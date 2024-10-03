@@ -1,0 +1,139 @@
+[gd_scene load_steps=12 format=3 uid="uid://hul5x10ptumj"]
+
+[ext_resource type="Script" path="res://editor/main.gd" id="1_4xdr8"]
+[ext_resource type="PackedScene" uid="uid://c01nu37bjhxsi" path="res://editor/camera/free_look_camera.tscn" id="2_n3tr4"]
+[ext_resource type="Script" path="res://editor/part.gd" id="3_yo0xd"]
+[ext_resource type="Material" uid="uid://dg0pq3t4uvees" path="res://editor/selection_box/selection_box_2_material.res" id="4_45btb"]
+[ext_resource type="Script" path="res://editor/selection_box/selection_box.gd" id="5_byqpd"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_jgeb0"]
+sky_top_color = Color(0.168627, 0.470588, 0.690196, 1)
+sky_horizon_color = Color(0.431373, 0.776471, 0.760784, 1)
+sky_curve = 0.0652911
+ground_bottom_color = Color(0.278431, 0.282353, 0.215686, 1)
+ground_horizon_color = Color(0.380392, 0.721569, 0.705882, 1)
+ground_curve = 0.00258815
+sun_angle_max = 14.5
+sun_curve = 0.135188
+
+[sub_resource type="Sky" id="Sky_ivc8r"]
+sky_material = SubResource("ProceduralSkyMaterial_jgeb0")
+
+[sub_resource type="Environment" id="Environment_erjk1"]
+background_mode = 2
+sky = SubResource("Sky_ivc8r")
+tonemap_mode = 2
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_3mjn7"]
+points = PackedVector3Array(-0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5)
+
+[sub_resource type="PrismMesh" id="PrismMesh_du6vf"]
+left_to_right = 0.0
+
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_4rntb"]
+
+[node name="Main" type="Node3D" node_paths=PackedStringArray("cam", "selection_box_hover")]
+script = ExtResource("1_4xdr8")
+cam = NodePath("Camera3D")
+selection_box_hover = NodePath("SelectionBox1")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_erjk1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.810042, -0.433699, 0.394636, 0, 0.673013, 0.739631, -0.586372, 0.599132, -0.545168, 0, 13, 0)
+shadow_enabled = true
+
+[node name="Camera3D" parent="." instance=ExtResource("2_n3tr4")]
+transform = Transform3D(0.877583, -0.229849, 0.420735, 0, 0.877583, 0.479426, -0.479426, -0.420736, 0.770151, 1.68294, 1.9177, 3.0806)
+
+[node name="UI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_lock_ = true
+
+[node name="HBoxContainer" type="HBoxContainer" parent="UI"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 74.0
+grow_horizontal = 2
+
+[node name="Button" type="Button" parent="UI/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Select"
+
+[node name="Button2" type="Button" parent="UI/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Move"
+
+[node name="Button3" type="Button" parent="UI/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Rotate"
+
+[node name="Button4" type="Button" parent="UI/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Scale"
+
+[node name="OptionButton" type="OptionButton" parent="UI/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Button5" type="Button" parent="UI/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Color"
+
+[node name="Button6" type="Button" parent="UI/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -8)
+shape = SubResource("ConvexPolygonShape3D_3mjn7")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CollisionShape3D"]
+mesh = SubResource("PrismMesh_du6vf")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="CollisionShape3D"]
+collision_mask = 2
+
+[node name="PartContainer" type="Node" parent="."]
+
+[node name="Part" type="StaticBody3D" parent="PartContainer"]
+script = ExtResource("3_yo0xd")
+
+[node name="Part2" type="StaticBody3D" parent="PartContainer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -3)
+script = ExtResource("3_yo0xd")
+part_scale = Vector3(0.5, 2, 4)
+
+[node name="Part3" type="StaticBody3D" parent="PartContainer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -1)
+script = ExtResource("3_yo0xd")
+part_scale = Vector3(2, 0.1, 2)
+
+[node name="Part4" type="StaticBody3D" parent="PartContainer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -5)
+script = ExtResource("3_yo0xd")
+part_scale = Vector3(0.25, 2, 0.25)
+
+[node name="Part5" type="StaticBody3D" parent="PartContainer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -6)
+script = ExtResource("3_yo0xd")
+part_scale = Vector3(1, 1, 1)
+
+[node name="SelectionBox1" type="MeshInstance3D" parent="."]
+material_override = ExtResource("4_45btb")
+mesh = SubResource("ImmediateMesh_4rntb")
+script = ExtResource("5_byqpd")
+box_scale = Vector3(2, 1, 4)
+box_thickness = 0.185

@@ -1,0 +1,7 @@
+11.7. started work on 3d level editor software
+12.7. started to implemente spawning, dragging and visual selection of cuboids
+17.7. finished implementing selection box
+
+24.7. implementing dragging
+
+2.10. returned to this project

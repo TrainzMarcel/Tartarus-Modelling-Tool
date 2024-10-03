@@ -1,0 +1,49 @@
+previous project plan:
+	  implement dragging of parts with limited distance, with selection wireframe
+	  implement selection of parts
+	  spawning of cuboids
+	  implement snapping
+	  implement coloring and material
+	  implement spawning parts of other shapes
+	  implement rotating and tilting (r t keys)
+	  implement scaling (with ctrl and shift)
+	  rotate tool
+	  rotation pivot mover
+	  add resizealign https://github.com/stravant/roblox-resizealign/tree/main
+
+v model example from chatgpt
+1. Requirements Section
+
+1.1 Functional Requirements:
+
+    FR-01: The vehicle simulation system must allow for modular connections between engines, gearboxes, and wheels.
+    FR-02: The system should simulate real-time power transmission from engines to wheels.
+    FR-03: Wheel RPM must cascade back to the engines for feedback control.
+    FR-04: Users should be able to visualize and adjust the positioning of components (e.g., wheels) in a 3D space.
+
+1.2 Non-Functional Requirements:
+
+    NFR-01: The system must maintain a frame rate of 60 FPS under full load.
+    NFR-02: The user interface should allow for component assembly within 5 seconds.
+    NFR-03: The simulation must process at least 4 engines, 4 gearboxes, and 8 wheels simultaneously without performance degradation.
+
+2. System Design Section
+
+2.1 System Architecture:
+
+    Modular Component Structure: The system will utilize a node-based structure where each component (engine, gearbox, wheel) is treated as a self-contained unit. These units will communicate via data arrays.
+
+    Data Flow Diagram:
+        Power flows from engines → gearboxes → wheels.
+        RPM values cascade back from wheels → gearboxes → engines.
+
+2.2 Component Interfaces:
+
+    Engine Module: Receives RPM data from gearboxes, outputs power to the gearbox.
+    Gearbox Module: Adjusts RPM based on gear ratios and forwards it to the next component in the chain.
+    Wheel Module: Calculates angular velocity and forwards the resulting RPM to the gearbox.
+
+2.3 Design Constraints:
+
+    Real-time feedback loop between wheels and engines.
+    Visual node-based representation of components in a 3D environment.

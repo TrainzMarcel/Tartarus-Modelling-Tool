@@ -1,0 +1,66 @@
+Business Requirement Analysis:
+
+This is the first step of the designation of the development cycle where product requirement needs to be cured from the customer’s perspective. in these phases include proper communication with the customer to understand the requirements of the customers. these are the very important activities that need to be handled properly, as most of the time customers do not know exactly what they want, and they are not sure about it at that time then we use an acceptance test design planning which is done at the time of business requirement it will be used as an input for acceptance testing.
+
+
+Systems design:
+
+How can the collected requirements be implemented? Here, a design for the entire system is created, including organization and graphic design depending on the project.
+
+
+Architectural Design (High-Level Design):
+
+In this stage, architectural specifications are comprehended and designed. Usually, several technical approaches are put out, and the ultimate choice is made after considering both the technical and financial viability. The system architecture is further divided into modules that each handle a distinct function. Another name for this is High-Level Design (HLD).
+
+At this point, the exchange of data and communication between the internal modules and external systems are well understood and defined. During this phase, integration tests can be created and documented using the information provided.
+
+
+Module Design (Low-Level Design):
+
+This phase, known as Low-Level Design (LLD), specifies the comprehensive internal design for every system module. Compatibility between the design and other external systems as well as other modules in the system architecture is crucial. Unit tests are a crucial component of any development process since they assist in identifying and eradicating the majority of mistakes and flaws at an early stage. Based on the internal module designs, these unit tests may now be created.
+
+
+Coding Phase:
+
+The Coding step involves writing the code for the system modules that were created during the Design phase. The system and architectural requirements are used to determine which programming language is most appropriate.
+
+The coding standards and principles are followed when performing the coding. Before the final build is checked into the repository, the code undergoes many code reviews and is optimized for optimal performance.
+Validation Phases:
+
+It involves dynamic analysis techniques (functional, and non-functional), and testing done by executing code. Validation is the process of evaluating the software after the completion of the development phase to determine whether the software meets the customer’s expectations and requirements. 
+
+So, V-Model contains Verification phases on one side of the Validation phases on the other side. The verification and Validation phases are joined by the coding phase in a V-shape. Thus, it is called V-Model. 
+There are several Validation phases in the V-Model:
+
+
+Unit Testing:
+
+Unit Test Plans are developed during the module design phase. These Unit Test Plans are executed to eliminate bugs in code or unit level.
+
+
+Integration testing:
+
+After completion of unit testing Integration testing is performed. In integration testing, the modules are integrated and the system is tested. Integration testing is performed in the Architecture design phase. This test verifies the communication of modules among themselves.
+
+
+System Testing:
+
+System testing tests the complete application with its functionality, inter-dependency, and communication. It tests the functional and non-functional requirements of the developed application.
+
+User Acceptance Testing (UAT):
+
+UAT is performed in a user environment that resembles the production environment. UAT verifies that the delivered system meets the user’s requirement and the system is ready for use in the real world.
+Design Phase: 
+
+    Requirement Analysis: This phase contains detailed communication with the customer to understand their requirements and expectations. This stage is known as Requirement Gathering.
+    System Design: This phase contains the system design and the complete hardware and communication setup for developing the product.
+    Architectural Design: System design is broken down further into modules taking up different functionalities. The data transfer and communication between the internal modules and with the outside world (other systems) is clearly understood.
+    Module Design: In this phase, the system breaks down into small modules. The detailed design of modules is specified, also known as Low-Level Design (LLD).
+
+Testing Phases: 
+
+    Unit Testing: Unit Test Plans are developed during the module design phase. These Unit Test Plans are executed to eliminate bugs at the code or unit level.
+    Integration testing: After completion of unit testing Integration testing is performed. In integration testing, the modules are integrated, and the system is tested. Integration testing is performed in the Architecture design phase. This test verifies the communication of modules among themselves.
+    System Testing: System testing tests the complete application with its functionality, interdependency, and communication. It tests the functional and non-functional requirements of the developed application.
+    User Acceptance Testing (UAT): UAT is performed in a user environment that resembles the production environment. UAT verifies that the delivered system meets the user’s requirement and the system is ready for use in the real world.
+
