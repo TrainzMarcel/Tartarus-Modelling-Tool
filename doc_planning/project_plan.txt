@@ -1,49 +1,111 @@
 previous project plan:
-	  implement dragging of parts with limited distance, with selection wireframe
-	  implement selection of parts
-	  spawning of cuboids
-	  implement snapping
 	  implement coloring and material
-	  implement spawning parts of other shapes
-	  implement rotating and tilting (r t keys)
-	  implement scaling (with ctrl and shift)
-	  rotate tool
-	  rotation pivot mover
-	  add resizealign https://github.com/stravant/roblox-resizealign/tree/main
 
-v model example from chatgpt
-1. Requirements Section
 
-1.1 Functional Requirements:
+REQUIREMENTS
+v0.1
+	VISUAL (visual feedback for editing)
+	  RV1 implement 3d selection box
+	  RV2 use the selection box to denote every selected part
+	  RV3 use the selection box with a flashing highlighter material for any hovered part
+	  RV4 paint tool, using the selection box and setting color of the selection box to the selected color in the paint tool, not meant for dragging
+	  RV5 material tool also uses the selection box and colors it orange
+	  
+	  
+	
+	
+	TOOLS (functionality for editing)
+	  RT1 implement dragging of parts with limited distance, with selection wireframe
+	  RT2 this dragging behavior as well as scaling and rotating behavior will have adjustable snap size and will snap both the rotation and position to any parts that are hovered over while dragging another part(s)
+	  RT3 implement selecting of parts; not holding shift will only select single parts, holding shift will allow for selection of several parts
+	  RT3 tools 1-4 (dragging, linearly translating, rotating and scaling) have the same base dragging and selecting behavior, but, tools 2-4 render interactive handles for their primary purpose
+	  RT4 tool 2 will be used for linear translation of blocks either in global axes or axes relative to said block
+	  RT5 tool 3 will be used to rotate again in global or relative axes
+	  RT6 the rotation pivot for a part should be adjustable
+	  RT7 tool 4 will be for scaling singular parts
+	  RT8 spawning of parts (cuboids, wedges, cylinders, spheres
+	  RT9 free flying camera
+	
+	
+	INPUT COMPONENTS (input for editing)
+	  IC1 camera	controlled linearly by wasd and rotated by right clicking and dragging
+	  IC2 tool 2	linearly translating is done by dragging one of 6 arrows, x arrows in red, y arrows in green, z arrows in blue and global or relative input is toggled by a checkbox or a keybind
+	  IC3 tool 2	there will also be a small square for each axis, which allows users to move parts planarly
+	  IC4 tool 3	rotating is done by dragging one of 3 rings, x rotation in red, y rotation in green and z rotation in blue
+	  IC5 tool 3	will have an extra button next to it, labeled "change pivot" where the parts pivot will be shown and be moveable by tool 2
+	  IC6 tool 4	scaling is done by dragging one of 6 spheres, x spheres in red, y spheres in green and z spheres in blue
+	  IC7 tool 4	holding ctrl will force the part to stay in the same position and scaling to work in both directions of the axis
+	  IC8 tool 4	shift will force scaling to work in all directions
+	  IC9 tool 4	holding both ctrl and shift will force the block to stay centered and scale in all directions
+	  IC10 dragging	pressing r will always rotate a dragged part (or group of parts) around the surface normal
+	  IC11 dragging	pressing t will always rotate a dragged part (or group of parts) around the horizontal axis from the camera
+	  IC12 camera	hitting f when any number of parts is selected should center the camera on them
+	  IC13 dragging	ability to copy, cut or paste selections of parts using ctrl, c, v and x
+	
+	
+	MODEL EXPORT (everything related to model exporting)
+	  ME1 possibility to export as .obj with materials and colors
+	  ME2 possibility to automatically set up materials in an input godot project, on models the material slots will be named after the material they use, with a number after to distinguish between any different colors (since u need a new material for every extra color on a model) and this way whenever a model is imported it will utilize the shared material
+	  ME3 every model with said specifically named material slots that is i	mported in a project with these shared materials, has the materials assigned automatically
+	  ME4 if an existing model is reimported/overwritten, update all the nodes with this model to the newest version, keeping the assigned materials as well as possible (i think i can only do this using a plugin)
+	
+	
+	MISC
+	  MI1 saving of models using csv files
+	  MI2 loading of models
+	  MI3 automated build chain
+	  
+	
+	
+	v0.1+ (requirements for future development cycle(s), which came to mind early and may be useful to future proof the code)
+	  RVx
+	TOOLS
+	  RTx ability to group parts together to create subassemblies
+	  RTx ability to scale subassemblies and multiple parts concurrently but only in every direction at once to avoid transform issues
+	  RTx ability to scale subassemblies and multiple parts concurrently in single axes if all are rectilinearly aligned
+	  MIx saving of subassemblies (in a separate folder from regular models)
+	  MIx loading of subassemblies
+	  MIx saves must keep a version number in case of any possible breaking changes
+	  RTx add resizealign https://github.com/stravant/roblox-resizealign/tree/main
+	  RTx add properties tab for adjust part values
+	  RTx save and load material presets/collections, input either godot standardmaterials or godot shadermaterials, for the time being the available materials will not be adjustable (keep this in mind for the implementation)
+	  RTx ability to lock parts (using lock tool)
+	  RTx ability to ctrl + z and ctrl + y
+	  RTx user guide f1 or ?/help button
 
-    FR-01: The vehicle simulation system must allow for modular connections between engines, gearboxes, and wheels.
-    FR-02: The system should simulate real-time power transmission from engines to wheels.
-    FR-03: Wheel RPM must cascade back to the engines for feedback control.
-    FR-04: Users should be able to visualize and adjust the positioning of components (e.g., wheels) in a 3D space.
 
-1.2 Non-Functional Requirements:
+SYSTEMS DESIGN
+	  
+	  
+	  
+	  
+	  
+	  
+	  
 
-    NFR-01: The system must maintain a frame rate of 60 FPS under full load.
-    NFR-02: The user interface should allow for component assembly within 5 seconds.
-    NFR-03: The simulation must process at least 4 engines, 4 gearboxes, and 8 wheels simultaneously without performance degradation.
 
-2. System Design Section
+HIGH LEVEL DESIGN
+	  
 
-2.1 System Architecture:
+LOW LEVEL DESIGN
+	  
+	  use a state machine for the dragging tool
+	  
+	  preemptive notes:
+	  recursively go through folders to update material or meshes
+	  https://github.com/Flynsarmy/gd-pixpal-tools-addon/blob/master/addons/pixpal_tools/material_importer.gd
+	  https://www.reddit.com/r/godot/comments/1azn4oj/ressource_import_script_to_apply_override/
+	  https://github.com/bikemurt/blender-godot-pipeline/blob/main/addons/blender_godot_pipeline/SceneInit.gd
+	  https://docs.godotengine.org/en/4.1/tutorials/assets_pipeline/importing_scenes.html#using-import-scripts-for-automation
 
-    Modular Component Structure: The system will utilize a node-based structure where each component (engine, gearbox, wheel) is treated as a self-contained unit. These units will communicate via data arrays.
+IMPLEMENTATION
+	  
 
-    Data Flow Diagram:
-        Power flows from engines → gearboxes → wheels.
-        RPM values cascade back from wheels → gearboxes → engines.
+UNIT TESTING
+	  
 
-2.2 Component Interfaces:
+USER TESTING
+	  
 
-    Engine Module: Receives RPM data from gearboxes, outputs power to the gearbox.
-    Gearbox Module: Adjusts RPM based on gear ratios and forwards it to the next component in the chain.
-    Wheel Module: Calculates angular velocity and forwards the resulting RPM to the gearbox.
 
-2.3 Design Constraints:
-
-    Real-time feedback loop between wheels and engines.
-    Visual node-based representation of components in a 3D environment.
+Requirements should be detailed enough to clearly define each functionality, but not overly granular to avoid overwhelming complexity. Aim for a middle ground: specific but manageable. Each requirement should cover a single, testable feature or behavior. For instance, instead of "support flowchart creation," say "allow users to drag and drop elements to create a flowchart with at least 10 node types." Break larger tasks into smaller, discrete requirements without going into unnecessary minutiae like implementation details.

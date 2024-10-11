@@ -1,14 +1,10 @@
 tartarus modelling tool
 
 
-state machine it is
-(i was talking about tool state)
+state machine for every drag tool state
 
 this counts in every tool mode except paint and material spawn part
 
-r and t also count in these cases
-r: will always rotate around the surface normal
-t: will always rotate around the horizontal axis from the camera
 
 also, parts are dragged by the position at which theyve been clicked on
 meaning:

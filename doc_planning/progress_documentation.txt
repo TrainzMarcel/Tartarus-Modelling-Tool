@@ -5,3 +5,5 @@
 24.7. implementing dragging
 
 2.10. returned to this project
+3.10. renamed this project to tartarus modelling tool and uploaded this project and the flowcharting tool to github along with setting up git vcs
+
