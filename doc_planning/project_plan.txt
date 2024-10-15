@@ -10,10 +10,8 @@ v0.1
 	  RV3 use the selection box with a flashing highlighter material for any hovered part
 	  RV4 paint tool, using the selection box and setting color of the selection box to the selected color in the paint tool, not meant for dragging
 	  RV5 material tool also uses the selection box and colors it orange
-	  
-	  
-	
-	
+
+
 	TOOLS (functionality for editing)
 	  RT1 implement dragging of parts with limited distance, with selection wireframe
 	  RT2 this dragging behavior as well as scaling and rotating behavior will have adjustable snap size and will snap both the rotation and position to any parts that are hovered over while dragging another part(s)
@@ -25,8 +23,8 @@ v0.1
 	  RT7 tool 4 will be for scaling singular parts
 	  RT8 spawning of parts (cuboids, wedges, cylinders, spheres
 	  RT9 free flying camera
-	
-	
+
+
 	INPUT COMPONENTS (input for editing)
 	  IC1 camera	controlled linearly by wasd and rotated by right clicking and dragging
 	  IC2 tool 2	linearly translating is done by dragging one of 6 arrows, x arrows in red, y arrows in green, z arrows in blue and global or relative input is toggled by a checkbox or a keybind
@@ -41,55 +39,43 @@ v0.1
 	  IC11 dragging	pressing t will always rotate a dragged part (or group of parts) around the horizontal axis from the camera
 	  IC12 camera	hitting f when any number of parts is selected should center the camera on them
 	  IC13 dragging	ability to copy, cut or paste selections of parts using ctrl, c, v and x
-	
-	
+	  IC14 tool 5	implement coloring tool which tints a part with the desired paint when clicked on
+	  IC15 tool 6	implement material tool which changes a parts material (still keeping its tint)
+	  IC16 possibility for collision checkboxes for every part
+
+
 	MODEL EXPORT (everything related to model exporting)
 	  ME1 possibility to export as .obj with materials and colors
 	  ME2 possibility to automatically set up materials in an input godot project, on models the material slots will be named after the material they use, with a number after to distinguish between any different colors (since u need a new material for every extra color on a model) and this way whenever a model is imported it will utilize the shared material
 	  ME3 every model with said specifically named material slots that is i	mported in a project with these shared materials, has the materials assigned automatically
 	  ME4 if an existing model is reimported/overwritten, update all the nodes with this model to the newest version, keeping the assigned materials as well as possible (i think i can only do this using a plugin)
-	
-	
+	  ME5 possibility to save filepaths for fast and easy reimporting
+
+
 	MISC
 	  MI1 saving of models using csv files
 	  MI2 loading of models
-	  MI3 automated build chain
-	  
-	
-	
-	v0.1+ (requirements for future development cycle(s), which came to mind early and may be useful to future proof the code)
-	  RVx
-	TOOLS
-	  RTx ability to group parts together to create subassemblies
-	  RTx ability to scale subassemblies and multiple parts concurrently but only in every direction at once to avoid transform issues
-	  RTx ability to scale subassemblies and multiple parts concurrently in single axes if all are rectilinearly aligned
-	  MIx saving of subassemblies (in a separate folder from regular models)
-	  MIx loading of subassemblies
-	  MIx saves must keep a version number in case of any possible breaking changes
-	  RTx add resizealign https://github.com/stravant/roblox-resizealign/tree/main
-	  RTx add properties tab for adjust part values
-	  RTx save and load material presets/collections, input either godot standardmaterials or godot shadermaterials, for the time being the available materials will not be adjustable (keep this in mind for the implementation)
-	  RTx ability to lock parts (using lock tool)
-	  RTx ability to ctrl + z and ctrl + y
-	  RTx user guide f1 or ?/help button
+	  MI3 automated build/export chain
 
 
 SYSTEMS DESIGN
-	  
-	  
-	  
-	  
-	  
-	  
-	  
+	  the system will primarily be driven by the main class, all other classes being called by main except debug.gd and unit_test.gd
+	  see systems_design_diagram.png for a module diagram
+	  parts will be snapped together to quickly create simplistic, easily texturable and paintable models
+	  when models are exported, they automatically get reimported in godot with shared materials
 
 
 HIGH LEVEL DESIGN
-	  
+	  this app will be programmed as procedurally as possible within godot game engine
+	  (at this point i lost interest in planning and just wanted to jump into the code)
 
 LOW LEVEL DESIGN
-	  
 	  use a state machine for the dragging tool
+	  dragging diagram: open tartarus_modelling_drag_logic.csv in tartarus flowcharting tool
+	  
+	  
+	  
+	  
 	  
 	  preemptive notes:
 	  recursively go through folders to update material or meshes
@@ -98,7 +84,7 @@ LOW LEVEL DESIGN
 	  https://github.com/bikemurt/blender-godot-pipeline/blob/main/addons/blender_godot_pipeline/SceneInit.gd
 	  https://docs.godotengine.org/en/4.1/tutorials/assets_pipeline/importing_scenes.html#using-import-scripts-for-automation
 
-IMPLEMENTATION
+IMPLEMENTATION NOTES
 	  
 
 UNIT TESTING

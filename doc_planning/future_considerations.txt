@@ -1,0 +1,16 @@
+	v0.1+ (requirements for future development cycle(s), which came to mind early and may be useful to future proof the code)
+	  RVx
+	TOOLS
+	  RTx ability to group parts together to create subassemblies
+	  RTx ability to scale subassemblies and multiple parts concurrently but only in every direction at once to avoid transform issues
+	  RTx ability to scale subassemblies and multiple parts concurrently in single axes if all are rectilinearly aligned
+	  MIx saving of subassemblies (in a separate folder from regular models)
+	  MIx loading of subassemblies
+	  MIx saves must keep a version number in case of any possible breaking changes
+	  RTx add resizealign https://github.com/stravant/roblox-resizealign/tree/main
+	  RTx add properties tab for adjusting part values
+	  RTx save and load material presets/collections, input either godot standardmaterials or godot shadermaterials, for the time being the available materials will not be adjustable (keep this in mind for the implementation)
+	  RTx ability to lock parts (using lock tool or properties menu)
+	  RTx ability to undo (ctrl + z) and redo (ctrl + y)
+	  RTx user guide f1 or ?/help button
+	  RTx possibly CSG operations for parts
