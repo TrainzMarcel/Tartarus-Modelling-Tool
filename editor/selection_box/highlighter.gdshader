@@ -10,4 +10,5 @@ void fragment() {
 	ROUGHNESS = 1.0;
 	METALLIC = 0.0;
 	SPECULAR = 0.5;
+	EMISSION = ALBEDO;
 }

@@ -1,9 +1,9 @@
-[gd_scene load_steps=12 format=3 uid="uid://hul5x10ptumj"]
+[gd_scene load_steps=13 format=3 uid="uid://hul5x10ptumj"]
 
 [ext_resource type="Script" path="res://editor/main.gd" id="1_4xdr8"]
 [ext_resource type="PackedScene" uid="uid://c01nu37bjhxsi" path="res://editor/camera/free_look_camera.tscn" id="2_n3tr4"]
 [ext_resource type="Script" path="res://editor/part.gd" id="3_yo0xd"]
-[ext_resource type="Material" uid="uid://dg0pq3t4uvees" path="res://editor/selection_box/selection_box_2_material.res" id="4_45btb"]
+[ext_resource type="Material" uid="uid://dg0pq3t4uvees" path="res://editor/selection_box/highlight_mat.res" id="4_sa2se"]
 [ext_resource type="Script" path="res://editor/selection_box/selection_box.gd" id="5_byqpd"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_jgeb0"]
@@ -24,18 +24,31 @@ background_mode = 2
 sky = SubResource("Sky_ivc8r")
 tonemap_mode = 2
 
+[sub_resource type="ButtonGroup" id="ButtonGroup_0qmei"]
+
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_3mjn7"]
 points = PackedVector3Array(-0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5)
 
 [sub_resource type="PrismMesh" id="PrismMesh_du6vf"]
 left_to_right = 0.0
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_4rntb"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_s5c6p"]
 
-[node name="Main" type="Node3D" node_paths=PackedStringArray("cam", "selection_box_hover")]
+[node name="Main" type="Node3D" node_paths=PackedStringArray("b_drag", "b_move", "b_rotate", "b_scale", "b_color", "b_material", "b_lock", "b_spawn", "b_spawn_type", "cam", "workspace", "no_drag_ui", "hover_selection_box")]
 script = ExtResource("1_4xdr8")
+b_drag = NodePath("UI/HBoxContainer/Button")
+b_move = NodePath("UI/HBoxContainer/Button2")
+b_rotate = NodePath("UI/HBoxContainer/Button3")
+b_scale = NodePath("UI/HBoxContainer/Button4")
+b_color = NodePath("UI/HBoxContainer/Button5")
+b_material = NodePath("UI/HBoxContainer/Button6")
+b_lock = NodePath("UI/HBoxContainer/Button7")
+b_spawn = NodePath("UI/HBoxContainer/Button8")
+b_spawn_type = NodePath("UI/HBoxContainer/Button8/OptionButton")
 cam = NodePath("Camera3D")
-selection_box_hover = NodePath("SelectionBox1")
+workspace = NodePath("Workspace")
+no_drag_ui = [NodePath("UI/HBoxContainer/Button"), NodePath("UI/HBoxContainer/Button2"), NodePath("UI/HBoxContainer/Button3"), NodePath("UI/HBoxContainer/Button4"), NodePath("UI/HBoxContainer/Button8"), NodePath("UI/HBoxContainer/Button8/OptionButton"), NodePath("UI/HBoxContainer/Button5"), NodePath("UI/HBoxContainer/Button6"), NodePath("UI/HBoxContainer/Button7")]
+hover_selection_box = NodePath("Workspace/HoverSelectionBox")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_erjk1")
@@ -58,43 +71,79 @@ metadata/_edit_lock_ = true
 
 [node name="HBoxContainer" type="HBoxContainer" parent="UI"]
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = -1
 anchor_right = 1.0
-offset_bottom = 74.0
-grow_horizontal = 2
+offset_right = -484.0
+offset_bottom = 54.0
 
 [node name="Button" type="Button" parent="UI/HBoxContainer"]
+custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
-size_flags_horizontal = 3
-text = "Select"
+toggle_mode = true
+button_pressed = true
+button_group = SubResource("ButtonGroup_0qmei")
+text = "Drag"
 
 [node name="Button2" type="Button" parent="UI/HBoxContainer"]
+custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("ButtonGroup_0qmei")
 text = "Move"
 
 [node name="Button3" type="Button" parent="UI/HBoxContainer"]
+custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("ButtonGroup_0qmei")
 text = "Rotate"
 
 [node name="Button4" type="Button" parent="UI/HBoxContainer"]
+custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("ButtonGroup_0qmei")
 text = "Scale"
 
-[node name="OptionButton" type="OptionButton" parent="UI/HBoxContainer"]
+[node name="Button8" type="Button" parent="UI/HBoxContainer"]
+custom_minimum_size = Vector2(97, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+text = "Spawn"
+
+[node name="OptionButton" type="OptionButton" parent="UI/HBoxContainer/Button8"]
+custom_minimum_size = Vector2(10, 0)
+layout_mode = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = 4.0
+offset_right = 97.0
+offset_bottom = 35.0
+item_count = 2
+popup/item_0/text = "cuboid"
+popup/item_0/id = 0
+popup/item_1/text = "sphere"
+popup/item_1/id = 1
 
 [node name="Button5" type="Button" parent="UI/HBoxContainer"]
+custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("ButtonGroup_0qmei")
 text = "Color"
 
 [node name="Button6" type="Button" parent="UI/HBoxContainer"]
+custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("ButtonGroup_0qmei")
+text = "Material"
+
+[node name="Button7" type="Button" parent="UI/HBoxContainer"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+toggle_mode = true
+button_group = SubResource("ButtonGroup_0qmei")
+text = "Lock"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -8)
@@ -106,34 +155,35 @@ mesh = SubResource("PrismMesh_du6vf")
 [node name="StaticBody3D" type="StaticBody3D" parent="CollisionShape3D"]
 collision_mask = 2
 
-[node name="PartContainer" type="Node" parent="."]
+[node name="Workspace" type="Node" parent="."]
 
-[node name="Part" type="StaticBody3D" parent="PartContainer"]
+[node name="Part" type="StaticBody3D" parent="Workspace"]
 script = ExtResource("3_yo0xd")
 
-[node name="Part2" type="StaticBody3D" parent="PartContainer"]
+[node name="Part2" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -3)
 script = ExtResource("3_yo0xd")
 part_scale = Vector3(0.5, 2, 4)
 
-[node name="Part3" type="StaticBody3D" parent="PartContainer"]
+[node name="Part3" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -1)
 script = ExtResource("3_yo0xd")
 part_scale = Vector3(2, 0.1, 2)
 
-[node name="Part4" type="StaticBody3D" parent="PartContainer"]
+[node name="Part4" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -5)
 script = ExtResource("3_yo0xd")
 part_scale = Vector3(0.25, 2, 0.25)
 
-[node name="Part5" type="StaticBody3D" parent="PartContainer"]
+[node name="Part5" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -6)
 script = ExtResource("3_yo0xd")
 part_scale = Vector3(1, 1, 1)
 
-[node name="SelectionBox1" type="MeshInstance3D" parent="."]
-material_override = ExtResource("4_45btb")
-mesh = SubResource("ImmediateMesh_4rntb")
+[node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
+visible = false
+material_override = ExtResource("4_sa2se")
+mesh = SubResource("ImmediateMesh_s5c6p")
+skeleton = NodePath("../..")
 script = ExtResource("5_byqpd")
 box_scale = Vector3(2, 1, 4)
-box_thickness = 0.185

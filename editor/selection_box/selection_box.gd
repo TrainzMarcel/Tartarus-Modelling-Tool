@@ -8,9 +8,16 @@ class_name SelectionBox
 		debug_update = false
 		box_update()
 
-@export var box_scale : Vector3 = Vector3(0.4, 0.2, 0.8)
-@export var box_thickness : float = 0.015
-var assigned_part : Part = null
+@export var box_scale : Vector3 = Vector3(0.4, 0.2, 0.8):
+	set(val):
+		box_scale = val
+		box_update()
+@export var box_thickness : float = 0.015:
+	set(val):
+		box_thickness = val
+		box_update()
+
+var assigned_node : Node3D = null
 
 #unused
 #@export var box_color : Color
