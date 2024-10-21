@@ -32,7 +32,7 @@ points = PackedVector3Array(-0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -
 [sub_resource type="PrismMesh" id="PrismMesh_du6vf"]
 left_to_right = 0.0
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_s5c6p"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_dplb7"]
 
 [node name="Main" type="Node3D" node_paths=PackedStringArray("b_drag", "b_move", "b_rotate", "b_scale", "b_color", "b_material", "b_lock", "b_spawn", "b_spawn_type", "cam", "workspace", "no_drag_ui", "hover_selection_box")]
 script = ExtResource("1_4xdr8")
@@ -183,7 +183,7 @@ part_scale = Vector3(1, 1, 1)
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("4_sa2se")
-mesh = SubResource("ImmediateMesh_s5c6p")
+mesh = SubResource("ImmediateMesh_dplb7")
 skeleton = NodePath("../..")
 script = ExtResource("5_byqpd")
 box_scale = Vector3(2, 1, 4)
