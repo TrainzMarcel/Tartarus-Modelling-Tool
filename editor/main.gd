@@ -33,6 +33,7 @@ enum SelectedTool {
 	lock
 }
 
+#will probably remove this
 enum DragState {
 	unselected_part_clicked_shift_unheld,
 	selected_part_clicked_shift_unheld,
@@ -47,6 +48,8 @@ var hovered_part : Part
 var ray_result : Dictionary
 
 var dragged_part : Part
+var initial_rotation : Transform3D
+
 var mouse_button_held : bool = false
 var selected_parts : Array[Part] = []
 var drag_offset : Array[Vector3] = []
@@ -100,12 +103,19 @@ func _input(event):
 		part_hover_selection_box(hovered_part)
 	
 	
-#set dragged_part
+#set dragged_part, recalculate all drag_offset vectors on new click
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				if safety_check(hovered_part):
 					dragged_part = hovered_part
+					var initial_rotation = hovered_part.transform
+					var i : int = 0
+					drag_offset.clear()
+					while i < selected_parts.size():
+						drag_offset.append(selected_parts[i].global_position - ray_result.position)
+						i = i + 1
+					
 				mouse_button_held = true
 			else:
 				dragged_part = null
@@ -143,7 +153,6 @@ func _input(event):
 							clear_all_selection_boxes()
 							part_instance_selection_box(hovered_part)
 #-------------------------------------------------------------------------------
-							
 		#no parts hovered
 				else:
 				#shift is unheld
@@ -170,14 +179,24 @@ func _input(event):
 	
 	"TODO"#implement dragging here once selecting works properly
 	"TODO"#maybe clean this up
+	#dragging happens here
 	if event is InputEventMouseMotion:
 		if mouse_button_held and safety_check(dragged_part) and not ray_result.is_empty():
 			var i : int = 0
 			while i < selected_parts.size():
 				selected_parts[i].global_position = ray_result.position + drag_offset[i]
 				selection_box_array[i].global_transform = selected_parts[i].global_transform
+				
 				i = i + 1
 			
+			#dragged_part.rotation = snap_rotation() * dragged_part.rotation
+			if safety_check(hovered_part):
+				if not part_rectilinear_alignment_check(dragged_part, hovered_part):
+					print("parts are NOT ALIGNED")
+					dragged_part.global_transform.basis = snap_rotation(dragged_part, ray_result)
+				else:
+					"DEBUG"
+					print("parts are ALIGNED")
 
 
 #set selected state and is_drag_tool
@@ -265,6 +284,130 @@ func part_hover_check():
 			return ray_result.collider
 	return null
 
+#d_part stands for dragged_part
+func snap_rotation(d_part : Part, ray_result : Dictionary):
+	
+#find closest matching basis vector of dragged_part to normal vector using absolute dot product
+#(the result farthest from 0)
+	var b_array : Array[Vector3] = [d_part.global_transform.basis.x,
+		d_part.global_transform.basis.y, d_part.global_transform.basis.z]
+	var i : int = 0
+	var closest_vector : Vector3
+	var highest_dot : float = 0
+	while i < b_array.size():
+		#remember, 1 = parallel vectors, 0 = perpendicular, -1 = opposing vectors
+		if abs(b_array[i].dot(ray_result.normal)) > highest_dot:
+			highest_dot = b_array[i].dot(ray_result.normal)
+			closest_vector = b_array[i]
+		i = i + 1
+	
+	if highest_dot == 0:
+		return d_part.global_transform.basis
+	
+#use angle_to between these two vectors as amount to rotate
+#cross product as axis to rotate around
+	
+	var rotated_basis : Basis = d_part.basis
+	var dot_1 = closest_vector.dot(ray_result.normal)
+	
+	#if vectors are opposed, flip closest_vector
+	var angle = (closest_vector * sign(dot_1)).angle_to(ray_result.normal)
+	var cr_p : Vector3 = (closest_vector * sign(dot_1)).cross(ray_result.normal)
+	
+	#if cross product returns empty vector, return unmodified basis
+	if cr_p.length() == 0:
+		return d_part.basis
+	
+	rotated_basis = d_part.basis.rotated(cr_p.normalized(), angle).orthonormalized()
+	
+	
+#find basis vector on canvas part which is not equal to normal or inverted normal
+#use x vector, else use y vector
+	var vec_1 : Vector3
+		#remember, 1 = parallel vectors, 0 = perpendicular, -1 = opposing vectors
+		#the closer to 0 the better in this case
+	if abs(ray_result.collider.basis.x.dot(ray_result.normal)) < abs(ray_result.collider.basis.y.dot(ray_result.normal)):
+		#canvas.basis.x is closer to 0
+		vec_1 = ray_result.collider.basis.x
+	else:
+		#canvas.basis.y is closer to 0
+		vec_1 = ray_result.collider.basis.y
+	
+	
+	#iterate over all 3 vectors and again find closest absolute dot product
+	#find signed angle between that and the closest vector and rotate accordingly
+	b_array = [rotated_basis.x, rotated_basis.y, rotated_basis.z]
+	var closest_vec : Vector3
+	highest_dot = 0
+	i = 0
+	while i < b_array.size():
+		if abs(vec_1.dot(b_array[i])) > abs(highest_dot):
+			highest_dot = vec_1.dot(b_array[i])
+			closest_vec = b_array[i]
+		i = i + 1
+	
+	angle = (closest_vec * sign(highest_dot)).angle_to(vec_1)
+	cr_p = (closest_vec * sign(highest_dot)).cross(vec_1)
+	
+	if cr_p.length() == 0:
+		return d_part.basis
+	
+	rotated_basis = rotated_basis.rotated(cr_p.normalized(), angle).orthonormalized()
+	
+	#the part should now hopefully be aligned and ready for linearly translating
+	#attempt exact alignment (assigning basis vectors of collider to d_part)
+	#and return
+	#return part_exact_alignment(rotated_basis, ray_result.collider.basis)
+	return rotated_basis
+
+func part_rectilinear_alignment_check(p1 : Part, p2 : Part):
+	var i : int = 0
+	var b_array_1 : Array[Vector3] = [p1.global_transform.basis.x,
+	p1.global_transform.basis.y, p1.global_transform.basis.z]
+	var b_array_2 : Array[Vector3] = [p2.global_transform.basis.x,
+	p2.global_transform.basis.y]
+	var is_aligned_1 : bool = false
+	var is_aligned_2 : bool = false
+	
+	#at least one of 3 vectors should evaluate to (almost) 1
+	while i < b_array_1.size():
+		#this is as precise as 32bit floats can do
+		if abs(b_array_1[i].dot(b_array_2[0])) > 0.999999:
+			is_aligned_1 = true
+			break
+		i = i + 1
+	
+	i = 0
+	while i < b_array_1.size():
+		if abs(b_array_1[i].dot(b_array_2[1])) > 0.999999:
+			is_aligned_2 = true
+			break
+		i = i + 1
+	return is_aligned_1 and is_aligned_2
+
+#p1: part to be affected, p2: part to align to
+func part_exact_alignment(p1 : Basis, p2 : Basis):
+	var i : int = 0
+	var j : int = 0
+	var b_array_1 : Array[Vector3] = [p1.x, p1.y, p1.z]
+	var b_array_2 : Array[Vector3] = [p2.x, p2.y, p2.z]
+
+	#at least one of 3 vectors should evaluate to 1
+	while i < b_array_1.size():
+		while j < b_array_2.size():
+			var dot : float = b_array_1[i].dot(b_array_2[j])
+			if abs(dot) > 0.95:
+				b_array_1[i] = b_array_2[j] * sign(dot)
+			j = j + 1
+		j = 0
+		i = i + 1
+
+	#assign to p1
+	p1.x = b_array_1[0]
+	p1.y = b_array_1[1]
+	p1.z = b_array_1[2]
+	return p1
+
 "TODO"#unit test somehow?
 func part_hover_selection_box(part : Part):
 	if is_hovering_allowed and safety_check(part):
@@ -274,24 +417,24 @@ func part_hover_selection_box(part : Part):
 	else:
 		hover_selection_box.visible = false
 
-
-func toggle_visibility_selection_box(part : Part, make_visible : bool):
-	if not safety_check(part):
-		return
-	
-	if make_visible:
-		for i in selection_box_array:
-			if safety_check(i):
-				if i.assigned_node == part:
-					i.visible = false
-					break
-	else:
-		for i in selection_box_array:
-			if safety_check(i):
-				if i.assigned_node == part:
-					i.visible = true
-					break
-		hover_selection_box.visible = false
+#might remove this
+#func toggle_visibility_selection_box(part : Part, make_visible : bool):
+#	if not safety_check(part):
+#		return
+#
+#	if make_visible:
+#		for i in selection_box_array:
+#			if safety_check(i):
+#				if i.assigned_node == part:
+#					i.visible = false
+#					break
+#	else:
+#		for i in selection_box_array:
+#			if safety_check(i):
+#				if i.assigned_node == part:
+#					i.visible = true
+#					break
+#		hover_selection_box.visible = false
 
 #instance and fit selection box to a part as child of part container and add it to the array
 func part_instance_selection_box(assigned_part : Part):
@@ -309,11 +452,13 @@ func clear_all_selection_boxes():
 	for i in selection_box_array:
 		if safety_check(i):
 			i.queue_free()
+	selection_box_array.clear()
 
 #delete selection box whos assigned_node matches the parameter
 func delete_selection_box(assigned_part : Node3D):
 	for i in selection_box_array:
 		if safety_check(i):
 			if i.assigned_node == assigned_part:
+				selection_box_array.erase(i)
 				i.queue_free()
 				return

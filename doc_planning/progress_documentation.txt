@@ -7,3 +7,10 @@
 2.10. returned to this project
 3.10. renamed this project to tartarus modelling tool and uploaded this project and the flowcharting tool to github along with setting up git vcs
 14.10. finished writing out requirements
+18.10. selection system and selection boxes are working
+21.10. selection system cleaned up
+23.10. got crude rotation snapping done, brought in 3d vector arrows for easier debugging
+
+
+
+
