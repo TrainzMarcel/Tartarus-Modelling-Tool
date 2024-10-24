@@ -1,6 +1,8 @@
 extends Node3D
 class_name Main
 
+@export var d_vector : DebugVector3D
+
 #ui
 @export var b_drag : Button
 @export var b_move : Button
@@ -177,8 +179,6 @@ func _input(event):
 	
 	
 	
-	"TODO"#implement dragging here once selecting works properly
-	"TODO"#maybe clean this up
 	#dragging happens here
 	if event is InputEventMouseMotion:
 		if mouse_button_held and safety_check(dragged_part) and not ray_result.is_empty():
@@ -191,9 +191,17 @@ func _input(event):
 			
 			#dragged_part.rotation = snap_rotation() * dragged_part.rotation
 			if safety_check(hovered_part):
+				d_vector.origin_position = ray_result.position
+				d_vector.input_vector = drag_offset[0]
 				if not part_rectilinear_alignment_check(dragged_part, hovered_part):
 					print("parts are NOT ALIGNED")
-					dragged_part.global_transform.basis = snap_rotation(dragged_part, ray_result)
+					var rotated_basis : Basis = snap_rotation(dragged_part, ray_result)
+					#rotate the drag_offset vector by the difference between the
+					#original matrix and rotated matrix
+					drag_offset[0] = (rotated_basis * dragged_part.basis.inverse()) * drag_offset[0]
+					dragged_part.global_position = ray_result.position
+					dragged_part.global_transform.basis = rotated_basis
+					dragged_part.global_position = ray_result.position + drag_offset[0]
 				else:
 					"DEBUG"
 					print("parts are ALIGNED")
@@ -253,7 +261,6 @@ func ui_hover_check(ui_list : Array[Control]):
 
 #having 2 indents was ugly so i also put this in a function
 #also checks for nulls
-"TODO"#unit test
 func safety_check(instance):
 	if is_instance_valid(instance):
 		if not instance.is_queued_for_deletion():
