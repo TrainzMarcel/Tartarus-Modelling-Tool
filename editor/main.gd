@@ -50,7 +50,7 @@ var hovered_part : Part
 var ray_result : Dictionary
 
 var dragged_part : Part
-var initial_rotation : Transform3D
+var initial_rotation : Basis
 
 var mouse_button_held : bool = false
 var selected_parts : Array[Part] = []
@@ -110,8 +110,8 @@ func _input(event):
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				if safety_check(hovered_part):
+					initial_rotation = hovered_part.basis
 					dragged_part = hovered_part
-					var initial_rotation = hovered_part.transform
 					var i : int = 0
 					drag_offset.clear()
 					while i < selected_parts.size():
@@ -173,15 +173,40 @@ func _input(event):
 		#if click on part in selection while shift is held, remove from selection
 		#if click on nothing, clear selection array
 		#if drag on part, figure this next part about dragging out
-		#selection box behavior:
-		#if hover over part, put s_box1 over it, hide when unhovered
-		#if hover over selected part(s), hide s_box2 and replace with s_box1
 	
 	
 	
 	#dragging happens here
 	if event is InputEventMouseMotion:
 		if mouse_button_held and safety_check(dragged_part) and not ray_result.is_empty():
+			#first, align rotation
+			if safety_check(hovered_part):
+				if not part_rectilinear_alignment_check(dragged_part, hovered_part):
+					#use initial_rotation so that dragged_part doesnt continually rotate further 
+					#from its initial rotation after being dragged over multiple off-grid parts
+					var rotated_basis : Basis = snap_rotation(initial_rotation, ray_result)
+					#calculate difference between original basis and new basis
+					var difference : Basis = rotated_basis * dragged_part.basis.inverse()
+					#rotate the drag_offset vector by the difference between the
+					#original matrix and rotated matrix
+					var i : int = 0
+					while i < selected_parts.size():
+						#rotate drag_offset vector by the difference basis
+						drag_offset[i] = difference * drag_offset[i]
+						
+						#move part to ray_result.position for easier pivoting
+						selected_parts[i].global_position = ray_result.position
+						
+						#rotate this part
+						selected_parts[i].basis = difference * selected_parts[i].basis
+						
+						#move it back out along the newly rotated drag_offset vector
+						selected_parts[i].global_position = ray_result.position + drag_offset[i]
+						
+						i = i + 1
+			
+			
+			#set positions according to drag_offset and where the selection is being dragged (ray_result.position)
 			var i : int = 0
 			while i < selected_parts.size():
 				selected_parts[i].global_position = ray_result.position + drag_offset[i]
@@ -189,22 +214,6 @@ func _input(event):
 				
 				i = i + 1
 			
-			#dragged_part.rotation = snap_rotation() * dragged_part.rotation
-			if safety_check(hovered_part):
-				d_vector.origin_position = ray_result.position
-				d_vector.input_vector = drag_offset[0]
-				if not part_rectilinear_alignment_check(dragged_part, hovered_part):
-					print("parts are NOT ALIGNED")
-					var rotated_basis : Basis = snap_rotation(dragged_part, ray_result)
-					#rotate the drag_offset vector by the difference between the
-					#original matrix and rotated matrix
-					drag_offset[0] = (rotated_basis * dragged_part.basis.inverse()) * drag_offset[0]
-					dragged_part.global_position = ray_result.position
-					dragged_part.global_transform.basis = rotated_basis
-					dragged_part.global_position = ray_result.position + drag_offset[0]
-				else:
-					"DEBUG"
-					print("parts are ALIGNED")
 
 
 #set selected state and is_drag_tool
@@ -269,7 +278,6 @@ func safety_check(instance):
 	return false
 
 #returns null or any hovered part
-"TODO"#unit test
 func part_hover_check():
 	if not is_hovering_allowed:
 		return null
@@ -291,49 +299,55 @@ func part_hover_check():
 			return ray_result.collider
 	return null
 
-#d_part stands for dragged_part
-func snap_rotation(d_part : Part, ray_result : Dictionary):
+#input is meant to be the part-to-be-rotated's basis
+"TODO"#unit test and make above comment better
+#res://editor/debug_and_unit_tests/unit_test.gd
+func snap_rotation(input : Basis, ray_result : Dictionary):
 	
 #find closest matching basis vector of dragged_part to normal vector using absolute dot product
 #(the result farthest from 0)
-	var b_array : Array[Vector3] = [d_part.global_transform.basis.x,
-		d_part.global_transform.basis.y, d_part.global_transform.basis.z]
+	var b_array : Array[Vector3] = [input.x, input.y, input.z]
+	var b_array_2 : Array[Vector3] = [ray_result.collider.basis.x, ray_result.collider.basis.y, ray_result.collider.basis.z]
 	var i : int = 0
-	var closest_vector : Vector3
+	var closest_vector_1 : Vector3
+	var closest_vector_2 : Vector3
 	var highest_dot : float = 0
 	while i < b_array.size():
-		#remember, 1 = parallel vectors, 0 = perpendicular, -1 = opposing vectors
-		if abs(b_array[i].dot(ray_result.normal)) > highest_dot:
-			highest_dot = b_array[i].dot(ray_result.normal)
-			closest_vector = b_array[i]
+		var j : int = 0
+		while j < b_array_2.size():
+			#remember, 1 = parallel vectors, 0 = perpendicular, -1 = opposing vectors
+			if abs(b_array[i].dot(b_array_2[j])) > abs(highest_dot):
+				highest_dot = b_array[i].dot(b_array_2[j])
+				closest_vector_1 = b_array[i]
+				closest_vector_2 = b_array_2[j]
+			j = j + 1
 		i = i + 1
 	
 	if highest_dot == 0:
-		return d_part.global_transform.basis
+		return input
 	
 #use angle_to between these two vectors as amount to rotate
 #cross product as axis to rotate around
 	
-	var rotated_basis : Basis = d_part.basis
-	var dot_1 = closest_vector.dot(ray_result.normal)
+	var dot_1 = closest_vector_1.dot(closest_vector_2)
 	
-	#if vectors are opposed, flip closest_vector
-	var angle = (closest_vector * sign(dot_1)).angle_to(ray_result.normal)
-	var cr_p : Vector3 = (closest_vector * sign(dot_1)).cross(ray_result.normal)
+	#if vectors are opposed, flip closest_vector_1
+	var angle = (closest_vector_1 * sign(dot_1)).angle_to(closest_vector_2)
+	var cr_p : Vector3 = (closest_vector_1 * sign(dot_1)).cross(closest_vector_2)
 	
 	#if cross product returns empty vector, return unmodified basis
 	if cr_p.length() == 0:
-		return d_part.basis
+		return input
 	
-	rotated_basis = d_part.basis.rotated(cr_p.normalized(), angle).orthonormalized()
+	var rotated_basis : Basis = input.rotated(cr_p.normalized(), angle).orthonormalized()
 	
 	
-#find basis vector on canvas part which is not equal to normal or inverted normal
+#find basis vector on canvas part which is not equal to closest_vector_2 or inverted closest_vector_2
 #use x vector, else use y vector
 	var vec_1 : Vector3
 		#remember, 1 = parallel vectors, 0 = perpendicular, -1 = opposing vectors
 		#the closer to 0 the better in this case
-	if abs(ray_result.collider.basis.x.dot(ray_result.normal)) < abs(ray_result.collider.basis.y.dot(ray_result.normal)):
+	if abs(ray_result.collider.basis.x.dot(closest_vector_2)) < abs(ray_result.collider.basis.y.dot(closest_vector_2)):
 		#canvas.basis.x is closer to 0
 		vec_1 = ray_result.collider.basis.x
 	else:
@@ -357,15 +371,13 @@ func snap_rotation(d_part : Part, ray_result : Dictionary):
 	cr_p = (closest_vec * sign(highest_dot)).cross(vec_1)
 	
 	if cr_p.length() == 0:
-		return d_part.basis
-	
-	rotated_basis = rotated_basis.rotated(cr_p.normalized(), angle).orthonormalized()
+		return input
 	
 	#the part should now hopefully be aligned and ready for linearly translating
 	#attempt exact alignment (assigning basis vectors of collider to d_part)
 	#and return
 	#return part_exact_alignment(rotated_basis, ray_result.collider.basis)
-	return rotated_basis
+	return rotated_basis.rotated(cr_p.normalized(), angle).orthonormalized()
 
 func part_rectilinear_alignment_check(p1 : Part, p2 : Part):
 	var i : int = 0
