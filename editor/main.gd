@@ -1,6 +1,7 @@
 extends Node3D
 class_name Main
 
+#DEBUG
 @export var d_vector : DebugVector3D
 
 #ui
@@ -35,21 +36,13 @@ enum SelectedTool {
 	lock
 }
 
-#will probably remove this
-enum DragState {
-	unselected_part_clicked_shift_unheld,
-	selected_part_clicked_shift_unheld,
-	unselected_part_clicked_shift_held,
-	selected_part_clicked_shift_held,
-	nothing_clicked_shift_unheld
-}
-
 #for selected
 var hovered_part : Part
 #raw ray result
 var ray_result : Dictionary
 
 var dragged_part : Part
+"TODO"#turn this back into a Transform3D to store initial position before snapping position
 var initial_rotation : Basis
 
 var mouse_button_held : bool = false
@@ -57,7 +50,7 @@ var selected_parts : Array[Part] = []
 var drag_offset : Array[Vector3] = []
 
 var selected_state : SelectedTool = SelectedTool.drag
-var drag_state : DragState = DragState.nothing_clicked_shift_unheld
+
 #gets set in on_tool_selected
 var is_drag_tool : bool = true
 #this bool is meant for non drag tools which dont need selecting but still need hovering and clicking functionality
@@ -124,6 +117,7 @@ func _input(event):
 				mouse_button_held = false
 		
 #selection logic (to be put in another function? maybe? probably)
+		
 		if event.button_index == MOUSE_BUTTON_LEFT:
 		#lmb down
 			if event.pressed:
@@ -173,15 +167,41 @@ func _input(event):
 		#if click on part in selection while shift is held, remove from selection
 		#if click on nothing, clear selection array
 		#if drag on part, figure this next part about dragging out
+		
+#change inital_transform on r or t press
+	#rotate clockwise around normal vector
+	if Input.is_key_pressed(KEY_R) and event.is_pressed() and not event.is_echo():
+		initial_rotation = initial_rotation.rotated(ray_result.normal, PI * 0.5)
+		"TODO123"#put an update thingy in here to realign parts
+		print(initial_rotation)
 	
+	#rotate around part vector which is closest to cam.basis.x
+	if Input.is_key_pressed(KEY_T) and event.is_pressed() and not event.is_echo():
+		var i : int = 0
+		var closest_vector : Vector3
+		var highest_dot : float = 0
+		#get closest vector to camera x vector
+		var b_array : Array[Vector3] = [initial_rotation.x, initial_rotation.y, initial_rotation.z]
+		while i < b_array.size():
+			if abs(b_array[i].dot(cam.basis.x)) > abs(highest_dot):
+				highest_dot = b_array[i].dot(cam.basis.x)
+				closest_vector = b_array[i]
+			i = i + 1
+		
+		if closest_vector.dot(cam.basis.x) < 0:
+			closest_vector = -closest_vector
+		
+		initial_rotation = initial_rotation.rotated(closest_vector.normalized(), PI * 0.5)
+		"TODO123"#put an update thingy in here to realign parts
 	
-	
-	#dragging happens here
+#dragging happens here
 	if event is InputEventMouseMotion:
 		if mouse_button_held and safety_check(dragged_part) and not ray_result.is_empty():
 			#first, align rotation
 			if safety_check(hovered_part):
-				if not part_rectilinear_alignment_check(dragged_part, hovered_part):
+				"TODO"#turn this into a function, see "TODO123"
+				#this if is currently commented out to test the code at "TODO123"
+				if true:#not part_rectilinear_alignment_check(dragged_part, hovered_part):
 					#use initial_rotation so that dragged_part doesnt continually rotate further 
 					#from its initial rotation after being dragged over multiple off-grid parts
 					var rotated_basis : Basis = snap_rotation(initial_rotation, ray_result)
@@ -204,6 +224,12 @@ func _input(event):
 						selected_parts[i].global_position = ray_result.position + drag_offset[i]
 						
 						i = i + 1
+				
+				#snap_position(dragged_part)
+				
+				
+				
+				
 			
 			
 			#set positions according to drag_offset and where the selection is being dragged (ray_result.position)
@@ -378,6 +404,15 @@ func snap_rotation(input : Basis, ray_result : Dictionary):
 	#and return
 	#return part_exact_alignment(rotated_basis, ray_result.collider.basis)
 	return rotated_basis.rotated(cr_p.normalized(), angle).orthonormalized()
+
+"TODO"#unit test
+#assumes that the parts are rectilinearly aligned
+#this will become a shitshow when i add wedges
+func snap_position(input : Vector3, ray_result : Dictionary):
+	
+	
+	return
+
 
 func part_rectilinear_alignment_check(p1 : Part, p2 : Part):
 	var i : int = 0
