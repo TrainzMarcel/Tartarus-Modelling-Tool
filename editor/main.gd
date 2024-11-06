@@ -2,7 +2,7 @@ extends Node3D
 class_name Main
 
 #DEBUG
-@export var d_vector : DebugVector3D
+@export var d_vector : Array[DebugVector3D]
 
 #ui
 @export var b_drag : Button
@@ -17,6 +17,8 @@ class_name Main
 
 @export var cam : FreeLookCamera
 @export var raycast_length : float = 128
+@export var positional_snap_increment : float = 0.1
+@export var rotational_snap_increment : float = 15
 @export var workspace : Node
 
 #for hovering
@@ -24,7 +26,6 @@ class_name Main
 @export var hover_selection_box : SelectionBox
 #if hovering over some block, hide regular selection box and store ref to it here
 var hidden_selection_box : SelectionBox
-var selection_box_array : Array[SelectionBox]
 
 enum SelectedTool {
 	drag,
@@ -36,25 +37,40 @@ enum SelectedTool {
 	lock
 }
 
-#for selected
-var hovered_part : Part
+#dragging data------------------------------------------------------------------
 #raw ray result
 var ray_result : Dictionary
 
 var dragged_part : Part
-"TODO"#turn this back into a Transform3D to store initial position before snapping position
+#for selected
+var hovered_part : Part
+
+#positional offset from the parts dragged position to the position of the snapped part
+var snap_offset : Vector3
+
+#purely rotational basis set from start of drag as a reference for snapping
 var initial_rotation : Basis
 
-var mouse_button_held : bool = false
+#bounding box of selected parts for 
+var selected_parts_aabb : AABB = AABB()
+#parallel arrays
 var selected_parts : Array[Part] = []
 var drag_offset : Array[Vector3] = []
+var selection_box_array : Array[SelectionBox] = []
 
+#conditionals-------------------------------------------------------------------
+
+var mouse_button_held : bool = false
+
+#gets set in on_tool_selected
 var selected_state : SelectedTool = SelectedTool.drag
 
 #gets set in on_tool_selected
 var is_drag_tool : bool = true
+
 #this bool is meant for non drag tools which dont need selecting but still need hovering and clicking functionality
 var is_hovering_allowed : bool = true
+
 #this bool is meant for drag tools, if this is enabled then hovering_allowed is also enabled
 var is_selecting_allowed : bool = true
 
@@ -71,6 +87,13 @@ func _ready():
 	b_material.pressed.connect(on_tool_selected.bind(b_material))
 	b_lock.pressed.connect(on_tool_selected.bind(b_lock))
 	b_spawn.pressed.connect(on_tool_selected.bind(b_spawn))
+	
+	var p = $Workspace/Part6
+	var b = $Workspace/Part11
+	print("output size:", calculate_extents(selected_parts_aabb, p, [p, b]).size)
+	var v = Vector3(p.part_scale)
+	v.y = v.y + 4
+	print("intended size:", v)
 
 
 
@@ -98,25 +121,36 @@ func _input(event):
 		part_hover_selection_box(hovered_part)
 	
 	
-#set dragged_part, recalculate all drag_offset vectors on new click
+#set dragged_part, recalculate all drag_offset vectors and bounding box on new click
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				if safety_check(hovered_part):
 					initial_rotation = hovered_part.basis
 					dragged_part = hovered_part
+					calculate_extents(selected_parts_aabb, dragged_part, selected_parts)
 					var i : int = 0
 					drag_offset.clear()
 					while i < selected_parts.size():
+						
+						
+						
+						
+						
 						drag_offset.append(selected_parts[i].global_position - ray_result.position)
 						i = i + 1
-					
+				
+				
+				
+				
+				
+				
 				mouse_button_held = true
 			else:
 				dragged_part = null
 				mouse_button_held = false
 		
-#selection logic (to be put in another function? maybe? probably)
+#selection logic (to be put in another function maybe)
 		
 		if event.button_index == MOUSE_BUTTON_LEFT:
 		#lmb down
@@ -170,13 +204,12 @@ func _input(event):
 		
 #change inital_transform on r or t press
 	#rotate clockwise around normal vector
-	if Input.is_key_pressed(KEY_R) and event.is_pressed() and not event.is_echo():
+	if Input.is_key_pressed(KEY_R) and event.is_pressed() and not event.is_echo() and not ray_result.is_empty():
 		initial_rotation = initial_rotation.rotated(ray_result.normal, PI * 0.5)
-		"TODO123"#put an update thingy in here to realign parts
-		print(initial_rotation)
+		update_snap()
 	
 	#rotate around part vector which is closest to cam.basis.x
-	if Input.is_key_pressed(KEY_T) and event.is_pressed() and not event.is_echo():
+	if Input.is_key_pressed(KEY_T) and event.is_pressed() and not event.is_echo() and not ray_result.is_empty():
 		var i : int = 0
 		var closest_vector : Vector3
 		var highest_dot : float = 0
@@ -192,44 +225,16 @@ func _input(event):
 			closest_vector = -closest_vector
 		
 		initial_rotation = initial_rotation.rotated(closest_vector.normalized(), PI * 0.5)
-		"TODO123"#put an update thingy in here to realign parts
+		
+		update_snap()
 	
 #dragging happens here
 	if event is InputEventMouseMotion:
 		if mouse_button_held and safety_check(dragged_part) and not ray_result.is_empty():
-			#first, align rotation
 			if safety_check(hovered_part):
-				"TODO"#turn this into a function, see "TODO123"
-				#this if is currently commented out to test the code at "TODO123"
-				if true:#not part_rectilinear_alignment_check(dragged_part, hovered_part):
-					#use initial_rotation so that dragged_part doesnt continually rotate further 
-					#from its initial rotation after being dragged over multiple off-grid parts
-					var rotated_basis : Basis = snap_rotation(initial_rotation, ray_result)
-					#calculate difference between original basis and new basis
-					var difference : Basis = rotated_basis * dragged_part.basis.inverse()
-					#rotate the drag_offset vector by the difference between the
-					#original matrix and rotated matrix
-					var i : int = 0
-					while i < selected_parts.size():
-						#rotate drag_offset vector by the difference basis
-						drag_offset[i] = difference * drag_offset[i]
-						
-						#move part to ray_result.position for easier pivoting
-						selected_parts[i].global_position = ray_result.position
-						
-						#rotate this part
-						selected_parts[i].basis = difference * selected_parts[i].basis
-						
-						#move it back out along the newly rotated drag_offset vector
-						selected_parts[i].global_position = ray_result.position + drag_offset[i]
-						
-						i = i + 1
-				
-				#snap_position(dragged_part)
-				
-				
-				
-				
+				if not part_rectilinear_alignment_check(dragged_part, hovered_part):
+					update_snap()
+			
 			
 			
 			#set positions according to drag_offset and where the selection is being dragged (ray_result.position)
@@ -408,10 +413,113 @@ func snap_rotation(input : Basis, ray_result : Dictionary):
 "TODO"#unit test
 #assumes that the parts are rectilinearly aligned
 #this will become a shitshow when i add wedges
-func snap_position(input : Vector3, ray_result : Dictionary):
+
+func calculate_extents(aabb : AABB, origin_part : Part, parts : Array[Part]):
+	var transformed_parts : Array[Transform3D] = []
+	var origin_part_offsets : Array[Vector3] = []
+	
+	#to get local coordinates
+	#1. get all positional offsets from origin part to selected parts
+	#2. move selected parts to the origin part
+	#3. transform all the parts by inverse basis of origin part
+	#4. set all part positions back to the original offsets from #1
+	
+	
+	#vector pointing from origin to part position and rotated by inverse basis of origin part
+	for i in parts:
+		var offset = origin_part.global_position - i.global_position
+		offset = origin_part.global_transform.basis.inverse() * offset
+		origin_part_offsets.append(offset)
+	
+	"TODO"#comment better
+	#rotate parts
+	for i in parts:
+		var part_transform = i.global_transform
+		#their offsets/positions will be taken care of in the next loop
+		part_transform.origin = Vector3.ZERO
+		part_transform.basis = part_transform.basis * origin_part.global_transform.basis.inverse()
+		transformed_parts.append(part_transform)
+	
+	#move parts back
+	var i : int = 0
+	while i < transformed_parts.size():
+		transformed_parts[i].origin = origin_part_offsets[i]
+		i = i + 1
+	
+	
+	#then resize bounding box
+	aabb.size = Vector3.ZERO
+	aabb.position = Vector3.ZERO
+	
+	
+	i = 0
+	while i < transformed_parts.size():
+		var corners : Array[Vector3] = []
+		for x in [-0.5, 0.5]:
+			for y in [-0.5, 0.5]:
+				for z in [-0.5, 0.5]:
+					var corner = transformed_parts[i].origin
+					corner = corner + transformed_parts[i].basis * (Vector3(x, y, z) * parts[i].part_scale)
+					corners.append(corner)
+					print(corner)
+		
+		"DEBUG"
+		d_vector[0].input_vector = transformed_parts[i].origin
+		d_vector[1].input_vector = origin_part.global_transform.origin
+		
+		for j in corners:
+			if not aabb.has_point(j):
+				aabb = aabb.expand(j)
+		i = i + 1
+	
+	return aabb
+
+
+func snap_position():
+	
+	
+	
+	
 	
 	
 	return
+
+func update_snap():
+	#use initial_rotation so that dragged_part doesnt continually rotate further 
+	#from its initial rotation after being dragged over multiple off-grid parts
+	var rotated_basis : Basis = snap_rotation(initial_rotation, ray_result)
+	#calculate difference between original basis and new basis
+	var difference : Basis = rotated_basis * dragged_part.basis.inverse()
+	#rotate the drag_offset vector by the difference between the
+	#original matrix and rotated matrix
+	var i : int = 0
+	while i < selected_parts.size():
+		#rotate drag_offset vector by the difference basis
+		drag_offset[i] = difference * drag_offset[i]
+		
+		#move part to ray_result.position for easier pivoting
+		selected_parts[i].global_position = ray_result.position
+		
+		#rotate this part
+		selected_parts[i].basis = difference * selected_parts[i].basis
+		
+		#move it back out along the newly rotated drag_offset vector
+		selected_parts[i].global_position = ray_result.position + drag_offset[i]
+		
+		selection_box_array[i].global_transform = selected_parts[i].global_transform
+		
+		i = i + 1
+	
+	
+	"TODO"
+	#to get local coords, move parts to center, undo rotation, add offsets back
+	#then do snap ops
+	#then reverse that with the snapped positions
+	#and then apply the new positions to the parts 
+	
+	
+	
+	#snap_position(dragged_part)
 
 
 func part_rectilinear_alignment_check(p1 : Part, p2 : Part):
