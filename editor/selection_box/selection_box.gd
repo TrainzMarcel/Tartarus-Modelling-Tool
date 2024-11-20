@@ -144,7 +144,6 @@ func box_update():
 	
 	
 	var box_half_thickness = box_thickness / 2
-	var box_scale_half = box_scale / 2
 	
 	var i : int = 0
 	i_mesh.clear_surfaces()

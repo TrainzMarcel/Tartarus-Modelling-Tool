@@ -195,6 +195,7 @@ func _input(event):
 	if Input.is_key_pressed(KEY_R) and event.is_pressed() and not event.is_echo() and not ray_result.is_empty():
 		initial_rotation = initial_rotation.rotated(ray_result.normal, PI * 0.5)
 		update_snap()
+		snap_position()
 	
 	#rotate around part vector which is closest to cam.basis.x
 	if Input.is_key_pressed(KEY_T) and event.is_pressed() and not event.is_echo() and not ray_result.is_empty():
@@ -204,6 +205,7 @@ func _input(event):
 			r_dict.vector = -r_dict.vector
 		initial_rotation = initial_rotation.rotated(r_dict.vector.normalized(), PI * 0.5)
 		update_snap()
+		snap_position()
 	
 	
 #dragging happens here
@@ -213,11 +215,8 @@ func _input(event):
 				if not part_rectilinear_alignment_check(dragged_part, hovered_part):
 					update_snap()
 				
-				
 				snap_position()
 				#set positions according to main_offset and where the selection is being dragged (ray_result.position)
-				
-				
 
 
 #set selected state and is_drag_tool
@@ -438,64 +437,48 @@ func calculate_extents(aabb : AABB, rotation_origin_part : Part, parts : Array[P
 #the position of the aabb is relative to dragged part if dragged_parts transform is an identity
 #perform the "normal vector bump" to make sure the parts dont phase through each other
 func snap_position():
-	"TODO"#just forget the aabb right now
+	#just forget the aabb right now
 	#what matters is figuring out the correct math here
-	#var offset = (ray_result.position - dragged_part.global_position) * ray_result.normal
-	
 	
 	var normal = ray_result.normal
-	#first snap normal
-	var hovered_scale = hovered_part.part_scale
-	var hovered_transform = hovered_part.global_transform
-	var dragged_scale = dragged_part.part_scale
-	var dragged_transform = dragged_part.global_transform
-		#first transform hovered part and dragged part by inverse transform of dragged part
-		#that way the coords should be easy to work with
-	hovered_transform = dragged_part.global_transform.inverse() * hovered_transform
-	dragged_transform = Transform3D.IDENTITY
 	
-	
-	
-	#then transform the offset vector back after the operation and apply it
-	
-	
-	
-	
-	#first find closest basis vectors to normal vector and use that to determine side lengths
-	#var basis_vec_1 : Array[Vector3] = [hovered_part.basis.x, hovered_part.basis.y, hovered_part.basis.z]
-	#basis_vec_1[0] = basis_vec_1[0] * hovered_part.part_scale.x
-	#basis_vec_1[1] = basis_vec_1[1] * hovered_part.part_scale.y
-	#basis_vec_1[2] = basis_vec_1[2] * hovered_part.part_scale.z
-	
+	#first find closest basis vectors to normal vector and use that to determine which side length to use
 	var basis_vec_2 : Array[Vector3] = [dragged_part.basis.x, dragged_part.basis.y, dragged_part.basis.z]
-	basis_vec_2[0] = basis_vec_2[0] * dragged_part.part_scale.x
-	basis_vec_2[1] = basis_vec_2[1] * dragged_part.part_scale.y
-	basis_vec_2[2] = basis_vec_2[2] * dragged_part.part_scale.z
+	var r_dict = find_closest_vector_abs(basis_vec_2, normal)
 	
-	#var r_dict_1 = find_closest_vector_abs(basis_vec_1, normal)
-	var r_dict_2 = find_closest_vector_abs(basis_vec_2, normal)
+	var side_length = 0
+	match r_dict.index:
+		0:
+			side_length = dragged_part.part_scale.x
+		1:
+			side_length = dragged_part.part_scale.y
+		2:
+			side_length = dragged_part.part_scale.z
 	
+	var normal_term = side_length * 0.5
+	#var planar_term
+	var inverse = hovered_part.global_transform.inverse()
+	var drag_offset_local : Vector3 = inverse.basis * drag_offset
+	var ray_result_local_position : Vector3 = inverse * ray_result.position
+	var normal_local : Vector3 = inverse.basis * normal
+	#normal "bump"
+	drag_offset_local = normal_local * side_length * 0.5 + (drag_offset_local - drag_offset_local * normal_local)
 	
+	#use the basis vectors which are not aligned with the normal 
+	#part position
+	print(ray_result_local_position + drag_offset_local)
 	
+	var result_local = ray_result_local_position + drag_offset_local
+	if r_dict.index != 0:
+		result_local.x = snapped(result_local.x, positional_snap_increment)
+	if r_dict.index != 1:
+		result_local.y = snapped(result_local.y, positional_snap_increment)
+	if r_dict.index != 2:
+		result_local.z = snapped(result_local.z, positional_snap_increment)
 	
-	#next, recalculate full position without using current position as start
-	#not using the current position prevents a possible feedback loop
+	var result_global : Vector3 = hovered_part.global_transform * result_local
+	dragged_part.global_position = result_global
 	
-	#get halved combination of side lengths which are parallel to normal
-	#var normal_term = (r_dict_1.vector.length() + r_dict_2.vector.length()) * 0.5
-	var normal_term = r_dict_2.vector.length() * 0.5
-	#subtract difference in positions
-	normal_term = normal_term * normal - drag_offset
-	print(normal_term)
-	
-	
-	
-	
-	#in future: + planar_term and bool parameter to disable planar snap calculations if snap increment is set to 0
-	var offset = normal_term
-	#print(offset)
-	dragged_part.global_position = ray_result.position + drag_offset + offset
-	#below, offset gets applied to each selected part
 	var i : int = 0
 	while i < selected_parts.size():
 		selected_parts[i].global_position = dragged_part.global_position + main_offset[i]
@@ -537,13 +520,7 @@ func update_snap():
 		
 		selection_box_array[i].global_transform = selected_parts[i].global_transform
 		i = i + 1
-	
-	
-	"TODO"
-	#to get local coords, move parts to center, undo rotation, add offsets back
-	#then do snap ops
-	#then reverse that with the snapped positions
-	#and then apply the new positions to the parts 
+
 
 #returns index of closest pointing vector, ignoring if the vector is pointing the opposite way
 func find_closest_vector_abs(search_array : Array[Vector3], target : Vector3):
