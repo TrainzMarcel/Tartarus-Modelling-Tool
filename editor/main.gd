@@ -436,18 +436,18 @@ func calculate_extents(aabb : AABB, rotation_origin_part : Part, parts : Array[P
 #this may become a shitshow when i add wedges
 #the position of the aabb is relative to dragged part if dragged_parts transform is an identity
 #perform the "normal vector bump" to make sure the parts dont phase through each other
-func snap_position():
+func snap_position(is_planar_snap : bool = true):
 	#just forget the aabb right now
 	#what matters is figuring out the correct math here
 	
 	var normal = ray_result.normal
 	
 	#first find closest basis vectors to normal vector and use that to determine which side length to use
-	var basis_vec_2 : Array[Vector3] = [dragged_part.basis.x, dragged_part.basis.y, dragged_part.basis.z]
-	var r_dict = find_closest_vector_abs(basis_vec_2, normal)
+	var basis_vec_1 : Array[Vector3] = [dragged_part.basis.x, dragged_part.basis.y, dragged_part.basis.z]
+	var r_dict_1 = find_closest_vector_abs(basis_vec_1, normal)
 	
 	var side_length = 0
-	match r_dict.index:
+	match r_dict_1.index:
 		0:
 			side_length = dragged_part.part_scale.x
 		1:
@@ -458,23 +458,37 @@ func snap_position():
 	var normal_term = side_length * 0.5
 	#var planar_term
 	var inverse = hovered_part.global_transform.inverse()
+	var basis_vec_2 : Array[Vector3] = [Basis.IDENTITY.x, Basis.IDENTITY.y, Basis.IDENTITY.z]
 	var drag_offset_local : Vector3 = inverse.basis * drag_offset
 	var ray_result_local_position : Vector3 = inverse * ray_result.position
 	var normal_local : Vector3 = inverse.basis * normal
-	#normal "bump"
-	drag_offset_local = normal_local * side_length * 0.5 + (drag_offset_local - drag_offset_local * normal_local)
 	
-	#use the basis vectors which are not aligned with the normal 
-	#part position
-	print(ray_result_local_position + drag_offset_local)
+	#normal "bump"
+	drag_offset_local = normal_local * (side_length * 0.5) + (drag_offset_local - drag_offset_local.dot(normal_local) * normal_local)
+	
 	
 	var result_local = ray_result_local_position + drag_offset_local
-	if r_dict.index != 0:
-		result_local.x = snapped(result_local.x, positional_snap_increment)
-	if r_dict.index != 1:
-		result_local.y = snapped(result_local.y, positional_snap_increment)
-	if r_dict.index != 2:
-		result_local.z = snapped(result_local.z, positional_snap_increment)
+	var r_dict_2 = find_closest_vector_abs(basis_vec_2, normal_local)
+	
+	"TODO"#make this into function(s)
+	if is_planar_snap:
+		#use x
+		if r_dict_2.index != 0:
+			result_local.x = snapped(result_local.x, positional_snap_increment)
+			print("fmod")
+			print(fmod(hovered_part.scale.x, positional_snap_increment))
+			if fmod(hovered_part.scale.x, positional_snap_increment) >= positional_snap_increment * 2:
+				result_local.x = result_local.x + positional_snap_increment * 0.5
+		#use y
+		if r_dict_2.index != 1:
+			result_local.y = snapped(result_local.y, positional_snap_increment)
+			if fmod(hovered_part.scale.y, positional_snap_increment) >= positional_snap_increment * 2:
+				result_local.y = result_local.y + positional_snap_increment * 0.5
+		#use z
+		if r_dict_2.index != 2:
+			result_local.z = snapped(result_local.z, positional_snap_increment)
+			if fmod(hovered_part.scale.z, positional_snap_increment) >= positional_snap_increment * 2:
+				result_local.z = result_local.z + positional_snap_increment * 0.5
 	
 	var result_global : Vector3 = hovered_part.global_transform * result_local
 	dragged_part.global_position = result_global
@@ -485,7 +499,7 @@ func snap_position():
 		selection_box_array[i].global_transform = selected_parts[i].global_transform
 		
 		i = i + 1
-	
+
 "TODO"#create rotate data and unrotate data function for bounding box
 #or data to local data to global
 #or maybe use one of those premade functions of node3d
