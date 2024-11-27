@@ -91,7 +91,6 @@ func _ready():
 	b_spawn.pressed.connect(on_tool_selected.bind(b_spawn))
 
 
-
 # Called every input event.
 func _input(event):
 #start by setting all control variables
@@ -200,7 +199,7 @@ func _input(event):
 	#rotate around part vector which is closest to cam.basis.x
 	if Input.is_key_pressed(KEY_T) and event.is_pressed() and not event.is_echo() and not ray_result.is_empty():
 		var b_array : Array[Vector3] = [initial_rotation.x, initial_rotation.y, initial_rotation.z]
-		var r_dict = find_closest_vector_abs(b_array, cam.basis.x)
+		var r_dict = SnapUtils.find_closest_vector_abs(b_array, cam.basis.x)
 		if r_dict.vector.dot(cam.basis.x) < 0:
 			r_dict.vector = -r_dict.vector
 		initial_rotation = initial_rotation.rotated(r_dict.vector.normalized(), PI * 0.5)
@@ -212,7 +211,7 @@ func _input(event):
 	if event is InputEventMouseMotion:
 		if mouse_button_held and safety_check(dragged_part) and not ray_result.is_empty():
 			if safety_check(hovered_part):
-				if not part_rectilinear_alignment_check(dragged_part, hovered_part):
+				if not SnapUtils.part_rectilinear_alignment_check(dragged_part, hovered_part):
 					update_snap()
 				
 				snap_position()
@@ -244,6 +243,7 @@ func on_tool_selected(button):
 			selected_state = SelectedTool.lock
 			is_drag_tool = false
 
+
 #this stuff was ugly so i put them into functions
 func raycast(from : Vector3, to : Vector3, exclude : Array[RID] = []):
 	var ray_param : PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.new()
@@ -251,6 +251,7 @@ func raycast(from : Vector3, to : Vector3, exclude : Array[RID] = []):
 	ray_param.to = to
 	ray_param.exclude = exclude
 	return get_world_3d().direct_space_state.intersect_ray(ray_param)
+
 
 #raycast from cam to where the mouse is pointing, works in ortho mode too
 func raycast_mouse_pos(exclude : Array[RID] = []):
@@ -263,13 +264,14 @@ func raycast_mouse_pos(exclude : Array[RID] = []):
 		exclude
 	)
 
+
 #returns true if hovering over visible ui
-"TODO"#unit test
 func ui_hover_check(ui_list : Array[Control]):
 	for i in ui_list:
 		if i.get_rect().has_point(get_viewport().get_mouse_position()) and i.visible:
 			return true
 	return false
+
 
 #having 2 indents was ugly so i also put this in a function
 #also checks for nulls
@@ -301,86 +303,6 @@ func part_hover_check():
 		if safety_check(ray_result.collider):
 			return ray_result.collider
 	return null
-
-#input is meant to be the part-to-be-rotated's basis
-"TODO"#unit test and make above comment better
-#res://editor/debug_and_unit_tests/unit_test.gd
-func snap_rotation(input : Basis, ray_result : Dictionary):
-	
-#find closest matching basis vector of dragged_part to normal vector using absolute dot product
-#(the result farthest from 0)
-	var b_array : Array[Vector3] = [input.x, input.y, input.z]
-	var b_array_2 : Array[Vector3] = [ray_result.collider.basis.x, ray_result.collider.basis.y, ray_result.collider.basis.z]
-	var i : int = 0
-	var closest_vector_1 : Vector3
-	var closest_vector_2 : Vector3
-	var highest_dot : float = 0
-	while i < b_array.size():
-		var j : int = 0
-		while j < b_array_2.size():
-			#remember, 1 = parallel vectors, 0 = perpendicular, -1 = opposing vectors
-			if abs(b_array[i].dot(b_array_2[j])) > abs(highest_dot):
-				highest_dot = b_array[i].dot(b_array_2[j])
-				closest_vector_1 = b_array[i]
-				closest_vector_2 = b_array_2[j]
-			j = j + 1
-		i = i + 1
-	
-	if highest_dot == 0:
-		return input
-	
-#use angle_to between these two vectors as amount to rotate
-#cross product as axis to rotate around
-	
-	var dot_1 = closest_vector_1.dot(closest_vector_2)
-	
-	#if vectors are opposed, flip closest_vector_1
-	var angle = (closest_vector_1 * sign(dot_1)).angle_to(closest_vector_2)
-	var cr_p : Vector3 = (closest_vector_1 * sign(dot_1)).cross(closest_vector_2)
-	
-	#if cross product returns empty vector, return unmodified basis
-	if cr_p.length() == 0:
-		return input
-	
-	var rotated_basis : Basis = input.rotated(cr_p.normalized(), angle).orthonormalized()
-	
-	
-#find basis vector on canvas part which is not equal to closest_vector_2 or inverted closest_vector_2
-#use x vector, else use y vector
-	var vec_1 : Vector3
-		#remember, 1 = parallel vectors, 0 = perpendicular, -1 = opposing vectors
-		#the closer to 0 the better in this case
-	if abs(ray_result.collider.basis.x.dot(closest_vector_2)) < abs(ray_result.collider.basis.y.dot(closest_vector_2)):
-		#canvas.basis.x is closer to 0
-		vec_1 = ray_result.collider.basis.x
-	else:
-		#canvas.basis.y is closer to 0
-		vec_1 = ray_result.collider.basis.y
-	
-	
-	#iterate over all 3 vectors and again find closest absolute dot product
-	#find signed angle between that and the closest vector and rotate accordingly
-	b_array = [rotated_basis.x, rotated_basis.y, rotated_basis.z]
-	var closest_vec : Vector3
-	highest_dot = 0
-	i = 0
-	while i < b_array.size():
-		if abs(vec_1.dot(b_array[i])) > abs(highest_dot):
-			highest_dot = vec_1.dot(b_array[i])
-			closest_vec = b_array[i]
-		i = i + 1
-	
-	angle = (closest_vec * sign(highest_dot)).angle_to(vec_1)
-	cr_p = (closest_vec * sign(highest_dot)).cross(vec_1)
-	
-	if cr_p.length() == 0:
-		return input
-	
-	#the part should now hopefully be aligned and ready for linearly translating
-	#attempt exact alignment (assigning basis vectors of collider to d_part)
-	#and return
-	#return part_exact_alignment(rotated_basis, ray_result.collider.basis)
-	return rotated_basis.rotated(cr_p.normalized(), angle).orthonormalized()
 
 "TODO"#clean up
 func calculate_extents(aabb : AABB, rotation_origin_part : Part, parts : Array[Part]):
@@ -444,56 +366,48 @@ func snap_position(is_planar_snap : bool = true):
 	
 	#first find closest basis vectors to normal vector and use that to determine which side length to use
 	var basis_vec_1 : Array[Vector3] = [dragged_part.basis.x, dragged_part.basis.y, dragged_part.basis.z]
-	var r_dict_1 = find_closest_vector_abs(basis_vec_1, normal)
+	var r_dict_1 = SnapUtils.find_closest_vector_abs(basis_vec_1, normal)
+	var side_length = dragged_part.part_scale[r_dict_1.index]
 	
-	var side_length = 0
-	match r_dict_1.index:
-		0:
-			side_length = dragged_part.part_scale.x
-		1:
-			side_length = dragged_part.part_scale.y
-		2:
-			side_length = dragged_part.part_scale.z
-	
-	var normal_term = side_length * 0.5
 	#var planar_term
 	var inverse = hovered_part.global_transform.inverse()
 	var basis_vec_2 : Array[Vector3] = [Basis.IDENTITY.x, Basis.IDENTITY.y, Basis.IDENTITY.z]
-	var drag_offset_local : Vector3 = inverse.basis * drag_offset
 	var ray_result_local_position : Vector3 = inverse * ray_result.position
 	var normal_local : Vector3 = inverse.basis * normal
-	
+	var drag_offset_local : Vector3 = inverse.basis * drag_offset
 	#normal "bump"
 	drag_offset_local = normal_local * (side_length * 0.5) + (drag_offset_local - drag_offset_local.dot(normal_local) * normal_local)
-	
-	
 	var result_local = ray_result_local_position + drag_offset_local
-	var r_dict_2 = find_closest_vector_abs(basis_vec_2, normal_local)
+	var r_dict_2 = SnapUtils.find_closest_vector_abs(basis_vec_2, normal_local)
 	
-	"TODO"#make this into function(s)
-	if is_planar_snap:
-		#use x
-		if r_dict_2.index != 0:
-			result_local.x = snapped(result_local.x, positional_snap_increment)
-			print("fmod")
-			print(fmod(hovered_part.scale.x, positional_snap_increment))
-			if fmod(hovered_part.scale.x, positional_snap_increment) >= positional_snap_increment * 2:
-				result_local.x = result_local.x + positional_snap_increment * 0.5
-		#use y
-		if r_dict_2.index != 1:
-			result_local.y = snapped(result_local.y, positional_snap_increment)
-			if fmod(hovered_part.scale.y, positional_snap_increment) >= positional_snap_increment * 2:
-				result_local.y = result_local.y + positional_snap_increment * 0.5
-		#use z
-		if r_dict_2.index != 2:
-			result_local.z = snapped(result_local.z, positional_snap_increment)
-			if fmod(hovered_part.scale.z, positional_snap_increment) >= positional_snap_increment * 2:
-				result_local.z = result_local.z + positional_snap_increment * 0.5
+	
+	#if one parts side length is even and one is odd
+	#add half of a snap increment to offset it away
+	var dragged_part_local : Basis = inverse.basis * dragged_part.basis
+	var dragged_part_side_lengths_local : Vector3 = SnapUtils.get_side_lengths_local(dragged_part.part_scale, dragged_part_local)
+	print(dragged_part_side_lengths_local)
+	var i : int = 0
+	
+	print("-----------------------------------")
+	while i < 3:
+		#dont snap normal direction, only planar directions
+		if abs(normal_local.dot(Basis.IDENTITY[i])) > 0.9:
+			i = i + 1
+			continue
+		
+		result_local[i] = snapped(result_local[i], positional_snap_increment)
+		var side_1_odd : bool = SnapUtils.is_odd_with_snap_size(hovered_part.part_scale[i], positional_snap_increment)
+		var side_2_odd : bool = SnapUtils.is_odd_with_snap_size(dragged_part_side_lengths_local[i], positional_snap_increment)
+		print("even/odd diference  ", side_1_odd != side_2_odd)
+		if side_1_odd != side_2_odd:
+			result_local[i] = result_local[i] + positional_snap_increment * 0.5
+		
+		i = i + 1
 	
 	var result_global : Vector3 = hovered_part.global_transform * result_local
 	dragged_part.global_position = result_global
 	
-	var i : int = 0
+	i = 0
 	while i < selected_parts.size():
 		selected_parts[i].global_position = dragged_part.global_position + main_offset[i]
 		selection_box_array[i].global_transform = selected_parts[i].global_transform
@@ -506,7 +420,7 @@ func snap_position(is_planar_snap : bool = true):
 func update_snap():
 	#use initial_rotation so that dragged_part doesnt continually rotate further 
 	#from its init6ial rotation after being dragged over multiple off-grid parts
-	var rotated_basis : Basis = snap_rotation(initial_rotation, ray_result)
+	var rotated_basis : Basis = SnapUtils.snap_rotation(initial_rotation, ray_result)
 	#calculate difference between original basis and new basis
 	var difference : Basis = rotated_basis * dragged_part.basis.inverse()
 	
@@ -535,74 +449,6 @@ func update_snap():
 		selection_box_array[i].global_transform = selected_parts[i].global_transform
 		i = i + 1
 
-
-#returns index of closest pointing vector, ignoring if the vector is pointing the opposite way
-func find_closest_vector_abs(search_array : Array[Vector3], target : Vector3):
-	var highest_dot : float
-	var closest_vec_index : int
-	var closest_vec : Vector3
-	var i : int = 0
-	while i < search_array.size():
-		var dot_product = search_array[i].dot(target)
-		if abs(highest_dot) < abs(dot_product):
-			highest_dot = dot_product
-			closest_vec_index = i
-			closest_vec = search_array[i]
-		i = i + 1
-	var return_dict = {
-		index = closest_vec_index,
-		dot = highest_dot,
-		vector = closest_vec
-	}
-	return return_dict
-
-func part_rectilinear_alignment_check(p1 : Part, p2 : Part):
-	var i : int = 0
-	var b_array_1 : Array[Vector3] = [p1.global_transform.basis.x,
-	p1.global_transform.basis.y, p1.global_transform.basis.z]
-	var b_array_2 : Array[Vector3] = [p2.global_transform.basis.x,
-	p2.global_transform.basis.y]
-	var is_aligned_1 : bool = false
-	var is_aligned_2 : bool = false
-	
-	#at least one of 3 vectors should evaluate to (almost) 1
-	while i < b_array_1.size():
-		#this is as precise as 32bit floats can do
-		if abs(b_array_1[i].dot(b_array_2[0])) > 0.999999:
-			is_aligned_1 = true
-			break
-		i = i + 1
-	
-	i = 0
-	while i < b_array_1.size():
-		if abs(b_array_1[i].dot(b_array_2[1])) > 0.999999:
-			is_aligned_2 = true
-			break
-		i = i + 1
-	return is_aligned_1 and is_aligned_2
-
-#p1: part to be affected, p2: part to align to
-func part_exact_alignment(p1 : Basis, p2 : Basis):
-	var i : int = 0
-	var j : int = 0
-	var b_array_1 : Array[Vector3] = [p1.x, p1.y, p1.z]
-	var b_array_2 : Array[Vector3] = [p2.x, p2.y, p2.z]
-
-	#at least one of 3 vectors should evaluate to 1
-	while i < b_array_1.size():
-		while j < b_array_2.size():
-			var dot : float = b_array_1[i].dot(b_array_2[j])
-			if abs(dot) > 0.95:
-				b_array_1[i] = b_array_2[j] * sign(dot)
-			j = j + 1
-		j = 0
-		i = i + 1
-
-	#assign to p1
-	p1.x = b_array_1[0]
-	p1.y = b_array_1[1]
-	p1.z = b_array_1[2]
-	return p1
 
 "TODO"#unit test somehow?
 func part_hover_selection_box(part : Part):
