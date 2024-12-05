@@ -44,4 +44,20 @@ v0.1
 	  IC14 tool 5	implement coloring tool which tints a part with the desired paint when clicked on
 	  IC15 tool 6	implement material tool which changes a parts material (still keeping its tint)
 	  IC16 tool 2	add checkbox or hotkey to switch between global axes and local part axes
+
+
+	MODEL EXPORT (everything related to model exporting)
+	  ME1 possibility to export as .obj with materials and colors
+	  ME2 possibility to automatically set up materials in an input godot project, on models the material slots will be named after the material they use, with a number after to distinguish between any different colors (since u need a new material for every extra color on a model) and this way whenever a model is imported it will utilize the shared material
+	  ME3 every model with said specifically named material slots that is i	mported in a project with these shared materials, has the materials assigned automatically
+	  ME4 if an existing model is reimported/overwritten, update all the nodes with this model to the newest version, keeping the assigned materials as well as possible (i think i can only do this using a plugin)
+	  ME5 possibility to save filepaths for fast and easy reimporting
+
+
+	MISC
+	  MI1 saving of models using csv files
+	  MI2 loading of models
+	  MI3 automated build/export chain
+
+
 ```
