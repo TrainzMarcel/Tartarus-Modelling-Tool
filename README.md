@@ -1,6 +1,7 @@
 # Tartarus-Modelling-Tool
 completely unfinished currently
 
+```
 REQUIREMENTS
 v0.1
 	VISUAL (visual feedback for editing)
@@ -43,3 +44,4 @@ v0.1
 	  IC14 tool 5	implement coloring tool which tints a part with the desired paint when clicked on
 	  IC15 tool 6	implement material tool which changes a parts material (still keeping its tint)
 	  IC16 tool 2	add checkbox or hotkey to switch between global axes and local part axes
+```
