@@ -143,14 +143,60 @@ static func part_exact_alignment(p1 : Basis, p2 : Basis):
 
 #return whether a number contains an odd or even amount of snap increments
 static func is_odd_with_snap_size(input : float, snap_increment : float):
-	var term_1 : float = input/snap_increment
-	var term_2 : int = roundf(term_1)
-	
+	var term_1 : float = input / snap_increment
+	var term_2 : int = int(roundf(term_1))
 	return term_2 % 2 != 0
-	
-	
 
 
 #assuming part rotation is rectalinear
 static func get_side_lengths_local(part_scale : Vector3, part_rotation : Basis):
 	return abs(part_rotation * part_scale)
+
+"TODO"#clean up
+static func calculate_extents(aabb : AABB, rotation_origin_part : Part, parts : Array[Part]):
+	var transformed_parts : Array[Transform3D] = []
+	var origin_part_offsets : Array[Vector3] = []
+	
+	#vector pointing from origin to part position and rotated by inverse basis of origin part
+	for i in parts:
+		var offset = rotation_origin_part.global_position - i.global_position
+		offset = rotation_origin_part.global_transform.basis.inverse() * offset
+		origin_part_offsets.append(offset)
+	
+	"TODO"#comment better
+	#rotate parts
+	for i in parts:
+		var part_transform = i.global_transform
+		#their offsets/positions will be taken care of in the next loop
+		part_transform.origin = Vector3.ZERO
+		part_transform.basis = part_transform.basis * rotation_origin_part.global_transform.basis.inverse()
+		transformed_parts.append(part_transform)
+	
+	#move parts back
+	var i : int = 0
+	while i < transformed_parts.size():
+		transformed_parts[i].origin = origin_part_offsets[i]
+		i = i + 1
+	
+	
+	#then resize bounding box
+	aabb.size = Vector3.ZERO
+	aabb.position = Vector3.ZERO
+	
+	
+	i = 0
+	while i < transformed_parts.size():
+		var corners : Array[Vector3] = []
+		for x in [-0.5, 0.5]:
+			for y in [-0.5, 0.5]:
+				for z in [-0.5, 0.5]:
+					var corner = transformed_parts[i].origin
+					corner = corner + transformed_parts[i].basis * (Vector3(x, y, z) * parts[i].part_scale)
+					corners.append(corner)
+		
+		for j in corners:
+			if not aabb.has_point(j):
+				aabb = aabb.expand(j)
+		i = i + 1
+	
+	return aabb

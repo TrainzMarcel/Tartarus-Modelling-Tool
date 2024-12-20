@@ -6,5 +6,3 @@
 current = true
 fov = 90.0
 script = ExtResource("1_vicul")
-
-[node name="Node" type="Node" parent="."]

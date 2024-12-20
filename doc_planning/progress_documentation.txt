@@ -10,7 +10,7 @@
 18.10. selection system and selection boxes are working
 21.10. selection system cleaned up
 23.10. got crude rotation snapping done, brought in 3d vector arrows for easier debugging
-
-
+25.10. fixed snap_rotation inconsistencies depending on surface normal
+28.10. laid groundwork for some stuff (TODO CLARIFY BEFORE COMMIT)
 
 

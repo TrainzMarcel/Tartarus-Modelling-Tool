@@ -20,3 +20,12 @@ config/icon="res://editor/icon.svg"
 gdscript/warnings/unused_variable=0
 gdscript/warnings/unused_parameter=0
 gdscript/warnings/shadowed_variable=0
+
+[display]
+
+window/vsync/vsync_mode=0
+
+[layer_names]
+
+3d_physics/layer_1="workspace"
+3d_physics/layer_2="transform_handles"
