@@ -10,7 +10,7 @@ uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nea
 // Maximum depth we can overdraw relative to the object original depth, in ENGINE UNITS.
 // For example, if overdraw_depth_limit = 0.2 and the original depth of the object is 1,
 // the object will be drawn on top of everything that as a depth between 1.0 and 1.2
-uniform float overdraw_depth_limit : hint_range(0.0, 100.0) = 0.005;
+uniform float overdraw_depth_limit : hint_range(0.0, 100.0) = 99;
 instance uniform vec3 color : source_color;
 
 

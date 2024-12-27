@@ -23,10 +23,8 @@ class_name Main
 @export var raycast_length : float = 128
 @export var positional_snap_increment : float = 0.2
 @export var rotational_snap_increment : float = 15
-#h stands for handles
-@export var h_position : Array[TransformHandle]
-@export var h_rotation : Array[TransformHandle]
-@export var h_scale : Array[TransformHandle]
+
+@export var transform_handle_root : Node3D
 @export var workspace : Node
 
 #for hovering
@@ -55,6 +53,8 @@ var hovered_part : Part
 
 #for selected
 var hovered_handle : TransformHandle
+#hovered handle from last input event
+var last_hovered_handle : TransformHandle
 
 
 #purely rotational basis set from start of drag as a reference for snapping
@@ -123,9 +123,32 @@ func _input(event):
 	if event is InputEventMouseMotion:
 		if is_hovering_allowed:
 			hovered_handle = handle_hover_check()
+			print("handle: ", hovered_handle)
 			if not safety_check(hovered_handle):
+				if safety_check(last_hovered_handle):
+					last_hovered_handle.visual_default()
+				
+				
+				
+				
+				
+				
+				"TODO"#from last time
+				#clean up this code, comment, make the arrows functional (add functions to make handles work on click and drag)
+				#add and configure rest of transform tools
+				#use aabb to position position and scale handles
+				#use distance from camera for scale (this was what needed to be in _process(delta))
+				#make it a REFINED SIMPLE and WELL ARCHITECTED system
+				
+				
 				hovered_part = part_hover_check()
+				print("part: ", hovered_part)
 				part_hover_selection_box(hovered_part)
+			else:
+				hover_selection_box.visible = false
+				hovered_handle.visual_drag()
+				if hovered_handle != last_hovered_handle and safety_check(last_hovered_handle):
+					last_hovered_handle.visual_default()
 	
 	
 #set dragged_part, recalculate all main_offset vectors and bounding box on new click
@@ -225,6 +248,9 @@ func _input(event):
 				
 				snap_position()
 				#set positions according to main_offset and where the selection is being dragged (ray_result.position)
+	
+	
+	last_hovered_handle = hovered_handle
 
 
 #set selected state and is_drag_tool
@@ -274,7 +300,7 @@ func raycast(from : Vector3, to : Vector3, exclude : Array[RID] = [], collision_
 	if not collision_mask.is_empty():
 		var sum : int = 0
 		for i in collision_mask:
-			sum = sum + pow(2, i - 1)
+			sum = int(sum + pow(2, i - 1))
 		
 		ray_param.collision_mask = sum
 	return get_world_3d().direct_space_state.intersect_ray(ray_param)
@@ -314,7 +340,7 @@ func safety_check(instance):
 func handle_hover_check():
 	ray_result = raycast_mouse_pos([], [2])
 	
-	if not ray_result.is_empty():
+	if not ray_result.is_empty() and not mouse_button_held:
 		if safety_check(ray_result.collider):
 			return ray_result.collider
 	return null
@@ -329,13 +355,13 @@ func part_hover_check():
 		for i in selected_parts:
 			if safety_check(i):
 				rids.append(i.get_rid())
-		ray_result = raycast_mouse_pos(rids)
+		ray_result = raycast_mouse_pos(rids, [1])
 	else:
 		#if not dragging, do not exclude selection
-		ray_result = raycast_mouse_pos()
+		ray_result = raycast_mouse_pos([], [1])
 	
 	if not ray_result.is_empty():
-		if safety_check(ray_result.collider):
+		if safety_check(ray_result.collider) and ray_result.collider is Part:
 			return ray_result.collider
 	return null
 
@@ -372,7 +398,7 @@ func snap_position(is_planar_snap : bool = true):
 	#add half of a snap increment to offset it away
 	var dragged_part_local : Basis = inverse.basis * dragged_part.basis
 	var dragged_part_side_lengths_local : Vector3 = SnapUtils.get_side_lengths_local(dragged_part.part_scale, dragged_part_local)
-	print(dragged_part_side_lengths_local)
+	#print(dragged_part_side_lengths_local)
 	var i : int = 0
 	
 	while i < 3:

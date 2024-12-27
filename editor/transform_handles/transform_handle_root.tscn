@@ -1,0 +1,114 @@
+[gd_scene load_steps=8 format=3 uid="uid://clfcgcedn47iy"]
+
+[ext_resource type="Script" path="res://editor/transform_handles/transform_handle.gd" id="1_i4hrh"]
+[ext_resource type="Shader" path="res://editor/transform_handles/render_over.gdshader" id="2_v5yh4"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_e7qbh"]
+render_priority = 0
+shader = ExtResource("2_v5yh4")
+shader_parameter/overdraw_depth_limit = 99.0
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_dymed"]
+top_radius = 0.1
+bottom_radius = 0.1
+height = 1.6
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_cf10l"]
+top_radius = 0.0
+bottom_radius = 0.25
+height = 0.5
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_p4f7v"]
+height = 1.5
+radius = 0.1
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_xjdm1"]
+height = 0.5
+radius = 0.2
+
+[node name="TransformHandleRoot" type="Node3D"]
+
+[node name="PositionHandles" type="Node3D" parent="."]
+
+[node name="TransformHandleX" type="StaticBody3D" parent="PositionHandles" node_paths=PackedStringArray("mesh_array", "collider_array")]
+collision_layer = 2
+collision_mask = 2
+script = ExtResource("1_i4hrh")
+direction_vector = Vector3(1, 0, 0)
+material = SubResource("ShaderMaterial_e7qbh")
+color_default = Color(0.588235, 0, 0, 1)
+color_drag = Color(1, 0, 0, 1)
+mesh_array = [NodePath("MeshInstance3D"), NodePath("MeshInstance3D2")]
+collider_array = [NodePath("CollisionShape3D"), NodePath("CollisionShape3D2")]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PositionHandles/TransformHandleX"]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 1.1, 0, 0)
+mesh = SubResource("CylinderMesh_dymed")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="PositionHandles/TransformHandleX"]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 2, 0, 0)
+mesh = SubResource("CylinderMesh_cf10l")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PositionHandles/TransformHandleX"]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 1.05, 0, 0)
+shape = SubResource("CylinderShape3D_p4f7v")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="PositionHandles/TransformHandleX"]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 2, 0, 0)
+shape = SubResource("CylinderShape3D_xjdm1")
+
+[node name="TransformHandleY" type="StaticBody3D" parent="PositionHandles" node_paths=PackedStringArray("mesh_array", "collider_array")]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+collision_layer = 2
+collision_mask = 2
+script = ExtResource("1_i4hrh")
+direction_vector = Vector3(0, 1, 0)
+material = SubResource("ShaderMaterial_e7qbh")
+color_default = Color(0, 0.588235, 0, 1)
+color_drag = Color(0, 1, 0, 1)
+mesh_array = [NodePath("MeshInstance3D"), NodePath("MeshInstance3D2")]
+collider_array = [NodePath("CollisionShape3D"), NodePath("CollisionShape3D2")]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PositionHandles/TransformHandleY"]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 1.1, 0, 0)
+mesh = SubResource("CylinderMesh_dymed")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="PositionHandles/TransformHandleY"]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 2, 0, 0)
+mesh = SubResource("CylinderMesh_cf10l")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PositionHandles/TransformHandleY"]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 1.05, 0, 0)
+shape = SubResource("CylinderShape3D_p4f7v")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="PositionHandles/TransformHandleY"]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 2, 0, 0)
+shape = SubResource("CylinderShape3D_xjdm1")
+
+[node name="TransformHandleZ" type="StaticBody3D" parent="PositionHandles" node_paths=PackedStringArray("mesh_array", "collider_array")]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 0, 0, 0)
+collision_layer = 2
+collision_mask = 2
+script = ExtResource("1_i4hrh")
+direction_vector = Vector3(0, 0, 1)
+material = SubResource("ShaderMaterial_e7qbh")
+color_default = Color(0, 0, 0.588235, 1)
+color_drag = Color(0, 0, 1, 1)
+mesh_array = [NodePath("MeshInstance3D"), NodePath("MeshInstance3D2")]
+collider_array = [NodePath("CollisionShape3D"), NodePath("CollisionShape3D2")]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PositionHandles/TransformHandleZ"]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 1.1, 0, 0)
+mesh = SubResource("CylinderMesh_dymed")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="PositionHandles/TransformHandleZ"]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 2, 0, 0)
+mesh = SubResource("CylinderMesh_cf10l")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PositionHandles/TransformHandleZ"]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 1.05, 0, 0)
+shape = SubResource("CylinderShape3D_p4f7v")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="PositionHandles/TransformHandleZ"]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 2, 0, 0)
+shape = SubResource("CylinderShape3D_xjdm1")
