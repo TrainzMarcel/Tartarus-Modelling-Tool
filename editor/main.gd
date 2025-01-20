@@ -23,15 +23,15 @@ class_name Main
 @export var raycast_length : float = 128
 @export var positional_snap_increment : float = 0.2
 @export var rotational_snap_increment : float = 15
-
-@export var transform_handle_root : Node3D
 @export var workspace : Node
+
+#transform handles
+@export var transform_handle_root : Node3D
+var local_transform_active : bool = false
 
 #for hovering
 @export var no_drag_ui : Array[Control]
 @export var hover_selection_box : SelectionBox
-#if hovering over some block, hide regular selection box and store ref to it here
-var hidden_selection_box : SelectionBox
 
 enum SelectedTool {
 	drag,
@@ -46,43 +46,34 @@ enum SelectedTool {
 #dragging data------------------------------------------------------------------
 #raw ray result
 var ray_result : Dictionary
-
 var dragged_part : Part
 #for selected
 var hovered_part : Part
-
 #for selected
 var hovered_handle : TransformHandle
-#hovered handle from last input event
-var last_hovered_handle : TransformHandle
-
-
+#store handle which is being dragged, in case mouse moves off handle while dragging
+var dragged_handle : TransformHandle
 #purely rotational basis set from start of drag as a reference for snapping
 var initial_rotation : Basis
-
 #bounding box of selected parts for positional snapping
 var selected_parts_aabb : AABB = AABB()
-#parallel arrays
+#selected_parts, main_offet and selection_box_array are parallel arrays
 var selected_parts : Array[Part] = []
 #offset from the dragged parts position to the raycast hit position
-var drag_offset : Vector3
-#offset of each selected part from dragged part
+#if dragged_part is null, its the offset from the dragged handles position to the ray hit position
 var main_offset : Array[Vector3] = []
 var selection_box_array : Array[SelectionBox] = []
+var drag_offset : Vector3
+#offset of each selected part from dragged part
 
 #conditionals-------------------------------------------------------------------
-
 var mouse_button_held : bool = false
-
 #gets set in on_tool_selected
 var selected_state : SelectedTool = SelectedTool.drag
-
 #gets set in on_tool_selected
 var is_drag_tool : bool = true
-
 #this bool is meant for non drag tools which dont need selecting but still need hovering and clicking functionality
 var is_hovering_allowed : bool = true
-
 #this bool is meant for drag tools, if this is enabled then hovering_allowed is also enabled
 var is_selecting_allowed : bool = true
 
@@ -99,6 +90,18 @@ func _ready():
 	b_material.pressed.connect(on_tool_selected.bind(b_material))
 	b_lock.pressed.connect(on_tool_selected.bind(b_lock))
 	b_spawn.pressed.connect(on_tool_selected.bind(b_spawn))
+
+
+"TODO"#from last time
+				#PRIMARY
+					#clean up this code, comment, make the arrows functional (add functions to make handles work on click and drag)
+					#make it a REFINED SIMPLE and WELL ARCHITECTED system
+					#also update doc_planning with the things i did today
+				
+				#SECONDARY
+					#add and configure rest of transform tools
+					#use aabb to position position and scale handles
+					#use distance from camera for scale (this was what needed to be in _process(delta))
 
 
 # Called every input event.
@@ -119,42 +122,27 @@ func _input(event):
 	
 	
 #do raycasting, set hovered_handle
-#if handle wasnt found, set hovered_part and render selectionbox around hovered_part
+#if handle wasnt found, raycast and set hovered_part, render selectionbox around hovered_part
+#transform handles take priority over parts
 	if event is InputEventMouseMotion:
 		if is_hovering_allowed:
 			hovered_handle = handle_hover_check()
-			print("handle: ", hovered_handle)
+			#handle wasnt detected
 			if not safety_check(hovered_handle):
-				if safety_check(last_hovered_handle):
-					last_hovered_handle.visual_default()
-				
-				
-				
-				
-				
-				
-				"TODO"#from last time
-				#clean up this code, comment, make the arrows functional (add functions to make handles work on click and drag)
-				#add and configure rest of transform tools
-				#use aabb to position position and scale handles
-				#use distance from camera for scale (this was what needed to be in _process(delta))
-				#make it a REFINED SIMPLE and WELL ARCHITECTED system
-				
-				
 				hovered_part = part_hover_check()
-				print("part: ", hovered_part)
 				part_hover_selection_box(hovered_part)
+			#handle was detected
 			else:
-				hover_selection_box.visible = false
-				hovered_handle.visual_drag()
-				if hovered_handle != last_hovered_handle and safety_check(last_hovered_handle):
-					last_hovered_handle.visual_default()
+				#set hovered_part to null as mouse is no longer hovering over a part
+				hovered_part = null
 	
 	
 #set dragged_part, recalculate all main_offset vectors and bounding box on new click
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
+				mouse_button_held = true
+				
 				if safety_check(hovered_part):
 					initial_rotation = hovered_part.basis
 					dragged_part = hovered_part
@@ -165,9 +153,19 @@ func _input(event):
 					while i < selected_parts.size():
 						main_offset.append(selected_parts[i].global_position - dragged_part.global_position)
 						i = i + 1
-				mouse_button_held = true
+				
+				#if handle is detected, try setting dragged_handle
+				if safety_check(hovered_handle):
+					#ONLY set dragged_handle if its null
+					#if not safety_check(dragged_handle):
+						dragged_handle = hovered_handle
+						dragged_handle.is_highlighted = true
+				
 			else:
 				dragged_part = null
+				if safety_check(dragged_handle):
+					dragged_handle.is_highlighted = false
+				dragged_handle = null
 				mouse_button_held = false
 	
 	
@@ -187,6 +185,10 @@ func _input(event):
 					if selected_parts.has(hovered_part):
 					#shift is held
 						if Input.is_key_pressed(KEY_SHIFT):
+							#patch to stop dragging when holding shift and
+							#dragging on an already selected part
+							if selected_parts[selected_parts.find(hovered_part)] == dragged_part:
+								dragged_part = null
 							delete_selection_box(hovered_part)
 							#erase the same index as hovered_part
 							main_offset.remove_at(selected_parts.find(hovered_part))
@@ -210,9 +212,10 @@ func _input(event):
 				elif is_selecting_allowed:
 					#shift is unheld
 					if not Input.is_key_pressed(KEY_SHIFT):
-						selected_parts.clear()
-						clear_all_selection_boxes()
-						main_offset.clear()
+						if not safety_check(hovered_handle):
+							selected_parts.clear()
+							clear_all_selection_boxes()
+							main_offset.clear()
 	#lmb up
 			else:
 				pass
@@ -239,18 +242,26 @@ func _input(event):
 	
 	
 	
-#dragging happens here
+#dragging (parts AND transform handles) happens here
 	if event is InputEventMouseMotion:
-		if mouse_button_held and safety_check(dragged_part) and not ray_result.is_empty() and is_selecting_allowed:
-			if safety_check(hovered_part):
-				if not SnapUtils.part_rectilinear_alignment_check(dragged_part, hovered_part):
-					update_snap()
-				
-				snap_position()
-				#set positions according to main_offset and where the selection is being dragged (ray_result.position)
-	
-	
-	last_hovered_handle = hovered_handle
+		if mouse_button_held and not ray_result.is_empty() and is_selecting_allowed:
+			if safety_check(dragged_part):
+				if safety_check(hovered_part):
+					if not SnapUtils.part_rectilinear_alignment_check(dragged_part, hovered_part):
+						update_snap()
+					
+					snap_position()
+					#set positions according to main_offset and where the selection is being dragged (ray_result.position)
+		
+		#handles do not need a "canvas" collider to be dragged over
+		if mouse_button_held and is_selecting_allowed:
+			if safety_check(dragged_handle):
+				#add function to move handles here
+				var result : Dictionary
+				#result = 
+				var first = cam.project_ray_normal(event.position - event.relative)
+				var second = cam.project_ray_normal(event.position)
+				TransformHandleUtils.transform(dragged_handle, drag_offset, ray_result, event, first, second, cam)
 
 
 #set selected state and is_drag_tool
@@ -307,14 +318,14 @@ func raycast(from : Vector3, to : Vector3, exclude : Array[RID] = [], collision_
 
 
 #raycast from cam to where the mouse is pointing, works in ortho mode too
-func raycast_mouse_pos(exclude : Array[RID] = [], collsion_mask : Array[int] = []):
+func raycast_mouse_pos(exclude : Array[RID] = [], collision_mask : Array[int] = []):
 	#project ray origin simply returns the camera position, EXCEPT,
 	#when camera is set to orthogonal
 	return raycast(
 		cam.project_ray_origin(get_viewport().get_mouse_position()),
 		cam.project_ray_origin(get_viewport().get_mouse_position()) + 
 		cam.project_ray_normal(get_viewport().get_mouse_position()) * raycast_length,
-		exclude, collsion_mask
+		exclude, collision_mask
 	)
 
 
@@ -339,8 +350,8 @@ func safety_check(instance):
 #returns null or any hovered handle
 func handle_hover_check():
 	ray_result = raycast_mouse_pos([], [2])
-	
-	if not ray_result.is_empty() and not mouse_button_held:
+	#make sure were not dragging a part before detecting a handle
+	if not ray_result.is_empty() and not safety_check(dragged_part):
 		if safety_check(ray_result.collider):
 			return ray_result.collider
 	return null
