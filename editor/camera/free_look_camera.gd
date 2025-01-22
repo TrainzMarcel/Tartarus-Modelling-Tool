@@ -30,12 +30,9 @@ func _input(event):
 	
 	if Input.is_key_pressed(KEY_F) and event.is_pressed() and not event.is_echo():
 		if main.selected_parts.size() > 0:
-			var sum : Vector3 = Vector3.ZERO
-			for i in main.selected_parts:
-				sum = sum + i.global_position
-			lock_position = sum / main.selected_parts.size()
 			
-			lock_zoom = main.selected_parts_aabb.size.length()
+			lock_position = main.selected_parts_abb.transform.origin
+			lock_zoom = main.selected_parts_abb.extents.length()
 			
 			global_position = lock_position + basis.z * lock_zoom
 			is_locked_on = true

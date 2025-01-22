@@ -21,6 +21,17 @@ enum DirectionTypeEnum
 #brighter color
 @export var color_drag : Color
 @export var mesh_array : Array[MeshInstance3D]
+var is_highlighted : bool = false:
+	set(value):
+		is_highlighted = value
+		
+		if value:
+			for i in mesh_array:
+				i.set_instance_shader_parameter("color", color_drag)
+		else:
+			for i in mesh_array:
+				i.set_instance_shader_parameter("color", color_default)
+
 #for hovering, scale this up a little bit
 @export var collider_array : Array[CollisionShape3D]
 

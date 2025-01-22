@@ -1,6 +1,11 @@
 extends RefCounted
 class_name SnapUtils
 
+static func average_position_part(input : Array[Part]):
+	var sum : Vector3 = Vector3.ZERO
+	for i in input:
+		sum = sum + i.global_position
+	return sum / input.size()
 
 #input is meant to be the part-to-be-rotated's basis
 "TODO"#unit test and make above comment better
@@ -153,50 +158,24 @@ static func get_side_lengths_local(part_scale : Vector3, part_rotation : Basis):
 	return abs(part_rotation * part_scale)
 
 "TODO"#clean up
-static func calculate_extents(aabb : AABB, rotation_origin_part : Part, parts : Array[Part]):
-	var transformed_parts : Array[Transform3D] = []
-	var origin_part_offsets : Array[Vector3] = []
+static func calculate_extents(abb : ABB, rotation_origin_part : Part, parts : Array[Part]):
+	abb.transform = rotation_origin_part.global_transform
+	abb.extents = Vector3.ZERO
 	
-	#vector pointing from origin to part position and rotated by inverse basis of origin part
-	for i in parts:
-		var offset = rotation_origin_part.global_position - i.global_position
-		offset = rotation_origin_part.global_transform.basis.inverse() * offset
-		origin_part_offsets.append(offset)
-	
-	"TODO"#comment better
-	#rotate parts
-	for i in parts:
-		var part_transform = i.global_transform
-		#their offsets/positions will be taken care of in the next loop
-		part_transform.origin = Vector3.ZERO
-		part_transform.basis = part_transform.basis * rotation_origin_part.global_transform.basis.inverse()
-		transformed_parts.append(part_transform)
-	
-	#move parts back
 	var i : int = 0
-	while i < transformed_parts.size():
-		transformed_parts[i].origin = origin_part_offsets[i]
-		i = i + 1
-	
-	
-	#then resize bounding box
-	aabb.size = Vector3.ZERO
-	aabb.position = Vector3.ZERO
-	
-	
-	i = 0
-	while i < transformed_parts.size():
+	while i < parts.size():
 		var corners : Array[Vector3] = []
 		for x in [-0.5, 0.5]:
 			for y in [-0.5, 0.5]:
 				for z in [-0.5, 0.5]:
-					var corner = transformed_parts[i].origin
-					corner = corner + transformed_parts[i].basis * (Vector3(x, y, z) * parts[i].part_scale)
+					var corner = parts[i].global_transform.origin
+					corner = corner + parts[i].global_transform.basis.x * (x * parts[i].part_scale.x)
+					corner = corner + parts[i].global_transform.basis.y * (y * parts[i].part_scale.y)
+					corner = corner + parts[i].global_transform.basis.z * (z * parts[i].part_scale.z)
 					corners.append(corner)
 		
 		for j in corners:
-			if not aabb.has_point(j):
-				aabb = aabb.expand(j)
+			abb.expand(j)
 		i = i + 1
 	
-	return aabb
+	return abb

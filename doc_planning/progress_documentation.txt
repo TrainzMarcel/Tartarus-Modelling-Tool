@@ -11,6 +11,14 @@
 21.10. selection system cleaned up
 23.10. got crude rotation snapping done, brought in 3d vector arrows for easier debugging
 25.10. fixed snap_rotation inconsistencies depending on surface normal
-28.10. laid groundwork for some stuff (TODO CLARIFY BEFORE COMMIT)
-
-
+28.10. created unit_test.gd, removed drag_state, added rotation using r and t
+6.11. moved dragging logic into update_snap(), added aabb calculation for determining size of selection
+18.11. drag_offset became offset from raycast hit to dragged part, main_offset became offset from dragged part to rest of selection
+20.11. refactored and cleaned up snap_position()
+27.11. further improved snapping (odd/even offset) and moved lots of static functions into snap_utils.gd
+5.12. updated readme
+20.12. added shader to render handles on top, started work on transform_handle.gd, added collision layers to raycast functions
+27.12. continued to roughly work out how to make transform handles work
+8.1. figuring out projection of mouse movement onto transform handle axis
+20.1. squashed bug when user tries to drag already selected part by holding shift, reorganized some code
+22.1. replaced aabb with my own abb class to avoid having to rotate my data to fit the aabb and temporarily added a mesh representation

@@ -1,4 +1,4 @@
-[gd_scene load_steps=67 format=3 uid="uid://hul5x10ptumj"]
+[gd_scene load_steps=69 format=3 uid="uid://hul5x10ptumj"]
 
 [ext_resource type="Script" path="res://editor/main.gd" id="1_4xdr8"]
 [ext_resource type="PackedScene" uid="uid://c01nu37bjhxsi" path="res://editor/camera/free_look_camera.tscn" id="2_n3tr4"]
@@ -34,12 +34,12 @@ points = PackedVector3Array(-0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -
 [sub_resource type="PrismMesh" id="PrismMesh_du6vf"]
 left_to_right = 0.0
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_t4p6b"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_d5knf"]
 transparency = 1
 albedo_color = Color(1, 0, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_xir31"]
-material = SubResource("StandardMaterial3D_t4p6b")
+[sub_resource type="CylinderMesh" id="CylinderMesh_r3egw"]
+material = SubResource("StandardMaterial3D_d5knf")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -47,12 +47,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5ejin"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_32i12"]
 transparency = 1
 albedo_color = Color(0, 1, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_3lvsl"]
-material = SubResource("StandardMaterial3D_5ejin")
+[sub_resource type="CylinderMesh" id="CylinderMesh_6hwdj"]
+material = SubResource("StandardMaterial3D_32i12")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -60,12 +60,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7vypv"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yris2"]
 transparency = 1
 albedo_color = Color(0, 0, 1, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_qy22c"]
-material = SubResource("StandardMaterial3D_7vypv")
+[sub_resource type="CylinderMesh" id="CylinderMesh_vomkb"]
+material = SubResource("StandardMaterial3D_yris2")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -73,12 +73,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_20h51"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_efje3"]
 transparency = 1
 albedo_color = Color(1, 0, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_1ts8y"]
-material = SubResource("StandardMaterial3D_20h51")
+[sub_resource type="CylinderMesh" id="CylinderMesh_jb8vb"]
+material = SubResource("StandardMaterial3D_efje3")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -86,12 +86,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o3qvk"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xlvl0"]
 transparency = 1
 albedo_color = Color(0, 1, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_iyltg"]
-material = SubResource("StandardMaterial3D_o3qvk")
+[sub_resource type="CylinderMesh" id="CylinderMesh_t2th4"]
+material = SubResource("StandardMaterial3D_xlvl0")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -99,12 +99,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bxkte"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vyah1"]
 transparency = 1
 albedo_color = Color(0, 0, 1, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_r6agg"]
-material = SubResource("StandardMaterial3D_bxkte")
+[sub_resource type="CylinderMesh" id="CylinderMesh_02gap"]
+material = SubResource("StandardMaterial3D_vyah1")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -112,12 +112,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_42kqh"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8qavg"]
 transparency = 1
 albedo_color = Color(1, 0, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_8heae"]
-material = SubResource("StandardMaterial3D_42kqh")
+[sub_resource type="CylinderMesh" id="CylinderMesh_ujwru"]
+material = SubResource("StandardMaterial3D_8qavg")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -125,12 +125,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_t5ckw"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_m7sax"]
 transparency = 1
 albedo_color = Color(0, 1, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_ok1ay"]
-material = SubResource("StandardMaterial3D_t5ckw")
+[sub_resource type="CylinderMesh" id="CylinderMesh_nl85j"]
+material = SubResource("StandardMaterial3D_m7sax")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -138,12 +138,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_02ie0"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ddgmn"]
 transparency = 1
 albedo_color = Color(0, 0, 1, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_0pqvh"]
-material = SubResource("StandardMaterial3D_02ie0")
+[sub_resource type="CylinderMesh" id="CylinderMesh_67ujk"]
+material = SubResource("StandardMaterial3D_ddgmn")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -151,12 +151,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_k2tal"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1xw57"]
 transparency = 1
 albedo_color = Color(1, 0, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_mrnfw"]
-material = SubResource("StandardMaterial3D_k2tal")
+[sub_resource type="CylinderMesh" id="CylinderMesh_5ejyw"]
+material = SubResource("StandardMaterial3D_1xw57")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -164,12 +164,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_02i3u"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_35nl0"]
 transparency = 1
 albedo_color = Color(0, 1, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_u2uhj"]
-material = SubResource("StandardMaterial3D_02i3u")
+[sub_resource type="CylinderMesh" id="CylinderMesh_r1d8t"]
+material = SubResource("StandardMaterial3D_35nl0")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -177,12 +177,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pbcs5"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_orpj2"]
 transparency = 1
 albedo_color = Color(0, 0, 1, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_6dj7d"]
-material = SubResource("StandardMaterial3D_pbcs5")
+[sub_resource type="CylinderMesh" id="CylinderMesh_uxkp6"]
+material = SubResource("StandardMaterial3D_orpj2")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -190,12 +190,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hmysd"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4uml0"]
 transparency = 1
 albedo_color = Color(1, 0, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_4xk5m"]
-material = SubResource("StandardMaterial3D_hmysd")
+[sub_resource type="CylinderMesh" id="CylinderMesh_2823w"]
+material = SubResource("StandardMaterial3D_4uml0")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -203,12 +203,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rdgps"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ognt0"]
 transparency = 1
 albedo_color = Color(0, 1, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_jqheg"]
-material = SubResource("StandardMaterial3D_rdgps")
+[sub_resource type="CylinderMesh" id="CylinderMesh_oph2j"]
+material = SubResource("StandardMaterial3D_ognt0")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -216,12 +216,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fi17n"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_iaeiq"]
 transparency = 1
 albedo_color = Color(0, 0, 1, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_x82n1"]
-material = SubResource("StandardMaterial3D_fi17n")
+[sub_resource type="CylinderMesh" id="CylinderMesh_ahqbs"]
+material = SubResource("StandardMaterial3D_iaeiq")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -229,12 +229,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gggoq"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_332hb"]
 transparency = 1
 albedo_color = Color(1, 0, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_y6e8n"]
-material = SubResource("StandardMaterial3D_gggoq")
+[sub_resource type="CylinderMesh" id="CylinderMesh_vi1dw"]
+material = SubResource("StandardMaterial3D_332hb")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -242,12 +242,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tff66"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_scp41"]
 transparency = 1
 albedo_color = Color(0, 1, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_lqd8b"]
-material = SubResource("StandardMaterial3D_tff66")
+[sub_resource type="CylinderMesh" id="CylinderMesh_ogf7k"]
+material = SubResource("StandardMaterial3D_scp41")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -255,12 +255,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uurng"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_byjas"]
 transparency = 1
 albedo_color = Color(0, 0, 1, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_ykyqj"]
-material = SubResource("StandardMaterial3D_uurng")
+[sub_resource type="CylinderMesh" id="CylinderMesh_sqw4j"]
+material = SubResource("StandardMaterial3D_byjas")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -268,12 +268,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_urvj4"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yklk7"]
 transparency = 1
 albedo_color = Color(1, 0, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_eh2kn"]
-material = SubResource("StandardMaterial3D_urvj4")
+[sub_resource type="CylinderMesh" id="CylinderMesh_yhcmr"]
+material = SubResource("StandardMaterial3D_yklk7")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -281,12 +281,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ynvqs"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uf7m8"]
 transparency = 1
 albedo_color = Color(0, 1, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_akqpl"]
-material = SubResource("StandardMaterial3D_ynvqs")
+[sub_resource type="CylinderMesh" id="CylinderMesh_r4tfw"]
+material = SubResource("StandardMaterial3D_uf7m8")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -294,12 +294,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fhyno"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_aijlm"]
 transparency = 1
 albedo_color = Color(0, 0, 1, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_8kt3k"]
-material = SubResource("StandardMaterial3D_fhyno")
+[sub_resource type="CylinderMesh" id="CylinderMesh_gqhcv"]
+material = SubResource("StandardMaterial3D_aijlm")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -307,12 +307,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1t8pv"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7i0it"]
 transparency = 1
 albedo_color = Color(1, 0, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_4vpig"]
-material = SubResource("StandardMaterial3D_1t8pv")
+[sub_resource type="CylinderMesh" id="CylinderMesh_j4not"]
+material = SubResource("StandardMaterial3D_7i0it")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -320,12 +320,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_otu0r"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kwcte"]
 transparency = 1
 albedo_color = Color(0, 1, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_h6gox"]
-material = SubResource("StandardMaterial3D_otu0r")
+[sub_resource type="CylinderMesh" id="CylinderMesh_1k15f"]
+material = SubResource("StandardMaterial3D_kwcte")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -333,12 +333,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ymqvk"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tyx2j"]
 transparency = 1
 albedo_color = Color(0, 0, 1, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_xwvvc"]
-material = SubResource("StandardMaterial3D_ymqvk")
+[sub_resource type="CylinderMesh" id="CylinderMesh_ej222"]
+material = SubResource("StandardMaterial3D_tyx2j")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -346,14 +346,14 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_17q6f"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_pjl7l"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cn3id"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_di4vf"]
 transparency = 1
 albedo_color = Color(1, 1, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_gef7b"]
-material = SubResource("StandardMaterial3D_cn3id")
+[sub_resource type="CylinderMesh" id="CylinderMesh_dx21d"]
+material = SubResource("StandardMaterial3D_di4vf")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -361,12 +361,12 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_s7lfq"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2kqrq"]
 transparency = 1
 albedo_color = Color(0.901961, 0.431373, 0, 1)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_7883o"]
-material = SubResource("StandardMaterial3D_s7lfq")
+[sub_resource type="CylinderMesh" id="CylinderMesh_65fjt"]
+material = SubResource("StandardMaterial3D_2kqrq")
 top_radius = 0.0
 bottom_radius = 0.2
 height = 1.0
@@ -374,7 +374,14 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[node name="Main" type="Node3D" node_paths=PackedStringArray("b_drag", "b_move", "b_rotate", "b_scale", "b_color", "b_material", "b_lock", "b_spawn", "b_spawn_type", "msg_label", "camera_speed_label", "camera_zoom_label", "cam", "workspace", "no_drag_ui", "hover_selection_box")]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7jdfo"]
+transparency = 1
+albedo_color = Color(0, 1, 1, 0.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wfgy5"]
+material = SubResource("StandardMaterial3D_7jdfo")
+
+[node name="Main" type="Node3D" node_paths=PackedStringArray("b_drag", "b_move", "b_rotate", "b_scale", "b_color", "b_material", "b_lock", "b_spawn", "b_spawn_type", "msg_label", "camera_speed_label", "camera_zoom_label", "cam", "workspace", "transform_handle_root", "no_drag_ui", "hover_selection_box")]
 script = ExtResource("1_4xdr8")
 b_drag = NodePath("UI/HBoxContainer/Button")
 b_move = NodePath("UI/HBoxContainer/Button2")
@@ -391,6 +398,7 @@ camera_zoom_label = NodePath("UI/Panel/Label3")
 cam = NodePath("Camera3D")
 positional_snap_increment = 0.1
 workspace = NodePath("Workspace")
+transform_handle_root = NodePath("Workspace/TransformHandleRoot")
 no_drag_ui = [NodePath("UI/HBoxContainer/Button"), NodePath("UI/HBoxContainer/Button2"), NodePath("UI/HBoxContainer/Button3"), NodePath("UI/HBoxContainer/Button4"), NodePath("UI/HBoxContainer/Button8"), NodePath("UI/HBoxContainer/Button8/OptionButton"), NodePath("UI/Panel"), NodePath("UI/HBoxContainer/Button7"), NodePath("UI/HBoxContainer/Button6")]
 hover_selection_box = NodePath("Workspace/HoverSelectionBox")
 
@@ -565,21 +573,21 @@ script = ExtResource("3_yo0xd")
 [node name="DebugVector3D" type="MeshInstance3D" parent="Workspace/Part"]
 transform = Transform3D(-4.37114e-08, 1, 4.37114e-08, 0, -4.37114e-08, 1, 1, 4.37114e-08, 1.91069e-15, 0.5, 0, 0)
 visible = false
-mesh = SubResource("CylinderMesh_xir31")
+mesh = SubResource("CylinderMesh_r3egw")
 script = ExtResource("4_fq3r4")
 color = Color(1, 0, 0, 1)
 
 [node name="DebugVector3D2" type="MeshInstance3D" parent="Workspace/Part"]
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0.5, 0)
 visible = false
-mesh = SubResource("CylinderMesh_3lvsl")
+mesh = SubResource("CylinderMesh_6hwdj")
 script = ExtResource("4_fq3r4")
 color = Color(0, 1, 0, 1)
 
 [node name="DebugVector3D3" type="MeshInstance3D" parent="Workspace/Part"]
 transform = Transform3D(-1, -8.74228e-08, -3.82137e-15, 0, -4.37114e-08, 1, -8.74228e-08, 1, 4.37114e-08, 0, 0, 0.5)
 visible = false
-mesh = SubResource("CylinderMesh_qy22c")
+mesh = SubResource("CylinderMesh_vomkb")
 script = ExtResource("4_fq3r4")
 color = Color(0, 0, 1, 1)
 
@@ -590,19 +598,19 @@ part_scale = Vector3(0.5, 2, 4)
 
 [node name="DebugVector3D" type="MeshInstance3D" parent="Workspace/Part2"]
 transform = Transform3D(-4.37114e-08, 0.25, 4.37114e-08, 0, -1.09278e-08, 1, 1, 1.09278e-08, 1.91069e-15, 0.125, 0, 0)
-mesh = SubResource("CylinderMesh_1ts8y")
+mesh = SubResource("CylinderMesh_jb8vb")
 script = ExtResource("4_fq3r4")
 color = Color(1, 0, 0, 1)
 
 [node name="DebugVector3D2" type="MeshInstance3D" parent="Workspace/Part2"]
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0.5, 0)
-mesh = SubResource("CylinderMesh_iyltg")
+mesh = SubResource("CylinderMesh_t2th4")
 script = ExtResource("4_fq3r4")
 color = Color(0, 1, 0, 1)
 
 [node name="DebugVector3D3" type="MeshInstance3D" parent="Workspace/Part2"]
 transform = Transform3D(-1, -1.74846e-07, -3.82137e-15, 0, -8.74228e-08, 1, -8.74228e-08, 2, 4.37114e-08, 0, 0, 1)
-mesh = SubResource("CylinderMesh_r6agg")
+mesh = SubResource("CylinderMesh_02gap")
 script = ExtResource("4_fq3r4")
 color = Color(0, 0, 1, 1)
 
@@ -613,19 +621,19 @@ part_scale = Vector3(0.2, 2, 4)
 
 [node name="DebugVector3D" type="MeshInstance3D" parent="Workspace/Part6"]
 transform = Transform3D(-4.37114e-08, 1, 4.37114e-08, 0, -4.37114e-08, 1, 1, 4.37114e-08, 1.91069e-15, 0.5, 0, 0)
-mesh = SubResource("CylinderMesh_8heae")
+mesh = SubResource("CylinderMesh_ujwru")
 script = ExtResource("4_fq3r4")
 color = Color(1, 0, 0, 1)
 
 [node name="DebugVector3D2" type="MeshInstance3D" parent="Workspace/Part6"]
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0.5, 0)
-mesh = SubResource("CylinderMesh_ok1ay")
+mesh = SubResource("CylinderMesh_nl85j")
 script = ExtResource("4_fq3r4")
 color = Color(0, 1, 0, 1)
 
 [node name="DebugVector3D3" type="MeshInstance3D" parent="Workspace/Part6"]
 transform = Transform3D(-1, -8.74228e-08, -3.82137e-15, 0, -4.37114e-08, 1, -8.74228e-08, 1, 4.37114e-08, 0, 0, 0.5)
-mesh = SubResource("CylinderMesh_0pqvh")
+mesh = SubResource("CylinderMesh_67ujk")
 script = ExtResource("4_fq3r4")
 color = Color(0, 0, 1, 1)
 
@@ -636,19 +644,19 @@ part_scale = Vector3(0.2, 2, 4)
 
 [node name="DebugVector3D" type="MeshInstance3D" parent="Workspace/Part11"]
 transform = Transform3D(-4.37114e-08, 1, 4.37114e-08, 0, -4.37114e-08, 1, 1, 4.37114e-08, 1.91069e-15, 0.5, 0, 0)
-mesh = SubResource("CylinderMesh_mrnfw")
+mesh = SubResource("CylinderMesh_5ejyw")
 script = ExtResource("4_fq3r4")
 color = Color(1, 0, 0, 1)
 
 [node name="DebugVector3D2" type="MeshInstance3D" parent="Workspace/Part11"]
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0.5, 0)
-mesh = SubResource("CylinderMesh_u2uhj")
+mesh = SubResource("CylinderMesh_r1d8t")
 script = ExtResource("4_fq3r4")
 color = Color(0, 1, 0, 1)
 
 [node name="DebugVector3D3" type="MeshInstance3D" parent="Workspace/Part11"]
 transform = Transform3D(-1, -8.74228e-08, -3.82137e-15, 0, -4.37114e-08, 1, -8.74228e-08, 1, 4.37114e-08, 0, 0, 0.5)
-mesh = SubResource("CylinderMesh_6dj7d")
+mesh = SubResource("CylinderMesh_uxkp6")
 script = ExtResource("4_fq3r4")
 color = Color(0, 0, 1, 1)
 
@@ -659,19 +667,19 @@ part_scale = Vector3(0.2, 2, 4)
 
 [node name="DebugVector3D" type="MeshInstance3D" parent="Workspace/Part10"]
 transform = Transform3D(-4.37114e-08, 1, 4.37114e-08, 0, -4.37114e-08, 1, 1, 4.37114e-08, 1.91069e-15, 0.5, 0, 0)
-mesh = SubResource("CylinderMesh_4xk5m")
+mesh = SubResource("CylinderMesh_2823w")
 script = ExtResource("4_fq3r4")
 color = Color(1, 0, 0, 1)
 
 [node name="DebugVector3D2" type="MeshInstance3D" parent="Workspace/Part10"]
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0.5, 0)
-mesh = SubResource("CylinderMesh_jqheg")
+mesh = SubResource("CylinderMesh_oph2j")
 script = ExtResource("4_fq3r4")
 color = Color(0, 1, 0, 1)
 
 [node name="DebugVector3D3" type="MeshInstance3D" parent="Workspace/Part10"]
 transform = Transform3D(-1, -8.74228e-08, -3.82137e-15, 0, -4.37114e-08, 1, -8.74228e-08, 1, 4.37114e-08, 0, 0, 0.5)
-mesh = SubResource("CylinderMesh_x82n1")
+mesh = SubResource("CylinderMesh_ahqbs")
 script = ExtResource("4_fq3r4")
 color = Color(0, 0, 1, 1)
 
@@ -682,19 +690,19 @@ part_scale = Vector3(0.2, 2, 4)
 
 [node name="DebugVector3D" type="MeshInstance3D" parent="Workspace/Part7"]
 transform = Transform3D(-4.37114e-08, 1, 4.37114e-08, 0, -4.37114e-08, 1, 1, 4.37114e-08, 1.91069e-15, 0.5, 0, 0)
-mesh = SubResource("CylinderMesh_y6e8n")
+mesh = SubResource("CylinderMesh_vi1dw")
 script = ExtResource("4_fq3r4")
 color = Color(1, 0, 0, 1)
 
 [node name="DebugVector3D2" type="MeshInstance3D" parent="Workspace/Part7"]
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0.5, 0)
-mesh = SubResource("CylinderMesh_lqd8b")
+mesh = SubResource("CylinderMesh_ogf7k")
 script = ExtResource("4_fq3r4")
 color = Color(0, 1, 0, 1)
 
 [node name="DebugVector3D3" type="MeshInstance3D" parent="Workspace/Part7"]
 transform = Transform3D(-1, -8.74228e-08, -3.82137e-15, 0, -4.37114e-08, 1, -8.74228e-08, 1, 4.37114e-08, 0, 0, 0.5)
-mesh = SubResource("CylinderMesh_ykyqj")
+mesh = SubResource("CylinderMesh_sqw4j")
 script = ExtResource("4_fq3r4")
 color = Color(0, 0, 1, 1)
 
@@ -705,19 +713,19 @@ part_scale = Vector3(0.2, 2, 4)
 
 [node name="DebugVector3D" type="MeshInstance3D" parent="Workspace/Part8"]
 transform = Transform3D(-4.37114e-08, 1, 4.37114e-08, 0, -4.37114e-08, 1, 1, 4.37114e-08, 1.91069e-15, 0.5, 0, 0)
-mesh = SubResource("CylinderMesh_eh2kn")
+mesh = SubResource("CylinderMesh_yhcmr")
 script = ExtResource("4_fq3r4")
 color = Color(1, 0, 0, 1)
 
 [node name="DebugVector3D2" type="MeshInstance3D" parent="Workspace/Part8"]
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0.5, 0)
-mesh = SubResource("CylinderMesh_akqpl")
+mesh = SubResource("CylinderMesh_r4tfw")
 script = ExtResource("4_fq3r4")
 color = Color(0, 1, 0, 1)
 
 [node name="DebugVector3D3" type="MeshInstance3D" parent="Workspace/Part8"]
 transform = Transform3D(-1, -8.74228e-08, -3.82137e-15, 0, -4.37114e-08, 1, -8.74228e-08, 1, 4.37114e-08, 0, 0, 0.5)
-mesh = SubResource("CylinderMesh_8kt3k")
+mesh = SubResource("CylinderMesh_gqhcv")
 script = ExtResource("4_fq3r4")
 color = Color(0, 0, 1, 1)
 
@@ -728,19 +736,19 @@ part_scale = Vector3(0.2, 2, 4)
 
 [node name="DebugVector3D" type="MeshInstance3D" parent="Workspace/Part9"]
 transform = Transform3D(-4.37114e-08, 1, 4.37114e-08, 0, -4.37114e-08, 1, 1, 4.37114e-08, 1.91069e-15, 0.5, 0, 0)
-mesh = SubResource("CylinderMesh_4vpig")
+mesh = SubResource("CylinderMesh_j4not")
 script = ExtResource("4_fq3r4")
 color = Color(1, 0, 0, 1)
 
 [node name="DebugVector3D2" type="MeshInstance3D" parent="Workspace/Part9"]
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0.5, 0)
-mesh = SubResource("CylinderMesh_h6gox")
+mesh = SubResource("CylinderMesh_1k15f")
 script = ExtResource("4_fq3r4")
 color = Color(0, 1, 0, 1)
 
 [node name="DebugVector3D3" type="MeshInstance3D" parent="Workspace/Part9"]
 transform = Transform3D(-1, -8.74228e-08, -3.82137e-15, 0, -4.37114e-08, 1, -8.74228e-08, 1, 4.37114e-08, 0, 0, 0.5)
-mesh = SubResource("CylinderMesh_xwvvc")
+mesh = SubResource("CylinderMesh_ej222")
 script = ExtResource("4_fq3r4")
 color = Color(0, 0, 1, 1)
 
@@ -762,7 +770,7 @@ part_scale = Vector3(1, 1, 1)
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("4_sa2se")
-mesh = SubResource("ImmediateMesh_17q6f")
+mesh = SubResource("ImmediateMesh_pjl7l")
 skeleton = NodePath("../..")
 script = ExtResource("5_byqpd")
 box_scale = Vector3(1, 1, 1)
@@ -771,12 +779,15 @@ box_scale = Vector3(1, 1, 1)
 
 [node name="DebugVector3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.30398, 0, 0)
-mesh = SubResource("CylinderMesh_gef7b")
+mesh = SubResource("CylinderMesh_dx21d")
 script = ExtResource("4_fq3r4")
 color = Color(1, 1, 0, 1)
 
 [node name="DebugVector3D2" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.30398, 0, 0)
-mesh = SubResource("CylinderMesh_7883o")
+mesh = SubResource("CylinderMesh_65fjt")
 script = ExtResource("4_fq3r4")
 color = Color(0.901961, 0.431373, 0, 1)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_wfgy5")
