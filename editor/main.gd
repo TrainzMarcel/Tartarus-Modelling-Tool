@@ -99,7 +99,7 @@ func _ready():
 				
 				#SECONDARY
 					#add and configure rest of transform tools
-					#use aabb to position position and scale handles
+					#use abb to position position and scale handles
 					#use distance from camera for scale (this was what needed to be in _process(delta))
 
 
@@ -259,12 +259,15 @@ func _input(event):
 					#set positions according to main_offset and where the selection is being dragged (ray_result.position)
 		
 		#handles do not need a "canvas" collider to be dragged over
+		#so theres no check of hovered_part or hovered_handle
 		if mouse_button_held and is_selecting_allowed:
 			if safety_check(dragged_handle):
 				#add function to move handles here
 				var first = cam.project_ray_normal(event.position - event.relative)
 				var second = cam.project_ray_normal(event.position)
 				var new_transform = TransformHandleUtils.transform(dragged_handle, transform_handle_root, drag_offset, ray_result, event, first, second, cam)
+				"TODO"#new transform function here
+#given: new transform, selected_parts, selection_box_array, selected_parts_abb and transform_handle_root
 				
 				transform_handle_root.global_transform = transform_handle_root.global_transform * new_transform
 				
@@ -275,8 +278,9 @@ func _input(event):
 					part.global_transform = new_transform * part.global_transform
 					box.global_transform = part.global_transform
 					i = i + 1
-					
-
+				
+				selected_parts_abb.transform = new_transform * selected_parts_abb.transform
+				$MeshInstance3D.global_transform = selected_parts_abb.transform
 
 #set selected state and is_drag_tool
 func on_tool_selected(button):
@@ -441,12 +445,12 @@ func snap_position(is_planar_snap : bool = true):
 	
 	var result_global : Vector3 = hovered_part.global_transform * result_local
 	dragged_part.global_position = result_global
-	
+	"TODO"#new transform function here
+#given: new transform, selected_parts, selection_box_array, selected_parts_abb and transform_handle_root
 	i = 0
 	while i < selected_parts.size():
 		selected_parts[i].global_position = dragged_part.global_position + main_offset[i]
 		selection_box_array[i].global_transform = selected_parts[i].global_transform
-		
 		i = i + 1
 
 
@@ -469,7 +473,7 @@ func update_snap():
 	while i < selected_parts.size():
 		#rotate main_offset vector by the difference basis
 		main_offset[i] = difference * main_offset[i]
-		
+		"TODO"#new transform function here
 		#move part to ray_result.position for easier pivoting
 		selected_parts[i].global_position = ray_result.position
 		
@@ -544,3 +548,5 @@ func delete_selection_box(assigned_part : Node3D):
 				selection_box_array.erase(i)
 				i.queue_free()
 				return
+
+
