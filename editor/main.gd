@@ -26,22 +26,12 @@ class_name Main
 @export var workspace : Node
 
 #transform handles
-@export var transform_handle_root : Node3D
+@export var transform_handle_root : TransformHandleRoot
 var local_transform_active : bool = false
 
 #for hovering
 @export var no_drag_ui : Array[Control]
 @export var hover_selection_box : SelectionBox
-
-enum SelectedTool {
-	drag,
-	drag_move,
-	drag_rotate,
-	drag_scale,
-	material,
-	color,
-	lock
-}
 
 #dragging data------------------------------------------------------------------
 #raw ray result
@@ -68,7 +58,7 @@ var drag_offset : Vector3
 #conditionals-------------------------------------------------------------------
 var mouse_button_held : bool = false
 #gets set in on_tool_selected
-var selected_state : SelectedTool = SelectedTool.drag
+var selected_tool_handle_array : Array[TransformHandle]
 #gets set in on_tool_selected
 var is_drag_tool : bool = true
 #this bool is meant for non drag tools which dont need selecting but still need hovering and clicking functionality
@@ -89,6 +79,9 @@ func _ready():
 	b_material.pressed.connect(on_tool_selected.bind(b_material))
 	b_lock.pressed.connect(on_tool_selected.bind(b_lock))
 	b_spawn.pressed.connect(on_tool_selected.bind(b_spawn))
+	
+	TransformHandleUtils.initialize_transform_handle_root(transform_handle_root)
+	selected_parts_abb.debug_mesh = $MeshInstance3D
 
 
 "TODO"#from last time
@@ -127,7 +120,7 @@ func _input(event):
 		if is_hovering_allowed:
 			hovered_handle = handle_hover_check()
 			#handle wasnt detected
-			if not safety_check(hovered_handle):
+			if not safety_check(hovered_handle) and not safety_check(dragged_handle):
 				hovered_part = part_hover_check()
 				part_hover_selection_box(hovered_part)
 			#handle was detected
@@ -147,8 +140,7 @@ func _input(event):
 					dragged_part = hovered_part
 					drag_offset = dragged_part.global_position - ray_result.position
 					selected_parts_abb = SnapUtils.calculate_extents(selected_parts_abb, dragged_part, selected_parts)
-					$MeshInstance3D.mesh.size = selected_parts_abb.extents
-					$MeshInstance3D.transform = selected_parts_abb.transform
+					transform_handle_root.global_transform = selected_parts_abb.transform
 					var i : int = 0
 					main_offset.clear()
 					while i < selected_parts.size():
@@ -160,14 +152,14 @@ func _input(event):
 					#ONLY set dragged_handle if its null
 					#if not safety_check(dragged_handle):
 						dragged_handle = hovered_handle
-						dragged_handle.is_highlighted = true
+						TransformHandleUtils.set_transform_handle_highlight(dragged_handle, true)
 						#hide hover selection_box because it does not move with transforms
 						hover_selection_box.visible = false
 				
 			else:
 				dragged_part = null
 				if safety_check(dragged_handle):
-					dragged_handle.is_highlighted = false
+					TransformHandleUtils.set_transform_handle_highlight(dragged_handle, false)
 				dragged_handle = null
 				mouse_button_held = false
 	
@@ -209,11 +201,7 @@ func _input(event):
 							main_offset = [hovered_part.global_position - dragged_part.global_position]
 							clear_all_selection_boxes()
 							part_instance_selection_box(hovered_part)
-					if selected_parts.size() > 0:
-						selected_parts_abb = SnapUtils.calculate_extents(selected_parts_abb, selected_parts[0], selected_parts)
-						$MeshInstance3D.mesh.size = selected_parts_abb.extents
-						$MeshInstance3D.transform = selected_parts_abb.transform
-			#no parts hovered
+		#no parts hovered
 				elif is_selecting_allowed:
 					#shift is unheld
 					if not Input.is_key_pressed(KEY_SHIFT):
@@ -221,9 +209,20 @@ func _input(event):
 							selected_parts.clear()
 							clear_all_selection_boxes()
 							main_offset.clear()
+					
+					
 	#lmb up
 			else:
 				pass
+			
+	#post click checks
+			if selected_parts.size() > 0:
+				selected_parts_abb = SnapUtils.calculate_extents(selected_parts_abb, selected_parts[0], selected_parts)
+				transform_handle_root.global_transform = selected_parts_abb.transform
+				TransformHandleUtils.set_tool_handle_array_active(selected_tool_handle_array, true)
+			
+			if selected_parts.size() == 0:
+				TransformHandleUtils.set_tool_handle_array_active(selected_tool_handle_array, false)
 	
 	
 #change initial_transform on r or t press
@@ -233,7 +232,7 @@ func _input(event):
 				#rotate clockwise around normal vector
 				if Input.is_key_pressed(KEY_R):
 					initial_rotation = initial_rotation.rotated(ray_result.normal, PI * 0.5)
-					update_snap()
+					apply_snap_rotation()
 					snap_position()
 				#rotate around part vector which is closest to cam.basis.x
 				if Input.is_key_pressed(KEY_T):
@@ -242,22 +241,24 @@ func _input(event):
 					if r_dict.vector.dot(cam.basis.x) < 0:
 						r_dict.vector = -r_dict.vector
 					initial_rotation = initial_rotation.rotated(r_dict.vector.normalized(), PI * 0.5)
-					update_snap()
+					apply_snap_rotation()
 					snap_position()
 	
 	
 	
 #dragging (parts AND transform handles) happens here
 	if event is InputEventMouseMotion:
+		#parts dragging under this if
 		if mouse_button_held and not ray_result.is_empty() and is_selecting_allowed:
 			if safety_check(dragged_part):
 				if safety_check(hovered_part):
 					if not SnapUtils.part_rectilinear_alignment_check(dragged_part, hovered_part):
-						update_snap()
+						apply_snap_rotation()
 					
 					snap_position()
 					#set positions according to main_offset and where the selection is being dragged (ray_result.position)
 		
+		#transform handle dragging under this if
 		#handles do not need a "canvas" collider to be dragged over
 		#so theres no check of hovered_part or hovered_handle
 		if mouse_button_held and is_selecting_allowed:
@@ -267,9 +268,9 @@ func _input(event):
 				var second = cam.project_ray_normal(event.position)
 				var new_transform = TransformHandleUtils.transform(dragged_handle, transform_handle_root, drag_offset, ray_result, event, first, second, cam)
 				"TODO"#new transform function here
-#given: new transform, selected_parts, selection_box_array, selected_parts_abb and transform_handle_root
 				
-				transform_handle_root.global_transform = transform_handle_root.global_transform * new_transform
+				#given: new transform, selection
+				transform_handle_root.global_transform = new_transform * transform_handle_root.global_transform
 				
 				var i : int = 0
 				while i < selected_parts.size():
@@ -280,41 +281,46 @@ func _input(event):
 					i = i + 1
 				
 				selected_parts_abb.transform = new_transform * selected_parts_abb.transform
-				$MeshInstance3D.global_transform = selected_parts_abb.transform
+				
 
 #set selected state and is_drag_tool
+"TODO"#put all the things one has to edit to add a new tool, into one file (maybe)
 func on_tool_selected(button):
 	match button:
 		b_drag:
-			selected_state = SelectedTool.drag
+			selected_tool_handle_array = []
 			is_drag_tool = true
 		b_move:
-			selected_state = SelectedTool.drag_move
+			selected_tool_handle_array = transform_handle_root.tool_handle_array.move
 			is_drag_tool = true
+			transform_handle_root.transform = selected_parts_abb.transform
+			if selected_parts.size() > 0:
+				TransformHandleUtils.set_tool_handle_array_active(selected_tool_handle_array, true)
 		b_rotate:
-			selected_state = SelectedTool.drag_rotate
+			#selected_tool_handle_array = transform_handle_root.tool_handle_array.rotate
 			is_drag_tool = true
 		b_scale:
-			selected_state = SelectedTool.drag_scale
+			#selected_tool_handle_array = transform_handle_root.tool_handle_array.scale
 			is_drag_tool = true
 		b_material:
-			selected_state = SelectedTool.material
+			#selected_tool_handle_array = []
 			is_drag_tool = false
 			selected_parts.clear()
 			clear_all_selection_boxes()
 			main_offset.clear()
 		b_color:
-			selected_state = SelectedTool.color
+			#selected_tool_handle_array = []
 			is_drag_tool = false
 			selected_parts.clear()
 			clear_all_selection_boxes()
 			main_offset.clear()
 		b_lock:
-			selected_state = SelectedTool.lock
+			#selected_tool_handle_array = []
 			is_drag_tool = false
 			selected_parts.clear()
 			clear_all_selection_boxes()
 			main_offset.clear()
+
 
 
 #this stuff was ugly so i put them into functions
@@ -401,9 +407,7 @@ func part_hover_check():
 #the position of the aabb is relative to dragged part if dragged_parts transform is an identity
 #perform the "normal vector bump" to make sure the parts dont phase through each other
 func snap_position(is_planar_snap : bool = true):
-	#just forget the aabb right now
-	#what matters is figuring out the correct math here
-	
+	var abb_offset_dragged_part : Vector3 = selected_parts_abb.transform.origin - dragged_part.position
 	var normal = ray_result.normal
 	
 	#first find closest basis vectors to normal vector and use that to determine which side length to use
@@ -445,19 +449,22 @@ func snap_position(is_planar_snap : bool = true):
 	
 	var result_global : Vector3 = hovered_part.global_transform * result_local
 	dragged_part.global_position = result_global
-	"TODO"#new transform function here
-#given: new transform, selected_parts, selection_box_array, selected_parts_abb and transform_handle_root
+	
+	"TODO"#this sucks
+	selected_parts_abb.transform.origin = abb_offset_dragged_part + dragged_part.position
+	transform_handle_root.transform.origin = selected_parts_abb.transform.origin
 	i = 0
 	while i < selected_parts.size():
 		selected_parts[i].global_position = dragged_part.global_position + main_offset[i]
 		selection_box_array[i].global_transform = selected_parts[i].global_transform
+		"TODO"#make this return a transform which can be applied to everything
+		#and throw this function into SnapUtils
+		"TODO"#use abb for normal bump
 		i = i + 1
 
 
-"TODO"#create rotate data and unrotate data function for bounding box
-#or data to local data to global
-#or maybe use one of those premade functions of node3d
-func update_snap():
+#rotation only
+func apply_snap_rotation():
 	#use initial_rotation so that dragged_part doesnt continually rotate further 
 	#from its init6ial rotation after being dragged over multiple off-grid parts
 	var rotated_basis : Basis = SnapUtils.snap_rotation(initial_rotation, ray_result)
@@ -465,6 +472,7 @@ func update_snap():
 	var difference : Basis = rotated_basis * dragged_part.basis.inverse()
 	
 	drag_offset = difference * drag_offset
+	selected_parts_abb.transform.basis = rotated_basis
 	
 	
 	#rotate the main_offset vector by the difference between the
@@ -548,5 +556,3 @@ func delete_selection_box(assigned_part : Node3D):
 				selection_box_array.erase(i)
 				i.queue_free()
 				return
-
-

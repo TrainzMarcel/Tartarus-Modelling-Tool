@@ -1,6 +1,7 @@
-[gd_scene load_steps=8 format=3 uid="uid://clfcgcedn47iy"]
+[gd_scene load_steps=9 format=3 uid="uid://clfcgcedn47iy"]
 
 [ext_resource type="Script" path="res://editor/transform_handles/transform_handle.gd" id="1_i4hrh"]
+[ext_resource type="Script" path="res://editor/transform_handles/transform_handle_root.gd" id="1_rew5o"]
 [ext_resource type="Shader" path="res://editor/transform_handles/render_over.gdshader" id="2_v5yh4"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_e7qbh"]
@@ -27,10 +28,10 @@ height = 0.5
 radius = 0.2
 
 [node name="TransformHandleRoot" type="Node3D"]
+script = ExtResource("1_rew5o")
 
-[node name="PositionHandles" type="Node3D" parent="."]
-
-[node name="TransformHandleX" type="StaticBody3D" parent="PositionHandles" node_paths=PackedStringArray("mesh_array", "collider_array")]
+[node name="PositionHandleX" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
+visible = false
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_i4hrh")
@@ -41,24 +42,26 @@ color_drag = Color(1, 0, 0, 1)
 mesh_array = [NodePath("MeshInstance3D"), NodePath("MeshInstance3D2")]
 collider_array = [NodePath("CollisionShape3D"), NodePath("CollisionShape3D2")]
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="PositionHandles/TransformHandleX"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PositionHandleX"]
 transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 1.1, 0, 0)
 mesh = SubResource("CylinderMesh_dymed")
 
-[node name="MeshInstance3D2" type="MeshInstance3D" parent="PositionHandles/TransformHandleX"]
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="PositionHandleX"]
 transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 2, 0, 0)
 mesh = SubResource("CylinderMesh_cf10l")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="PositionHandles/TransformHandleX"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PositionHandleX"]
 transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 1.05, 0, 0)
 shape = SubResource("CylinderShape3D_p4f7v")
+disabled = true
 
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="PositionHandles/TransformHandleX"]
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="PositionHandleX"]
 transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 2, 0, 0)
 shape = SubResource("CylinderShape3D_xjdm1")
+disabled = true
 
-[node name="TransformHandleY" type="StaticBody3D" parent="PositionHandles" node_paths=PackedStringArray("mesh_array", "collider_array")]
-transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+[node name="PositionHandleY" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
+visible = false
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_i4hrh")
@@ -69,24 +72,26 @@ color_drag = Color(0, 1, 0, 1)
 mesh_array = [NodePath("MeshInstance3D"), NodePath("MeshInstance3D2")]
 collider_array = [NodePath("CollisionShape3D"), NodePath("CollisionShape3D2")]
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="PositionHandles/TransformHandleY"]
-transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 1.1, 0, 0)
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PositionHandleY"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.80825e-08, 1.1, 0)
 mesh = SubResource("CylinderMesh_dymed")
 
-[node name="MeshInstance3D2" type="MeshInstance3D" parent="PositionHandles/TransformHandleY"]
-transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 2, 0, 0)
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="PositionHandleY"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.74228e-08, 2, 0)
 mesh = SubResource("CylinderMesh_cf10l")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="PositionHandles/TransformHandleY"]
-transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 1.05, 0, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PositionHandleY"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5897e-08, 1.05, 0)
 shape = SubResource("CylinderShape3D_p4f7v")
+disabled = true
 
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="PositionHandles/TransformHandleY"]
-transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 2, 0, 0)
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="PositionHandleY"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.74228e-08, 2, 0)
 shape = SubResource("CylinderShape3D_xjdm1")
+disabled = true
 
-[node name="TransformHandleZ" type="StaticBody3D" parent="PositionHandles" node_paths=PackedStringArray("mesh_array", "collider_array")]
-transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 0, 0, 0)
+[node name="PositionHandleZ" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
+visible = false
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_i4hrh")
@@ -97,18 +102,20 @@ color_drag = Color(0, 0, 1, 1)
 mesh_array = [NodePath("MeshInstance3D"), NodePath("MeshInstance3D2")]
 collider_array = [NodePath("CollisionShape3D"), NodePath("CollisionShape3D2")]
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="PositionHandles/TransformHandleZ"]
-transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 1.1, 0, 0)
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PositionHandleZ"]
+transform = Transform3D(1.91069e-15, -4.37114e-08, -1, -1, -4.37114e-08, 0, -4.37114e-08, 1, -4.37114e-08, -4.80825e-08, 0, 1.1)
 mesh = SubResource("CylinderMesh_dymed")
 
-[node name="MeshInstance3D2" type="MeshInstance3D" parent="PositionHandles/TransformHandleZ"]
-transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 2, 0, 0)
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="PositionHandleZ"]
+transform = Transform3D(1.91069e-15, -4.37114e-08, -1, -1, -4.37114e-08, 0, -4.37114e-08, 1, -4.37114e-08, -8.74228e-08, 0, 2)
 mesh = SubResource("CylinderMesh_cf10l")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="PositionHandles/TransformHandleZ"]
-transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 1.05, 0, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PositionHandleZ"]
+transform = Transform3D(1.91069e-15, -4.37114e-08, -1, -1, -4.37114e-08, 0, -4.37114e-08, 1, -4.37114e-08, -4.5897e-08, 0, 1.05)
 shape = SubResource("CylinderShape3D_p4f7v")
+disabled = true
 
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="PositionHandles/TransformHandleZ"]
-transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 2, 0, 0)
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="PositionHandleZ"]
+transform = Transform3D(1.91069e-15, -4.37114e-08, -1, -1, -4.37114e-08, 0, -4.37114e-08, 1, -4.37114e-08, -8.74228e-08, 0, 2)
 shape = SubResource("CylinderShape3D_xjdm1")
+disabled = true
