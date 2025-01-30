@@ -4,6 +4,7 @@ class_name TransformHandleUtils
 
 "TODO"#add a max distance in case user drags too far
 #make sure to test this with orthogonal camera in the future
+"TODO"#this math doesnt always work properly (something to do with camera angle and being too close to a handle)
 static func transform(active_handle : TransformHandle, transform_handle_root : Node3D, drag_offset : Vector3, ray_result : Dictionary, event : InputEventMouseMotion, cam_normal_prev : Vector3, cam_normal : Vector3, cam : FreeLookCamera):
 	var r_transform : Transform3D = Transform3D()
 	var local_vector : Vector3 = transform_handle_root.transform.basis * active_handle.direction_vector
@@ -69,3 +70,4 @@ static func initialize_transform_handle_root(input : TransformHandleRoot):
 		transform_handle_array.append(i)
 	
 	input.tool_handle_array.move = transform_handle_array
+

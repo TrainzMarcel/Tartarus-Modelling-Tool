@@ -11,8 +11,7 @@ static func average_position_part(input : Array[Part]):
 "TODO"#unit test and make above comment better
 #res://editor/debug_and_unit_tests/unit_test.gd
 static func snap_rotation(input : Basis, ray_result : Dictionary):
-	var b_array : Array[Vector3] = [input.x, input.y, input.z]
-	var b_array_2 : Array[Vector3] = [ray_result.collider.basis.x, ray_result.collider.basis.y, ray_result.collider.basis.z]
+	var input_2 : Basis = ray_result.collider.basis
 	var i : int = 0
 	var closest_vector_1 : Vector3
 	var closest_vector_2 : Vector3
@@ -20,18 +19,18 @@ static func snap_rotation(input : Basis, ray_result : Dictionary):
 	
 #find closest matching basis vector of dragged_part to normal vector using absolute dot product
 #(the dot product farthest from 0)
-	while i < b_array.size():
+	while i < 3:
 		var j : int = 0
-		while j < b_array_2.size():
+		while j < 3:
 			#remember, 1 = parallel vectors, 0 = perpendicular, -1 = opposing vectors
-			if abs(b_array[i].dot(b_array_2[j])) > abs(highest_dot):
-				highest_dot = b_array[i].dot(b_array_2[j])
-				closest_vector_1 = b_array[i]
-				closest_vector_2 = b_array_2[j]
+			if abs(input[i].dot(input_2[j])) > abs(highest_dot):
+				highest_dot = input[i].dot(input_2[j])
+				closest_vector_1 = input[i]
+				closest_vector_2 = input_2[j]
 			j = j + 1
 		i = i + 1
 	
-	if highest_dot == 0:
+	if is_equal_approx(highest_dot, 0.0):
 		return input
 	
 	
@@ -64,8 +63,7 @@ static func snap_rotation(input : Basis, ray_result : Dictionary):
 	
 #iterate over all 3 vectors and again find closest absolute dot product
 #find signed angle between that and the closest vector and rotate accordingly
-	b_array = [rotated_basis.x, rotated_basis.y, rotated_basis.z]
-	var r_dict_2 = find_closest_vector_abs(b_array, vec_1)
+	var r_dict_2 = find_closest_vector_abs(rotated_basis, vec_1, true)
 	angle = (r_dict_2.vector * sign(r_dict_2.dot)).angle_to(vec_1)
 	cross_product = (r_dict_2.vector * sign(r_dict_2.dot)).cross(vec_1)
 	
@@ -76,13 +74,84 @@ static func snap_rotation(input : Basis, ray_result : Dictionary):
 	return rotated_basis.rotated(cross_product.normalized(), angle).orthonormalized()
 
 
-#returns index of closest pointing vector, ignoring if the vector is pointing the opposite way
-static func find_closest_vector_abs(search_array : Array[Vector3], target : Vector3):
+#planar positional snap, returns global vector3 position of dragged part
+static func snap_position(ray_result : Dictionary,
+dragged_part : Part,
+hovered_part : Part,
+selected_parts_abb : ABB,
+drag_offset : Vector3,
+positional_snap_increment : float,
+is_planar_snap : bool = true):
+	
+	var normal = ray_result.normal
+	
+	#first find closest basis vectors to normal vector and use that to determine which side length to use
+	var r_dict_1 = SnapUtils.find_closest_vector_abs(dragged_part.basis, normal, true)
+	var side_length = dragged_part.part_scale[r_dict_1.index]
+	
+	#inverse for transforming everything to local space of the hovered part
+	var inverse = hovered_part.global_transform.inverse()
+	#transformed local variables
+	var ray_result_local_position : Vector3 = inverse * ray_result.position
+	var normal_local : Vector3 = inverse.basis * normal
+	var drag_offset_local : Vector3 = inverse.basis * drag_offset
+	
+	#normal "bump"
+	"TODO"#use abb for normal bump, but first fix positioning of abb
+	drag_offset_local = normal_local * (side_length * 0.5) + (drag_offset_local - drag_offset_local.dot(normal_local) * normal_local)
+	var result_local = ray_result_local_position + drag_offset_local
+	var r_dict_2 = SnapUtils.find_closest_vector_abs(Basis.IDENTITY, normal_local, true)
+	
+	
+	#if one parts side length is even and one is odd
+	#add half of a snap increment to offset it away
+	var dragged_part_local : Basis = inverse.basis * dragged_part.basis
+	var dragged_part_side_lengths_local : Vector3 = SnapUtils.get_side_lengths_local(dragged_part.part_scale, dragged_part_local)
+	#print(dragged_part_side_lengths_local)
+	var i : int = 0
+	
+	while i < 3:
+		#dont snap normal direction, only planar directions
+		if abs(normal_local.dot(Basis.IDENTITY[i])) > 0.9:
+			i = i + 1
+			continue
+		
+		result_local[i] = snapped(result_local[i], positional_snap_increment)
+		var side_1_odd : bool = SnapUtils.is_odd_with_snap_size(hovered_part.part_scale[i], positional_snap_increment)
+		var side_2_odd : bool = SnapUtils.is_odd_with_snap_size(dragged_part_side_lengths_local[i], positional_snap_increment)
+		if side_1_odd != side_2_odd:
+			result_local[i] = result_local[i] + positional_snap_increment * 0.5
+		i = i + 1
+	
+	"TODO"#read https://github.com/MostlyAdequate/mostly-adequate-guide/blob/master/ch03.md
+	#apply this to dragged_part, 
+	"TODO"#make this return a transform which can be applied to everything
+	var relative : Vector3 = (hovered_part.global_transform * result_local) - dragged_part.position
+	return {absolute = hovered_part.global_transform * result_local,
+	relative = relative}
+	
+	#i = 0
+	#while i < selected_parts.size():
+	#	selected_parts[i].global_position = dragged_part.global_position + main_offset[i]
+	#	selection_box_array[i].global_transform = selected_parts[i].global_transform
+
+
+
+#returns index of most parallel vector to target vector, no matter if its pointing the opposite way or not
+#update; removed type of search_array to allow basis as parameter
+static func find_closest_vector_abs(search_array, target : Vector3, is_search_array_basis : bool):
 	var highest_dot : float
 	var closest_vec_index : int
 	var closest_vec : Vector3
+	
 	var i : int = 0
-	while i < search_array.size():
+	var j : int = 0
+	if is_search_array_basis:
+		j = 3
+	else:
+		j = search_array.size()
+	
+	while i < j:
 		var dot_product = search_array[i].dot(target)
 		if abs(highest_dot) < abs(dot_product):
 			highest_dot = dot_product
@@ -99,24 +168,22 @@ static func find_closest_vector_abs(search_array : Array[Vector3], target : Vect
 
 static func part_rectilinear_alignment_check(p1 : Part, p2 : Part):
 	var i : int = 0
-	var b_array_1 : Array[Vector3] = [p1.global_transform.basis.x,
-	p1.global_transform.basis.y, p1.global_transform.basis.z]
-	var b_array_2 : Array[Vector3] = [p2.global_transform.basis.x,
-	p2.global_transform.basis.y]
+	var p1_basis : Basis = p1.global_transform.basis
+	var p2_basis : Basis = p2.global_transform.basis
 	var is_aligned_1 : bool = false
 	var is_aligned_2 : bool = false
 	
 	#at least one of 3 vectors should evaluate to (almost) 1
-	while i < b_array_1.size():
+	while i < 3:
 		#this is as precise as 32bit floats can do
-		if abs(b_array_1[i].dot(b_array_2[0])) > 0.999999:
+		if abs(p1_basis[i].dot(p2_basis[0])) > 0.999999:
 			is_aligned_1 = true
 			break
 		i = i + 1
 	
 	i = 0
-	while i < b_array_1.size():
-		if abs(b_array_1[i].dot(b_array_2[1])) > 0.999999:
+	while i < 3:
+		if abs(p1_basis[i].dot(p2_basis[1])) > 0.999999:
 			is_aligned_2 = true
 			break
 		i = i + 1
@@ -126,24 +193,19 @@ static func part_rectilinear_alignment_check(p1 : Part, p2 : Part):
 static func part_exact_alignment(p1 : Basis, p2 : Basis):
 	var i : int = 0
 	var j : int = 0
-	var b_array_1 : Array[Vector3] = [p1.x, p1.y, p1.z]
-	var b_array_2 : Array[Vector3] = [p2.x, p2.y, p2.z]
-
+	var p1_mutated : Basis = Basis(p1)
+	
 	#at least one of 3 vectors should evaluate to 1
-	while i < b_array_1.size():
-		while j < b_array_2.size():
-			var dot : float = b_array_1[i].dot(b_array_2[j])
+	while i < 3:
+		while j < 3:
+			var dot : float = p1[i].dot(p2[j])
 			if abs(dot) > 0.95:
-				b_array_1[i] = b_array_2[j] * sign(dot)
+				p1_mutated[i] = p2[j] * sign(dot)
 			j = j + 1
 		j = 0
 		i = i + 1
-
-	#assign to p1
-	p1.x = b_array_1[0]
-	p1.y = b_array_1[1]
-	p1.z = b_array_1[2]
-	return p1
+	
+	return p1_mutated
 
 
 #return whether a number contains an odd or even amount of snap increments
