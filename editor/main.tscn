@@ -1,4 +1,4 @@
-[gd_scene load_steps=69 format=3 uid="uid://hul5x10ptumj"]
+[gd_scene load_steps=76 format=3 uid="uid://hul5x10ptumj"]
 
 [ext_resource type="Script" path="res://editor/main.gd" id="1_4xdr8"]
 [ext_resource type="PackedScene" uid="uid://c01nu37bjhxsi" path="res://editor/camera/free_look_camera.tscn" id="2_n3tr4"]
@@ -7,6 +7,7 @@
 [ext_resource type="Material" uid="uid://dg0pq3t4uvees" path="res://editor/selection_box/highlight_mat.res" id="4_sa2se"]
 [ext_resource type="Script" path="res://editor/selection_box/selection_box.gd" id="5_byqpd"]
 [ext_resource type="PackedScene" uid="uid://clfcgcedn47iy" path="res://editor/transform_handles/transform_handle_root.tscn" id="7_wy0x5"]
+[ext_resource type="Texture2D" uid="uid://canip75ut1vvn" path="res://editor/icon.svg" id="8_0y85n"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_jgeb0"]
 sky_top_color = Color(0.168627, 0.470588, 0.690196, 1)
@@ -374,12 +375,48 @@ radial_segments = 16
 rings = 1
 cap_top = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yt3a6"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ayqrk"]
 transparency = 1
 albedo_color = Color(0, 1, 1, 0.298039)
 
-[sub_resource type="BoxMesh" id="BoxMesh_ppggx"]
-material = SubResource("StandardMaterial3D_yt3a6")
+[sub_resource type="BoxMesh" id="BoxMesh_gfya6"]
+material = SubResource("StandardMaterial3D_ayqrk")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pxu0s"]
+transparency = 1
+albedo_color = Color(1, 1, 0, 0.407843)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_13xlt"]
+material = SubResource("StandardMaterial3D_pxu0s")
+top_radius = 0.0
+bottom_radius = 0.2
+height = 1.0
+radial_segments = 16
+rings = 1
+cap_top = false
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0v5us"]
+transparency = 1
+albedo_color = Color(1, 1, 0, 0.407843)
+albedo_texture = ExtResource("8_0y85n")
+uv1_triplanar = true
+
+[sub_resource type="BoxMesh" id="BoxMesh_qe5on"]
+material = SubResource("StandardMaterial3D_0v5us")
+size = Vector3(10, 0.01, 10)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7umvj"]
+transparency = 1
+albedo_color = Color(1, 0, 0, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_315y0"]
+material = SubResource("StandardMaterial3D_7umvj")
+top_radius = 0.0
+bottom_radius = 0.2
+height = 1.0
+radial_segments = 16
+rings = 1
+cap_top = false
 
 [node name="Main" type="Node3D" node_paths=PackedStringArray("d_vector", "b_drag", "b_move", "b_rotate", "b_scale", "b_color", "b_material", "b_lock", "b_spawn", "b_spawn_type", "b_local_transform_active", "l_positional_snap_increment", "l_rotational_snap_increment", "msg_label", "camera_speed_label", "camera_zoom_label", "cam", "workspace", "transform_handle_root", "no_drag_ui", "hover_selection_box")]
 script = ExtResource("1_4xdr8")
@@ -869,16 +906,28 @@ box_scale = Vector3(1, 1, 1)
 [node name="TransformHandleRoot" parent="Workspace" instance=ExtResource("7_wy0x5")]
 
 [node name="DebugVector3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.30398, 0, 0)
 mesh = SubResource("CylinderMesh_rrjhv")
 script = ExtResource("4_fq3r4")
 color = Color(1, 1, 0, 1)
 
 [node name="DebugVector3D2" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.30398, 0, 0)
 mesh = SubResource("CylinderMesh_cha21")
 script = ExtResource("4_fq3r4")
 color = Color(0.901961, 0.431373, 0, 1)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-mesh = SubResource("BoxMesh_ppggx")
+mesh = SubResource("BoxMesh_gfya6")
+
+[node name="DebugVector3D3" type="MeshInstance3D" parent="."]
+mesh = SubResource("CylinderMesh_13xlt")
+script = ExtResource("4_fq3r4")
+color = Color(1, 1, 0, 0.407843)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="DebugVector3D3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+mesh = SubResource("BoxMesh_qe5on")
+
+[node name="DebugVector3D4" type="MeshInstance3D" parent="."]
+mesh = SubResource("CylinderMesh_315y0")
+script = ExtResource("4_fq3r4")
+color = Color(1, 0, 0, 1)

@@ -29,7 +29,7 @@ func _input(event):
 		return
 	
 	if Input.is_key_pressed(KEY_F) and event.is_pressed() and not event.is_echo():
-		if main.selected_parts.size() > 0:
+		if main.selected_parts_array.size() > 0:
 			
 			lock_position = main.selected_parts_abb.transform.origin
 			lock_zoom = main.selected_parts_abb.extents.length()

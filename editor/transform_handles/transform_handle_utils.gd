@@ -2,26 +2,51 @@ extends RefCounted
 class_name TransformHandleUtils
 
 
+"TODO"#rename variables better
+"TODO"#comment better
 "TODO"#add a max distance in case user drags too far
+"TODO"#add snapping increment
 #make sure to test this with orthogonal camera in the future
 "TODO"#this math doesnt always work properly (something to do with camera angle and being too close to a handle)
-static func transform(active_handle : TransformHandle, transform_handle_root : Node3D, drag_offset : Vector3, ray_result : Dictionary, event : InputEventMouseMotion, cam_normal_prev : Vector3, cam_normal : Vector3, cam : FreeLookCamera):
+static func transform(active_handle : TransformHandle, transform_handle_root : Node3D, drag_offset : Vector3, ray_result : Dictionary, event : InputEventMouseMotion, cam_normal_prev : Vector3, cam_normal : Vector3, cam : FreeLookCamera, debug_mesh : Array, p_snap_increment : float):
 	var r_transform : Transform3D = Transform3D()
-	var local_vector : Vector3 = transform_handle_root.transform.basis * active_handle.direction_vector
+	
+	#direction_vector of active_handle transformed to global space from local (local to active_handle)
+	var global_vector : Vector3 = transform_handle_root.transform.basis * active_handle.direction_vector
 	match active_handle.direction_type:
 		TransformHandle.DirectionTypeEnum.axis_move:
-			#first construct a plane along the axis the normal of which points to the camera
-			#(but only rotating along the axis)
-			var plane_axis : Plane = Plane(local_vector)
+			
 			#need a plane which acts like a sprite that rotates around the handles direction_vector
-			var plane_cam : Plane = Plane(plane_axis.project(cam.global_position))
+			
+			#project vector pointing from handle to camera.global_position
+			var vec : Vector3 = cam.global_position - active_handle.global_position
+			var vec_2 : Vector3 = vec.dot(global_vector.normalized()) * global_vector.normalized()
+			vec = (vec - vec_2).normalized()
+			
+			var plane_cam_d = (active_handle.global_position.dot(vec) * vec).length()
+			
+			#if the camera is pointing away from the 0,0,0 point, invert plane_cam_d (since the normal would be flipped
+			if cam.global_position.dot(vec) < 0:
+				plane_cam_d = -plane_cam_d
+			
+			var plane_cam : Plane = Plane(vec, plane_cam_d)
+			
+			"DEBUG"#--------------------------------------------------------------------------------
+			print(plane_cam.normal)
+			
+			debug_mesh[0].input_vector = plane_cam.normal
+			debug_mesh[0].origin_position = Vector3.ZERO
+			debug_mesh[0].origin_position = debug_mesh[0].origin_position + plane_cam.d * plane_cam.normal
+			"DEBUG"#--------------------------------------------------------------------------------
+			
+			
 			var cam_normal_plane = plane_cam.intersects_ray(cam.global_position, cam_normal)
 			var cam_normal_prev_plane = plane_cam.intersects_ray(cam.global_position, cam_normal_prev)
 			
 			#find vector between mouse projected onto plane_cam from
 			if cam_normal_plane != null and cam_normal_prev_plane != null:
 				var term_1 = cam_normal_plane - cam_normal_prev_plane
-				var term_2 = local_vector * (local_vector.dot(term_1))
+				var term_2 = global_vector * (global_vector.dot(term_1))
 				r_transform.origin = term_2
 			
 			

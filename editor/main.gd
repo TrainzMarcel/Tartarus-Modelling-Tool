@@ -87,6 +87,12 @@ func _ready():
 	b_lock.pressed.connect(on_tool_selected.bind(b_lock))
 	b_spawn.pressed.connect(on_tool_selected.bind(b_spawn))
 	
+	"TODO"#add a mechanism to remove focus when there is a left click off the ui
+	l_positional_snap_increment.text_submitted.connect(on_snap_increment_set.bind(l_positional_snap_increment))
+	l_rotational_snap_increment.text_submitted.connect(on_snap_increment_set.bind(l_rotational_snap_increment))
+	
+	b_local_transform_active.toggled.connect(on_local_transform_set)
+	
 	TransformHandleUtils.initialize_transform_handle_root(transform_handle_root)
 	selected_parts_abb.debug_mesh = $MeshInstance3D
 
@@ -121,8 +127,6 @@ func _input(event):
 	
 	
 	#for transform handle root to be set to global rotation or local part rotation
-	local_transform_active = b_local_transform_active.button_pressed
-	set_transform_handle_root_position(transform_handle_root, selected_parts_abb.transform, local_transform_active)
 	
 	
 #do raycasting, set hovered_handle
@@ -283,7 +287,7 @@ func _input(event):
 				"TODO"#comment better
 				var first = cam.project_ray_normal(event.position - event.relative)
 				var second = cam.project_ray_normal(event.position)
-				var new_transform = TransformHandleUtils.transform(dragged_handle, transform_handle_root, drag_offset, ray_result, event, first, second, cam)
+				var new_transform = TransformHandleUtils.transform(dragged_handle, transform_handle_root, drag_offset, ray_result, event, first, second, cam, [$DebugVector3D3, $DebugVector3D4], positional_snap_increment)
 				"TEST"
 				#transform_handle_root.global_transform = new_transform * transform_handle_root.global_transform
 				set_transform_handle_root_position(transform_handle_root, new_transform * transform_handle_root.global_transform, local_transform_active)
@@ -340,6 +344,18 @@ func on_tool_selected(button):
 			clear_all_selection_boxes()
 			offset_dragged_to_selected_array.clear()
 
+
+func on_snap_increment_set(new, line_edit):
+	if line_edit == l_positional_snap_increment:
+		positional_snap_increment = float(line_edit.text)
+	elif line_edit == l_rotational_snap_increment:
+		rotational_snap_increment = float(line_edit.text)
+	line_edit.release_focus()
+
+
+func on_local_transform_set(active):
+	local_transform_active = active
+	set_transform_handle_root_position(transform_handle_root, selected_parts_abb.transform, local_transform_active)
 
 #this stuff was ugly so i put them into functions
 func raycast(from : Vector3, to : Vector3, exclude : Array[RID] = [], collision_mask : Array[int] = []):
