@@ -1,11 +1,16 @@
 extends Node3D
 class_name Main
 
-#DEBUG
+"DEBUG"
+"TODO"#once transform_tools gets merged, work on hyperdebug.gd
+#which will dynamically bind all the debug functions to minimize overhead
+#when debugging isnt active
+@export_category("Debug")
 @export var d_vector : Array[DebugVector3D]
 
 #ui
 #top panel, left block
+@export_category("UI")
 @export var b_drag : Button
 @export var b_move : Button
 @export var b_rotate : Button
@@ -18,6 +23,7 @@ class_name Main
 
 #top panel, right block
 @export var b_local_transform_active : CheckBox
+@export var b_snapping_active : CheckBox
 @export var l_positional_snap_increment : LineEdit
 @export var l_rotational_snap_increment : LineEdit
 
@@ -26,40 +32,55 @@ class_name Main
 @export var camera_speed_label : Label
 @export var camera_zoom_label : Label
 
-#dependencies
-@export var cam : FreeLookCamera
-@export var raycast_length : float = 128
-@export var positional_snap_increment : float = 0.2
-@export var rotational_snap_increment : float = 15
-@export var workspace : Node
-
-#transform handles
-@export var transform_handle_root : TransformHandleRoot
-var local_transform_active : bool = false
-
-#for hovering
+#array of control nodes which are iterated over to check if the mouse is over ui
 @export var no_drag_ui : Array[Control]
+
+
+#dependencies
+@export_category("Dependencies")
+@export var cam : FreeLookCamera
+@export var workspace : Node
+@export var transform_handle_root : TransformHandleRoot
 @export var hover_selection_box : SelectionBox
+
+
+#overlapping data (used by both dragging and handles)--------------------------------
+var positional_snap_increment : float = 0.2
+var rotational_snap_increment : float = 15
+var snapping_active : bool = true
+#bounding box of selected parts for positional snapping
+var selected_parts_abb : ABB = ABB.new()
+#vector pointing from ray_result.position to dragged_part (or dragged_handle)
+var drag_offset : Vector3
+
 
 #dragging data------------------------------------------------------------------
 #raw ray result
 var ray_result : Dictionary
 var dragged_part : Part
 var hovered_part : Part
-#store handle which is being dragged, in case mouse moves off handle while dragging
-var dragged_handle : TransformHandle
-var hovered_handle : TransformHandle
 #purely rotational basis set from start of drag as a reference for snapping
 var initial_rotation : Basis
-#bounding box of selected parts for positional snapping
-var selected_parts_abb : ABB = ABB.new()
 #!!!selected_parts_array, offset_dragged_to_selected_array and selection_box_array are parallel arrays!!!
 var selected_parts_array : Array[Part] = []
 var offset_dragged_to_selected_array : Array[Vector3] = []
 #offset from the dragged parts position to the raycast hit position
 var selection_box_array : Array[SelectionBox] = []
-#vector pointing from ray_result.position to dragged_part 
-var drag_offset : Vector3
+@export_category("Tweakables")
+#length of raycast for dragging
+@export var raycast_length : float = 128
+
+
+#transform handle data----------------------------------------------------------
+#store handle which is being dragged, in case mouse moves off handle while dragging
+var dragged_handle : TransformHandle
+#hovered handle to set dragged handle when the user clicks
+var hovered_handle : TransformHandle
+#initial transform to make snapping work with transformhandles
+var handle_initial_transform : Transform3D
+#determines if transform axes will be local to the selection or global
+var local_transform_active : bool = false
+
 
 #conditionals-------------------------------------------------------------------
 var mouse_button_held : bool = false
@@ -72,6 +93,7 @@ var is_drag_tool : bool = true
 var is_hovering_allowed : bool = true
 #this bool is meant for drag tools, if this is enabled then hovering_allowed is also enabled
 var is_selecting_allowed : bool = true
+
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -88,13 +110,18 @@ func _ready():
 	b_spawn.pressed.connect(on_tool_selected.bind(b_spawn))
 	
 	"TODO"#add a mechanism to remove focus when there is a left click off the ui
+	"TODO"#move this and todo to new ui module
 	l_positional_snap_increment.text_submitted.connect(on_snap_increment_set.bind(l_positional_snap_increment))
 	l_rotational_snap_increment.text_submitted.connect(on_snap_increment_set.bind(l_rotational_snap_increment))
 	
-	b_local_transform_active.toggled.connect(on_local_transform_set)
+	b_local_transform_active.toggled.connect(on_local_transform_active_set)
+	b_snapping_active.toggled.connect(on_snapping_active_set)
 	
 	TransformHandleUtils.initialize_transform_handle_root(transform_handle_root)
+	"DEBUG"
 	selected_parts_abb.debug_mesh = $MeshInstance3D
+	#for convienience sakes so my console isnt covered up every time i start the software
+	get_window().position = Vector2(1920*0.5 - 1152 * 0.3, 0)
 
 
 "TODO"#from last time
@@ -107,6 +134,12 @@ func _ready():
 					#add and configure rest of transform tools
 					#use abb to position position and scale handles
 					#use distance from camera for scale (this was what needed to be in _process(delta))
+					#^this might be really hard to do, godot does not like scaling physicsbodies, so id have to scale everything individually
+					#future idea: put selection box around selected_parts_abb as a visual cue (still keeping the selectionboxes of individual parts)
+					#future idea 2: recolor selection box to red if 2 selected parts are overlapping perfectly
+"TODO"#once transform_tools is merged, better clarify which transforms are relative and which ones are absolute (or provide both)
+"TODO"#once transform_tools is merged, seriously consider having a central reference point for selections (such as the bounding box)
+#for example offset_dragged_to_selected_array does not provide anything useful when ur not dragging and always contains a 0,0,0 value because the offset of the dragged part to itself is also stored here
 
 
 # Called every input event.
@@ -124,9 +157,6 @@ func _input(event):
 		#hovering is not allowed if cursor is captured or over ui
 		is_hovering_allowed = Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED
 		is_hovering_allowed = is_hovering_allowed and not ui_hover_check(no_drag_ui)
-	
-	
-	#for transform handle root to be set to global rotation or local part rotation
 	
 	
 #do raycasting, set hovered_handle
@@ -150,15 +180,12 @@ func _input(event):
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				mouse_button_held = true
-				
 				if safety_check(hovered_part):
 					initial_rotation = hovered_part.basis
 					dragged_part = hovered_part
 					drag_offset = dragged_part.global_position - ray_result.position
 					selected_parts_abb = SnapUtils.calculate_extents(selected_parts_abb, dragged_part, selected_parts_array)
-					"TEST"
 					set_transform_handle_root_position(transform_handle_root, selected_parts_abb.transform, local_transform_active)
-					#transform_handle_root.global_transform = selected_parts_abb.transform
 					var i : int = 0
 					offset_dragged_to_selected_array.clear()
 					while i < selected_parts_array.size():
@@ -170,6 +197,9 @@ func _input(event):
 					#ONLY set dragged_handle if its null
 					#if not safety_check(dragged_handle):
 						dragged_handle = hovered_handle
+						#use drag_offset the same way as with dragged_part
+						drag_offset = dragged_handle.global_position - ray_result.position
+						handle_initial_transform = transform_handle_root.transform
 						TransformHandleUtils.set_transform_handle_highlight(dragged_handle, true)
 						#hide hover selection_box because it does not move with transforms
 						hover_selection_box.visible = false
@@ -236,6 +266,7 @@ func _input(event):
 	#post click checks
 			if selected_parts_array.size() > 0:
 				selected_parts_abb = SnapUtils.calculate_extents(selected_parts_abb, selected_parts_array[0], selected_parts_array)
+				set_transform_handle_root_position(transform_handle_root, selected_parts_abb.transform, local_transform_active)
 				TransformHandleUtils.set_tool_handle_array_active(selected_tool_handle_array, true)
 			
 			if selected_parts_array.size() == 0:
@@ -275,6 +306,7 @@ func _input(event):
 						apply_snap_rotation()
 					
 					#set positions according to offset_dragged_to_selected_array and where the selection is being dragged (ray_result.position)
+					"TODO"#after transform_tools is merged, add snapping_active to this function
 					var result = SnapUtils.snap_position(ray_result, dragged_part, hovered_part, selected_parts_abb, drag_offset, positional_snap_increment)
 					apply_snap_position(result.absolute, result.relative)
 		
@@ -283,29 +315,33 @@ func _input(event):
 		#so theres no check of hovered_part or hovered_handle
 		if mouse_button_held and is_selecting_allowed:
 			if safety_check(dragged_handle):
-				#add function to move handles here
 				"TODO"#comment better
-				var first = cam.project_ray_normal(event.position - event.relative)
-				var second = cam.project_ray_normal(event.position)
-				var new_transform = TransformHandleUtils.transform(dragged_handle, transform_handle_root, drag_offset, ray_result, event, first, second, cam, [$DebugVector3D3, $DebugVector3D4], positional_snap_increment)
-				"TEST"
-				#transform_handle_root.global_transform = new_transform * transform_handle_root.global_transform
-				set_transform_handle_root_position(transform_handle_root, new_transform * transform_handle_root.global_transform, local_transform_active)
+				var cam_normal_initial : Vector3 = cam.project_ray_normal(event.position)
+				var result : Dictionary = TransformHandleUtils.transform(dragged_handle, transform_handle_root, drag_offset, handle_initial_transform, cam_normal_initial, event, cam, [$DebugVector3D3, $DebugVector3D4], positional_snap_increment, rotational_snap_increment, snapping_active)
+				set_transform_handle_root_position(transform_handle_root, result.absolute, local_transform_active)
 				
+				"TODO"#after transform_tools is merged, use abb as central reference point and fix this to work with multi selections
+				if result.modify_position:
+					var i : int = 0
+					while i < selected_parts_array.size():
+						var part = selected_parts_array[i]
+						var box = selection_box_array[i]
+						part.global_position = result.absolute.origin
+						box.global_position = part.global_position
+						i = i + 1
+					selected_parts_abb.transform.origin = result.absolute.origin
 				
-				var i : int = 0
-				while i < selected_parts_array.size():
-					var part = selected_parts_array[i]
-					var box = selection_box_array[i]
-					part.global_transform = new_transform * part.global_transform
-					box.global_transform = part.global_transform
-					i = i + 1
-				
-				selected_parts_abb.transform = new_transform * selected_parts_abb.transform
-				
+				if result.modify_rotation:
+					"TODO"#implement
+					pass
+				if result.modify_scale:
+					"TODO"#implement
+					pass
+
 
 #set selected state and is_drag_tool
 "TODO"#put all the things one has to edit to add a new tool, into one file (maybe)
+"TODO"#soon to be moved to a separate ui module
 func on_tool_selected(button):
 	match button:
 		b_drag:
@@ -316,7 +352,7 @@ func on_tool_selected(button):
 		b_move:
 			selected_tool_handle_array = transform_handle_root.tool_handle_array.move
 			is_drag_tool = true
-			transform_handle_root.transform = selected_parts_abb.transform
+			set_transform_handle_root_position(transform_handle_root, selected_parts_abb.transform, local_transform_active)
 			if selected_parts_array.size() > 0:
 				TransformHandleUtils.set_tool_handle_array_active(selected_tool_handle_array, true)
 		b_rotate:
@@ -345,6 +381,7 @@ func on_tool_selected(button):
 			offset_dragged_to_selected_array.clear()
 
 
+"TODO"#soon to be moved to a separate ui module
 func on_snap_increment_set(new, line_edit):
 	if line_edit == l_positional_snap_increment:
 		positional_snap_increment = float(line_edit.text)
@@ -353,9 +390,16 @@ func on_snap_increment_set(new, line_edit):
 	line_edit.release_focus()
 
 
-func on_local_transform_set(active):
+"TODO"#soon to be moved to a separate ui module
+func on_local_transform_active_set(active):
 	local_transform_active = active
 	set_transform_handle_root_position(transform_handle_root, selected_parts_abb.transform, local_transform_active)
+
+
+"TODO"#soon to be moved to a separate ui module
+func on_snapping_active_set(active):
+	snapping_active = active
+
 
 #this stuff was ugly so i put them into functions
 func raycast(from : Vector3, to : Vector3, exclude : Array[RID] = [], collision_mask : Array[int] = []):
@@ -485,7 +529,6 @@ func apply_snap_rotation():
 		i = i + 1
 	
 	
-	"TODO"#this is rushed code
 	#the below section takes care of the abb which needs to move with the selection
 	#rotate vector by difference
 	offset_abb_dragged_part = difference * offset_abb_dragged_part
@@ -506,6 +549,7 @@ func part_hover_selection_box(part : Part):
 
 
 #might remove this
+#this function was meant to toggle the visibility of selectionboxes but it was unreliable
 #func toggle_visibility_selection_box(part : Part, make_visible : bool):
 #	if not safety_check(part):
 #		return

@@ -26,3 +26,5 @@
 24.1. removed state enum and changed out with array which contains each transformhandle, renamed some functions to make more sense, changed transformhandle code to work at any orientation, reorganized some functions into transformhandleutils
 29.1. added a bunch of functionality to set the position and rotation of the transform tools, optimized functions in snap_utils to iterate through basis instead of redundant arrays
 30.1. optimized and fixed calculation of mouse in 3d space for transform handles, got too exhausted to add snapping, added snapping options ui, added signals and functionality for said ui
+
+3.2. added snapping to transform handles, added torus collisider generator, started work on rotation tool, added partially automated setup to transform handles (tool script)

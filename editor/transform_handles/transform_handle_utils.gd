@@ -1,56 +1,89 @@
 extends RefCounted
 class_name TransformHandleUtils
 
-
+"TODO"#when adding scaling tool, return a .size attribute for scaled parts
 "TODO"#rename variables better
 "TODO"#comment better
 "TODO"#add a max distance in case user drags too far
 "TODO"#add snapping increment
 #make sure to test this with orthogonal camera in the future
 "TODO"#this math doesnt always work properly (something to do with camera angle and being too close to a handle)
-static func transform(active_handle : TransformHandle, transform_handle_root : Node3D, drag_offset : Vector3, ray_result : Dictionary, event : InputEventMouseMotion, cam_normal_prev : Vector3, cam_normal : Vector3, cam : FreeLookCamera, debug_mesh : Array, p_snap_increment : float):
-	var r_transform : Transform3D = Transform3D()
+
+static func transform(active_handle : TransformHandle, transform_handle_root : Node3D, drag_offset : Vector3, handle_initial_transform : Transform3D, cam_normal_initial : Vector3, event : InputEventMouseMotion, cam : FreeLookCamera, debug_mesh : Array, p_snap_increment : float, r_snap_increment : float, snapping_active : bool):
+	#return transform
+	var r_dict : Dictionary = {
+		absolute = Transform3D(),
+		relative = Transform3D(),
+		modify_position = false,
+		modify_rotation = false,
+		modify_scale = false
+	}
 	
-	#direction_vector of active_handle transformed to global space from local (local to active_handle)
-	var global_vector : Vector3 = transform_handle_root.transform.basis * active_handle.direction_vector
+	#direction_vector of active_handle transformed from local to global space (local to active_handle)
+	var global_vector : Vector3 = (transform_handle_root.transform.basis * active_handle.direction_vector).normalized()
+	
 	match active_handle.direction_type:
 		TransformHandle.DirectionTypeEnum.axis_move:
-			
 			#need a plane which acts like a sprite that rotates around the handles direction_vector
 			
-			#project vector pointing from handle to camera.global_position
+			#vector pointing from handle to camera.global_position
 			var vec : Vector3 = cam.global_position - active_handle.global_position
+			#project this vector onto the transform_handles direction vector
+			#to only get the part of the vector that is pointing along that direction vector
 			var vec_2 : Vector3 = vec.dot(global_vector.normalized()) * global_vector.normalized()
+			#flatten vector along transform handle
+			#imagine a disc around the transform handles vector and flattening the vector onto the disc
+			#like now taking away the component that vec_2 had
 			vec = (vec - vec_2).normalized()
 			
-			var plane_cam_d = (active_handle.global_position.dot(vec) * vec).length()
+			#get length (and with the dot product also whether the camera is facing away or not, to flip plane_cam_d)
+			var plane_cam_d = active_handle.global_position.dot(vec)
 			
-			#if the camera is pointing away from the 0,0,0 point, invert plane_cam_d (since the normal would be flipped
-			if cam.global_position.dot(vec) < 0:
-				plane_cam_d = -plane_cam_d
-			
+			#create plane which cursor would land on if it was put in 3d space
 			var plane_cam : Plane = Plane(vec, plane_cam_d)
 			
 			"DEBUG"#--------------------------------------------------------------------------------
-			print(plane_cam.normal)
-			
+			#print(plane_cam.normal)
 			debug_mesh[0].input_vector = plane_cam.normal
 			debug_mesh[0].origin_position = Vector3.ZERO
 			debug_mesh[0].origin_position = debug_mesh[0].origin_position + plane_cam.d * plane_cam.normal
 			"DEBUG"#--------------------------------------------------------------------------------
 			
+			var cam_normal_initial_plane = plane_cam.intersects_ray(cam.global_position, cam_normal_initial)
 			
-			var cam_normal_plane = plane_cam.intersects_ray(cam.global_position, cam_normal)
-			var cam_normal_prev_plane = plane_cam.intersects_ray(cam.global_position, cam_normal_prev)
+			#fallback value if intersects_ray fails
+			var term_1 = Vector3.ZERO
+			if cam_normal_initial_plane != null:
+				term_1 = (cam_normal_initial_plane.dot(global_vector)) * global_vector
+			#print("global_vector", global_vector)
+			#print("cam normal initial ", cam_normal_initial_plane)
+			#print("term 1 ", term_1)
 			
-			#find vector between mouse projected onto plane_cam from
-			if cam_normal_plane != null and cam_normal_prev_plane != null:
-				var term_1 = cam_normal_plane - cam_normal_prev_plane
-				var term_2 = global_vector * (global_vector.dot(term_1))
-				r_transform.origin = term_2
+			var projected_offset : Vector3 = drag_offset.dot(global_vector) * global_vector
 			
+			var term_snapped : Vector3 = term_1 + projected_offset
+			var projected_initial : Vector3 = handle_initial_transform.origin.dot(global_vector) * global_vector
+			if snapping_active:
+				term_snapped = term_snapped - projected_initial
+				term_snapped = term_snapped * handle_initial_transform.basis
+				var j : int = 0
+				while j < 3:
+					term_snapped[j] = snapped(term_snapped[j], p_snap_increment)
+					j = j + 1
+				
+				term_snapped = handle_initial_transform.basis * term_snapped
+				term_snapped = term_snapped + projected_initial
 			
+			#absolute defined as the original position plus the amount the user dragged
+			#r_dict.absolute.origin = term_snapped + handle_initial_transform.origin + projected_offset
 			
+			#print(debug_mesh[1].input_vector)
+			r_dict.absolute.origin = term_snapped + (handle_initial_transform.origin - handle_initial_transform.origin.dot(global_vector) * global_vector)
+			r_dict.absolute.basis = handle_initial_transform.basis
+			#relative defined as only the amount the user dragged
+			r_dict.relative.origin = term_snapped
+			r_dict.relative.basis = handle_initial_transform.basis
+			r_dict.modify_position = true
 			
 		TransformHandle.DirectionTypeEnum.axis_rotate:
 			print("ROTATE")
@@ -58,17 +91,8 @@ static func transform(active_handle : TransformHandle, transform_handle_root : N
 			print("PLANE MOVE")
 	
 	
-	#take ((plane normal times absolute distance to plane) DOT cam_normal) * cam_normal
-	#do same operation with cam_normal_prev
-	#then subtract them
-	#finally, project result onto active_handle.normal
-	
-	
-	
-	
-	"TODO"#last time i focused on modularizing main and improving the data structure of transformhandle root AND i have to make tool switching work with collision and visibility.
-	#next would be to implement rotating tool, scaling tool, spawning of parts, color and material tool, material shader, then saving and loading, then wedges, better snapping, pivot point and export import pipeline as final boss
-	return r_transform
+	#next would be to implement rotating tool, scaling tool, spawning of parts, color and material tool, material shader, then saving and loading, then wedges, better snapping, pivot point and export import pipeline
+	return r_dict
 
 
 static func set_tool_handle_array_active(bundle : Array, input : bool):
@@ -87,12 +111,17 @@ static func set_transform_handle_highlight(handle : TransformHandle, input : boo
 			i.set_instance_shader_parameter("color", handle.color_default)
 
 
+"TODO"#put everything needed to add a new tool into this file (or another)
 static func initialize_transform_handle_root(input : TransformHandleRoot):
 	var child_nodes : Array[Node] = input.get_children()
 	var transform_handle_array : Array[TransformHandle] = []
 	
-	for i in child_nodes:
-		transform_handle_array.append(i)
+	input.tool_handle_array.move = []
+	input.tool_handle_array.rotate = []
 	
-	input.tool_handle_array.move = transform_handle_array
+	for i in child_nodes:
+		if i.identifier == "move":
+			input.tool_handle_array.move.append(i)
+		elif i.identifier == "rotate":
+			input.tool_handle_array.rotate.append(i)
 
