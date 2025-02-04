@@ -68,7 +68,7 @@ var offset_dragged_to_selected_array : Array[Vector3] = []
 var selection_box_array : Array[SelectionBox] = []
 @export_category("Tweakables")
 #length of raycast for dragging
-@export var raycast_length : float = 128
+@export var raycast_length : float = 1024
 
 
 #transform handle data----------------------------------------------------------
@@ -78,6 +78,7 @@ var dragged_handle : TransformHandle
 var hovered_handle : TransformHandle
 #initial transform to make snapping work with transformhandles
 var handle_initial_transform : Transform3D
+var initial_event : InputEvent
 #determines if transform axes will be local to the selection or global
 var local_transform_active : bool = false
 
@@ -173,7 +174,7 @@ func _input(event):
 			else:
 				#set hovered_part to null as mouse is no longer hovering over a part
 				hovered_part = null
-	
+		print(hovered_handle)
 	
 #set dragged_part, recalculate all offset_dragged_to_selected_array vectors and bounding box on new click
 	if event is InputEventMouseButton:
@@ -200,6 +201,7 @@ func _input(event):
 						#use drag_offset the same way as with dragged_part
 						drag_offset = dragged_handle.global_position - ray_result.position
 						handle_initial_transform = transform_handle_root.transform
+						initial_event = event
 						TransformHandleUtils.set_transform_handle_highlight(dragged_handle, true)
 						#hide hover selection_box because it does not move with transforms
 						hover_selection_box.visible = false
@@ -295,7 +297,6 @@ func _input(event):
 					apply_snap_position(result.absolute, result.relative)
 	
 	
-	
 #dragging (parts AND transform handles) happens here
 	if event is InputEventMouseMotion:
 		#parts dragging under this if
@@ -316,8 +317,7 @@ func _input(event):
 		if mouse_button_held and is_selecting_allowed:
 			if safety_check(dragged_handle):
 				"TODO"#comment better
-				var cam_normal_initial : Vector3 = cam.project_ray_normal(event.position)
-				var result : Dictionary = TransformHandleUtils.transform(dragged_handle, transform_handle_root, drag_offset, handle_initial_transform, cam_normal_initial, event, cam, [$DebugVector3D3, $DebugVector3D4], positional_snap_increment, rotational_snap_increment, snapping_active)
+				var result : Dictionary = TransformHandleUtils.transform(dragged_handle, transform_handle_root, drag_offset, handle_initial_transform, initial_event, event, cam, [$DebugVector3D3, $DebugVector3D4], positional_snap_increment, rotational_snap_increment, snapping_active)
 				set_transform_handle_root_position(transform_handle_root, result.absolute, local_transform_active)
 				
 				"TODO"#after transform_tools is merged, use abb as central reference point and fix this to work with multi selections
@@ -332,8 +332,14 @@ func _input(event):
 					selected_parts_abb.transform.origin = result.absolute.origin
 				
 				if result.modify_rotation:
-					"TODO"#implement
-					pass
+					var i : int = 0
+					while i < selected_parts_array.size():
+						var part = selected_parts_array[i]
+						var box = selection_box_array[i]
+						part.global_transform.basis = result.absolute.basis
+						box.global_transform.basis = part.global_transform.basis
+						i = i + 1
+					selected_parts_abb.transform.basis = result.absolute.basis
 				if result.modify_scale:
 					"TODO"#implement
 					pass
@@ -343,42 +349,41 @@ func _input(event):
 "TODO"#put all the things one has to edit to add a new tool, into one file (maybe)
 "TODO"#soon to be moved to a separate ui module
 func on_tool_selected(button):
+	if selected_tool_handle_array != null:
+		TransformHandleUtils.set_tool_handle_array_active(selected_tool_handle_array, false)
+	
 	match button:
 		b_drag:
-			if selected_parts_array.size() > 0:
-				TransformHandleUtils.set_tool_handle_array_active(selected_tool_handle_array, false)
 			selected_tool_handle_array = []
 			is_drag_tool = true
 		b_move:
 			selected_tool_handle_array = transform_handle_root.tool_handle_array.move
 			is_drag_tool = true
 			set_transform_handle_root_position(transform_handle_root, selected_parts_abb.transform, local_transform_active)
-			if selected_parts_array.size() > 0:
-				TransformHandleUtils.set_tool_handle_array_active(selected_tool_handle_array, true)
 		b_rotate:
-			#selected_tool_handle_array = transform_handle_root.tool_handle_array.rotate
+			selected_tool_handle_array = transform_handle_root.tool_handle_array.rotate
 			is_drag_tool = true
+			set_transform_handle_root_position(transform_handle_root, selected_parts_abb.transform, local_transform_active)
 		b_scale:
-			#selected_tool_handle_array = transform_handle_root.tool_handle_array.scale
+			selected_tool_handle_array = transform_handle_root.tool_handle_array.scale
 			is_drag_tool = true
 		b_material:
-			#selected_tool_handle_array = []
+			selected_tool_handle_array = []
 			is_drag_tool = false
-			selected_parts_array.clear()
-			clear_all_selection_boxes()
-			offset_dragged_to_selected_array.clear()
 		b_color:
-			#selected_tool_handle_array = []
+			selected_tool_handle_array = []
 			is_drag_tool = false
-			selected_parts_array.clear()
-			clear_all_selection_boxes()
-			offset_dragged_to_selected_array.clear()
 		b_lock:
-			#selected_tool_handle_array = []
+			selected_tool_handle_array = []
 			is_drag_tool = false
-			selected_parts_array.clear()
-			clear_all_selection_boxes()
-			offset_dragged_to_selected_array.clear()
+	
+	if not is_drag_tool:
+		selected_parts_array.clear()
+		clear_all_selection_boxes()
+		offset_dragged_to_selected_array.clear()
+	
+	if selected_parts_array.size() > 0 and selected_tool_handle_array != null:
+				TransformHandleUtils.set_tool_handle_array_active(selected_tool_handle_array, true)
 
 
 "TODO"#soon to be moved to a separate ui module
@@ -410,12 +415,7 @@ func raycast(from : Vector3, to : Vector3, exclude : Array[RID] = [], collision_
 	
 	#if anybody is confused about this calculation
 	#https://docs.godotengine.org/en/4.1/tutorials/physics/physics_introduction.html#code-example
-	if not collision_mask.is_empty():
-		var sum : int = 0
-		for i in collision_mask:
-			sum = int(sum + pow(2, i - 1))
-		
-		ray_param.collision_mask = sum
+	ray_param.collision_mask = SnapUtils.calculate_collision_layer(collision_mask)
 	return get_world_3d().direct_space_state.intersect_ray(ray_param)
 
 
@@ -500,7 +500,6 @@ func apply_snap_rotation():
 	var rotated_basis : Basis = SnapUtils.snap_rotation(initial_rotation, ray_result)
 	#calculate difference between original basis and new basis
 	var difference : Basis = rotated_basis * dragged_part.basis.inverse()
-	
 	drag_offset = difference * drag_offset
 	
 	#vector pointing from dragged part to abb
@@ -534,8 +533,10 @@ func apply_snap_rotation():
 	offset_abb_dragged_part = difference * offset_abb_dragged_part
 	#rotate abb
 	selected_parts_abb.transform.basis = difference * selected_parts_abb.transform.basis
+	
 	#move abb to vector
 	selected_parts_abb.transform.origin = offset_abb_dragged_part + dragged_part.position
+	set_transform_handle_root_position(transform_handle_root, selected_parts_abb.transform, local_transform_active)
 
 
 "TODO"#unit test somehow?

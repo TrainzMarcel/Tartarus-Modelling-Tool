@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://clfcgcedn47iy"]
+[gd_scene load_steps=13 format=3 uid="uid://clfcgcedn47iy"]
 
 [ext_resource type="Script" path="res://editor/transform_handles/transform_handle.gd" id="1_i4hrh"]
 [ext_resource type="Script" path="res://editor/transform_handles/transform_handle_root.gd" id="1_rew5o"]
@@ -39,6 +39,11 @@ outer_radius = 2.02
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_fkfvk"]
 height = 1.0718
 radius = 0.1
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_v72t1"]
+render_priority = 0
+shader = ExtResource("2_v5yh4")
+shader_parameter/overdraw_depth_limit = 99.0
 
 [node name="TransformHandleRoot" type="Node3D"]
 script = ExtResource("1_rew5o")
@@ -255,65 +260,239 @@ disabled = true
 
 [node name="RotationHandleX" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
+collision_layer = 2
+collision_mask = 2
 script = ExtResource("1_i4hrh")
 identifier = "rotate"
 direction_vector = Vector3(1, 0, 0)
 direction_type = 2
 material = SubResource("ShaderMaterial_ecedk")
-color_default = Color(0.588235, 0, 0, 1)
+color_default = Color(0.58, 0, 0, 1)
 color_drag = Color(1, 0, 0, 1)
 mesh_array = [NodePath("MeshInstance3D")]
 collider_array = [NodePath("CollisionShape3D"), NodePath("CollisionShape3D1"), NodePath("CollisionShape3D2"), NodePath("CollisionShape3D3"), NodePath("CollisionShape3D4"), NodePath("CollisionShape3D5"), NodePath("CollisionShape3D6"), NodePath("CollisionShape3D7"), NodePath("CollisionShape3D8"), NodePath("CollisionShape3D9"), NodePath("CollisionShape3D10"), NodePath("CollisionShape3D11")]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="RotationHandleX"]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
 material_override = SubResource("ShaderMaterial_ecedk")
 instance_shader_parameters/color = Color(0.588235, 0, 0, 1)
 mesh = SubResource("TorusMesh_pvecf")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="RotationHandleX"]
-transform = Transform3D(0.75, 0.5, -0.433013, -0.5, -4.37114e-08, -0.866025, -0.433013, 0.866025, 0.25, 1.64545, 0, -0.95)
+transform = Transform3D(-0.5, -6.55671e-08, -0.866025, -0.75, -0.5, 0.433013, -0.433013, 0.866025, 0.25, -7.19249e-08, -1.64545, -0.95)
 shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
 
 [node name="CollisionShape3D1" type="CollisionShape3D" parent="RotationHandleX"]
-transform = Transform3D(0.25, 0.866025, -0.433013, -0.866025, -4.37114e-08, -0.5, -0.433013, 0.5, 0.75, 0.95, 0, -1.64545)
+transform = Transform3D(-0.866025, -8.15666e-08, -0.5, -0.25, -0.866025, 0.433013, -0.433013, 0.5, 0.75, -4.15258e-08, -0.95, -1.64545)
 shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
 
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="RotationHandleX"]
-transform = Transform3D(-4.37114e-08, 1, 3.13709e-08, -1, -4.37114e-08, 3.13709e-08, 3.13709e-08, -3.13709e-08, 1, -5.96046e-08, 0, -1.9)
+transform = Transform3D(-1, -8.74228e-08, 3.13709e-08, 8.74228e-08, -1, -3.13709e-08, 3.13709e-08, -3.13709e-08, 1, 2.6054e-15, 5.96046e-08, -1.9)
 shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
 
 [node name="CollisionShape3D3" type="CollisionShape3D" parent="RotationHandleX"]
-transform = Transform3D(0.25, 0.866025, 0.433013, -0.866025, -4.37114e-08, 0.5, 0.433013, -0.5, 0.75, -0.95, 0, -1.64545)
+transform = Transform3D(-0.866025, -8.15666e-08, 0.5, -0.25, -0.866025, -0.433013, 0.433013, -0.5, 0.75, 4.15258e-08, 0.95, -1.64545)
 shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
 
 [node name="CollisionShape3D4" type="CollisionShape3D" parent="RotationHandleX"]
-transform = Transform3D(0.75, 0.5, 0.433013, -0.5, -4.37114e-08, 0.866025, 0.433013, -0.866025, 0.25, -1.64545, 0, -0.95)
+transform = Transform3D(-0.5, -6.55671e-08, 0.866025, -0.75, -0.5, -0.433013, 0.433013, -0.866025, 0.25, 7.19249e-08, 1.64545, -0.95)
 shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
 
 [node name="CollisionShape3D5" type="CollisionShape3D" parent="RotationHandleX"]
-transform = Transform3D(1, -9.41126e-08, -9.41126e-08, 9.41126e-08, -4.37114e-08, 1, -9.41126e-08, -1, -4.37114e-08, -1.9, 0, 1.78814e-07)
+transform = Transform3D(5.04012e-08, -4.37114e-08, 1, -1, 9.41126e-08, 5.04012e-08, -9.41126e-08, -1, -4.37114e-08, 8.30516e-08, 1.9, 1.78814e-07)
 shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
 
 [node name="CollisionShape3D6" type="CollisionShape3D" parent="RotationHandleX"]
-transform = Transform3D(0.75, -0.5, -0.433013, 0.5, -4.37114e-08, 0.866025, -0.433013, -0.866025, 0.25, -1.64545, 0, 0.95)
+transform = Transform3D(0.5, -2.18557e-08, 0.866025, -0.75, 0.5, 0.433013, -0.433013, -0.866025, 0.25, 7.19249e-08, 1.64545, 0.95)
 shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
 
 [node name="CollisionShape3D7" type="CollisionShape3D" parent="RotationHandleX"]
-transform = Transform3D(0.25, -0.866026, -0.433013, 0.866026, -4.37114e-08, 0.5, -0.433013, -0.5, 0.75, -0.95, 0, 1.64545)
+transform = Transform3D(0.866026, -5.8562e-09, 0.5, -0.25, 0.866026, 0.433013, -0.433013, -0.5, 0.75, 4.15258e-08, 0.95, 1.64545)
 shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
 
 [node name="CollisionShape3D8" type="CollisionShape3D" parent="RotationHandleX"]
-transform = Transform3D(-4.37114e-08, -1, 1.25483e-07, 1, -4.37114e-08, -1.25483e-07, 1.25483e-07, 1.25483e-07, 1, 2.38419e-07, 0, 1.9)
+transform = Transform3D(1, -1.06581e-14, -1.25483e-07, 1.06581e-14, 1, -1.25483e-07, 1.25483e-07, 1.25483e-07, 1, -1.04216e-14, -2.38419e-07, 1.9)
 shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
 
 [node name="CollisionShape3D9" type="CollisionShape3D" parent="RotationHandleX"]
-transform = Transform3D(0.25, -0.866025, 0.433013, 0.866025, -4.37114e-08, -0.5, 0.433013, 0.5, 0.75, 0.95, 0, 1.64545)
+transform = Transform3D(0.866025, -5.85624e-09, -0.5, -0.25, 0.866025, -0.433013, 0.433013, 0.5, 0.75, -4.15258e-08, -0.95, 1.64545)
 shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
 
 [node name="CollisionShape3D10" type="CollisionShape3D" parent="RotationHandleX"]
-transform = Transform3D(0.75, -0.5, 0.433013, 0.5, -4.37114e-08, -0.866026, 0.433013, 0.866026, 0.25, 1.64545, 0, 0.95)
+transform = Transform3D(0.5, -2.18557e-08, -0.866026, -0.75, 0.5, -0.433013, 0.433013, 0.866026, 0.25, -7.19249e-08, -1.64545, 0.95)
 shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
 
 [node name="CollisionShape3D11" type="CollisionShape3D" parent="RotationHandleX"]
+transform = Transform3D(-1.69194e-07, -4.37114e-08, -1, -1, -1.25483e-07, 1.69194e-07, -1.25483e-07, 1, -4.37114e-08, -8.30516e-08, -1.9, -2.38419e-07)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="RotationHandleY" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
+visible = false
+collision_layer = 2
+collision_mask = 2
+script = ExtResource("1_i4hrh")
+identifier = "rotate"
+direction_vector = Vector3(0, 1, 0)
+direction_type = 2
+material = SubResource("ShaderMaterial_ecedk")
+color_default = Color(0, 0.58, 0, 1)
+color_drag = Color(0, 1, 0, 1)
+mesh_array = [NodePath("MeshInstance3D")]
+collider_array = [NodePath("CollisionShape3D"), NodePath("CollisionShape3D1"), NodePath("CollisionShape3D2"), NodePath("CollisionShape3D3"), NodePath("CollisionShape3D4"), NodePath("CollisionShape3D5"), NodePath("CollisionShape3D6"), NodePath("CollisionShape3D7"), NodePath("CollisionShape3D8"), NodePath("CollisionShape3D9"), NodePath("CollisionShape3D10"), NodePath("CollisionShape3D11")]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RotationHandleY"]
+material_override = SubResource("ShaderMaterial_ecedk")
+instance_shader_parameters/color = Color(0, 0.58, 0, 1)
+mesh = SubResource("TorusMesh_pvecf")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RotationHandleY"]
+transform = Transform3D(0.75, 0.5, -0.433013, -0.5, -4.37114e-08, -0.866025, -0.433013, 0.866025, 0.25, 1.64545, 0, -0.95)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D1" type="CollisionShape3D" parent="RotationHandleY"]
+transform = Transform3D(0.25, 0.866025, -0.433013, -0.866025, -4.37114e-08, -0.5, -0.433013, 0.5, 0.75, 0.95, 0, -1.64545)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="RotationHandleY"]
+transform = Transform3D(-4.37114e-08, 1, 3.13709e-08, -1, -4.37114e-08, 3.13709e-08, 3.13709e-08, -3.13709e-08, 1, -5.96046e-08, 0, -1.9)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="RotationHandleY"]
+transform = Transform3D(0.25, 0.866025, 0.433013, -0.866025, -4.37114e-08, 0.5, 0.433013, -0.5, 0.75, -0.95, 0, -1.64545)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D4" type="CollisionShape3D" parent="RotationHandleY"]
+transform = Transform3D(0.75, 0.5, 0.433013, -0.5, -4.37114e-08, 0.866025, 0.433013, -0.866025, 0.25, -1.64545, 0, -0.95)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D5" type="CollisionShape3D" parent="RotationHandleY"]
+transform = Transform3D(1, -9.41126e-08, -9.41126e-08, 9.41126e-08, -4.37114e-08, 1, -9.41126e-08, -1, -4.37114e-08, -1.9, 0, 1.78814e-07)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D6" type="CollisionShape3D" parent="RotationHandleY"]
+transform = Transform3D(0.75, -0.5, -0.433013, 0.5, -4.37114e-08, 0.866025, -0.433013, -0.866025, 0.25, -1.64545, 0, 0.95)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D7" type="CollisionShape3D" parent="RotationHandleY"]
+transform = Transform3D(0.25, -0.866026, -0.433013, 0.866026, -4.37114e-08, 0.5, -0.433013, -0.5, 0.75, -0.95, 0, 1.64545)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D8" type="CollisionShape3D" parent="RotationHandleY"]
+transform = Transform3D(-4.37114e-08, -1, 1.25483e-07, 1, -4.37114e-08, -1.25483e-07, 1.25483e-07, 1.25483e-07, 1, 2.38419e-07, 0, 1.9)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D9" type="CollisionShape3D" parent="RotationHandleY"]
+transform = Transform3D(0.25, -0.866025, 0.433013, 0.866025, -4.37114e-08, -0.5, 0.433013, 0.5, 0.75, 0.95, 0, 1.64545)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D10" type="CollisionShape3D" parent="RotationHandleY"]
+transform = Transform3D(0.75, -0.5, 0.433013, 0.5, -4.37114e-08, -0.866026, 0.433013, 0.866026, 0.25, 1.64545, 0, 0.95)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D11" type="CollisionShape3D" parent="RotationHandleY"]
 transform = Transform3D(1, 1.25483e-07, -1.25483e-07, -1.25483e-07, -4.37114e-08, -1, -1.25483e-07, 1, -4.37114e-08, 1.9, 0, -2.38419e-07)
 shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="RotationHandleZ" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
+visible = false
+collision_layer = 2
+collision_mask = 2
+script = ExtResource("1_i4hrh")
+identifier = "rotate"
+direction_vector = Vector3(0, 0, 1)
+direction_type = 2
+material = SubResource("ShaderMaterial_v72t1")
+color_default = Color(0, 0, 0.58, 1)
+color_drag = Color(0, 0, 1, 1)
+mesh_array = [NodePath("MeshInstance3D")]
+collider_array = [NodePath("CollisionShape3D"), NodePath("CollisionShape3D1"), NodePath("CollisionShape3D2"), NodePath("CollisionShape3D3"), NodePath("CollisionShape3D4"), NodePath("CollisionShape3D5"), NodePath("CollisionShape3D6"), NodePath("CollisionShape3D7"), NodePath("CollisionShape3D8"), NodePath("CollisionShape3D9"), NodePath("CollisionShape3D10"), NodePath("CollisionShape3D11")]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RotationHandleZ"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0)
+material_override = SubResource("ShaderMaterial_v72t1")
+instance_shader_parameters/color = Color(0, 0, 0.58, 1)
+mesh = SubResource("TorusMesh_pvecf")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RotationHandleZ"]
+transform = Transform3D(0.75, 0.5, -0.433013, -0.433013, 0.866025, 0.25, 0.5, 5.85624e-09, 0.866025, 1.64545, -0.95, 4.15258e-08)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D1" type="CollisionShape3D" parent="RotationHandleZ"]
+transform = Transform3D(0.25, 0.866025, -0.433013, -0.433013, 0.5, 0.75, 0.866025, 2.18557e-08, 0.5, 0.95, -1.64545, 7.19249e-08)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="RotationHandleZ"]
+transform = Transform3D(-4.37114e-08, 1, 3.13709e-08, 7.50823e-08, -3.13709e-08, 1, 1, 4.37114e-08, -7.50823e-08, -5.96046e-08, -1.9, 8.30516e-08)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="RotationHandleZ"]
+transform = Transform3D(0.25, 0.866025, 0.433013, 0.433013, -0.5, 0.75, 0.866025, 6.55671e-08, -0.5, -0.95, -1.64545, 7.19249e-08)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D4" type="CollisionShape3D" parent="RotationHandleZ"]
+transform = Transform3D(0.75, 0.5, 0.433013, 0.433013, -0.866025, 0.25, 0.5, 8.15666e-08, -0.866025, -1.64545, -0.95, 4.15258e-08)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D5" type="CollisionShape3D" parent="RotationHandleZ"]
+transform = Transform3D(1, -9.41126e-08, -9.41126e-08, -9.41126e-08, -1, -8.74228e-08, -9.41126e-08, 8.74228e-08, -1, -1.9, 1.78814e-07, -7.81621e-15)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D6" type="CollisionShape3D" parent="RotationHandleZ"]
+transform = Transform3D(0.75, -0.5, -0.433013, -0.433013, -0.866025, 0.25, -0.5, 8.15666e-08, -0.866025, -1.64545, 0.95, -4.15258e-08)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D7" type="CollisionShape3D" parent="RotationHandleZ"]
+transform = Transform3D(0.25, -0.866026, -0.433013, -0.433013, -0.5, 0.75, -0.866026, 6.55671e-08, -0.5, -0.95, 1.64545, -7.19249e-08)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D8" type="CollisionShape3D" parent="RotationHandleZ"]
+transform = Transform3D(-4.37114e-08, -1, 1.25483e-07, 8.17716e-08, 1.25483e-07, 1, -1, 4.37114e-08, 8.17716e-08, 2.38419e-07, 1.9, -8.30516e-08)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D9" type="CollisionShape3D" parent="RotationHandleZ"]
+transform = Transform3D(0.25, -0.866025, 0.433013, 0.433013, 0.5, 0.75, -0.866025, 2.18557e-08, 0.5, 0.95, 1.64545, -7.19249e-08)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D10" type="CollisionShape3D" parent="RotationHandleZ"]
+transform = Transform3D(0.75, -0.5, 0.433013, 0.433013, 0.866026, 0.25, -0.5, 5.8562e-09, 0.866026, 1.64545, 0.95, -4.15258e-08)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true
+
+[node name="CollisionShape3D11" type="CollisionShape3D" parent="RotationHandleZ"]
+transform = Transform3D(1, 1.25483e-07, -1.25483e-07, -1.25483e-07, 1, -1.06581e-14, 1.25483e-07, 1.06581e-14, 1, 1.9, -2.38419e-07, 1.04216e-14)
+shape = SubResource("CylinderShape3D_fkfvk")
+disabled = true

@@ -1,11 +1,22 @@
 extends RefCounted
 class_name SnapUtils
 
+
 static func average_position_part(input : Array[Part]):
 	var sum : Vector3 = Vector3.ZERO
 	for i in input:
 		sum = sum + i.global_position
 	return sum / input.size()
+
+
+static func calculate_collision_layer(input_layers_to_enable : Array[int]):
+	if not input_layers_to_enable.is_empty():
+		var sum : int = 0
+		for i in input_layers_to_enable:
+			sum = int(sum + pow(2, i - 1))
+		
+		return sum
+
 
 #input is meant to be the part-to-be-rotated's basis
 "TODO"#unit test and make above comment better
@@ -136,7 +147,6 @@ is_planar_snap : bool = true):
 	#	selection_box_array[i].global_transform = selected_parts[i].global_transform
 
 
-
 #returns index of most parallel vector to target vector, no matter if its pointing the opposite way or not
 #update; removed type of search_array to allow basis as parameter
 static func find_closest_vector_abs(search_array, target : Vector3, is_search_array_basis : bool):
@@ -215,11 +225,12 @@ static func is_odd_with_snap_size(input : float, snap_increment : float):
 	return term_2 % 2 != 0
 
 
-#assuming part rotation is rectalinear
+#assuming part rotation is rectilinear
 static func get_side_lengths_local(part_scale : Vector3, part_rotation : Basis):
 	return abs(part_rotation * part_scale)
 
-"TODO"#clean up
+
+"TODO"#clean up (maybe)
 static func calculate_extents(abb : ABB, rotation_origin_part : Part, parts : Array[Part]):
 	abb.transform = rotation_origin_part.global_transform
 	abb.extents = Vector3.ZERO
