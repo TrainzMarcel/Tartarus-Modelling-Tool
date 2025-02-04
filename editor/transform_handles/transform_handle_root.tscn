@@ -48,7 +48,6 @@ visible = false
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_i4hrh")
-set_up = null
 identifier = "move"
 direction_vector = Vector3(1, 0, 0)
 material = SubResource("ShaderMaterial_e7qbh")
@@ -84,7 +83,6 @@ visible = false
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_i4hrh")
-set_up = null
 identifier = "move"
 direction_vector = Vector3(0, 1, 0)
 material = SubResource("ShaderMaterial_e7qbh")
@@ -120,7 +118,6 @@ visible = false
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_i4hrh")
-set_up = null
 identifier = "move"
 direction_vector = Vector3(0, 0, 1)
 material = SubResource("ShaderMaterial_e7qbh")
@@ -156,7 +153,6 @@ visible = false
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_i4hrh")
-set_up = null
 identifier = "move"
 direction_vector = Vector3(-1, 0, 0)
 material = SubResource("ShaderMaterial_e7qbh")
@@ -192,7 +188,6 @@ visible = false
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_i4hrh")
-set_up = null
 identifier = "move"
 direction_vector = Vector3(0, -1, 0)
 material = SubResource("ShaderMaterial_e7qbh")
@@ -228,7 +223,6 @@ visible = false
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_i4hrh")
-set_up = null
 identifier = "move"
 direction_vector = Vector3(0, 0, -1)
 material = SubResource("ShaderMaterial_e7qbh")
@@ -260,8 +254,8 @@ shape = SubResource("CylinderShape3D_xjdm1")
 disabled = true
 
 [node name="RotationHandleX" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
+visible = false
 script = ExtResource("1_i4hrh")
-set_up = null
 identifier = "rotate"
 direction_vector = Vector3(1, 0, 0)
 direction_type = 2
@@ -272,6 +266,8 @@ mesh_array = [NodePath("MeshInstance3D")]
 collider_array = [NodePath("CollisionShape3D"), NodePath("CollisionShape3D1"), NodePath("CollisionShape3D2"), NodePath("CollisionShape3D3"), NodePath("CollisionShape3D4"), NodePath("CollisionShape3D5"), NodePath("CollisionShape3D6"), NodePath("CollisionShape3D7"), NodePath("CollisionShape3D8"), NodePath("CollisionShape3D9"), NodePath("CollisionShape3D10"), NodePath("CollisionShape3D11")]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="RotationHandleX"]
+material_override = SubResource("ShaderMaterial_ecedk")
+instance_shader_parameters/color = Color(0.588235, 0, 0, 1)
 mesh = SubResource("TorusMesh_pvecf")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="RotationHandleX"]

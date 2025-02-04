@@ -112,16 +112,28 @@ static func set_transform_handle_highlight(handle : TransformHandle, input : boo
 
 
 "TODO"#put everything needed to add a new tool into this file (or another)
+#this system is very bad with the identifiers and all
 static func initialize_transform_handle_root(input : TransformHandleRoot):
 	var child_nodes : Array[Node] = input.get_children()
 	var transform_handle_array : Array[TransformHandle] = []
+	var identifiers : Array[String] = ["move", "rotate"]
 	
-	input.tool_handle_array.move = []
-	input.tool_handle_array.rotate = []
-	
-	for i in child_nodes:
-		if i.identifier == "move":
-			input.tool_handle_array.move.append(i)
-		elif i.identifier == "rotate":
-			input.tool_handle_array.rotate.append(i)
-
+	#loop through identifiers
+	for j in identifiers:
+		#for each identifier, loop over all child nodes
+		for i in child_nodes:
+			#if child nodes identifier matches the current one
+			if i.identifier == j:
+				#add it to the array
+				transform_handle_array.append(i)
+		
+		
+		#after the loop, assign duplicate (just to be safe) of typed array to the correct dict key
+		match j:
+			"move":
+				input.tool_handle_array.move = transform_handle_array.duplicate()
+			"rotate":
+				input.tool_handle_array.rotate = transform_handle_array.duplicate()
+		
+		#clear before getting the next tool handles to assign
+		transform_handle_array.clear()
