@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://c8p4ayc185mun"]
+
+[resource]
+shading_mode = 0
+specular_mode = 2
+texture_repeat = false

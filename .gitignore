@@ -2,6 +2,4 @@
 .godot/
 
 # Godot-specific ignores
-.import/
-export.cfg
 *.import

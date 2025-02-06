@@ -63,4 +63,3 @@ func has_point(point : Vector3):
 		i = i + 1
 	
 	return true
-

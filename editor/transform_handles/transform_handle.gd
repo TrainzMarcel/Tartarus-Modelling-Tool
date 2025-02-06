@@ -10,7 +10,7 @@ enum DirectionTypeEnum
 	axis_move,
 	plane_move,
 	axis_rotate,#rotate around center of selection TODO later add tool to move rotational pivot
-	
+	axis_scale
 }
 
 
@@ -25,7 +25,7 @@ enum DirectionTypeEnum
 #this setting makes it so that the transform handle gets moved out to the face it represents
 #note that im not implementing this for local transform mode where the handles may not align with any face
 #this is needed for the scaling tool im making
-@export var handle_follow_abb_surface : bool = false
+@export var handle_force_follow_abb_surface : bool = false
 
 #material to be used
 @export var material : Material
@@ -42,15 +42,11 @@ enum DirectionTypeEnum
 func _ready():
 	for i in mesh_array:
 		i.material_override = material
-		i.set_instance_shader_parameter("color", color_default)
+		i.material_override.albedo_color = color_default
 
 func automated_setup():
 		#rotation MUST be untouched for this to work properly, only rotate and move child nodes into place
 		quaternion = Quaternion()
-		
-		#layer and mask MUST be set to 2
-		collision_mask = SnapUtils.calculate_collision_layer([2])
-		collision_layer = SnapUtils.calculate_collision_layer([2])
 		
 		var child_nodes = get_children()
 		collider_array.clear()
@@ -62,6 +58,7 @@ func automated_setup():
 		for j in child_nodes:
 			if j is MeshInstance3D:
 				mesh_array.append(j)
+				j.material_override = null
 		
 		if name.to_lower().contains("x"):
 			direction_vector = Vector3.RIGHT
@@ -78,7 +75,5 @@ func automated_setup():
 		if name.contains("2"):
 			direction_vector = -direction_vector
 		
-		if self.material == null:
-			material = ShaderMaterial.new()
-			"TODO"#not sure if this works, will test tomorrow
-			material.shader = preload("res://editor/transform_handles/render_over.gdshader")
+		material = preload("res://editor/transform_handles/transform_handle_material.tres").duplicate()
+		

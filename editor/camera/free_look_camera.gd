@@ -12,6 +12,7 @@ class_name FreeLookCamera
 @export var min_zoom : float = 0.2
 @onready var _velocity = default_velocity
 @export var main : Main
+@export var second_camera : Camera3D
 
 var is_locked_on : bool = false
 #average position of all selected parts, this is what the camera will pivot around
@@ -104,3 +105,30 @@ func _process(delta):
 		translate(direction * _velocity * delta * boost_speed_multiplier)
 	else:
 		translate(direction * _velocity * delta)
+	
+	"TODO"#this is tech debt, this shouldnt be in here
+	#will refine this after transform_handles is merged
+	if second_camera != null:
+		second_camera.global_transform.basis = global_transform.basis
+		#vector pointing from the transform_handle_root to the camera
+		var term = (global_position - main.transform_handle_root.global_position)
+		second_camera.global_position = term.normalized() * main.transform_handle_scale + main.transform_handle_root.global_position
+		
+		
+		#i put a check in at main.set_transform_handle_root_position()
+		#which automatically keeps the transform_handle_root aligned with the part
+		#if handle_force_follow_abb_surface on the first transform handle is set to true
+		#so this should work
+		if main.selected_tool_handle_array != null:
+			var extension : Vector3 = main.selected_parts_abb.extents
+			extension = extension * main.transform_handle_scale * 0.5
+			for i in main.selected_tool_handle_array:
+				if i.handle_force_follow_abb_surface:
+					
+					#move the handles out along their direction vectors
+					if i.direction_vector.x != 0:
+						i.position.x = i.direction_vector.x * extension.x / term.length()
+					if i.direction_vector.y != 0:
+						i.position.y = i.direction_vector.y * extension.y / term.length()
+					if i.direction_vector.z != 0:
+						i.position.z = i.direction_vector.z * extension.z / term.length()

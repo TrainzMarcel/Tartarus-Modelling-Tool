@@ -9,6 +9,8 @@ static func average_position_part(input : Array[Part]):
 	return sum / input.size()
 
 
+#if anybody is confused about this calculation
+#https://docs.godotengine.org/en/4.1/tutorials/physics/physics_introduction.html#code-example
 static func calculate_collision_layer(input_layers_to_enable : Array[int]):
 	if not input_layers_to_enable.is_empty():
 		var sum : int = 0

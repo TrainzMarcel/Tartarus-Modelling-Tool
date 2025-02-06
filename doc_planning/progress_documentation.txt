@@ -27,4 +27,7 @@
 29.1. added a bunch of functionality to set the position and rotation of the transform tools, optimized functions in snap_utils to iterate through basis instead of redundant arrays
 30.1. optimized and fixed calculation of mouse in 3d space for transform handles, got too exhausted to add snapping, added snapping options ui, added signals and functionality for said ui
 
-3.2. added snapping to transform handles, added torus collisider generator, started work on rotation tool, added partially automated setup to transform handles (tool script)
+3.2. added snapping to transform handles, added torus collider generator, started work on rotation tool, added partially automated setup to transform handles (tool script)
+4.2. implemented rotation tool
+5.2. solved problem of transform handles getting too small from too far away (subviewport with second camera), albeit with some tech debt, deleted render_over shader as it is no longer needed
+6.2. rewrote math for linear movement of transform handles
