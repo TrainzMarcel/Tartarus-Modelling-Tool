@@ -10,42 +10,50 @@ class_name FreeLookCamera
 @export var max_speed : float = 1000
 @export var min_speed : float = 0.2
 @export var min_zoom : float = 0.2
-@onready var _velocity = default_velocity
-@export var main : Main
-@export var second_camera : Camera3D
-
+@onready var velocity = default_velocity
 var is_locked_on : bool = false
-#average position of all selected parts, this is what the camera will pivot around
+#using bounding box of all selected parts, this is what the camera will pivot around
 var lock_position : Vector3
 #distance from lock position
 var lock_zoom : float = 0
 
-func _ready():
-	main.camera_speed_label.text = str(default_velocity)
-	main.camera_zoom_label.text = str("x0")
-	
 
-func _input(event):
+func initialize(camera_speed_label : Label, camera_zoom_label : Label):
+	camera_speed_label.text = str(default_velocity)
+	camera_zoom_label.text = str("x0")
+
+
+func cam_input(
+	event : InputEvent,
+	second_camera : Camera3D,
+	selected_parts_array : Array[Part],
+	selected_parts_abb : ABB,
+	msg_label : Label,
+	camera_zoom_label : Label,
+	camera_speed_label : Label
+	):
+	
 	if not self.current:
 		return
 	
 	if Input.is_key_pressed(KEY_F) and event.is_pressed() and not event.is_echo():
-		if main.selected_parts_array.size() > 0:
+		if selected_parts_array.size() > 0:
 			
-			lock_position = main.selected_parts_abb.transform.origin
-			lock_zoom = main.selected_parts_abb.extents.length()
+			lock_position = selected_parts_abb.transform.origin
+			"TODO"#this might get long if bounding box is too big
+			lock_zoom = selected_parts_abb.extents.length()
 			
 			global_position = lock_position + basis.z * lock_zoom
 			is_locked_on = true
-			main.camera_zoom_label.text = "x" + str(round(lock_zoom * 10) * 0.1)
-			main.msg_label.text = "camera locked on"
+			camera_zoom_label.text = "x" + str(round(lock_zoom * 10) * 0.1)
+			msg_label.text = "camera locked on"
 	
 	#if any movement keys are pressed, stop locking onto parts
 	var unlock : bool = Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_A)
 	unlock = unlock or Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_D)
 	
 	if is_locked_on and unlock:
-		main.msg_label.text = "camera unlocked"
+		msg_label.text = "camera unlocked"
 	
 	if is_locked_on:
 		is_locked_on = not unlock
@@ -65,11 +73,14 @@ func _input(event):
 				global_position = lock_position + basis.z * lock_zoom
 	
 	#right click and scroll for speed adjustment
-	"TODO"#little ui number in bottom showing speed
 	if event is InputEventMouseButton:
 		match event.button_index:
 			MOUSE_BUTTON_RIGHT:
-				Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED if event.pressed else Input.MOUSE_MODE_VISIBLE)
+				if event.pressed:
+					Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+				else:
+					Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+					
 			MOUSE_BUTTON_WHEEL_UP:
 				if is_locked_on:
 					#update zoom
@@ -77,7 +88,7 @@ func _input(event):
 					global_position = lock_position + basis.z * lock_zoom
 				else:
 					#increase fly velocity
-					_velocity = clamp(_velocity * speed_scale, min_speed, max_speed)
+					velocity = clamp(velocity * speed_scale, min_speed, max_speed)
 			MOUSE_BUTTON_WHEEL_DOWN:
 				if is_locked_on:
 					#update zoom
@@ -85,12 +96,20 @@ func _input(event):
 					global_position = lock_position + basis.z * lock_zoom
 				else:
 					#decrease fly velocity
-					_velocity = clamp(_velocity / speed_scale, min_speed, max_speed)
+					velocity = clamp(velocity / speed_scale, min_speed, max_speed)
 		
-		main.camera_speed_label.text = str(round(_velocity * 10) * 0.1)
-		main.camera_zoom_label.text = "x" + str(round(lock_zoom * 10) * 0.1)
+		camera_speed_label.text = str(round(velocity * 10) * 0.1)
+		camera_zoom_label.text = "x" + str(round(lock_zoom * 10) * 0.1)
 
-func _process(delta):
+func cam_process(
+		delta : float,
+		second_camera : Camera3D,
+		transform_handle_root : TransformHandleRoot,
+		transform_handle_scale : float,
+		selected_tool_handle_array : Array[TransformHandle],
+		selected_parts_abb : ABB
+		):
+	
 	if not current:
 		return
 	
@@ -102,27 +121,28 @@ func _process(delta):
 	).normalized()
 	
 	if Input.is_physical_key_pressed(KEY_SHIFT): # boost
-		translate(direction * _velocity * delta * boost_speed_multiplier)
+		translate(direction * velocity * delta * boost_speed_multiplier)
 	else:
-		translate(direction * _velocity * delta)
+		translate(direction * velocity * delta)
 	
-	"TODO"#this is tech debt, this shouldnt be in here
 	#will refine this after transform_handles is merged
 	if second_camera != null:
+		#set second_camera rotation to match
 		second_camera.global_transform.basis = global_transform.basis
 		#vector pointing from the transform_handle_root to the camera
-		var term = (global_position - main.transform_handle_root.global_position)
-		second_camera.global_position = term.normalized() * main.transform_handle_scale + main.transform_handle_root.global_position
+		var term = (global_position - transform_handle_root.global_position)
+		#set position to be a fixed distance away from 0, 0, 0 plus the position of transform_handle_root
+		second_camera.global_position = term.normalized() * transform_handle_scale + transform_handle_root.global_position
 		
 		
 		#i put a check in at main.set_transform_handle_root_position()
 		#which automatically keeps the transform_handle_root aligned with the part
 		#if handle_force_follow_abb_surface on the first transform handle is set to true
 		#so this should work
-		if main.selected_tool_handle_array != null:
-			var extension : Vector3 = main.selected_parts_abb.extents
-			extension = extension * main.transform_handle_scale * 0.5
-			for i in main.selected_tool_handle_array:
+		if selected_tool_handle_array != null:
+			var extension : Vector3 = selected_parts_abb.extents
+			extension = extension * transform_handle_scale * 0.5
+			for i in selected_tool_handle_array:
 				if i.handle_force_follow_abb_surface:
 					
 					#move the handles out along their direction vectors

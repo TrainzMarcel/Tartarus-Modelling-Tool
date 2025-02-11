@@ -31,3 +31,6 @@
 4.2. implemented rotation tool
 5.2. solved problem of transform handles getting too small from too far away (subviewport with second camera), albeit with some tech debt, deleted render_over shader as it is no longer needed
 6.2. rewrote math for linear movement of transform handles
+7.2. merged and deleted transform_handles branch, started to refine architecture of codebase
+10.2. fixed ALL transform handle bugs, added hovered color, deleted offset_dragged_to_selected_array and replaced it with offset_abb_to_selected_array, thereby making the abb the central reference point for transformations and selections, used abb in snap_position for "normal bump", added double and half button for positional snapping, properly managed state of freelookcamera, added snapping_active to snap_position()
+11.2. properly implemented scaling tool for single part selections

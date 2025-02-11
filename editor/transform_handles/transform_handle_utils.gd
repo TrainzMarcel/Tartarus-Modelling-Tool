@@ -8,11 +8,11 @@ class_name TransformHandleUtils
 static func transform(
 		active_handle : TransformHandle,
 		transform_handle_root : Node3D,
-		drag_offset : Vector3,
 		handle_initial_transform : Transform3D,
 		initial_event : InputEventMouse,
 		event : InputEventMouseMotion,
-		cam : Camera3D, debug_mesh : Array,
+		cam : Camera3D,
+		debug_mesh : Array,
 		p_snap_increment : float,
 		r_snap_increment : float,
 		snapping_active : bool
@@ -20,8 +20,8 @@ static func transform(
 	
 	#return transform
 	var r_dict : Dictionary = {
-		absolute = Transform3D(),
-		relative = Transform3D(),#
+		transform = Transform3D(),
+		basis_relative = 0.0,
 		part_scale = Vector3(),
 		modify_position = false,
 		modify_rotation = false,
@@ -35,7 +35,6 @@ static func transform(
 	var cam_normal : Vector3 = cam.project_ray_normal(event.position)
 	var cam_normal_initial : Vector3 = cam.project_ray_normal(initial_event.position)
 	
-	"TODO"#simplify this the same way i made the rotation gizmos work, with just one scalar setting everything
 	#future note: make it possible to scale selections or groupings if all parts are rectilinearly aligned
 	match active_handle.direction_type:
 		TransformHandle.DirectionTypeEnum.axis_move:
@@ -47,11 +46,8 @@ static func transform(
 			
 			#absolute defined as the original position plus the amount the user dragged
 			#add the snapped term and take away the original position along the vector axis
-			r_dict.absolute.origin = (term_1 * global_vector) + handle_initial_transform.origin
-			r_dict.absolute.basis = handle_initial_transform.basis
-			#relative defined as only the amount the user dragged
-			r_dict.relative.origin = term_1 * global_vector
-			r_dict.relative.basis = handle_initial_transform.basis
+			r_dict.transform.origin = (term_1 * global_vector) + handle_initial_transform.origin
+			r_dict.transform.basis = handle_initial_transform.basis
 			r_dict.modify_position = true
 		TransformHandle.DirectionTypeEnum.axis_rotate:
 			#need a plane which is placed right on the ring
@@ -71,10 +67,6 @@ static func transform(
 			debug_mesh[0].origin_position = debug_mesh[0].origin_position + plane_ring.d * plane_ring.normal
 			"DEBUG"#--------------------------------------------------------------------------------
 			
-			print("---------------------------------")
-			print(global_vector)
-			#print("cam_normal_initial on plane: ", cam_normal_initial_plane)
-			#print("cam_normal on plane: ", cam_normal_plane)
 			#fallback value if intersects_ray fails
 			var term_1 = Vector3.ZERO
 			var term_2 = Vector3.ZERO
@@ -90,11 +82,9 @@ static func transform(
 				angle_snapped = deg_to_rad(snapped(rad_to_deg(angle_snapped), r_snap_increment))
 			
 			#absolute defined as the original position plus the amount the user dragged
-			r_dict.absolute.basis = handle_initial_transform.basis.rotated(global_vector_initial, angle_snapped).orthonormalized()
-			r_dict.absolute.origin = handle_initial_transform.origin
-			#relative defined as only the amount the user dragged
-			r_dict.relative.basis = Basis().rotated(global_vector_initial, angle_snapped)
-			r_dict.relative.origin = handle_initial_transform.origin
+			r_dict.transform.basis = handle_initial_transform.basis.rotated(global_vector_initial, angle_snapped).orthonormalized()
+			r_dict.basis_relative = angle_snapped
+			r_dict.transform.origin = handle_initial_transform.origin
 			r_dict.modify_rotation = true
 		TransformHandle.DirectionTypeEnum.plane_move:
 			print("PLANE MOVE")#coming probably in v0.2
@@ -107,11 +97,10 @@ static func transform(
 			
 			#absolute defined as the original position plus the amount the user dragged
 			#add the snapped term and take away the original position along the vector axis
-			r_dict.absolute.origin = (term_1 * global_vector) + handle_initial_transform.origin
-			r_dict.absolute.basis = handle_initial_transform.basis
-			#relative defined as only the amount the user dragged
-			r_dict.relative.origin = term_1 * global_vector
-			r_dict.relative.basis = handle_initial_transform.basis
+			r_dict.transform.origin = (term_1 * global_vector) + handle_initial_transform.origin
+			r_dict.transform.basis = handle_initial_transform.basis
+			r_dict.part_scale = (term_1 * active_handle.direction_vector)
+			r_dict.scalar = term_1
 			r_dict.modify_position = true
 			r_dict.modify_scale = true
 	
@@ -156,10 +145,14 @@ static func set_tool_handle_array_active(bundle : Array, input : bool):
 			j.disabled = not input
 
 
-static func set_transform_handle_highlight(handle : TransformHandle, input : bool):
-	if input:
+"TODO"#cleaner parameters, like an enum or set color
+static func set_transform_handle_highlight(handle : TransformHandle, drag : bool, hover : bool = false):
+	if drag:
 		for i in handle.mesh_array:
 			i.material_override.albedo_color = handle.color_drag
+	elif hover:
+		for i in handle.mesh_array:
+			i.material_override.albedo_color = handle.color_hover
 	else:
 		for i in handle.mesh_array:
 			i.material_override.albedo_color = handle.color_default

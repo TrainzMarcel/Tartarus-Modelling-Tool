@@ -15,46 +15,43 @@ class_name Part
 #size with setter
 	set(value):
 		part_scale = value
-		#ugh im tired
-		if part_collider_node != null:
-			#implement the different shapes
-			match part_shape:
-			#cuboid
-				0:
-					var shape : BoxShape3D = part_collider_node.shape
-					shape.size = part_scale
-			#wedge
-				1:
-					pass
-			#cylinder
-				2:
-					pass
-			#sphere
-				3:
-					pass
+		
+		if part_collider_node == null or part_mesh_node == null:
+			return
+		#implement the different shapes
+		match part_shape:
+		#cuboid
+			0:
+				var shape : BoxShape3D = part_collider_node.shape
+				shape.size = part_scale
+		#wedge
+			1:
+				pass
+		#cylinder
+			2:
+				pass
+		#sphere
+			3:
+				pass
+			
+	
+		#implement the different shapes
+		match part_shape:
+		#cuboid
+			0:
+				var mesh_res : BoxMesh = part_mesh_node.mesh
+				mesh_res.size = part_scale
+		#wedge
+			1:
+				pass
+		#cylinder
+			2:
+				pass
+		#sphere
+			3:
+				pass
 				
-		
-		if part_mesh_node != null:
-			#implement the different shapes
-			match part_shape:
-			#cuboid
-				0:
-					var mesh_res : BoxMesh = part_mesh_node.mesh
-					mesh_res.size = part_scale
-			#wedge
-				1:
-					pass
-			#cylinder
-				2:
-					pass
-			#sphere
-				3:
-					pass
-				
-		
-		
-		#if part_mesh_node != null:
-			#implement the different shapes
+
 
 #pivot vec3 local to the node
 @export var part_pivot : Vector3 = Vector3.ZERO
@@ -74,17 +71,16 @@ func _ready():
 	#assign collider when added to scene tree
 	part_collider_node = CollisionShape3D.new()
 	part_collider_node.owner = get_tree().edited_scene_root
-	self.add_child(part_collider_node)
+	add_child(part_collider_node)
 	part_collider_node.shape = BoxShape3D.new()
 	#set collision mask to not collide with other parts
-	self.set_collision_mask_value(1, false)
-	self.set_collision_mask_value(2, true)
+	set_collision_mask_value(1, false)
+	set_collision_mask_value(2, true)
 	
 	part_mesh_node = MeshInstance3D.new()
 	part_mesh_node.owner = get_tree().edited_scene_root
-	self.add_child(part_mesh_node)
+	add_child(part_mesh_node)
 	part_mesh_node.mesh = BoxMesh.new()
-
-#only set this after its initialized lol
-	"DEBUG"
-	self.part_scale = self.part_scale
+	
+#only set this after its initialized (does not run through setter if mesh or collider are null)
+	part_scale = part_scale

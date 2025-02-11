@@ -94,13 +94,13 @@ hovered_part : Part,
 selected_parts_abb : ABB,
 drag_offset : Vector3,
 positional_snap_increment : float,
-is_planar_snap : bool = true):
+snapping_active : bool):
 	
 	var normal = ray_result.normal
 	
-	#first find closest basis vectors to normal vector and use that to determine which side length to use
+	#first find closest basis vectors to normal vector and use that to determine which side length of the abb to use
 	var r_dict_1 = SnapUtils.find_closest_vector_abs(dragged_part.basis, normal, true)
-	var side_length = dragged_part.part_scale[r_dict_1.index]
+	var side_length = selected_parts_abb.extents[r_dict_1.index]
 	
 	#inverse for transforming everything to local space of the hovered part
 	var inverse = hovered_part.global_transform.inverse()
@@ -110,7 +110,6 @@ is_planar_snap : bool = true):
 	var drag_offset_local : Vector3 = inverse.basis * drag_offset
 	
 	#normal "bump"
-	"TODO"#use abb for normal bump, but first fix positioning of abb
 	drag_offset_local = normal_local * (side_length * 0.5) + (drag_offset_local - drag_offset_local.dot(normal_local) * normal_local)
 	var result_local = ray_result_local_position + drag_offset_local
 	var r_dict_2 = SnapUtils.find_closest_vector_abs(Basis.IDENTITY, normal_local, true)
@@ -123,22 +122,24 @@ is_planar_snap : bool = true):
 	#print(dragged_part_side_lengths_local)
 	var i : int = 0
 	
-	while i < 3:
-		#dont snap normal direction, only planar directions
-		if abs(normal_local.dot(Basis.IDENTITY[i])) > 0.9:
+	if snapping_active:
+		while i < 3:
+			#dont snap normal direction, only planar directions
+			if abs(normal_local.dot(Basis.IDENTITY[i])) > 0.9:
+				i = i + 1
+				continue
+			
+			result_local[i] = snapped(result_local[i], positional_snap_increment)
+			var side_1_odd : bool = SnapUtils.is_odd_with_snap_size(hovered_part.part_scale[i], positional_snap_increment)
+			var side_2_odd : bool = SnapUtils.is_odd_with_snap_size(dragged_part_side_lengths_local[i], positional_snap_increment)
+			if side_1_odd != side_2_odd:
+				result_local[i] = result_local[i] + positional_snap_increment * 0.5
 			i = i + 1
-			continue
-		
-		result_local[i] = snapped(result_local[i], positional_snap_increment)
-		var side_1_odd : bool = SnapUtils.is_odd_with_snap_size(hovered_part.part_scale[i], positional_snap_increment)
-		var side_2_odd : bool = SnapUtils.is_odd_with_snap_size(dragged_part_side_lengths_local[i], positional_snap_increment)
-		if side_1_odd != side_2_odd:
-			result_local[i] = result_local[i] + positional_snap_increment * 0.5
-		i = i + 1
 	
-	"TODO"#read https://github.com/MostlyAdequate/mostly-adequate-guide/blob/master/ch03.md
 	#apply this to dragged_part, 
 	"TODO"#make this return a transform which can be applied to everything
+	"TODO"#delete all relative returns in this program
+	"TODO"#make selection snap by the closest corner of ray_result.position
 	var relative : Vector3 = (hovered_part.global_transform * result_local) - dragged_part.position
 	return {absolute = hovered_part.global_transform * result_local,
 	relative = relative}
