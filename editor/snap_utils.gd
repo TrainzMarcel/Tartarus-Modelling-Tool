@@ -52,13 +52,15 @@ static func snap_rotation(input : Basis, ray_result : Dictionary):
 	var dot_1 = closest_vector_1.dot(closest_vector_2)
 	#if vectors are opposed, flip closest_vector_1
 	var angle = (closest_vector_1 * sign(dot_1)).angle_to(closest_vector_2)
+	#print(rad_to_deg(angle))
+	
 	var cross_product : Vector3 = (closest_vector_1 * sign(dot_1)).cross(closest_vector_2)
+	var rotated_basis : Basis = input
 	
-	#if cross product returns empty vector, return unmodified basis
-	if cross_product.length() == 0:
-		return input
+	#if cross product returns empty vector, dont modify basis
+	if cross_product.length() != 0:
+		rotated_basis = rotated_basis.rotated(cross_product.normalized(), angle).orthonormalized()
 	
-	var rotated_basis : Basis = input.rotated(cross_product.normalized(), angle).orthonormalized()
 	
 	
 #find basis vector on canvas part which is not equal to closest_vector_2 or inverted closest_vector_2
@@ -84,44 +86,50 @@ static func snap_rotation(input : Basis, ray_result : Dictionary):
 		return input
 	
 	#the part should now hopefully be aligned and ready for linear snapping
-	return rotated_basis.rotated(cross_product.normalized(), angle).orthonormalized()
+	var final : Basis = rotated_basis.rotated(cross_product.normalized(), angle).orthonormalized()
+	return final
 
 
 #planar positional snap, returns global vector3 position of dragged part
-static func snap_position(ray_result : Dictionary,
-dragged_part : Part,
-hovered_part : Part,
-selected_parts_abb : ABB,
-drag_offset : Vector3,
-positional_snap_increment : float,
-snapping_active : bool):
+static func snap_position(
+	ray_result : Dictionary,
+	dragged_part : Part,
+	hovered_part : Part,
+	selected_parts_abb : ABB,
+	drag_offset : Vector3,
+	positional_snap_increment : float,
+	snapping_active : bool
+	):
 	
-	var normal = ray_result.normal
+	var normal : Vector3 = ray_result.normal
 	
 	#first find closest basis vectors to normal vector and use that to determine which side length of the abb to use
-	var r_dict_1 = SnapUtils.find_closest_vector_abs(dragged_part.basis, normal, true)
-	var side_length = selected_parts_abb.extents[r_dict_1.index]
+	var r_dict_1 : Dictionary = SnapUtils.find_closest_vector_abs(selected_parts_abb.transform.basis, normal, true)
+	var side_length : float = selected_parts_abb.extents[r_dict_1.index]
 	
 	#inverse for transforming everything to local space of the hovered part
-	var inverse = hovered_part.global_transform.inverse()
+	var inverse : Transform3D = hovered_part.global_transform.inverse()
 	#transformed local variables
 	var ray_result_local_position : Vector3 = inverse * ray_result.position
 	var normal_local : Vector3 = inverse.basis * normal
 	var drag_offset_local : Vector3 = inverse.basis * drag_offset
 	
 	#normal "bump"
-	drag_offset_local = normal_local * (side_length * 0.5) + (drag_offset_local - drag_offset_local.dot(normal_local) * normal_local)
+	var drag_offset_local_without_normal_component = drag_offset_local - (drag_offset_local.dot(normal_local) * normal_local)
+	
+	drag_offset_local = normal_local * (side_length * 0.5) + drag_offset_local_without_normal_component
+	
 	var result_local = ray_result_local_position + drag_offset_local
-	var r_dict_2 = SnapUtils.find_closest_vector_abs(Basis.IDENTITY, normal_local, true)
 	
 	
 	#if one parts side length is even and one is odd
 	#add half of a snap increment to offset it away
 	var dragged_part_local : Basis = inverse.basis * dragged_part.basis
 	var dragged_part_side_lengths_local : Vector3 = SnapUtils.get_side_lengths_local(dragged_part.part_scale, dragged_part_local)
-	#print(dragged_part_side_lengths_local)
+	
 	var i : int = 0
 	
+	"TODO"#make selection snap by the closest corner of ray_result.position
 	if snapping_active:
 		while i < 3:
 			#dont snap normal direction, only planar directions
@@ -137,17 +145,8 @@ snapping_active : bool):
 			i = i + 1
 	
 	#apply this to dragged_part, 
-	"TODO"#make this return a transform which can be applied to everything
-	"TODO"#delete all relative returns in this program
-	"TODO"#make selection snap by the closest corner of ray_result.position
-	var relative : Vector3 = (hovered_part.global_transform * result_local) - dragged_part.position
-	return {absolute = hovered_part.global_transform * result_local,
-	relative = relative}
-	
-	#i = 0
-	#while i < selected_parts.size():
-	#	selected_parts[i].global_position = dragged_part.global_position + main_offset[i]
-	#	selection_box_array[i].global_transform = selected_parts[i].global_transform
+	var result : Vector3 = hovered_part.global_transform * result_local
+	return result
 
 
 #returns index of most parallel vector to target vector, no matter if its pointing the opposite way or not

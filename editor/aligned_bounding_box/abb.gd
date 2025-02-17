@@ -1,17 +1,9 @@
 extends RefCounted
 class_name ABB
 
-"DEBUG"
-var debug_mesh : MeshInstance3D
-var extents : Vector3 = Vector3.ZERO:
-	set(value):
-		extents = value
-		debug_mesh.mesh.size = value
+var extents : Vector3 = Vector3.ZERO
+var transform : Transform3D
 
-var transform : Transform3D:
-	set(value):
-		transform = value
-		debug_mesh.transform = value
 
 
 #expand bounding box to point in global space

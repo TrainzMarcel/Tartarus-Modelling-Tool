@@ -16,7 +16,7 @@ enum DirectionTypeEnum
 	set(value):
 		automated_setup()
 
-@export var identifier : String = ""
+@export var tool_type : Main.SelectedToolEnum = Main.SelectedToolEnum.t_move
 @export var direction_vector : Vector3
 @export var direction_type : DirectionTypeEnum = DirectionTypeEnum.axis_move
 

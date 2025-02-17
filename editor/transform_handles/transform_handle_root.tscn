@@ -129,7 +129,6 @@ script = ExtResource("1_rew5o")
 [node name="PositionHandleX" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-identifier = "move"
 direction_vector = Vector3(1, 0, 0)
 material = SubResource("StandardMaterial3D_pwmkv")
 color_default = Color(0.8, 0, 0, 1)
@@ -161,7 +160,6 @@ disabled = true
 [node name="PositionHandleY" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-identifier = "move"
 direction_vector = Vector3(0, 1, 0)
 material = SubResource("StandardMaterial3D_r516u")
 color_default = Color(0, 0.8, 0, 1)
@@ -193,7 +191,6 @@ disabled = true
 [node name="PositionHandleZ" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-identifier = "move"
 direction_vector = Vector3(0, 0, 1)
 material = SubResource("StandardMaterial3D_duhfq")
 color_default = Color(0, 0, 0.8, 1)
@@ -225,7 +222,6 @@ disabled = true
 [node name="PositionHandleX2" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-identifier = "move"
 direction_vector = Vector3(-1, 0, 0)
 material = SubResource("StandardMaterial3D_4p311")
 color_default = Color(0.8, 0, 0, 1)
@@ -257,7 +253,6 @@ disabled = true
 [node name="PositionHandleY2" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-identifier = "move"
 direction_vector = Vector3(0, -1, 0)
 material = SubResource("StandardMaterial3D_6dw36")
 color_default = Color(0, 0.8, 0, 1)
@@ -289,7 +284,6 @@ disabled = true
 [node name="PositionHandleZ2" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-identifier = "move"
 direction_vector = Vector3(0, 0, -1)
 material = SubResource("StandardMaterial3D_pmx2k")
 color_default = Color(0, 0, 0.8, 1)
@@ -321,7 +315,7 @@ disabled = true
 [node name="RotationHandleX" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-identifier = "rotate"
+tool_type = 2
 direction_vector = Vector3(1, 0, 0)
 direction_type = 2
 material = SubResource("StandardMaterial3D_r675x")
@@ -399,7 +393,7 @@ disabled = true
 [node name="RotationHandleY" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-identifier = "rotate"
+tool_type = 2
 direction_vector = Vector3(0, 1, 0)
 direction_type = 2
 material = SubResource("StandardMaterial3D_k0bnw")
@@ -476,7 +470,7 @@ disabled = true
 [node name="RotationHandleZ" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-identifier = "rotate"
+tool_type = 2
 direction_vector = Vector3(0, 0, 1)
 direction_type = 2
 material = SubResource("StandardMaterial3D_rjfsp")
@@ -554,7 +548,7 @@ disabled = true
 [node name="ScaleHandleX" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-identifier = "scale"
+tool_type = 3
 direction_vector = Vector3(1, 0, 0)
 direction_type = 3
 handle_force_follow_abb_surface = true
@@ -578,7 +572,7 @@ mesh = SubResource("SphereMesh_yly6o")
 [node name="ScaleHandleY" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-identifier = "scale"
+tool_type = 3
 direction_vector = Vector3(0, 1, 0)
 direction_type = 3
 handle_force_follow_abb_surface = true
@@ -602,7 +596,7 @@ mesh = SubResource("SphereMesh_yly6o")
 [node name="ScaleHandleZ" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-identifier = "scale"
+tool_type = 3
 direction_vector = Vector3(0, 0, 1)
 direction_type = 3
 handle_force_follow_abb_surface = true
@@ -626,7 +620,7 @@ mesh = SubResource("SphereMesh_yly6o")
 [node name="ScaleHandleX2" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-identifier = "scale"
+tool_type = 3
 direction_vector = Vector3(-1, 0, 0)
 direction_type = 3
 handle_force_follow_abb_surface = true
@@ -650,7 +644,7 @@ mesh = SubResource("SphereMesh_yly6o")
 [node name="ScaleHandleY2" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-identifier = "scale"
+tool_type = 3
 direction_vector = Vector3(0, -1, 0)
 direction_type = 3
 handle_force_follow_abb_surface = true
@@ -674,7 +668,7 @@ mesh = SubResource("SphereMesh_yly6o")
 [node name="ScaleHandleZ2" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-identifier = "scale"
+tool_type = 3
 direction_vector = Vector3(0, 0, -1)
 direction_type = 3
 handle_force_follow_abb_surface = true

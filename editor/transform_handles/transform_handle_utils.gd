@@ -8,14 +8,16 @@ class_name TransformHandleUtils
 static func transform(
 		active_handle : TransformHandle,
 		transform_handle_root : Node3D,
+		abb_initial_extents : Vector3,
 		handle_initial_transform : Transform3D,
 		initial_event : InputEventMouse,
 		event : InputEventMouseMotion,
 		cam : Camera3D,
-		debug_mesh : Array,
 		p_snap_increment : float,
 		r_snap_increment : float,
-		snapping_active : bool
+		snapping_active : bool,
+		is_ctrl_pressed : bool,
+		is_shift_pressed : bool
 	):
 	
 	#return transform
@@ -48,6 +50,7 @@ static func transform(
 			#add the snapped term and take away the original position along the vector axis
 			r_dict.transform.origin = (term_1 * global_vector) + handle_initial_transform.origin
 			r_dict.transform.basis = handle_initial_transform.basis
+			r_dict.scalar = term_1
 			r_dict.modify_position = true
 		TransformHandle.DirectionTypeEnum.axis_rotate:
 			#need a plane which is placed right on the ring
@@ -60,12 +63,10 @@ static func transform(
 			var cam_normal_initial_plane = plane_ring.intersects_ray(cam.global_position, cam_normal_initial)
 			var cam_normal_plane = plane_ring.intersects_ray(cam.global_position, cam_normal)
 			
-			"DEBUG"#--------------------------------------------------------------------------------
-			#print(plane_cam.normal)
-			debug_mesh[0].input_vector = plane_ring.normal
-			debug_mesh[0].origin_position = Vector3.ZERO
-			debug_mesh[0].origin_position = debug_mesh[0].origin_position + plane_ring.d * plane_ring.normal
-			"DEBUG"#--------------------------------------------------------------------------------
+			HyperDebug.actions.transform_handle_rotation_visualize.do({
+				origin_position = plane_ring.d * plane_ring.normal,
+				input_vector = plane_ring.normal
+				})
 			
 			#fallback value if intersects_ray fails
 			var term_1 = Vector3.ZERO
@@ -83,7 +84,7 @@ static func transform(
 			
 			#absolute defined as the original position plus the amount the user dragged
 			r_dict.transform.basis = handle_initial_transform.basis.rotated(global_vector_initial, angle_snapped).orthonormalized()
-			r_dict.basis_relative = angle_snapped
+			r_dict.angle_relative = angle_snapped
 			r_dict.transform.origin = handle_initial_transform.origin
 			r_dict.modify_rotation = true
 		TransformHandle.DirectionTypeEnum.plane_move:
@@ -95,12 +96,60 @@ static func transform(
 			if snapping_active:
 				term_1 = snapped(term_1, p_snap_increment)
 			
+			#control: makes part not move and scale toward both directions
+			#shift: makes part scale toward all directions proportionally
+			#shift + control: makes part not move and scale toward all directions proportionally
+			
+			#set this with ctrl and shift
+			var multiplier = 0.5
+			if Input.is_key_pressed(KEY_CTRL):
+				multiplier = 0
+				term_1 = term_1 * 2
+			
+			
+			var local : Vector3 = active_handle.direction_vector
+			
+			#if local x y or z are negative, set scalar to be negative
+			var i = 0
+			while i < 3:
+				if local[i] < 0 and not Input.is_key_pressed(KEY_SHIFT):
+					term_1 = -term_1
+				i = i + 1
+			
+			
+			var scale_min : Vector3 = abb_initial_extents + term_1 * local
+			var scale_diff : Vector3 = term_1 * local
+			
+			
+			if Input.is_key_pressed(KEY_SHIFT):
+				var percentage = (abb_initial_extents.dot(local) + term_1) / abb_initial_extents.dot(local)
+				scale_min = abb_initial_extents + abb_initial_extents * percentage
+				scale_diff = abb_initial_extents * percentage
+			
+			
+			
+			"TODO"#this loop sucks because it affects all dimensions and not just the one which is being scaled
+			i = 0
+			while i < 3:
+				
+				scale_min[i] = max(scale_min[i], p_snap_increment)
+				i = i + 1
+			
+			r_dict.part_scale = scale_min
+			
+			
+			r_dict.transform.origin = handle_initial_transform.origin + handle_initial_transform.basis * (scale_diff * local * multiplier)
+	
+			
+			
+			
+			
 			#absolute defined as the original position plus the amount the user dragged
 			#add the snapped term and take away the original position along the vector axis
-			r_dict.transform.origin = (term_1 * global_vector) + handle_initial_transform.origin
+			#r_dict.transform.origin = (term_1 * global_vector) + handle_initial_transform.origin
 			r_dict.transform.basis = handle_initial_transform.basis
-			r_dict.part_scale = (term_1 * active_handle.direction_vector)
-			r_dict.scalar = term_1
+			#r_dict.part_scale = (term_1 * active_handle.direction_vector)
+			#r_dict.scalar = term_1
 			r_dict.modify_position = true
 			r_dict.modify_scale = true
 	
@@ -126,9 +175,19 @@ static func linear_move(cam : Camera3D, active_handle : TransformHandle, global_
 	#create plane which cursor would land on if it was put in 3d space
 	var plane_cam : Plane = Plane(vec, plane_cam_d)
 	
+	
+	
+	
+	
 	#vector pointing to mouse position projected onto the plane
 	var cam_normal_plane = plane_cam.intersects_ray(cam.global_position, cam_normal)
 	var cam_normal_plane_initial = plane_cam.intersects_ray(cam.global_position, cam_normal_initial)
+	
+	HyperDebug.actions.transform_handle_linear_visualize.do({
+		input_vector = plane_cam.normal,
+		origin_position = plane_cam.d * plane_cam.normal
+		})
+	
 	
 	#fallback value if intersects_ray fails
 	var term_1 : float = 0
@@ -159,30 +218,22 @@ static func set_transform_handle_highlight(handle : TransformHandle, drag : bool
 
 
 "TODO"#put everything needed to add a new tool into this file (or another)
-#this system is very bad with the identifiers and all
 static func initialize_transform_handle_root(input : TransformHandleRoot):
 	var child_nodes : Array[Node] = input.get_children()
 	var transform_handle_array : Array[TransformHandle] = []
-	var identifiers : Array[String] = ["move", "rotate", "scale"]
 	
 	#loop through identifiers
-	for j in identifiers:
+	for j in Main.SelectedToolEnum.values():
 		#for each identifier, loop over all child nodes
 		for i in child_nodes:
 			#if child nodes identifier matches the current one
-			if i.identifier == j:
+			if i.tool_type == j:
 				#add it to the array
 				transform_handle_array.append(i)
 		
 		
 		#after the loop, assign duplicate (just to be safe) of typed array to the correct dict key
-		match j:
-			"move":
-				input.tool_handle_array.move = transform_handle_array.duplicate()
-			"rotate":
-				input.tool_handle_array.rotate = transform_handle_array.duplicate()
-			"scale":
-				input.tool_handle_array.scale = transform_handle_array.duplicate()
+		input.tool_handle_array[j] = transform_handle_array.duplicate()
 		
 		#clear before getting the next tool handles to assign
 		transform_handle_array.clear()

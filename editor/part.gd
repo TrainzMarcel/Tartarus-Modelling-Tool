@@ -57,7 +57,18 @@ class_name Part
 @export var part_pivot : Vector3 = Vector3.ZERO
 
 #material setter
-@export var part_material : StandardMaterial3D
+@export var part_material : Material:
+	set(value):
+		part_material = value
+		if part_mesh_node != null:
+			part_mesh_node.material_override = value
+
+#material setter
+@export var part_color : Color:
+	set(value):
+		part_color = value
+		if part_mesh_node != null:
+			part_mesh_node.set_instance_shader_parameter("color", value)
 
 #automatic assigning of collision shape
 #make sure to set collision mask correctly so parts dont interact
