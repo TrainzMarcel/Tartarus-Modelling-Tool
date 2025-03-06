@@ -7,7 +7,7 @@
 [ext_resource type="Material" uid="uid://dg0pq3t4uvees" path="res://editor/selection_box/highlight_mat.res" id="4_sa2se"]
 [ext_resource type="Script" path="res://editor/selection_box/selection_box.gd" id="5_byqpd"]
 [ext_resource type="Script" path="res://editor/ui/drop_down_button.gd" id="5_jjx4e"]
-[ext_resource type="PackedScene" uid="uid://cwt02lxvderye" path="res://doc_design/ui_test_1.tscn" id="6_whu6r"]
+[ext_resource type="PackedScene" uid="uid://cwt02lxvderye" path="res://editor/ui/ui_test_1.tscn" id="6_whu6r"]
 [ext_resource type="PackedScene" uid="uid://clfcgcedn47iy" path="res://editor/transform_handles/transform_handle_root.tscn" id="7_wy0x5"]
 [ext_resource type="Shader" path="res://editor/materials/mat_1.gdshader" id="9_ys456"]
 [ext_resource type="Texture2D" uid="uid://du7navikebxm7" path="res://editor/materials/image_files/wood_01_albedo.jpg" id="10_5s45i"]
@@ -53,7 +53,7 @@ points = PackedVector3Array(-0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -
 [sub_resource type="PrismMesh" id="PrismMesh_du6vf"]
 left_to_right = 0.0
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_ygtx3"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_hh281"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_b2n2e"]
 render_priority = 0
@@ -540,7 +540,7 @@ part_scale = Vector3(0.2, 0.2, 0.8)
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("4_sa2se")
-mesh = SubResource("ImmediateMesh_ygtx3")
+mesh = SubResource("ImmediateMesh_hh281")
 skeleton = NodePath("../..")
 script = ExtResource("5_byqpd")
 box_scale = Vector3(1, 1, 1)
