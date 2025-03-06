@@ -10,7 +10,7 @@ static var b_color : Button
 static var b_material : Button
 static var b_lock : Button
 static var b_spawn : Button
-static var b_spawn_type : OptionButton
+
 
 #top panel, right block
 static var b_local_transform_active : CheckBox
@@ -34,7 +34,8 @@ func initialize(
 	on_snap_increment_set : Callable,
 	on_snap_increment_doubled_or_halved : Callable,
 	on_local_transform_active_set : Callable,
-	on_snapping_active_set : Callable
+	on_snapping_active_set : Callable,
+	on_color_selected : Callable
 	):
 	
 	UI.b_drag = %Button
@@ -45,7 +46,6 @@ func initialize(
 	UI.b_material = %Button6
 	UI.b_lock = %Button7
 	UI.b_spawn = %Button8
-	UI.b_spawn_type = %OptionButton
 	UI.b_local_transform_active = %Button9
 	UI.b_snapping_active = %Button10
 	
@@ -68,12 +68,14 @@ func initialize(
 		UI.b_material,
 		UI.b_lock,
 		UI.b_spawn,
-		UI.b_spawn_type,
+		#UI.b_spawn_type,
 		UI.b_position_snap_double,
 		UI.b_position_snap_half,
 		%VBoxContainer,
-		%Panel
+		%Panel,
+		%ColorPanel
 	]
+	
 	
 	#connect all pressed signals to an event with a reference as their parameter
 	UI.b_drag.pressed.connect(on_tool_selected.bind(UI.b_drag))
@@ -84,6 +86,141 @@ func initialize(
 	UI.b_material.pressed.connect(on_tool_selected.bind(UI.b_material))
 	UI.b_lock.pressed.connect(on_tool_selected.bind(UI.b_lock))
 	UI.b_spawn.pressed.connect(on_spawn_pressed.bind(UI.b_spawn))
+	
+	
+	
+	#set up color picker
+	var sample_button : Button = %ColorPanel/MarginContainer/GridContainer/Button
+	var color_buttons : Array[Button] = AutomatedColorPalette.read_colors_and_create_buttons(FileAccess.get_file_as_string("res://editor/ui/default_color_codes.txt"), sample_button)
+	sample_button.queue_free()
+	await sample_button.tree_exited
+	var grid_container : GridContainer = %ColorPanel/MarginContainer/GridContainer
+	
+	
+	#set up required variables
+	var w : int = grid_container.columns
+	var i : int = 0
+	var j : int = 0
+	var no_more_swaps : bool = false
+	
+	var grayscale_buttons : Array[Button] = []
+	var grayscale_epsilon : int = 30
+	
+	#sort color buttons by value
+	while not no_more_swaps:
+		no_more_swaps = true
+		while i < color_buttons.size() - 1:
+			var index_1 : int = i
+			var index_2 : int = i + 1
+			var button_1 : Button = color_buttons[index_1]
+			var button_2 : Button = color_buttons[index_2]
+			#swap if hue of current color is bigger than the one of next color
+			if AutomatedColorPalette.get_saturation(button_1.modulate) > AutomatedColorPalette.get_saturation(button_2.modulate): 
+				var temp = color_buttons[index_1]
+				color_buttons[index_1] = color_buttons[index_2]
+				color_buttons[index_2] = temp
+				no_more_swaps = false
+			i = i + 1
+		i = 0
+	
+	i = 0
+	no_more_swaps = false
+	#sort color buttons by hue
+	while not no_more_swaps:
+		no_more_swaps = true
+		while i < color_buttons.size() - 1:
+			var index_1 : int = i
+			var index_2 : int = i + 1
+			var button_1 : Button = color_buttons[index_1]
+			var button_2 : Button = color_buttons[index_2]
+			#swap if hue of current color is bigger than the one of next color
+			if AutomatedColorPalette.get_hue(button_1.modulate) > AutomatedColorPalette.get_hue(button_2.modulate):
+				var temp = color_buttons[index_1]
+				color_buttons[index_1] = color_buttons[index_2]
+				color_buttons[index_2] = temp
+				no_more_swaps = false
+			i = i + 1
+		i = 0
+	
+	
+	
+	#lastly place grayscale colors at the end
+	i = 0
+	while i < color_buttons.size():
+		#take out, append to end
+		if AutomatedColorPalette.get_grayscale(color_buttons[i].modulate, grayscale_epsilon, color_buttons[i].tooltip_text):
+			grayscale_buttons.append(color_buttons.pop_at(i))
+			i = i - 1
+		i = i + 1
+	
+	#sort color buttons in each row by value
+	i = 0
+	while i < color_buttons.size():
+		no_more_swaps = false
+		while not no_more_swaps:
+			no_more_swaps = true
+			j = 0
+			
+			if i + w > color_buttons.size():
+				w = color_buttons.size() - i
+			
+			while j < w - 1:
+				var index_1 : int = i + j
+				var index_2 : int = i + j + 1
+				var button_1 : Button = color_buttons[index_1]
+				var button_2 : Button = color_buttons[index_2]
+				#swap if hue of current color is bigger than the one of next color
+#				if AutomatedColorPalette.get_saturation(button_1.modulate) < AutomatedColorPalette.get_saturation(button_2.modulate): 
+				if button_1.modulate.v < button_2.modulate.v: 
+					var temp = color_buttons[index_1]
+					color_buttons[index_1] = color_buttons[index_2]
+					color_buttons[index_2] = temp
+					no_more_swaps = false
+				j = j + 1
+		i = i + w
+	
+	
+	i = 0
+	no_more_swaps = false
+	while not no_more_swaps:
+		no_more_swaps = true
+		while i < grayscale_buttons.size() - 1:
+			var index_1 : int = i
+			var index_2 : int = i + 1
+			var button_1 : Button = grayscale_buttons[index_1]
+			var button_2 : Button = grayscale_buttons[index_2]
+			#swap if hue of current color is bigger than the one of next color
+			if button_1.modulate.v < button_2.modulate.v:
+				var temp = grayscale_buttons[index_1]
+				grayscale_buttons[index_1] = grayscale_buttons[index_2]
+				grayscale_buttons[index_2] = temp
+				no_more_swaps = false
+			i = i + 1
+		i = 0
+	
+	color_buttons.append_array(grayscale_buttons)
+	
+	
+	"DEBUG"
+	i = 0
+	var print_array : Array = []
+	while i < color_buttons.size():
+		#print_array.append(str(round(AutomatedColorPalette.get_hue(color_buttons[i].modulate)*100)*0.01))
+		print_array.append(str(round(color_buttons[i].modulate.v*100)*0.01))
+		#print_array.append(str(AutomatedColorPalette.get_grayscale(color_buttons[i].modulate)))
+		if print_array.size() > w - 1:
+			print(print_array)
+			print_array.clear()
+		i = i + 1
+	
+	
+	i = 0
+	while i < color_buttons.size():
+		%ColorPanel/MarginContainer/GridContainer.add_child(color_buttons[i])
+		color_buttons[i].pressed.connect(on_color_selected.bind(color_buttons[i]))
+		i = i + 1
+	
+	
 	
 	#when mouse isnt hovering and clicks on something else, ui focus gets released
 	UI.l_positional_snap_increment.text_submitted.connect(on_snap_increment_set.bind(UI.l_positional_snap_increment))

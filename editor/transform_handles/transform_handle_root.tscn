@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3 uid="uid://clfcgcedn47iy"]
+[gd_scene load_steps=27 format=3 uid="uid://clfcgcedn47iy"]
 
 [ext_resource type="Script" path="res://editor/transform_handles/transform_handle.gd" id="1_i4hrh"]
 [ext_resource type="Script" path="res://editor/transform_handles/transform_handle_root.gd" id="1_rew5o"]
@@ -39,19 +39,24 @@ specular_mode = 2
 albedo_color = Color(0, 0, 0.8, 1)
 texture_repeat = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4p311"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_r8oru"]
 shading_mode = 0
 specular_mode = 2
 albedo_color = Color(0.8, 0, 0, 1)
 texture_repeat = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6dw36"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_3khkg"]
+top_radius = 0.1
+bottom_radius = 0.1
+height = 0.2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_g6qia"]
 shading_mode = 0
 specular_mode = 2
 albedo_color = Color(0, 0.8, 0, 1)
 texture_repeat = false
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pmx2k"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5f02d"]
 shading_mode = 0
 specular_mode = 2
 albedo_color = Color(0, 0, 0.8, 1)
@@ -223,21 +228,36 @@ disabled = true
 visible = false
 script = ExtResource("1_i4hrh")
 direction_vector = Vector3(-1, 0, 0)
-material = SubResource("StandardMaterial3D_4p311")
+material = SubResource("StandardMaterial3D_r8oru")
 color_default = Color(0.8, 0, 0, 1)
 color_drag = Color(0.58, 0, 0, 1)
 color_hover = Color(1, 0, 0, 1)
-mesh_array = [NodePath("MeshInstance3D"), NodePath("MeshInstance3D2")]
+mesh_array = [NodePath("MeshInstance3D"), NodePath("MeshInstance3D2"), NodePath("MeshInstance3D3"), NodePath("MeshInstance3D4"), NodePath("MeshInstance3D5")]
 collider_array = [NodePath("CollisionShape3D"), NodePath("CollisionShape3D2")]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="PositionHandleX2"]
-transform = Transform3D(4.37114e-08, -1, -8.74228e-08, -1, -4.37114e-08, 0, -3.82137e-15, 8.74228e-08, -1, -1.1, 0, 9.61651e-08)
-material_override = SubResource("StandardMaterial3D_4p311")
-mesh = SubResource("CylinderMesh_dymed")
+transform = Transform3D(4.37114e-08, -1, -8.74228e-08, -1, -4.37114e-08, 0, -3.82137e-15, 8.74228e-08, -1, -0.4, 0, 9.61651e-08)
+material_override = SubResource("StandardMaterial3D_r8oru")
+mesh = SubResource("CylinderMesh_3khkg")
 
 [node name="MeshInstance3D2" type="MeshInstance3D" parent="PositionHandleX2"]
+transform = Transform3D(4.37114e-08, -1, -8.74228e-08, -1, -4.37114e-08, 0, -3.82137e-15, 8.74228e-08, -1, -0.8, 0, 9.61651e-08)
+material_override = SubResource("StandardMaterial3D_r8oru")
+mesh = SubResource("CylinderMesh_3khkg")
+
+[node name="MeshInstance3D3" type="MeshInstance3D" parent="PositionHandleX2"]
+transform = Transform3D(4.37114e-08, -1, -8.74228e-08, -1, -4.37114e-08, 0, -3.82137e-15, 8.74228e-08, -1, -1.2, 0, 9.61651e-08)
+material_override = SubResource("StandardMaterial3D_r8oru")
+mesh = SubResource("CylinderMesh_3khkg")
+
+[node name="MeshInstance3D4" type="MeshInstance3D" parent="PositionHandleX2"]
+transform = Transform3D(4.37114e-08, -1, -8.74228e-08, -1, -4.37114e-08, 0, -3.82137e-15, 8.74228e-08, -1, -1.6, 0, 9.61651e-08)
+material_override = SubResource("StandardMaterial3D_r8oru")
+mesh = SubResource("CylinderMesh_3khkg")
+
+[node name="MeshInstance3D5" type="MeshInstance3D" parent="PositionHandleX2"]
 transform = Transform3D(4.37114e-08, -1, -8.74228e-08, -1, -4.37114e-08, 0, -3.82137e-15, 8.74228e-08, -1, -2, 0, 1.74846e-07)
-material_override = SubResource("StandardMaterial3D_4p311")
+material_override = SubResource("StandardMaterial3D_r8oru")
 mesh = SubResource("CylinderMesh_cf10l")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PositionHandleX2"]
@@ -254,21 +274,36 @@ disabled = true
 visible = false
 script = ExtResource("1_i4hrh")
 direction_vector = Vector3(0, -1, 0)
-material = SubResource("StandardMaterial3D_6dw36")
+material = SubResource("StandardMaterial3D_g6qia")
 color_default = Color(0, 0.8, 0, 1)
 color_drag = Color(0, 0.58, 0, 1)
 color_hover = Color(0, 1, 0, 1)
-mesh_array = [NodePath("MeshInstance3D"), NodePath("MeshInstance3D2")]
+mesh_array = [NodePath("MeshInstance3D3"), NodePath("MeshInstance3D4"), NodePath("MeshInstance3D5"), NodePath("MeshInstance3D6"), NodePath("MeshInstance3D7")]
 collider_array = [NodePath("CollisionShape3D"), NodePath("CollisionShape3D2")]
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="PositionHandleY2"]
-transform = Transform3D(1, 0, 0, 0, -1, 8.74228e-08, 0, -8.74228e-08, -1, -4.80825e-08, -1.1, -9.61651e-08)
-material_override = SubResource("StandardMaterial3D_6dw36")
-mesh = SubResource("CylinderMesh_dymed")
+[node name="MeshInstance3D3" type="MeshInstance3D" parent="PositionHandleY2"]
+transform = Transform3D(1, 8.74228e-08, 3.82137e-15, 8.74228e-08, -1, -8.74228e-08, -3.82137e-15, 8.74228e-08, -1, 0, -0.4, 9.61651e-08)
+material_override = SubResource("StandardMaterial3D_g6qia")
+mesh = SubResource("CylinderMesh_3khkg")
 
-[node name="MeshInstance3D2" type="MeshInstance3D" parent="PositionHandleY2"]
+[node name="MeshInstance3D4" type="MeshInstance3D" parent="PositionHandleY2"]
+transform = Transform3D(1, 8.74228e-08, 3.82137e-15, 8.74228e-08, -1, -8.74228e-08, -3.82137e-15, 8.74228e-08, -1, 0, -0.8, 9.61651e-08)
+material_override = SubResource("StandardMaterial3D_g6qia")
+mesh = SubResource("CylinderMesh_3khkg")
+
+[node name="MeshInstance3D5" type="MeshInstance3D" parent="PositionHandleY2"]
+transform = Transform3D(1, 8.74228e-08, 3.82137e-15, 8.74228e-08, -1, -8.74228e-08, -3.82137e-15, 8.74228e-08, -1, 0, -1.2, 9.61651e-08)
+material_override = SubResource("StandardMaterial3D_g6qia")
+mesh = SubResource("CylinderMesh_3khkg")
+
+[node name="MeshInstance3D6" type="MeshInstance3D" parent="PositionHandleY2"]
+transform = Transform3D(1, 8.74228e-08, 3.82137e-15, 8.74228e-08, -1, -8.74228e-08, -3.82137e-15, 8.74228e-08, -1, 0, -1.6, 9.61651e-08)
+material_override = SubResource("StandardMaterial3D_g6qia")
+mesh = SubResource("CylinderMesh_3khkg")
+
+[node name="MeshInstance3D7" type="MeshInstance3D" parent="PositionHandleY2"]
 transform = Transform3D(1, 0, 0, 0, -1, 8.74228e-08, 0, -8.74228e-08, -1, -8.74228e-08, -2, -1.74846e-07)
-material_override = SubResource("StandardMaterial3D_6dw36")
+material_override = SubResource("StandardMaterial3D_g6qia")
 mesh = SubResource("CylinderMesh_cf10l")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PositionHandleY2"]
@@ -285,21 +320,16 @@ disabled = true
 visible = false
 script = ExtResource("1_i4hrh")
 direction_vector = Vector3(0, 0, -1)
-material = SubResource("StandardMaterial3D_pmx2k")
+material = SubResource("StandardMaterial3D_5f02d")
 color_default = Color(0, 0, 0.8, 1)
 color_drag = Color(0, 0, 0.58, 1)
 color_hover = Color(0, 0, 1, 1)
-mesh_array = [NodePath("MeshInstance3D"), NodePath("MeshInstance3D2")]
+mesh_array = [NodePath("MeshInstance3D2"), NodePath("MeshInstance3D3"), NodePath("MeshInstance3D4"), NodePath("MeshInstance3D5"), NodePath("MeshInstance3D6")]
 collider_array = [NodePath("CollisionShape3D"), NodePath("CollisionShape3D2")]
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="PositionHandleZ2"]
-transform = Transform3D(1.99741e-15, -4.56956e-08, 1, -1, -4.37114e-08, 0, 4.37114e-08, -1, -4.56956e-08, -5.02652e-08, 0, -1.1)
-material_override = SubResource("StandardMaterial3D_pmx2k")
-mesh = SubResource("CylinderMesh_dymed")
 
 [node name="MeshInstance3D2" type="MeshInstance3D" parent="PositionHandleZ2"]
 transform = Transform3D(1.99741e-15, -4.56956e-08, 1, -1, -4.37114e-08, 0, 4.37114e-08, -1, -4.56956e-08, -9.13911e-08, 0, -2)
-material_override = SubResource("StandardMaterial3D_pmx2k")
+material_override = SubResource("StandardMaterial3D_5f02d")
 mesh = SubResource("CylinderMesh_cf10l")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PositionHandleZ2"]
@@ -311,6 +341,26 @@ disabled = true
 transform = Transform3D(1.99741e-15, -4.56956e-08, 1, -1, -4.37114e-08, 0, 4.37114e-08, -1, -4.56956e-08, -9.13911e-08, 0, -2)
 shape = SubResource("CylinderShape3D_xjdm1")
 disabled = true
+
+[node name="MeshInstance3D3" type="MeshInstance3D" parent="PositionHandleZ2"]
+transform = Transform3D(1, 8.74228e-08, 3.82137e-15, -2.11758e-21, -4.37114e-08, 1, 8.74228e-08, -1, -4.37114e-08, 0, 0, -0.4)
+material_override = SubResource("StandardMaterial3D_5f02d")
+mesh = SubResource("CylinderMesh_3khkg")
+
+[node name="MeshInstance3D4" type="MeshInstance3D" parent="PositionHandleZ2"]
+transform = Transform3D(1, 8.74228e-08, 3.82137e-15, -2.11758e-21, -4.37114e-08, 1, 8.74228e-08, -1, -4.37114e-08, 0, 0, -0.8)
+material_override = SubResource("StandardMaterial3D_5f02d")
+mesh = SubResource("CylinderMesh_3khkg")
+
+[node name="MeshInstance3D5" type="MeshInstance3D" parent="PositionHandleZ2"]
+transform = Transform3D(1, 8.74228e-08, 3.82137e-15, -2.11758e-21, -4.37114e-08, 1, 8.74228e-08, -1, -4.37114e-08, 0, 0, -1.2)
+material_override = SubResource("StandardMaterial3D_5f02d")
+mesh = SubResource("CylinderMesh_3khkg")
+
+[node name="MeshInstance3D6" type="MeshInstance3D" parent="PositionHandleZ2"]
+transform = Transform3D(1, 8.74228e-08, 3.82137e-15, -2.11758e-21, -4.37114e-08, 1, 8.74228e-08, -1, -4.37114e-08, 0, 0, -1.6)
+material_override = SubResource("StandardMaterial3D_5f02d")
+mesh = SubResource("CylinderMesh_3khkg")
 
 [node name="RotationHandleX" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false

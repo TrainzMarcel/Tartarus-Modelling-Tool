@@ -1,11 +1,13 @@
-[gd_scene load_steps=24 format=3 uid="uid://hul5x10ptumj"]
+[gd_scene load_steps=27 format=3 uid="uid://hul5x10ptumj"]
 
 [ext_resource type="Script" path="res://editor/main.gd" id="1_4xdr8"]
 [ext_resource type="PackedScene" uid="uid://c01nu37bjhxsi" path="res://editor/camera/free_look_camera.tscn" id="2_n3tr4"]
 [ext_resource type="Script" path="res://editor/part.gd" id="3_yo0xd"]
-[ext_resource type="Script" path="res://editor/ui.gd" id="4_c5qxg"]
+[ext_resource type="Script" path="res://editor/ui/ui.gd" id="4_4bycu"]
 [ext_resource type="Material" uid="uid://dg0pq3t4uvees" path="res://editor/selection_box/highlight_mat.res" id="4_sa2se"]
 [ext_resource type="Script" path="res://editor/selection_box/selection_box.gd" id="5_byqpd"]
+[ext_resource type="Script" path="res://editor/ui/drop_down_button.gd" id="5_jjx4e"]
+[ext_resource type="PackedScene" uid="uid://cwt02lxvderye" path="res://doc_design/ui_test_1.tscn" id="6_whu6r"]
 [ext_resource type="PackedScene" uid="uid://clfcgcedn47iy" path="res://editor/transform_handles/transform_handle_root.tscn" id="7_wy0x5"]
 [ext_resource type="Shader" path="res://editor/materials/mat_1.gdshader" id="9_ys456"]
 [ext_resource type="Texture2D" uid="uid://du7navikebxm7" path="res://editor/materials/image_files/wood_01_albedo.jpg" id="10_5s45i"]
@@ -38,13 +40,20 @@ environment = SubResource("Environment_ye61o")
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_82eal"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7haax"]
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_3mjn7"]
 points = PackedVector3Array(-0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5)
 
 [sub_resource type="PrismMesh" id="PrismMesh_du6vf"]
 left_to_right = 0.0
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_6npdu"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_ygtx3"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_b2n2e"]
 render_priority = 0
@@ -66,7 +75,6 @@ size = Vector3(0.075, 3.76, 5.82)
 
 [node name="Main" type="Node3D" node_paths=PackedStringArray("cam", "second_cam", "workspace", "transform_handle_root", "hover_selection_box", "ui_node")]
 script = ExtResource("1_4xdr8")
-debug_active = true
 cam = NodePath("Camera3D")
 second_cam = NodePath("SubViewportContainer/SubViewport/Camera3D")
 workspace = NodePath("Workspace")
@@ -115,10 +123,11 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("4_c5qxg")
+script = ExtResource("4_4bycu")
 metadata/_edit_lock_ = true
 
 [node name="HBoxContainer" type="HBoxContainer" parent="UI"]
+visible = false
 layout_mode = 1
 anchors_preset = -1
 anchor_right = 1.0
@@ -160,33 +169,31 @@ toggle_mode = true
 button_group = SubResource("ButtonGroup_0qmei")
 text = "Scale"
 
-[node name="Button8" type="Button" parent="UI/HBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="UI/HBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Button8" type="Button" parent="UI/HBoxContainer/HBoxContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(105, 54)
+custom_minimum_size = Vector2(60, 54)
 layout_mode = 2
 size_flags_vertical = 0
 text = "Spawn"
 
-[node name="OptionButton" type="OptionButton" parent="UI/HBoxContainer/Button8"]
+[node name="OptionButton" type="Button" parent="UI/HBoxContainer/HBoxContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(10, 0)
+custom_minimum_size = Vector2(10, 54)
 layout_mode = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_top = 4.0
-offset_right = 97.0
-offset_bottom = 35.0
-item_count = 4
-popup/item_0/text = "cuboid"
-popup/item_0/id = 0
-popup/item_1/text = "wedge"
-popup/item_1/id = 1
-popup/item_2/text = "cylinder"
-popup/item_2/id = 3
-popup/item_3/text = "sphere"
-popup/item_3/id = 2
+size_flags_vertical = 0
+toggle_mode = true
+text = "▼"
+script = ExtResource("5_jjx4e")
 
-[node name="Button5" type="Button" parent="UI/HBoxContainer"]
+[node name="HBoxContainer2" type="HBoxContainer" parent="UI/HBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Button5" type="Button" parent="UI/HBoxContainer/HBoxContainer2"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(80, 54)
 layout_mode = 2
@@ -195,7 +202,22 @@ toggle_mode = true
 button_group = SubResource("ButtonGroup_0qmei")
 text = "Color"
 
-[node name="Button6" type="Button" parent="UI/HBoxContainer"]
+[node name="OptionButton2" type="Button" parent="UI/HBoxContainer/HBoxContainer2" node_paths=PackedStringArray("attached_control")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(10, 54)
+layout_mode = 2
+size_flags_vertical = 0
+toggle_mode = true
+text = "▼"
+script = ExtResource("5_jjx4e")
+attached_control = NodePath("../../../ColorPanel")
+hide_after_click_on_attached_control = true
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="UI/HBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Button6" type="Button" parent="UI/HBoxContainer/HBoxContainer3"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(80, 54)
 layout_mode = 2
@@ -203,6 +225,12 @@ size_flags_vertical = 0
 toggle_mode = true
 button_group = SubResource("ButtonGroup_0qmei")
 text = "Material"
+
+[node name="OptionButton" type="Button" parent="UI/HBoxContainer/HBoxContainer3"]
+custom_minimum_size = Vector2(10, 54)
+layout_mode = 2
+size_flags_vertical = 0
+text = "▼"
 
 [node name="Button7" type="Button" parent="UI/HBoxContainer"]
 unique_name_in_owner = true
@@ -336,8 +364,46 @@ grow_vertical = 2
 button_pressed = true
 text = "Snapping active"
 
+[node name="ColorPanel" type="Panel" parent="UI"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = -1
+offset_left = 303.0
+offset_top = 57.0
+offset_right = 659.0
+offset_bottom = 347.0
+focus_mode = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="UI/ColorPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="GridContainer" type="GridContainer" parent="UI/ColorPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+columns = 16
+
+[node name="Button" type="Button" parent="UI/ColorPanel/MarginContainer/GridContainer"]
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_7haax")
+theme_override_styles/hover = SubResource("StyleBoxFlat_7haax")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_7haax")
+action_mode = 0
+
 [node name="Panel" type="Panel" parent="UI"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -392,6 +458,9 @@ grow_vertical = 0
 text = "x1.17"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Control" parent="UI" instance=ExtResource("6_whu6r")]
+layout_mode = 1
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -8)
@@ -471,7 +540,7 @@ part_scale = Vector3(0.2, 0.2, 0.8)
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("4_sa2se")
-mesh = SubResource("ImmediateMesh_6npdu")
+mesh = SubResource("ImmediateMesh_ygtx3")
 skeleton = NodePath("../..")
 script = ExtResource("5_byqpd")
 box_scale = Vector3(1, 1, 1)

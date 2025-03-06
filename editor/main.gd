@@ -61,6 +61,8 @@ enum SelectedToolEnum
 }
 #gets set in on_tool_selected
 var selected_tool : SelectedToolEnum
+#gets set in on_color_selected
+var selected_color : Color
 
 #dragging data------------------------------------------------------------------
 #raw ray result
@@ -115,7 +117,16 @@ var is_selecting_allowed : bool = true
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	OS.low_processor_usage_mode = true
-	ui_node.initialize(on_spawn_pressed, on_tool_selected, on_snap_increment_set, on_snap_increment_doubled_or_halved, on_local_transform_active_set, on_snapping_active_set)
+	ui_node.initialize(
+		on_spawn_pressed,
+		on_tool_selected,
+		on_snap_increment_set,
+		on_snap_increment_doubled_or_halved,
+		on_local_transform_active_set,
+		on_snapping_active_set,
+		on_color_selected
+		)
+	
 	cam.initialize(UI.camera_speed_label, UI.camera_zoom_label)
 	TransformHandleUtils.initialize_transform_handle_root(transform_handle_root)
 	
@@ -262,7 +273,7 @@ func _input(event):
 						hovered_part.part_material = preload("res://editor/materials/mat_1.tres")
 					
 					if selected_tool == SelectedToolEnum.t_color:
-						hovered_part.part_color = Color.RED
+						hovered_part.part_color = selected_color
 					
 					
 					
@@ -397,7 +408,6 @@ func _input(event):
 				
 				
 				"TODO"#figure out correct positioning direction and move this code into TransformHandleUtils.transform()
-				"TODO"#this entire scaling section is janky, clean up the math
 				if result.modify_scale:
 					selected_parts_array[0].part_scale = result.part_scale
 					selected_parts_abb.extents = result.part_scale
@@ -677,6 +687,9 @@ func on_spawn_pressed(button):
 	workspace.add_child(new_part)
 	new_part.global_position = cam.global_position + part_spawn_distance * -cam.basis.z
 
+
+func on_color_selected(button):
+	selected_color = button.modulate
 
 
 func on_snap_increment_set(new, line_edit):

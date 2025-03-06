@@ -34,3 +34,11 @@
 7.2. merged and deleted transform_handles branch, started to refine architecture of codebase
 10.2. fixed ALL transform handle bugs, added hovered color, deleted offset_dragged_to_selected_array and replaced it with offset_abb_to_selected_array, thereby making the abb the central reference point for transformations and selections, used abb in snap_position for "normal bump", added double and half button for positional snapping, properly managed state of freelookcamera, added snapping_active to snap_position()
 11.2. properly implemented scaling tool for single part selections
+13.2. started working on shaders for material which can be colored per instance and is always visible even at full black and full white
+14.2. fixed wrongly handled edge case in snap_rotation() when dragged part is aligned to hovered part with normal vector but not others, fixed bug in apply_snap_rotation() where selected_parts_abb.basis was being set wrong in some cases (and was getting out of sync from the selection), fixed bug in snap_position() where "normal bump" was still using side length of dragged part, added centralized tool enum in main and got rid of string identifiers in transform handles
+17.2. implemented HyperDebug to the best of my ability, tried to make an easy interface to use; define an action in HyperDebug.config(), then call .do() on the action, passing all required data for visualization or the string to print, hastily moved scaling math into snap_utils.transform()
+26.2. back from long break, brainstormed about ui and ux, made negative axis positioning handles dashed to indicate theyre the negative direction, made new "dropdown" control class
+27.2. finished dropdown button class, started work on automatic color sorting algorithm
+28.2. finished color sorting algorithm
+3.3. created icons for: drag, move, rotate, scale, add part, delete part, color tool, material tool, lock part, unlock part, all in blender.
+5.3. reworked material tool icon, made moodboard for ui styling, created basic layout for ui

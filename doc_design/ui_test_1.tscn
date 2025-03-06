@@ -1,0 +1,591 @@
+[gd_scene load_steps=21 format=3 uid="uid://cwt02lxvderye"]
+
+[ext_resource type="Texture2D" uid="uid://b0rc2151mdwdt" path="res://editor/ui/assets/drag_tool.png" id="2_kkh5d"]
+[ext_resource type="Texture2D" uid="uid://cm53rvlp32ixw" path="res://editor/ui/assets/move_tool.png" id="3_2fuqx"]
+[ext_resource type="Texture2D" uid="uid://bx7h4ex7khrgr" path="res://editor/ui/assets/rotate_tool.png" id="4_6p8g3"]
+[ext_resource type="Texture2D" uid="uid://cfl4sq61yn4bu" path="res://editor/ui/assets/scale_tool.png" id="5_d4lfn"]
+[ext_resource type="Script" path="res://editor/ui/drop_down_button.gd" id="6_fve7m"]
+[ext_resource type="Texture2D" uid="uid://cc4xfiowj8pcq" path="res://editor/ui/assets/spawn_tool.png" id="6_w2sp5"]
+[ext_resource type="Texture2D" uid="uid://cj7pjif54bssh" path="res://editor/ui/assets/delete_tool.png" id="8_j4yp8"]
+[ext_resource type="Texture2D" uid="uid://j08u3645o7il" path="res://editor/ui/assets/color_tool.png" id="9_vx3ec"]
+[ext_resource type="Texture2D" uid="uid://bjt03rmqsf3ny" path="res://editor/ui/assets/material_tool.png" id="10_faotw"]
+[ext_resource type="Texture2D" uid="uid://bkvjtaofh6ye7" path="res://editor/ui/assets/lock_part.png" id="11_dffo3"]
+[ext_resource type="FontFile" uid="uid://ctid3aju4ruko" path="res://editor/ui/assets/segmen7-sharp/segmen7-sharp.otf" id="12_hh5ef"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d0atw"]
+bg_color = Color(0.180392, 0.180392, 0.180392, 1)
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="Theme" id="Theme_v2fbp"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6myb8"]
+bg_color = Color(0.109804, 0.109804, 0.109804, 0.819608)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.109804, 0.109804, 0.109804, 0.819608)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+corner_detail = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vqowt"]
+bg_color = Color(0.109804, 0.109804, 0.109804, 0.819608)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.8, 0, 0, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+corner_detail = 4
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_mycpf"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hovfx"]
+bg_color = Color(0.109804, 0.109804, 0.109804, 0.819608)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+corner_detail = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mkebd"]
+bg_color = Color(0.113725, 0.113725, 0.670588, 1)
+corner_radius_top_left = 25
+corner_radius_top_right = 25
+corner_radius_bottom_right = 25
+corner_radius_bottom_left = 25
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_32kbf"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d8fs8"]
+bg_color = Color(0.117647, 0.117647, 0.117647, 1)
+border_width_bottom = 2
+border_color = Color(0.117647, 0.117647, 0.117647, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+corner_detail = 4
+expand_margin_top = 4.0
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_lock_ = true
+
+[node name="Panel5" type="Panel" parent="."]
+layout_mode = 1
+offset_right = 647.0
+offset_bottom = 101.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_d0atw")
+
+[node name="Panel" type="Panel" parent="."]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+offset_left = 4.0
+offset_top = 25.0
+offset_right = 642.0
+offset_bottom = 33.0
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 0
+offset_right = 511.0
+offset_bottom = 73.0
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 0
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 9
+
+[node name="TopBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer2"]
+layout_mode = 2
+
+[node name="MenuButton" type="MenuButton" parent="MarginContainer/VBoxContainer2/TopBar"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+theme = SubResource("Theme_v2fbp")
+theme_override_font_sizes/font_size = 14
+text = "File"
+item_count = 5
+popup/item_0/text = "Save"
+popup/item_0/id = 0
+popup/item_1/text = "Save as"
+popup/item_1/id = 1
+popup/item_2/text = "Load"
+popup/item_2/id = 2
+popup/item_3/text = "Export"
+popup/item_3/id = 3
+popup/item_4/text = "Import"
+popup/item_4/id = 4
+
+[node name="MenuButton2" type="MenuButton" parent="MarginContainer/VBoxContainer2/TopBar"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+theme = SubResource("Theme_v2fbp")
+theme_override_font_sizes/font_size = 14
+text = "Edit"
+item_count = 10
+popup/item_0/text = "Undo"
+popup/item_0/id = 4
+popup/item_1/text = "Redo"
+popup/item_1/id = 1
+popup/item_2/text = ""
+popup/item_2/id = 4
+popup/item_2/separator = true
+popup/item_3/text = "Copy"
+popup/item_3/id = 2
+popup/item_4/text = "Paste"
+popup/item_4/id = 3
+popup/item_5/text = "Cut"
+popup/item_5/id = 5
+popup/item_6/text = "Duplicate"
+popup/item_6/id = 6
+popup/item_7/text = "Clear"
+popup/item_7/id = 7
+popup/item_8/text = ""
+popup/item_8/id = 8
+popup/item_8/separator = true
+popup/item_9/text = "Options"
+popup/item_9/id = 9
+
+[node name="MenuButton3" type="MenuButton" parent="MarginContainer/VBoxContainer2/TopBar"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+theme = SubResource("Theme_v2fbp")
+theme_override_font_sizes/font_size = 14
+text = "Assets"
+item_count = 3
+popup/item_0/text = "Edit Color Palettes"
+popup/item_0/id = 0
+popup/item_1/text = "Edit Material Palettes"
+popup/item_1/id = 1
+popup/item_2/text = "Edit Spawnable Shapes"
+popup/item_2/id = 2
+
+[node name="MenuButton4" type="MenuButton" parent="MarginContainer/VBoxContainer2/TopBar"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+theme = SubResource("Theme_v2fbp")
+theme_override_font_sizes/font_size = 14
+text = "Help"
+item_count = 1
+popup/item_0/text = "Open Manual"
+popup/item_0/id = 0
+
+[node name="ToolBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer2"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Button" type="Button" parent="MarginContainer/VBoxContainer2/ToolBar"]
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+tooltip_text = "Drag tool"
+theme_override_styles/normal = SubResource("StyleBoxFlat_6myb8")
+theme_override_styles/hover = SubResource("StyleBoxFlat_6myb8")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_vqowt")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_mycpf")
+toggle_mode = true
+icon = ExtResource("2_kkh5d")
+expand_icon = true
+
+[node name="Panel" type="Panel" parent="MarginContainer/VBoxContainer2/ToolBar/Button"]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 64.0
+offset_right = 58.0
+offset_bottom = 96.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_hovfx")
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer2/ToolBar/Button/Panel"]
+layout_mode = 0
+offset_left = -3.0
+offset_top = 2.0
+offset_right = 33.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.117647, 1, 0.172549, 1)
+theme_override_fonts/font = ExtResource("12_hh5ef")
+theme_override_font_sizes/font_size = 8
+text = "1"
+horizontal_alignment = 1
+
+[node name="Button2" type="Button" parent="MarginContainer/VBoxContainer2/ToolBar"]
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+tooltip_text = "Move tool"
+icon = ExtResource("3_2fuqx")
+expand_icon = true
+
+[node name="Panel" type="Panel" parent="MarginContainer/VBoxContainer2/ToolBar/Button2"]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 64.0
+offset_right = 58.0
+offset_bottom = 96.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_hovfx")
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer2/ToolBar/Button2/Panel"]
+layout_mode = 0
+offset_left = -3.0
+offset_top = 2.0
+offset_right = 33.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.117647, 1, 0.172549, 1)
+theme_override_fonts/font = ExtResource("12_hh5ef")
+theme_override_font_sizes/font_size = 8
+text = "2"
+horizontal_alignment = 1
+
+[node name="Button3" type="Button" parent="MarginContainer/VBoxContainer2/ToolBar"]
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+tooltip_text = "Rotate tool"
+icon = ExtResource("4_6p8g3")
+expand_icon = true
+
+[node name="Panel" type="Panel" parent="MarginContainer/VBoxContainer2/ToolBar/Button3"]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 64.0
+offset_right = 58.0
+offset_bottom = 96.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_hovfx")
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer2/ToolBar/Button3/Panel"]
+layout_mode = 0
+offset_left = -3.0
+offset_top = 2.0
+offset_right = 33.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.117647, 1, 0.172549, 1)
+theme_override_fonts/font = ExtResource("12_hh5ef")
+theme_override_font_sizes/font_size = 8
+text = "3"
+horizontal_alignment = 1
+
+[node name="Button4" type="Button" parent="MarginContainer/VBoxContainer2/ToolBar"]
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+tooltip_text = "Scale tool"
+icon = ExtResource("5_d4lfn")
+expand_icon = true
+
+[node name="Panel" type="Panel" parent="MarginContainer/VBoxContainer2/ToolBar/Button4"]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 64.0
+offset_right = 58.0
+offset_bottom = 96.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_hovfx")
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer2/ToolBar/Button4/Panel"]
+layout_mode = 0
+offset_left = -3.0
+offset_top = 2.0
+offset_right = 33.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.117647, 1, 0.172549, 1)
+theme_override_fonts/font = ExtResource("12_hh5ef")
+theme_override_font_sizes/font_size = 8
+text = "4"
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer2/ToolBar"]
+layout_mode = 2
+theme_override_constants/separation = 1
+
+[node name="Button5" type="Button" parent="MarginContainer/VBoxContainer2/ToolBar/HBoxContainer"]
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+tooltip_text = "Drag tool"
+icon = ExtResource("6_w2sp5")
+expand_icon = true
+
+[node name="Panel" type="Panel" parent="MarginContainer/VBoxContainer2/ToolBar/HBoxContainer/Button5"]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 64.0
+offset_right = 58.0
+offset_bottom = 96.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_hovfx")
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer2/ToolBar/HBoxContainer/Button5/Panel"]
+layout_mode = 0
+offset_left = -3.0
+offset_top = 2.0
+offset_right = 33.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.117647, 1, 0.172549, 1)
+theme_override_fonts/font = ExtResource("12_hh5ef")
+theme_override_font_sizes/font_size = 8
+text = "5"
+horizontal_alignment = 1
+
+[node name="DropDownButton" type="Button" parent="MarginContainer/VBoxContainer2/ToolBar/HBoxContainer"]
+layout_mode = 2
+text = "▲"
+script = ExtResource("6_fve7m")
+
+[node name="Button6" type="Button" parent="MarginContainer/VBoxContainer2/ToolBar"]
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+tooltip_text = "Drag tool"
+icon = ExtResource("8_j4yp8")
+expand_icon = true
+
+[node name="Panel" type="Panel" parent="MarginContainer/VBoxContainer2/ToolBar/Button6"]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 64.0
+offset_right = 58.0
+offset_bottom = 96.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_hovfx")
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer2/ToolBar/Button6/Panel"]
+layout_mode = 0
+offset_left = -3.0
+offset_top = 2.0
+offset_right = 33.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.117647, 1, 0.172549, 1)
+theme_override_fonts/font = ExtResource("12_hh5ef")
+theme_override_font_sizes/font_size = 8
+text = "6"
+horizontal_alignment = 1
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer2/ToolBar"]
+layout_mode = 2
+theme_override_constants/separation = 1
+
+[node name="Button7" type="Button" parent="MarginContainer/VBoxContainer2/ToolBar/HBoxContainer2"]
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+tooltip_text = "Drag tool"
+icon = ExtResource("9_vx3ec")
+expand_icon = true
+
+[node name="Panel" type="Panel" parent="MarginContainer/VBoxContainer2/ToolBar/HBoxContainer2/Button7"]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 64.0
+offset_right = 58.0
+offset_bottom = 96.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_hovfx")
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer2/ToolBar/HBoxContainer2/Button7/Panel"]
+layout_mode = 0
+offset_left = -3.0
+offset_top = 2.0
+offset_right = 33.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.117647, 1, 0.172549, 1)
+theme_override_fonts/font = ExtResource("12_hh5ef")
+theme_override_font_sizes/font_size = 8
+text = "7"
+horizontal_alignment = 1
+
+[node name="DropDownButton" type="Button" parent="MarginContainer/VBoxContainer2/ToolBar/HBoxContainer2"]
+layout_mode = 2
+text = "▲"
+script = ExtResource("6_fve7m")
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/VBoxContainer2/ToolBar"]
+layout_mode = 2
+theme_override_constants/separation = 1
+
+[node name="Button8" type="Button" parent="MarginContainer/VBoxContainer2/ToolBar/HBoxContainer3"]
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+tooltip_text = "Drag tool"
+icon = ExtResource("10_faotw")
+expand_icon = true
+
+[node name="Panel" type="Panel" parent="MarginContainer/VBoxContainer2/ToolBar/HBoxContainer3/Button8"]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 64.0
+offset_right = 58.0
+offset_bottom = 96.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_hovfx")
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer2/ToolBar/HBoxContainer3/Button8/Panel"]
+layout_mode = 0
+offset_left = -3.0
+offset_top = 2.0
+offset_right = 33.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.117647, 1, 0.172549, 1)
+theme_override_fonts/font = ExtResource("12_hh5ef")
+theme_override_font_sizes/font_size = 8
+text = "8"
+horizontal_alignment = 1
+
+[node name="DropDownButton" type="Button" parent="MarginContainer/VBoxContainer2/ToolBar/HBoxContainer3"]
+layout_mode = 2
+text = "▲"
+script = ExtResource("6_fve7m")
+
+[node name="Button9" type="Button" parent="MarginContainer/VBoxContainer2/ToolBar"]
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+tooltip_text = "Drag tool"
+icon = ExtResource("11_dffo3")
+expand_icon = true
+
+[node name="Panel" type="Panel" parent="MarginContainer/VBoxContainer2/ToolBar/Button9"]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 64.0
+offset_right = 58.0
+offset_bottom = 96.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_hovfx")
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer2/ToolBar/Button9/Panel"]
+layout_mode = 0
+offset_left = -3.0
+offset_top = 2.0
+offset_right = 33.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.117647, 1, 0.172549, 1)
+theme_override_fonts/font = ExtResource("12_hh5ef")
+theme_override_font_sizes/font_size = 8
+text = "9"
+horizontal_alignment = 1
+
+[node name="Panel2" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -27.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Panel3" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 338.0
+offset_top = 57.0
+offset_right = 520.0
+offset_bottom = 149.0
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_mkebd")
+
+[node name="Label" type="Label" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 339.0
+offset_top = 393.0
+offset_right = 581.0
+offset_bottom = 510.0
+theme_override_colors/font_color = Color(0, 0.843137, 1, 1)
+theme_override_fonts/font = ExtResource("12_hh5ef")
+text = "1.5X"
+
+[node name="Label2" type="Label" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 182.0
+offset_top = 160.0
+offset_right = 222.0
+offset_bottom = 183.0
+text = "all required buttons:
+toolbar
+snapping options -> x units, x degrees, snapping enabled, local transform enabled
+color palette menu
+file -> save, load, export, import
+edit -> undo redo copy, paste, cut, duplicate, clear, settings
+assets -> edit color palettes, edit material palettes, edit spawnable shapes
+help -> open manual"
+
+[node name="Panel4" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -159.0
+offset_right = 314.0
+offset_bottom = -27.0
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_d0atw")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.004
+anchor_top = 1.019
+anchor_right = 0.004
+anchor_bottom = 1.019
+offset_left = -0.608
+offset_top = -171.312
+offset_right = 309.392
+offset_bottom = -4.31201
+grow_horizontal = 0
+theme_override_constants/separation = 6
+
+[node name="Label" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Snapping Options"
+
+[node name="Panel" type="Panel" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="CheckBox" type="CheckBox" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_6myb8")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_6myb8")
+theme_override_styles/hover = SubResource("StyleBoxFlat_6myb8")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_6myb8")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_32kbf")
+text = "Local transform enabled"
+
+[node name="Panel2" type="Panel" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="LineEdit" type="LineEdit" parent="VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.117647, 1, 0.172549, 1)
+theme_override_fonts/font = ExtResource("12_hh5ef")
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("StyleBoxFlat_d8fs8")
+text = "0.2"
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "units"
+
+[node name="LineEdit2" type="LineEdit" parent="VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.117647, 1, 0.172549, 1)
+theme_override_fonts/font = ExtResource("12_hh5ef")
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("StyleBoxFlat_d8fs8")
+text = "15"
+
+[node name="Label2" type="Label" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "degrees"
