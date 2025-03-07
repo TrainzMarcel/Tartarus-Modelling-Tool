@@ -41,4 +41,6 @@
 27.2. finished dropdown button class, started work on automatic color sorting algorithm
 28.2. finished color sorting algorithm
 3.3. created icons for: drag, move, rotate, scale, add part, delete part, color tool, material tool, lock part, unlock part, all in blender.
-5.3. reworked material tool icon, made moodboard for ui styling, created basic layout for ui
+5.3. reworked material tool icon, made moodboard for ui styling, created basic layout for new ui
+6.3. cleaned up test ui, reworked folder structure, continued work on ui, made themes for ui
+7.3. cleaned up and removed all themes in favor of going back to theme overrides, added sci fi font, finalized bottom panel, added functionality for having no tools selected

@@ -51,6 +51,7 @@ var selected_parts_abb_pivot : Vector3 = Vector3.ZERO
 #centralized tool identifier
 enum SelectedToolEnum
 {
+	none,
 	t_drag,
 	t_move,
 	t_rotate,
@@ -60,7 +61,7 @@ enum SelectedToolEnum
 	t_lock
 }
 #gets set in on_tool_selected
-var selected_tool : SelectedToolEnum
+var selected_tool : SelectedToolEnum = SelectedToolEnum.none
 #gets set in on_color_selected
 var selected_color : Color
 
@@ -107,11 +108,11 @@ var selected_tool_handle_array : Array[TransformHandle]
 var mouse_button_held : bool = false
 #gets set in on_tool_selected
 #gets set in on_tool_selected
-var is_drag_tool : bool = true
+var is_drag_tool : bool = false
 #this bool is meant for non drag tools which dont need selecting but still need hovering and clicking functionality
-var is_hovering_allowed : bool = true
+var is_hovering_allowed : bool = false
 #this bool is meant for drag tools, if this is enabled then hovering_allowed is also enabled
-var is_selecting_allowed : bool = true
+var is_selecting_allowed : bool = false
 
 
 # Called when the node enters the scene tree for the first time.
@@ -146,12 +147,10 @@ func _input(event):
 	is_selecting_allowed = is_selecting_allowed and Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED
 	
 	#if selecting is allowed, hovering is allowed as well
-	if is_selecting_allowed:
-		is_hovering_allowed = true
-	else:
-		#hovering is not allowed if cursor is captured or over ui
-		is_hovering_allowed = Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED
-		is_hovering_allowed = is_hovering_allowed and not is_ui_hovered
+	#hovering is not allowed if cursor is captured or over ui
+	is_hovering_allowed = is_selecting_allowed
+	is_hovering_allowed = is_hovering_allowed and Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED
+	is_hovering_allowed = is_hovering_allowed and not is_ui_hovered
 	
 	
 #do raycasting, set hovered_handle
@@ -159,6 +158,9 @@ func _input(event):
 #transform handles take priority over parts
 	if event is InputEventMouseMotion:
 		if is_hovering_allowed:
+			print("is_hovering_allowed   ", is_hovering_allowed)
+			print("is_selecting_allowed  ", is_selecting_allowed)
+			print("is_drag_tool          ", is_drag_tool)
 			hovered_handle = handle_hover_check()
 			#handle wasnt detected
 			if not Main.safety_check(hovered_handle) and not Main.safety_check(dragged_handle):
@@ -274,9 +276,6 @@ func _input(event):
 					
 					if selected_tool == SelectedToolEnum.t_color:
 						hovered_part.part_color = selected_color
-					
-					
-					
 				
 				
 	#lmb up

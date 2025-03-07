@@ -233,7 +233,7 @@ func initialize(
 	UI.b_snapping_active.toggled.connect(on_snapping_active_set)
 
 static func select_tool(
-	button : Control,
+	button : Button,
 	selected_tool_handle_array : Array[TransformHandle],
 	selected_tool : Main.SelectedToolEnum,
 	is_drag_tool : bool,
@@ -250,35 +250,40 @@ static func select_tool(
 	
 	var has_associated_transform_handles : bool = false
 	
-	match button:
-		b_drag:
-			selected_tool = Main.SelectedToolEnum.t_drag
-			has_associated_transform_handles = false
-			is_drag_tool = true
-		b_move:
-			selected_tool = Main.SelectedToolEnum.t_move
-			has_associated_transform_handles = true
-			is_drag_tool = true
-		b_rotate:
-			selected_tool = Main.SelectedToolEnum.t_rotate
-			has_associated_transform_handles = true
-			is_drag_tool = true
-		b_scale:
-			selected_tool = Main.SelectedToolEnum.t_scale
-			has_associated_transform_handles = true
-			is_drag_tool = true
-		b_material:
-			selected_tool = Main.SelectedToolEnum.t_material
-			has_associated_transform_handles = false
-			is_drag_tool = false
-		b_color:
-			selected_tool = Main.SelectedToolEnum.t_color
-			has_associated_transform_handles = false
-			is_drag_tool = false
-		b_lock:
-			selected_tool = Main.SelectedToolEnum.t_lock
-			has_associated_transform_handles = false
-			is_drag_tool = false
+	if button.button_pressed:
+		match button:
+			b_drag:
+				selected_tool = Main.SelectedToolEnum.t_drag
+				has_associated_transform_handles = false
+				is_drag_tool = true
+			b_move:
+				selected_tool = Main.SelectedToolEnum.t_move
+				has_associated_transform_handles = true
+				is_drag_tool = true
+			b_rotate:
+				selected_tool = Main.SelectedToolEnum.t_rotate
+				has_associated_transform_handles = true
+				is_drag_tool = true
+			b_scale:
+				selected_tool = Main.SelectedToolEnum.t_scale
+				has_associated_transform_handles = true
+				is_drag_tool = true
+			b_material:
+				selected_tool = Main.SelectedToolEnum.t_material
+				has_associated_transform_handles = false
+				is_drag_tool = false
+			b_color:
+				selected_tool = Main.SelectedToolEnum.t_color
+				has_associated_transform_handles = false
+				is_drag_tool = false
+			b_lock:
+				selected_tool = Main.SelectedToolEnum.t_lock
+				has_associated_transform_handles = false
+				is_drag_tool = false
+	else:
+		selected_tool = Main.SelectedToolEnum.none
+		has_associated_transform_handles = false
+		is_drag_tool = false
 	
 	if has_associated_transform_handles:
 		selected_tool_handle_array = transform_handle_root.tool_handle_array[selected_tool]

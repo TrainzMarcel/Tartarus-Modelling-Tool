@@ -1,0 +1,8 @@
+[gd_resource type="Theme" load_steps=2 format=3 uid="uid://dvh0x5qyaaolk"]
+
+[ext_resource type="FontFile" uid="uid://ctid3aju4ruko" path="res://editor/ui/assets/segmen7_sharp/segmen7-sharp.otf" id="1_fob2m"]
+
+[resource]
+Control/colors/font_color = Color(0.117647, 1, 0.172549, 1)
+Control/font_sizes/font_size = 8
+Control/fonts/font = ExtResource("1_fob2m")

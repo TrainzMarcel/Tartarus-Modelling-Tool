@@ -53,7 +53,7 @@ points = PackedVector3Array(-0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -
 [sub_resource type="PrismMesh" id="PrismMesh_du6vf"]
 left_to_right = 0.0
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_hh281"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_vmb3e"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_b2n2e"]
 render_priority = 0
@@ -540,7 +540,7 @@ part_scale = Vector3(0.2, 0.2, 0.8)
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("4_sa2se")
-mesh = SubResource("ImmediateMesh_hh281")
+mesh = SubResource("ImmediateMesh_vmb3e")
 skeleton = NodePath("../..")
 script = ExtResource("5_byqpd")
 box_scale = Vector3(1, 1, 1)

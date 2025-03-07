@@ -1,0 +1,6 @@
+[gd_resource type="StyleBoxTexture" load_steps=2 format=3 uid="uid://cweor237iacfe"]
+
+[ext_resource type="Texture2D" uid="uid://buxscuocp21ae" path="res://editor/ui/styles/panel_styles/sleek_gradient.tres" id="1_cc3ut"]
+
+[resource]
+texture = ExtResource("1_cc3ut")
