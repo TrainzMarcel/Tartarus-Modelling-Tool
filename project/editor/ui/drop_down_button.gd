@@ -1,3 +1,4 @@
+@tool
 extends Button
 class_name DropDownButton
 
@@ -16,6 +17,8 @@ func _ready():
 	toggle_mode = true
 	toggled.connect(on_drop_down_button_pressed)
 
+func _init():
+	text = folded_in_symbol
 
 func on_drop_down_button_pressed(pressed_down : bool):
 	if pressed_down:
@@ -41,3 +44,14 @@ func _input(event):
 			if (not attached_control_rect.has_point(event.position) or hide_after_click_on_attached_control) and not button_rect.has_point(event.position):
 				button_pressed = false
 				on_drop_down_button_pressed(button_pressed)
+
+func _make_custom_tooltip(for_text : String):
+	return UI.custom_tooltip(for_text)
+
+func _enter_tree():
+	get_tree().node_added.connect(on_node_added)
+
+func on_node_added(node : Node):
+	var pp := node as PopupPanel
+	if pp and pp.theme_type_variation == "TooltipPanel":
+		pp.transparent_bg = true

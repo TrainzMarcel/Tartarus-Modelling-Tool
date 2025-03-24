@@ -1,6 +1,7 @@
 extends Control
 class_name UI
 
+
 #top panel, left block
 static var b_drag : Button
 static var b_move : Button
@@ -231,6 +232,21 @@ func initialize(
 	
 	UI.b_local_transform_active.toggled.connect(on_local_transform_active_set)
 	UI.b_snapping_active.toggled.connect(on_snapping_active_set)
+
+
+#tooltip styling
+static var tooltip_panel : StyleBox = preload("res://editor/ui/styles/panel_styles/tooltip_panel.tres")
+static var tooltip_font : Theme = preload("res://editor/ui/styles/font_styles/t_sci_fi_regular.tres")
+
+static func custom_tooltip(for_text : String):
+	var tooltip : Label = Label.new()
+	for_text = for_text
+	tooltip.text = for_text.replace("(", "[ ").replace(")", " ]").replace("\n", " ")
+	tooltip.theme = UI.tooltip_font
+	tooltip.add_theme_stylebox_override("normal", tooltip_panel)
+	tooltip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return tooltip
+
 
 static func select_tool(
 	button : Button,
