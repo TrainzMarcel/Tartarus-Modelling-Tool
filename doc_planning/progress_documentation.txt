@@ -47,4 +47,7 @@
 17.3. back from other work, styled tooltips, started work on document displaying ui
 20.3. finished document displaying ui; added page change buttons, added search function
 21.3. added incomplete search result marking function
-24.3. finished search result marking function
+24.3. working on search result marking function
+25.3. working on search result marking function
+26.3. working on search result marking function + jumping between search results + marking selected search result
+27.3. finished working on document viewer

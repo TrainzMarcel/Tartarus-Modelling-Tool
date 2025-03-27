@@ -53,7 +53,7 @@ points = PackedVector3Array(-0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -
 [sub_resource type="PrismMesh" id="PrismMesh_du6vf"]
 left_to_right = 0.0
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_oiogt"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_e5wpn"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_b2n2e"]
 render_priority = 0
@@ -127,7 +127,6 @@ script = ExtResource("4_4bycu")
 metadata/_edit_lock_ = true
 
 [node name="HBoxContainer" type="HBoxContainer" parent="UI"]
-visible = false
 layout_mode = 1
 anchors_preset = -1
 anchor_right = 1.0
@@ -403,7 +402,6 @@ action_mode = 0
 
 [node name="Panel" type="Panel" parent="UI"]
 unique_name_in_owner = true
-visible = false
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -460,6 +458,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="NewUI" parent="UI" instance=ExtResource("6_whu6r")]
+visible = false
 layout_mode = 1
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
@@ -540,7 +539,7 @@ part_scale = Vector3(0.2, 0.2, 0.8)
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("4_sa2se")
-mesh = SubResource("ImmediateMesh_oiogt")
+mesh = SubResource("ImmediateMesh_e5wpn")
 skeleton = NodePath("../..")
 script = ExtResource("5_byqpd")
 box_scale = Vector3(1, 1, 1)

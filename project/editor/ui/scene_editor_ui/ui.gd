@@ -92,7 +92,7 @@ func initialize(
 	
 	#set up color picker
 	var sample_button : Button = %ColorPanel/MarginContainer/GridContainer/Button
-	var color_buttons : Array[Button] = AutomatedColorPalette.read_colors_and_create_buttons(FileAccess.get_file_as_string("res://editor/ui/default_color_codes.txt"), sample_button)
+	var color_buttons : Array[Button] = AutomatedColorPalette.read_colors_and_create_buttons(FileAccess.get_file_as_string("res://editor/data/default_color_codes.txt"), sample_button)
 	sample_button.queue_free()
 	await sample_button.tree_exited
 	var grid_container : GridContainer = %ColorPanel/MarginContainer/GridContainer
