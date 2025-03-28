@@ -1,7 +1,10 @@
 ![program_icon_v1E2_CHOSEN](https://github.com/user-attachments/assets/d0b31d3f-b637-49ba-a614-cb59c931eff0)
 # Tartarus-Modelling-Tool
 completely unfinished currently
+
 each building block is treated like it has its own coordinate system
+
+![image](https://github.com/user-attachments/assets/d00bf542-52e8-4a92-abcc-a09cadd1b991)
 
 ```
 REQUIREMENTS
@@ -63,4 +66,3 @@ v0.1
 
 
 ```
-![image](https://github.com/user-attachments/assets/d00bf542-52e8-4a92-abcc-a09cadd1b991)
