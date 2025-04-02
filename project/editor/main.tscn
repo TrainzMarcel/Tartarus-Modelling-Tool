@@ -1,17 +1,17 @@
 [gd_scene load_steps=27 format=3 uid="uid://hul5x10ptumj"]
 
 [ext_resource type="Script" path="res://editor/main.gd" id="1_4xdr8"]
-[ext_resource type="PackedScene" uid="uid://c01nu37bjhxsi" path="res://editor/camera/free_look_camera.tscn" id="2_n3tr4"]
-[ext_resource type="Script" path="res://editor/part.gd" id="3_yo0xd"]
-[ext_resource type="Script" path="res://editor/ui/ui.gd" id="4_4bycu"]
-[ext_resource type="Material" uid="uid://dg0pq3t4uvees" path="res://editor/selection_box/highlight_mat.res" id="4_sa2se"]
-[ext_resource type="Script" path="res://editor/selection_box/selection_box.gd" id="5_byqpd"]
-[ext_resource type="Script" path="res://editor/ui/drop_down_button.gd" id="5_jjx4e"]
-[ext_resource type="PackedScene" uid="uid://cwt02lxvderye" path="res://editor/ui/ui_new.tscn" id="6_whu6r"]
-[ext_resource type="PackedScene" uid="uid://clfcgcedn47iy" path="res://editor/transform_handles/transform_handle_root.tscn" id="7_wy0x5"]
-[ext_resource type="Shader" path="res://editor/materials/mat_1.gdshader" id="9_ys456"]
-[ext_resource type="Texture2D" uid="uid://du7navikebxm7" path="res://editor/materials/image_files/wood_01_albedo.jpg" id="10_5s45i"]
-[ext_resource type="Texture2D" uid="uid://cynafa7nsgncw" path="res://editor/materials/image_files/wood_01_normal.jpg" id="11_5r5hq"]
+[ext_resource type="PackedScene" uid="uid://c01nu37bjhxsi" path="res://editor/classes/camera/free_look_camera.tscn" id="2_n3tr4"]
+[ext_resource type="Script" path="res://editor/classes/ui_editor/ui.gd" id="4_4bycu"]
+[ext_resource type="Script" path="res://editor/classes/ui_editor/drop_down_button.gd" id="5_jjx4e"]
+[ext_resource type="PackedScene" uid="uid://cwt02lxvderye" path="res://editor/classes/ui_editor/ui_new.tscn" id="6_whu6r"]
+[ext_resource type="Script" path="res://editor/classes/part.gd" id="7_nrd43"]
+[ext_resource type="PackedScene" uid="uid://clfcgcedn47iy" path="res://editor/classes/transform_handles/transform_handle_root.tscn" id="7_wy0x5"]
+[ext_resource type="Material" uid="uid://dg0pq3t4uvees" path="res://editor/classes/selection_box/highlight_mat.res" id="8_4p0vi"]
+[ext_resource type="Script" path="res://editor/classes/selection_box/selection_box.gd" id="9_n7hy1"]
+[ext_resource type="Shader" path="res://editor/data_editor/materials/mat_1.gdshader" id="9_ys456"]
+[ext_resource type="Texture2D" uid="uid://du7navikebxm7" path="res://editor/data_editor/materials/image_files/wood_01_albedo.jpg" id="10_5s45i"]
+[ext_resource type="Texture2D" uid="uid://cynafa7nsgncw" path="res://editor/data_editor/materials/image_files/wood_01_normal.jpg" id="11_5r5hq"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_jgeb0"]
 sky_top_color = Color(0.168627, 0.470588, 0.690196, 1)
@@ -53,7 +53,7 @@ points = PackedVector3Array(-0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -
 [sub_resource type="PrismMesh" id="PrismMesh_du6vf"]
 left_to_right = 0.0
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_e5wpn"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_62205"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_b2n2e"]
 render_priority = 0
@@ -127,6 +127,7 @@ script = ExtResource("4_4bycu")
 metadata/_edit_lock_ = true
 
 [node name="HBoxContainer" type="HBoxContainer" parent="UI"]
+visible = false
 layout_mode = 1
 anchors_preset = -1
 anchor_right = 1.0
@@ -187,6 +188,8 @@ size_flags_vertical = 0
 toggle_mode = true
 text = "▲"
 script = ExtResource("5_jjx4e")
+folded_in_symbol = "▲"
+folded_out_symbol = "▼"
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="UI/HBoxContainer"]
 layout_mode = 2
@@ -209,6 +212,8 @@ size_flags_vertical = 0
 toggle_mode = true
 text = "▲"
 script = ExtResource("5_jjx4e")
+folded_in_symbol = "▲"
+folded_out_symbol = "▼"
 attached_control = NodePath("../../../ColorPanel")
 hide_after_click_on_attached_control = true
 
@@ -402,6 +407,7 @@ action_mode = 0
 
 [node name="Panel" type="Panel" parent="UI"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -458,7 +464,6 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="NewUI" parent="UI" instance=ExtResource("6_whu6r")]
-visible = false
 layout_mode = 1
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
@@ -474,74 +479,74 @@ collision_mask = 2
 [node name="Workspace" type="Node" parent="."]
 
 [node name="Part" type="StaticBody3D" parent="Workspace"]
-script = ExtResource("3_yo0xd")
+script = ExtResource("7_nrd43")
 
 [node name="Part2" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -0.680444)
-script = ExtResource("3_yo0xd")
+script = ExtResource("7_nrd43")
 part_scale = Vector3(0.5, 2, 4)
 
 [node name="Part6" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(0.289632, -0.105418, 0.951315, 0.956495, 0.0683042, -0.28364, -0.035078, 0.992079, 0.120615, 2, 0, -5.17892)
-script = ExtResource("3_yo0xd")
+script = ExtResource("7_nrd43")
 part_scale = Vector3(0.2, 2, 4)
 
 [node name="Part11" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(0.289632, -0.105418, 0.951315, 0.956495, 0.0683042, -0.28364, -0.035078, 0.992079, 0.120615, 2.42167, -0.273217, -9.14724)
-script = ExtResource("3_yo0xd")
+script = ExtResource("7_nrd43")
 part_scale = Vector3(0.2, 2, 4)
 
 [node name="Part10" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(0.289632, -0.105418, 0.951315, 0.956495, 0.0683042, -0.28364, -0.035078, 0.992079, 0.120615, 2, 0, -5.17892)
-script = ExtResource("3_yo0xd")
+script = ExtResource("7_nrd43")
 part_scale = Vector3(0.2, 2, 4)
 
 [node name="Part7" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(0.0678765, -0.959059, -0.274954, 0.994294, 0.0422935, 0.097934, -0.0822962, -0.280033, 0.956456, 7.03947, 0, -5.33047)
-script = ExtResource("3_yo0xd")
+script = ExtResource("7_nrd43")
 part_scale = Vector3(0.2, 2, 4)
 
 [node name="Part8" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(-0.14046, -0.186612, -0.972341, 0.990087, -0.0267847, -0.137883, -0.000313073, -0.982068, 0.188524, 2, 0, -11.4667)
-script = ExtResource("3_yo0xd")
+script = ExtResource("7_nrd43")
 part_scale = Vector3(0.2, 2, 4)
 
 [node name="Part9" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(-0.558939, 0.675168, 0.481389, 0.821381, 0.371229, 0.433039, 0.113669, 0.637446, -0.762064, 7.14437, -3.8147e-06, -10.2857)
-script = ExtResource("3_yo0xd")
+script = ExtResource("7_nrd43")
 part_scale = Vector3(0.2, 2, 4)
 
 [node name="Part3" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.45, 3.25, -0.73)
-script = ExtResource("3_yo0xd")
+script = ExtResource("7_nrd43")
 part_scale = Vector3(1.6, 0.2, 3.7)
 
 [node name="Part4" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0.75, 2.75, 1.02)
-script = ExtResource("3_yo0xd")
+script = ExtResource("7_nrd43")
 part_scale = Vector3(0.2, 0.2, 0.8)
 
 [node name="Part5" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0.75, 2.75, -2.48)
-script = ExtResource("3_yo0xd")
+script = ExtResource("7_nrd43")
 part_scale = Vector3(0.2, 0.2, 0.8)
 
 [node name="Part12" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 2.15, 2.75, -2.48)
-script = ExtResource("3_yo0xd")
+script = ExtResource("7_nrd43")
 part_scale = Vector3(0.2, 0.2, 0.8)
 
 [node name="Part13" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 2.15, 2.75, 1.02)
-script = ExtResource("3_yo0xd")
+script = ExtResource("7_nrd43")
 part_scale = Vector3(0.2, 0.2, 0.8)
 
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
-material_override = ExtResource("4_sa2se")
-mesh = SubResource("ImmediateMesh_e5wpn")
+material_override = ExtResource("8_4p0vi")
+mesh = SubResource("ImmediateMesh_62205")
 skeleton = NodePath("../..")
-script = ExtResource("5_byqpd")
+script = ExtResource("9_n7hy1")
 box_scale = Vector3(1, 1, 1)
 
 [node name="MeshInstance3Dshadertest" type="MeshInstance3D" parent="Workspace"]

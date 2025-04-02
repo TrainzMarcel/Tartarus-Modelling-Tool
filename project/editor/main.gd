@@ -272,7 +272,7 @@ func _input(event):
 				elif is_part_hovered and not is_selecting_allowed:
 					
 					if selected_tool == SelectedToolEnum.t_material:
-						hovered_part.part_material = preload("res://editor/materials/mat_1.tres")
+						hovered_part.part_material = preload("res://editor/data_editor/materials/mat_1.tres")
 					
 					if selected_tool == SelectedToolEnum.t_color:
 						hovered_part.part_color = selected_color
@@ -614,7 +614,7 @@ func part_instance_selection_box(assigned_part : Part):
 	new.assigned_node = assigned_part
 	new.box_scale = assigned_part.part_scale
 	new.global_transform = assigned_part.global_transform
-	var mat : StandardMaterial3D = preload("res://editor/selection_box/selection_box_mat.res")
+	var mat : StandardMaterial3D = preload("res://editor/classes/selection_box/selection_box_mat.res")
 	new.material_override = mat
 
 

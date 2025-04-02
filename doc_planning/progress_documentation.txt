@@ -43,11 +43,13 @@
 3.3. created icons for: drag, move, rotate, scale, add part, delete part, color tool, material tool, lock part, unlock part, all in blender.
 5.3. reworked material tool icon, made moodboard for ui styling, created basic layout for new ui
 6.3. cleaned up test ui, reworked folder structure, continued work on ui, made themes for ui
-7.3. cleaned up and removed all themes in favor of going back to theme overrides, added sci fi font, finalized bottom panel, added functionality for having no tools selected
+7.3. cleaned up and removed all themes in favor of going back to theme overrides, added sci fi font, finalized bottom panel, added functionality for having no tools selected (which i did so hastily that i broke some tool selecting code)
 17.3. back from other work, styled tooltips, started work on document displaying ui
 20.3. finished document displaying ui; added page change buttons, added search function
 21.3. added incomplete search result marking function
 24.3. working on search result marking function
 25.3. working on search result marking function
 26.3. working on search result marking function + jumping between search results + marking selected search result
-27.3. finished working on document viewer
+27.3. finished working on document viewer, started working on material and color picker ui
+28.3. designed logo, added ExpandPanel class
+32.3. fixed dropdown button issues, 

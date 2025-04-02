@@ -1,0 +1,278 @@
+[gd_scene load_steps=14 format=3 uid="uid://bln1og3mu36mh"]
+
+[ext_resource type="StyleBox" uid="uid://ccuocdfe5fudm" path="res://editor/data_ui/styles/panel_styles/panel_rounded_all.tres" id="1_75oe6"]
+[ext_resource type="Script" path="res://editor/classes/ui_document_display/document_display.gd" id="2_8rlph"]
+[ext_resource type="Theme" uid="uid://nxn5uapgdhhx" path="res://editor/data_ui/styles/font_styles/t_sci_fi_regular.tres" id="3_cn5wq"]
+[ext_resource type="StyleBox" uid="uid://bdapxi8kfkyap" path="res://editor/data_ui/styles/button_and_line_edit_styles/bottom_bar/mini_button/hover_normal.tres" id="4_ubajj"]
+[ext_resource type="StyleBox" uid="uid://l8wdqqom1c4k" path="res://editor/data_ui/styles/button_and_line_edit_styles/bottom_bar/mini_button/pressed.tres" id="5_08pjf"]
+[ext_resource type="StyleBox" uid="uid://cjs2pnpup0ys7" path="res://editor/data_ui/styles/button_and_line_edit_styles/focus_invisible.tres" id="6_60lfc"]
+[ext_resource type="StyleBox" uid="uid://c3yy373mpphkj" path="res://editor/data_ui/styles/button_and_line_edit_styles/tool_bar/button_regular/hover_normal.tres" id="7_pkpnh"]
+[ext_resource type="StyleBox" uid="uid://srkvy1wv8a2t" path="res://editor/data_ui/styles/button_and_line_edit_styles/tool_bar/button_regular/pressed.tres" id="8_a3xob"]
+[ext_resource type="Theme" uid="uid://dvh0x5qyaaolk" path="res://editor/data_ui/styles/font_styles/t_number_display.tres" id="9_ddctr"]
+[ext_resource type="StyleBox" uid="uid://b1bkepq7spu42" path="res://editor/data_ui/styles/panel_styles/number_display_panel.tres" id="10_foe0w"]
+[ext_resource type="StyleBox" uid="uid://cweor237iacfe" path="res://editor/data_ui/styles/panel_styles/gradient_panel.tres" id="11_boql1"]
+[ext_resource type="FontFile" uid="uid://cb5ore3ww1ktl" path="res://editor/data_ui/assets/JetBrainsMono-2.304/JetBrainsMonoNL-Regular.ttf" id="12_n7vqu"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_6oyx8"]
+content_margin_bottom = 6.0
+
+[node name="DocumentDisplay" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_8rlph")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -507.0
+offset_top = -253.0
+offset_right = 517.0
+offset_bottom = 259.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = ExtResource("1_75oe6")
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 2
+
+[node name="TopBarHBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="SearchBarHBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/TopBarHBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="SearchControlsHBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/TopBarHBoxContainer/SearchBarHBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="FirstResult" type="Button" parent="Panel/MarginContainer/VBoxContainer/TopBarHBoxContainer/SearchBarHBoxContainer/SearchControlsHBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 35)
+layout_mode = 2
+theme = ExtResource("3_cn5wq")
+theme_override_styles/normal = ExtResource("7_pkpnh")
+theme_override_styles/hover = ExtResource("7_pkpnh")
+theme_override_styles/pressed = ExtResource("8_a3xob")
+theme_override_styles/focus = ExtResource("6_60lfc")
+text = "|<"
+
+[node name="PreviousResult" type="Button" parent="Panel/MarginContainer/VBoxContainer/TopBarHBoxContainer/SearchBarHBoxContainer/SearchControlsHBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 35)
+layout_mode = 2
+theme = ExtResource("3_cn5wq")
+theme_override_styles/normal = ExtResource("7_pkpnh")
+theme_override_styles/hover = ExtResource("7_pkpnh")
+theme_override_styles/pressed = ExtResource("8_a3xob")
+theme_override_styles/focus = ExtResource("6_60lfc")
+text = "<"
+
+[node name="CurrentResultDisplay" type="Label" parent="Panel/MarginContainer/VBoxContainer/TopBarHBoxContainer/SearchBarHBoxContainer/SearchControlsHBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(54, 36)
+layout_mode = 2
+theme = ExtResource("9_ddctr")
+theme_override_styles/normal = ExtResource("10_foe0w")
+text = "000"
+horizontal_alignment = 1
+vertical_alignment = 2
+clip_text = true
+
+[node name="Label3" type="Label" parent="Panel/MarginContainer/VBoxContainer/TopBarHBoxContainer/SearchBarHBoxContainer/SearchControlsHBoxContainer"]
+layout_mode = 2
+theme = ExtResource("3_cn5wq")
+theme_override_font_sizes/font_size = 34
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
+text = "/"
+horizontal_alignment = 1
+
+[node name="SumResultDisplay" type="Label" parent="Panel/MarginContainer/VBoxContainer/TopBarHBoxContainer/SearchBarHBoxContainer/SearchControlsHBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(54, 36)
+layout_mode = 2
+theme = ExtResource("9_ddctr")
+theme_override_styles/normal = ExtResource("10_foe0w")
+text = "000"
+horizontal_alignment = 1
+vertical_alignment = 2
+clip_text = true
+
+[node name="NextResult" type="Button" parent="Panel/MarginContainer/VBoxContainer/TopBarHBoxContainer/SearchBarHBoxContainer/SearchControlsHBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 35)
+layout_mode = 2
+theme = ExtResource("3_cn5wq")
+theme_override_styles/normal = ExtResource("7_pkpnh")
+theme_override_styles/hover = ExtResource("7_pkpnh")
+theme_override_styles/pressed = ExtResource("8_a3xob")
+theme_override_styles/focus = ExtResource("6_60lfc")
+text = ">"
+
+[node name="LastResult" type="Button" parent="Panel/MarginContainer/VBoxContainer/TopBarHBoxContainer/SearchBarHBoxContainer/SearchControlsHBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 35)
+layout_mode = 2
+theme = ExtResource("3_cn5wq")
+theme_override_styles/normal = ExtResource("7_pkpnh")
+theme_override_styles/hover = ExtResource("7_pkpnh")
+theme_override_styles/pressed = ExtResource("8_a3xob")
+theme_override_styles/focus = ExtResource("6_60lfc")
+text = ">|"
+
+[node name="SearchLineEdit" type="LineEdit" parent="Panel/MarginContainer/VBoxContainer/TopBarHBoxContainer/SearchBarHBoxContainer" node_paths=PackedStringArray("shortcut_context")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+shortcut_context = NodePath("../../../../..")
+theme_override_styles/focus = ExtResource("6_60lfc")
+placeholder_text = "Search for keywords.."
+context_menu_enabled = false
+
+[node name="CancelSearchButton" type="Button" parent="Panel/MarginContainer/VBoxContainer/TopBarHBoxContainer/SearchBarHBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+theme = ExtResource("3_cn5wq")
+theme_override_styles/normal = ExtResource("4_ubajj")
+theme_override_styles/hover = ExtResource("4_ubajj")
+theme_override_styles/pressed = ExtResource("5_08pjf")
+theme_override_styles/focus = ExtResource("6_60lfc")
+action_mode = 0
+text = "❌"
+
+[node name="ClosePageButton" type="Button" parent="Panel/MarginContainer/VBoxContainer/TopBarHBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+theme = ExtResource("3_cn5wq")
+theme_override_styles/normal = ExtResource("4_ubajj")
+theme_override_styles/hover = ExtResource("4_ubajj")
+theme_override_styles/pressed = ExtResource("5_08pjf")
+theme_override_styles/focus = ExtResource("6_60lfc")
+action_mode = 0
+text = "❌"
+
+[node name="GradientPanel" type="Panel" parent="Panel/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("11_boql1")
+
+[node name="PageRichTextLabel" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_fonts/mono_font = ExtResource("12_n7vqu")
+theme_override_styles/focus = ExtResource("6_60lfc")
+bbcode_enabled = true
+
+[node name="GradientPanel2" type="Panel" parent="Panel/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("11_boql1")
+
+[node name="PageControlsHBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="FirstPage" type="Button" parent="Panel/MarginContainer/VBoxContainer/PageControlsHBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 35)
+layout_mode = 2
+theme = ExtResource("3_cn5wq")
+theme_override_styles/normal = ExtResource("7_pkpnh")
+theme_override_styles/hover = ExtResource("7_pkpnh")
+theme_override_styles/pressed = ExtResource("8_a3xob")
+theme_override_styles/focus = ExtResource("6_60lfc")
+text = "|<"
+
+[node name="PreviousPage" type="Button" parent="Panel/MarginContainer/VBoxContainer/PageControlsHBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 35)
+layout_mode = 2
+theme = ExtResource("3_cn5wq")
+theme_override_styles/normal = ExtResource("7_pkpnh")
+theme_override_styles/hover = ExtResource("7_pkpnh")
+theme_override_styles/pressed = ExtResource("8_a3xob")
+theme_override_styles/focus = ExtResource("6_60lfc")
+text = "<"
+
+[node name="CurrentPageDisplay" type="Label" parent="Panel/MarginContainer/VBoxContainer/PageControlsHBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+theme = ExtResource("9_ddctr")
+theme_override_styles/normal = ExtResource("10_foe0w")
+text = "01"
+horizontal_alignment = 1
+vertical_alignment = 2
+clip_text = true
+
+[node name="Label3" type="Label" parent="Panel/MarginContainer/VBoxContainer/PageControlsHBoxContainer"]
+layout_mode = 2
+theme = ExtResource("3_cn5wq")
+theme_override_font_sizes/font_size = 34
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
+text = "/"
+horizontal_alignment = 1
+
+[node name="SumPageDisplay" type="Label" parent="Panel/MarginContainer/VBoxContainer/PageControlsHBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+theme = ExtResource("9_ddctr")
+theme_override_styles/normal = ExtResource("10_foe0w")
+text = "01"
+horizontal_alignment = 1
+vertical_alignment = 2
+clip_text = true
+
+[node name="NextPage" type="Button" parent="Panel/MarginContainer/VBoxContainer/PageControlsHBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 35)
+layout_mode = 2
+theme = ExtResource("3_cn5wq")
+theme_override_styles/normal = ExtResource("7_pkpnh")
+theme_override_styles/hover = ExtResource("7_pkpnh")
+theme_override_styles/pressed = ExtResource("8_a3xob")
+theme_override_styles/focus = ExtResource("6_60lfc")
+text = ">"
+
+[node name="LastPage" type="Button" parent="Panel/MarginContainer/VBoxContainer/PageControlsHBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 35)
+layout_mode = 2
+theme = ExtResource("3_cn5wq")
+theme_override_styles/normal = ExtResource("7_pkpnh")
+theme_override_styles/hover = ExtResource("7_pkpnh")
+theme_override_styles/pressed = ExtResource("8_a3xob")
+theme_override_styles/focus = ExtResource("6_60lfc")
+text = ">|"

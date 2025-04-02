@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://c01nu37bjhxsi"]
+
+[ext_resource type="Script" path="res://editor/classes/camera/free_look_camera.gd" id="1_vicul"]
+
+[node name="Camera3D" type="Camera3D"]
+current = true
+fov = 90.0
+script = ExtResource("1_vicul")

@@ -1,0 +1,8 @@
+[gd_resource type="Theme" load_steps=2 format=3 uid="uid://nxn5uapgdhhx"]
+
+[ext_resource type="FontFile" uid="uid://nk6kbmgwcafg" path="res://editor/data_ui/assets/trivial_fontzillion/trivial-regular.otf" id="1_mljo7"]
+
+[resource]
+Control/colors/font_color = Color(0.913725, 0.913725, 0.913725, 1)
+Control/font_sizes/font_size = 16
+Control/fonts/font = ExtResource("1_mljo7")
