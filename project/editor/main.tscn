@@ -1,9 +1,7 @@
-[gd_scene load_steps=27 format=3 uid="uid://hul5x10ptumj"]
+[gd_scene load_steps=22 format=3 uid="uid://hul5x10ptumj"]
 
 [ext_resource type="Script" path="res://editor/main.gd" id="1_4xdr8"]
 [ext_resource type="PackedScene" uid="uid://c01nu37bjhxsi" path="res://editor/classes/camera/free_look_camera.tscn" id="2_n3tr4"]
-[ext_resource type="Script" path="res://editor/classes/ui_editor/ui.gd" id="4_4bycu"]
-[ext_resource type="Script" path="res://editor/classes/ui_editor/drop_down_button.gd" id="5_jjx4e"]
 [ext_resource type="PackedScene" uid="uid://cwt02lxvderye" path="res://editor/classes/ui_editor/ui_new.tscn" id="6_whu6r"]
 [ext_resource type="Script" path="res://editor/classes/part.gd" id="7_nrd43"]
 [ext_resource type="PackedScene" uid="uid://clfcgcedn47iy" path="res://editor/classes/transform_handles/transform_handle_root.tscn" id="7_wy0x5"]
@@ -36,24 +34,13 @@ tonemap_mode = 2
 [sub_resource type="World3D" id="World3D_15twx"]
 environment = SubResource("Environment_ye61o")
 
-[sub_resource type="ButtonGroup" id="ButtonGroup_0qmei"]
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_82eal"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7haax"]
-bg_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_3mjn7"]
 points = PackedVector3Array(-0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5)
 
 [sub_resource type="PrismMesh" id="PrismMesh_du6vf"]
 left_to_right = 0.0
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_62205"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_y8mwr"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_b2n2e"]
 render_priority = 0
@@ -80,7 +67,7 @@ second_cam = NodePath("SubViewportContainer/SubViewport/Camera3D")
 workspace = NodePath("Workspace")
 transform_handle_root = NodePath("SubViewportContainer/SubViewport/TransformHandleRoot")
 hover_selection_box = NodePath("Workspace/HoverSelectionBox")
-ui_node = NodePath("UI")
+ui_node = NodePath("NewUI")
 transform_handle_scale = 7.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -116,355 +103,7 @@ render_target_update_mode = 4
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3)
 fov = 90.0
 
-[node name="UI" type="Control" parent="."]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-script = ExtResource("4_4bycu")
-metadata/_edit_lock_ = true
-
-[node name="HBoxContainer" type="HBoxContainer" parent="UI"]
-visible = false
-layout_mode = 1
-anchors_preset = -1
-anchor_right = 1.0
-offset_bottom = 103.0
-
-[node name="Button" type="Button" parent="UI/HBoxContainer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 54)
-layout_mode = 2
-size_flags_vertical = 0
-toggle_mode = true
-button_group = SubResource("ButtonGroup_0qmei")
-text = "Drag"
-
-[node name="Button2" type="Button" parent="UI/HBoxContainer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 54)
-layout_mode = 2
-size_flags_vertical = 0
-toggle_mode = true
-button_group = SubResource("ButtonGroup_0qmei")
-text = "Move"
-
-[node name="Button3" type="Button" parent="UI/HBoxContainer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 54)
-layout_mode = 2
-size_flags_vertical = 0
-toggle_mode = true
-button_group = SubResource("ButtonGroup_0qmei")
-text = "Rotate"
-
-[node name="Button4" type="Button" parent="UI/HBoxContainer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 54)
-layout_mode = 2
-size_flags_vertical = 0
-toggle_mode = true
-button_group = SubResource("ButtonGroup_0qmei")
-text = "Scale"
-
-[node name="HBoxContainer" type="HBoxContainer" parent="UI/HBoxContainer"]
-layout_mode = 2
-theme_override_constants/separation = 0
-
-[node name="Button8" type="Button" parent="UI/HBoxContainer/HBoxContainer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(60, 54)
-layout_mode = 2
-size_flags_vertical = 0
-text = "Spawn"
-
-[node name="OptionButton" type="Button" parent="UI/HBoxContainer/HBoxContainer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(10, 54)
-layout_mode = 2
-size_flags_vertical = 0
-toggle_mode = true
-text = "▲"
-script = ExtResource("5_jjx4e")
-folded_in_symbol = "▲"
-folded_out_symbol = "▼"
-
-[node name="HBoxContainer2" type="HBoxContainer" parent="UI/HBoxContainer"]
-layout_mode = 2
-theme_override_constants/separation = 0
-
-[node name="Button5" type="Button" parent="UI/HBoxContainer/HBoxContainer2"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 54)
-layout_mode = 2
-size_flags_vertical = 0
-toggle_mode = true
-button_group = SubResource("ButtonGroup_0qmei")
-text = "Color"
-
-[node name="OptionButton2" type="Button" parent="UI/HBoxContainer/HBoxContainer2" node_paths=PackedStringArray("attached_control")]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(10, 54)
-layout_mode = 2
-size_flags_vertical = 0
-toggle_mode = true
-text = "▲"
-script = ExtResource("5_jjx4e")
-folded_in_symbol = "▲"
-folded_out_symbol = "▼"
-attached_control = NodePath("../../../ColorPanel")
-hide_after_click_on_attached_control = true
-
-[node name="HBoxContainer3" type="HBoxContainer" parent="UI/HBoxContainer"]
-layout_mode = 2
-theme_override_constants/separation = 0
-
-[node name="Button6" type="Button" parent="UI/HBoxContainer/HBoxContainer3"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 54)
-layout_mode = 2
-size_flags_vertical = 0
-toggle_mode = true
-button_group = SubResource("ButtonGroup_0qmei")
-text = "Material"
-
-[node name="OptionButton" type="Button" parent="UI/HBoxContainer/HBoxContainer3"]
-custom_minimum_size = Vector2(10, 54)
-layout_mode = 2
-size_flags_vertical = 0
-text = "▼"
-
-[node name="Button7" type="Button" parent="UI/HBoxContainer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 54)
-layout_mode = 2
-size_flags_vertical = 0
-toggle_mode = true
-button_group = SubResource("ButtonGroup_0qmei")
-text = "Lock"
-
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/HBoxContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="Panel3" type="Panel" parent="UI/HBoxContainer/VBoxContainer"]
-custom_minimum_size = Vector2(70, 32)
-layout_mode = 2
-
-[node name="Button9" type="CheckBox" parent="UI/HBoxContainer/VBoxContainer/Panel3"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 0)
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -1.5
-offset_bottom = 0.5
-grow_horizontal = 2
-grow_vertical = 2
-text = "Local transform mode"
-
-[node name="Panel2" type="Panel" parent="UI/HBoxContainer/VBoxContainer"]
-custom_minimum_size = Vector2(70, 28)
-layout_mode = 2
-
-[node name="Label" type="Label" parent="UI/HBoxContainer/VBoxContainer/Panel2"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-text = "Snapping options"
-horizontal_alignment = 1
-
-[node name="HBoxContainer" type="HBoxContainer" parent="UI/HBoxContainer/VBoxContainer"]
-layout_mode = 2
-
-[node name="LineEditPositionIncrement" type="LineEdit" parent="UI/HBoxContainer/VBoxContainer/HBoxContainer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(50, 35)
-layout_mode = 2
-text = "0.1"
-max_length = 6
-
-[node name="ButtonSnapDouble" type="Button" parent="UI/HBoxContainer/VBoxContainer/HBoxContainer/LineEditPositionIncrement"]
-unique_name_in_owner = true
-layout_mode = 2
-offset_top = 36.0
-offset_right = 33.0
-offset_bottom = 67.0
-size_flags_vertical = 0
-theme_override_styles/focus = SubResource("StyleBoxEmpty_82eal")
-text = "x2"
-
-[node name="ButtonSnapHalf" type="Button" parent="UI/HBoxContainer/VBoxContainer/HBoxContainer/LineEditPositionIncrement"]
-unique_name_in_owner = true
-layout_mode = 2
-offset_left = 34.0
-offset_top = 36.0
-offset_right = 67.0
-offset_bottom = 67.0
-size_flags_vertical = 0
-theme_override_styles/focus = SubResource("StyleBoxEmpty_82eal")
-text = "÷2"
-
-[node name="Panel" type="Panel" parent="UI/HBoxContainer/VBoxContainer/HBoxContainer"]
-custom_minimum_size = Vector2(70, 0)
-layout_mode = 2
-
-[node name="Label" type="Label" parent="UI/HBoxContainer/VBoxContainer/HBoxContainer/Panel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = 6.0
-offset_bottom = -1.0
-grow_horizontal = 2
-grow_vertical = 2
-text = "units"
-
-[node name="LineEditRotationIncrement" type="LineEdit" parent="UI/HBoxContainer/VBoxContainer/HBoxContainer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(50, 35)
-layout_mode = 2
-text = "15"
-max_length = 6
-
-[node name="Panel2" type="Panel" parent="UI/HBoxContainer/VBoxContainer/HBoxContainer"]
-custom_minimum_size = Vector2(70, 0)
-layout_mode = 2
-
-[node name="Label" type="Label" parent="UI/HBoxContainer/VBoxContainer/HBoxContainer/Panel2"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = 6.0
-offset_bottom = -1.0
-grow_horizontal = 2
-grow_vertical = 2
-text = "degrees"
-
-[node name="Panel4" type="Panel" parent="UI/HBoxContainer/VBoxContainer/HBoxContainer"]
-custom_minimum_size = Vector2(150, 32)
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="Button10" type="CheckBox" parent="UI/HBoxContainer/VBoxContainer/HBoxContainer/Panel4"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 0)
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -1.5
-offset_bottom = 0.5
-grow_horizontal = 2
-grow_vertical = 2
-button_pressed = true
-text = "Snapping active"
-
-[node name="ColorPanel" type="Panel" parent="UI"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 1
-anchors_preset = -1
-offset_left = 303.0
-offset_top = 57.0
-offset_right = 659.0
-offset_bottom = 347.0
-focus_mode = 1
-
-[node name="MarginContainer" type="MarginContainer" parent="UI/ColorPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/margin_left = 4
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 4
-theme_override_constants/margin_bottom = 4
-
-[node name="GridContainer" type="GridContainer" parent="UI/ColorPanel/MarginContainer"]
-layout_mode = 2
-theme_override_constants/h_separation = 4
-theme_override_constants/v_separation = 4
-columns = 16
-
-[node name="Button" type="Button" parent="UI/ColorPanel/MarginContainer/GridContainer"]
-custom_minimum_size = Vector2(18, 18)
-layout_mode = 2
-theme_override_styles/normal = SubResource("StyleBoxFlat_7haax")
-theme_override_styles/hover = SubResource("StyleBoxFlat_7haax")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_7haax")
-action_mode = 0
-
-[node name="Panel" type="Panel" parent="UI"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -35.0
-grow_horizontal = 2
-grow_vertical = 0
-
-[node name="Label" type="Label" parent="UI/Panel"]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -4.0
-offset_bottom = -4.0
-grow_horizontal = 2
-grow_vertical = 2
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Label2" type="Label" parent="UI/Panel"]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -93.0
-offset_top = -35.0
-grow_horizontal = 0
-grow_vertical = 0
-text = "x1.17"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Label3" type="Label" parent="UI/Panel"]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -168.0
-offset_top = -35.0
-offset_right = -75.0
-grow_horizontal = 0
-grow_vertical = 0
-text = "x1.17"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="NewUI" parent="UI" instance=ExtResource("6_whu6r")]
-layout_mode = 1
+[node name="NewUI" parent="." instance=ExtResource("6_whu6r")]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -8)
@@ -544,7 +183,7 @@ part_scale = Vector3(0.2, 0.2, 0.8)
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("8_4p0vi")
-mesh = SubResource("ImmediateMesh_62205")
+mesh = SubResource("ImmediateMesh_y8mwr")
 skeleton = NodePath("../..")
 script = ExtResource("9_n7hy1")
 box_scale = Vector3(1, 1, 1)

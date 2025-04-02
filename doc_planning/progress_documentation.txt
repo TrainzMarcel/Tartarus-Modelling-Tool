@@ -52,4 +52,5 @@
 26.3. working on search result marking function + jumping between search results + marking selected search result
 27.3. finished working on document viewer, started working on material and color picker ui
 28.3. designed logo, added ExpandPanel class
-32.3. fixed dropdown button issues, 
+31.3. fixed dropdown button issues, restructured repo
+2.4. finished color, material and part picker uis, made new ui functional, added dataloader util, added numericlineedit class, moved ui functions out of automatedcolorpicker

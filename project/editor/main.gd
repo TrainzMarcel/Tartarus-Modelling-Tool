@@ -39,6 +39,7 @@ class_name Main
 @export var hover_selection_box : SelectionBox
 @export var ui_node : UI
 
+
 #overlapping data (used by both dragging and handles)--------------------------------
 var positional_snap_increment : float = 0.1
 var rotational_snap_increment : float = 15
@@ -64,6 +65,11 @@ enum SelectedToolEnum
 var selected_tool : SelectedToolEnum = SelectedToolEnum.none
 #gets set in on_color_selected
 var selected_color : Color
+#gets set in on_material_selected
+var selected_material : ShaderMaterial
+#gets set in on_part_type_selected
+"TODO"#plan how this will work exactly
+#var selected_part : Part.part_shape
 
 #dragging data------------------------------------------------------------------
 #raw ray result
@@ -118,17 +124,18 @@ var is_selecting_allowed : bool = false
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	OS.low_processor_usage_mode = true
-	ui_node.initialize(
-		on_spawn_pressed,
-		on_tool_selected,
-		on_snap_increment_set,
-		on_snap_increment_doubled_or_halved,
-		on_local_transform_active_set,
-		on_snapping_active_set,
-		on_color_selected
-		)
 	
-	cam.initialize(UI.camera_speed_label, UI.camera_zoom_label)
+	ui_node.initialize(
+	on_spawn_pressed,
+	on_tool_selected,
+	main_on_snap_button_pressed,
+	main_on_snap_text_changed,
+	on_local_transform_active_set,
+	on_snapping_active_set,
+	on_color_selected
+	)
+	
+	cam.initialize(UI.l_camera_speed)
 	TransformHandleUtils.initialize_transform_handle_root(transform_handle_root)
 	
 	
@@ -411,12 +418,12 @@ func _input(event):
 					selected_parts_array[0].part_scale = result.part_scale
 					selected_parts_abb.extents = result.part_scale
 					Main.redraw_all_selection_boxes(selection_box_array)
-					UI.msg_label.text = "Scale: " + str(selected_parts_array[0].part_scale)
+					UI.l_message.text = "Scale: " + str(selected_parts_array[0].part_scale)
 					
 				if result.modify_position:
 					apply_snap_position(result.transform.origin)
 					if not result.modify_scale:
-						UI.msg_label.text = "Translation: " + str(result.scalar * dragged_handle.direction_vector)
+						UI.l_message.text = "Translation: " + str(result.scalar * dragged_handle.direction_vector)
 					
 				if result.modify_rotation:
 					if local_transform_active:
@@ -424,7 +431,7 @@ func _input(event):
 					else:
 						var global_direction_vector : Vector3 = transform_handle_root.basis * dragged_handle.direction_vector
 						apply_snap_rotation(abb_initial_transform.basis.rotated(global_direction_vector, result.angle_relative), selected_parts_abb.transform.basis)
-					UI.msg_label.text = "Angle: " + str(rad_to_deg(result.angle_relative))
+					UI.l_message.text = "Angle: " + str(rad_to_deg(result.angle_relative))
 				
 				Main.set_transform_handle_root_position(transform_handle_root, result.transform, local_transform_active, selected_tool_handle_array)
 	
@@ -432,7 +439,7 @@ func _input(event):
 	prev_hovered_handle = hovered_handle
 	
 	#camera controls
-	cam.cam_input(event, second_cam, selected_parts_array, selected_parts_abb, UI.msg_label, UI.camera_zoom_label, UI.camera_speed_label)
+	cam.cam_input(event, second_cam, selected_parts_array, selected_parts_abb, UI.l_message, UI.l_camera_speed)
 
 
 func _process(delta : float):
@@ -681,7 +688,8 @@ func on_tool_selected(button):
 	offset_abb_to_selected_array = r_dict.offset_abb_to_selected_array
 
 
-func on_spawn_pressed(button):
+#
+func on_spawn_pressed():
 	var new_part : Part = Part.new()
 	workspace.add_child(new_part)
 	new_part.global_position = cam.global_position + part_spawn_distance * -cam.basis.z
@@ -691,27 +699,21 @@ func on_color_selected(button):
 	selected_color = button.modulate
 
 
-func on_snap_increment_set(new, line_edit):
-	if line_edit == UI.l_positional_snap_increment:
-		positional_snap_increment = float(line_edit.text)
-	elif line_edit == UI.l_rotational_snap_increment:
-		rotational_snap_increment = float(line_edit.text)
-	line_edit.release_focus()
+func main_on_snap_text_changed(line_edit):
+	var r_dict = UI.main_on_snap_text_changed(line_edit, positional_snap_increment, rotational_snap_increment)
+	positional_snap_increment = r_dict.positional_snap_increment
+	rotational_snap_increment = r_dict.rotational_snap_increment
 
 
-func on_snap_increment_doubled_or_halved(button):
-	if button == UI.b_position_snap_double:
-		positional_snap_increment = positional_snap_increment * 2
-	else:
-		positional_snap_increment = positional_snap_increment * 0.5
-	
-	UI.l_positional_snap_increment.text = str(positional_snap_increment)
+func main_on_snap_button_pressed(button):
+	var r_dict = UI.on_snap_button_pressed(button, positional_snap_increment, rotational_snap_increment)
+	positional_snap_increment = r_dict.positional_snap_increment
+	rotational_snap_increment = r_dict.rotational_snap_increment
 
 
 func on_local_transform_active_set(active):
 	local_transform_active = active
 	Main.set_transform_handle_root_position(transform_handle_root, selected_parts_abb.transform, local_transform_active, selected_tool_handle_array)
-
 
 func on_snapping_active_set(active):
 	snapping_active = active

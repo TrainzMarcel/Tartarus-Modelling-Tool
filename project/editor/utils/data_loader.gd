@@ -40,3 +40,4 @@ static func read_colors_and_create_colors(file_as_string : String):
 	return r_dict
 
 "TODO"#add config read function, add material read function, add part model read function
+"TODO"#also add all the filepaths in here

@@ -5,42 +5,10 @@ class_name AutomatedColorPalette
 #read colors from file
 "TODO"#make a centralized class for reading config data and asset (color, material, primitives) data
 
-#simply add the buttons to the tree afterward
-"TODO"#change this to make name and color array
-static func read_colors_and_create_colors(file_as_string : String):
-	var lines : PackedStringArray = file_as_string.split("\n")
-	var color_array : Array[Color] = []
-	var color_name_array : Array[String] = []
-	var i : int = 0
-	
-	#read data
-	#iterate through each line
-	while i < lines.size():
-		#get data in each line
-		var data : PackedStringArray = lines[i].split(",")
-		
-		"DEBUG"
-		if data[0] == "#":
-			break
-		
-		#strip spaces that come after commas
-		for j in data:
-			j.lstrip(" ")
-		
-		
-		#configure arrays
-		if data.size() == 4:
-			color_name_array.append(data[0])
-			color_array.append(Color8(int(data[1]), int(data[2]), int(data[3])))
-		i = i + 1
-	
-	var r_dict : Dictionary = {}
-	r_dict.color_array = color_array
-	r_dict.color_name_array = color_name_array
-	return r_dict
 
 
 "TODO"#handle in ui
+#simply add the buttons to the tree afterward
 static func create_buttons_from_colors(sample_button : Button, color_array : Array[Color], color_name_array : Array[String]):
 	var i : int = 0
 	var button_array : Array[Button] = []

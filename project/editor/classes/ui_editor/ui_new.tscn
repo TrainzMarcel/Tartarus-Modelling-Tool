@@ -1,5 +1,6 @@
-[gd_scene load_steps=66 format=3 uid="uid://cwt02lxvderye"]
+[gd_scene load_steps=70 format=3 uid="uid://cwt02lxvderye"]
 
+[ext_resource type="Script" path="res://editor/classes/ui_editor/ui_new.gd" id="1_8kn7b"]
 [ext_resource type="StyleBox" uid="uid://bkbmbfniourik" path="res://editor/data_ui/styles/panel_styles/panel_rounded_bottom.tres" id="1_pntfv"]
 [ext_resource type="Theme" uid="uid://nxn5uapgdhhx" path="res://editor/data_ui/styles/font_styles/t_sci_fi_regular.tres" id="2_3wo47"]
 [ext_resource type="StyleBox" uid="uid://584xxlr8f35n" path="res://editor/data_ui/styles/button_and_line_edit_styles/top_bar/hover_normal.tres" id="3_u2fg2"]
@@ -29,8 +30,10 @@
 [ext_resource type="StyleBox" uid="uid://ctv4pftl856v0" path="res://editor/data_ui/styles/panel_styles/panel_rounded_none.tres" id="27_qasec"]
 [ext_resource type="StyleBox" uid="uid://c7csd37xwk66g" path="res://editor/data_ui/styles/panel_styles/panel_rounded_top.tres" id="28_k504t"]
 [ext_resource type="StyleBox" uid="uid://b1bkepq7spu42" path="res://editor/data_ui/styles/panel_styles/number_display_panel.tres" id="29_accpp"]
+[ext_resource type="Theme" uid="uid://j8ity0sbguy1" path="res://editor/data_ui/styles/font_styles/t_sci_fi_small.tres" id="29_j817h"]
 [ext_resource type="StyleBox" uid="uid://bdapxi8kfkyap" path="res://editor/data_ui/styles/button_and_line_edit_styles/bottom_bar/mini_button/hover_normal.tres" id="30_5372q"]
 [ext_resource type="StyleBox" uid="uid://l8wdqqom1c4k" path="res://editor/data_ui/styles/button_and_line_edit_styles/bottom_bar/mini_button/pressed.tres" id="31_a6skq"]
+[ext_resource type="Script" path="res://editor/classes/ui_editor/line_edit_numeric.gd" id="32_5rtk1"]
 [ext_resource type="PackedScene" uid="uid://bln1og3mu36mh" path="res://editor/classes/ui_document_display/document_display.tscn" id="32_epjev"]
 [ext_resource type="StyleBox" uid="uid://0h1muoc1ycaj" path="res://editor/data_ui/styles/button_and_line_edit_styles/material_list_and_part_list/hover_normal.tres" id="33_53mnp"]
 [ext_resource type="StyleBox" uid="uid://cf35g1rgpap53" path="res://editor/data_ui/styles/button_and_line_edit_styles/material_list_and_part_list/pressed.tres" id="34_31jf6"]
@@ -78,6 +81,9 @@ unicode = 53
 
 [sub_resource type="Shortcut" id="Shortcut_tj081"]
 events = [SubResource("InputEventKey_eo468")]
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_ftpix"]
+allow_unpress = true
 
 [sub_resource type="InputEventKey" id="InputEventKey_axiv2"]
 device = -1
@@ -186,7 +192,7 @@ corner_radius_bottom_left = 6
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_cn6d1"]
 
-[node name="Control" type="Control"]
+[node name="UserInterface" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -194,26 +200,28 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+script = ExtResource("1_8kn7b")
 metadata/_edit_lock_ = true
 
-[node name="TopLeftBlockPanel" type="PanelContainer" parent="."]
+[node name="PanelContainerTopLeftBlock" type="PanelContainer" parent="."]
 layout_mode = 1
 offset_right = 645.0
 offset_bottom = 103.0
 theme_override_styles/panel = ExtResource("1_pntfv")
 
-[node name="TopLeftBlockMarginContainer" type="MarginContainer" parent="TopLeftBlockPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainerTopLeftBlock"]
 layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 3
 
-[node name="VBoxContainer" type="VBoxContainer" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainerTopLeftBlock/MarginContainer"]
 layout_mode = 2
 theme_override_constants/separation = 3
 
-[node name="TopBar" type="MenuBar" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer"]
+[node name="TopBar" type="MenuBar" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 theme = ExtResource("2_3wo47")
 theme_override_styles/normal = ExtResource("3_u2fg2")
@@ -221,7 +229,8 @@ theme_override_styles/hover = ExtResource("3_u2fg2")
 theme_override_styles/pressed = ExtResource("4_xvqi6")
 theme_override_styles/focus = ExtResource("5_rq1a8")
 
-[node name="File" type="PopupMenu" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/TopBar"]
+[node name="File" type="PopupMenu" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/TopBar"]
+unique_name_in_owner = true
 theme_override_fonts/font = ExtResource("6_07mtu")
 item_count = 5
 item_0/text = "[Ctrl + Shift + S] Save as.."
@@ -235,7 +244,8 @@ item_3/id = 3
 item_4/text = "Export"
 item_4/id = 4
 
-[node name="Edit" type="PopupMenu" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/TopBar"]
+[node name="Edit" type="PopupMenu" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/TopBar"]
+unique_name_in_owner = true
 theme_override_fonts/font = ExtResource("6_07mtu")
 item_count = 10
 item_0/text = "[Ctrl + Z] Undo"
@@ -261,7 +271,8 @@ item_8/separator = true
 item_9/text = "Settings"
 item_9/id = 9
 
-[node name="Assets" type="PopupMenu" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/TopBar"]
+[node name="Assets" type="PopupMenu" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/TopBar"]
+unique_name_in_owner = true
 theme_override_fonts/font = ExtResource("6_07mtu")
 item_count = 3
 item_0/text = "Edit Color Palettes"
@@ -274,7 +285,8 @@ item_2/text = "Edit Spawnable Parts"
 item_2/id = 2
 item_2/disabled = true
 
-[node name="Help" type="PopupMenu" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/TopBar"]
+[node name="Help" type="PopupMenu" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/TopBar"]
+unique_name_in_owner = true
 disable_3d = true
 theme_override_fonts/font = ExtResource("6_07mtu")
 item_count = 2
@@ -283,16 +295,17 @@ item_0/id = 0
 item_1/text = "License"
 item_1/id = 1
 
-[node name="PanelGradient" type="Panel" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer"]
+[node name="PanelGradient" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 theme_override_styles/panel = ExtResource("7_lp6ld")
 
-[node name="ToolBar" type="HBoxContainer" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer"]
+[node name="ToolBar" type="HBoxContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="Button" type="Button" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar"]
+[node name="ButtonDragTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
+unique_name_in_owner = true
 self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
@@ -309,7 +322,7 @@ icon = ExtResource("10_0gx03")
 expand_icon = true
 script = ExtResource("11_6a6rl")
 
-[node name="Panel" type="Panel" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/Button"]
+[node name="Panel" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/ButtonDragTool"]
 clip_contents = true
 layout_mode = 1
 anchors_preset = 3
@@ -324,7 +337,7 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/panel = ExtResource("12_rh0pf")
 
-[node name="Label" type="Label" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/Button/Panel"]
+[node name="Label" type="Label" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/ButtonDragTool/Panel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -338,7 +351,8 @@ text = "1"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="Button2" type="Button" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar"]
+[node name="ButtonMoveTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
+unique_name_in_owner = true
 self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
@@ -355,7 +369,7 @@ icon = ExtResource("14_q0855")
 expand_icon = true
 script = ExtResource("11_6a6rl")
 
-[node name="Panel" type="Panel" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/Button2"]
+[node name="Panel" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/ButtonMoveTool"]
 clip_contents = true
 layout_mode = 1
 anchors_preset = 3
@@ -370,7 +384,7 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/panel = ExtResource("12_rh0pf")
 
-[node name="Label" type="Label" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/Button2/Panel"]
+[node name="Label" type="Label" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/ButtonMoveTool/Panel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -384,7 +398,8 @@ text = "2"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="Button3" type="Button" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar"]
+[node name="ButtonRotateTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
+unique_name_in_owner = true
 self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
@@ -401,7 +416,7 @@ icon = ExtResource("15_1l4gu")
 expand_icon = true
 script = ExtResource("11_6a6rl")
 
-[node name="Panel" type="Panel" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/Button3"]
+[node name="Panel" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/ButtonRotateTool"]
 clip_contents = true
 layout_mode = 1
 anchors_preset = 3
@@ -416,7 +431,7 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/panel = ExtResource("12_rh0pf")
 
-[node name="Label" type="Label" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/Button3/Panel"]
+[node name="Label" type="Label" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/ButtonRotateTool/Panel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -430,7 +445,8 @@ text = "3"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="Button4" type="Button" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar"]
+[node name="ButtonScaleTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
+unique_name_in_owner = true
 self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
@@ -447,7 +463,7 @@ icon = ExtResource("16_cgmjl")
 expand_icon = true
 script = ExtResource("11_6a6rl")
 
-[node name="Panel" type="Panel" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/Button4"]
+[node name="Panel" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/ButtonScaleTool"]
 clip_contents = true
 layout_mode = 1
 anchors_preset = 3
@@ -462,7 +478,7 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/panel = ExtResource("12_rh0pf")
 
-[node name="Label" type="Label" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/Button4/Panel"]
+[node name="Label" type="Label" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/ButtonScaleTool/Panel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -476,11 +492,12 @@ text = "4"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar"]
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
 layout_mode = 2
 theme_override_constants/separation = 2
 
-[node name="Button5" type="Button" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/HBoxContainer"]
+[node name="ButtonSpawnPart" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainer"]
+unique_name_in_owner = true
 self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
@@ -494,7 +511,7 @@ icon = ExtResource("19_wgrgr")
 expand_icon = true
 script = ExtResource("11_6a6rl")
 
-[node name="Panel" type="Panel" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/HBoxContainer/Button5"]
+[node name="Panel" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainer/ButtonSpawnPart"]
 clip_contents = true
 layout_mode = 1
 anchors_preset = 3
@@ -509,7 +526,7 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/panel = ExtResource("12_rh0pf")
 
-[node name="Label" type="Label" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/HBoxContainer/Button5/Panel"]
+[node name="Label" type="Label" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainer/ButtonSpawnPart/Panel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -523,7 +540,7 @@ text = "5"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="DropDownButton" type="Button" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/HBoxContainer" node_paths=PackedStringArray("attached_control")]
+[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainer" node_paths=PackedStringArray("attached_control")]
 layout_mode = 2
 tooltip_text = "Choose a part type"
 theme_override_styles/normal = ExtResource("20_ibnk4")
@@ -532,14 +549,17 @@ theme_override_styles/pressed = ExtResource("21_oijav")
 theme_override_styles/focus = ExtResource("5_rq1a8")
 toggle_mode = true
 action_mode = 0
+button_group = SubResource("ButtonGroup_ftpix")
 shortcut = SubResource("Shortcut_31aik")
 text = "▼"
 script = ExtResource("22_e8bxn")
 folded_in_symbol = "▲"
 folded_out_symbol = "▼"
-attached_control = NodePath("../../../../../../PartPanel")
+attached_control = NodePath("../../../../../../PanelContainerPart")
+hide_after_click_on_attached_control = true
 
-[node name="Button6" type="Button" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar"]
+[node name="ButtonDeleteTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
+unique_name_in_owner = true
 self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
@@ -556,7 +576,7 @@ icon = ExtResource("23_8184h")
 expand_icon = true
 script = ExtResource("11_6a6rl")
 
-[node name="Panel" type="Panel" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/Button6"]
+[node name="Panel" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/ButtonDeleteTool"]
 clip_contents = true
 layout_mode = 1
 anchors_preset = 3
@@ -571,7 +591,7 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/panel = ExtResource("12_rh0pf")
 
-[node name="Label" type="Label" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/Button6/Panel"]
+[node name="Label" type="Label" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/ButtonDeleteTool/Panel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -585,11 +605,12 @@ text = "6"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar"]
+[node name="HBoxContainer2" type="HBoxContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
 layout_mode = 2
 theme_override_constants/separation = 2
 
-[node name="Button7" type="Button" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/HBoxContainer2"]
+[node name="ButtonPaintTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainer2"]
+unique_name_in_owner = true
 self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
@@ -606,7 +627,7 @@ icon = ExtResource("24_ux0rv")
 expand_icon = true
 script = ExtResource("11_6a6rl")
 
-[node name="Panel" type="Panel" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/HBoxContainer2/Button7"]
+[node name="Panel" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainer2/ButtonPaintTool"]
 clip_contents = true
 layout_mode = 1
 anchors_preset = 3
@@ -621,7 +642,7 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/panel = ExtResource("12_rh0pf")
 
-[node name="Label" type="Label" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/HBoxContainer2/Button7/Panel"]
+[node name="Label" type="Label" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainer2/ButtonPaintTool/Panel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -635,7 +656,7 @@ text = "7"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="DropDownButton" type="Button" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/HBoxContainer2" node_paths=PackedStringArray("attached_control")]
+[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainer2" node_paths=PackedStringArray("attached_control")]
 layout_mode = 2
 tooltip_text = "Choose a color"
 theme_override_styles/normal = ExtResource("20_ibnk4")
@@ -644,18 +665,21 @@ theme_override_styles/pressed = ExtResource("21_oijav")
 theme_override_styles/focus = ExtResource("5_rq1a8")
 toggle_mode = true
 action_mode = 0
+button_group = SubResource("ButtonGroup_ftpix")
 shortcut = SubResource("Shortcut_s6i4f")
 text = "▼"
 script = ExtResource("22_e8bxn")
 folded_in_symbol = "▲"
 folded_out_symbol = "▼"
-attached_control = NodePath("../../../../../../ColorPanel")
+attached_control = NodePath("../../../../../../PanelContainerColor")
+hide_after_click_on_attached_control = true
 
-[node name="HBoxContainer3" type="HBoxContainer" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar"]
+[node name="HBoxContainer3" type="HBoxContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
 layout_mode = 2
 theme_override_constants/separation = 2
 
-[node name="Button8" type="Button" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/HBoxContainer3"]
+[node name="ButtonMaterialTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainer3"]
+unique_name_in_owner = true
 self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
@@ -672,7 +696,7 @@ icon = ExtResource("25_g8aqp")
 expand_icon = true
 script = ExtResource("11_6a6rl")
 
-[node name="Panel" type="Panel" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/HBoxContainer3/Button8"]
+[node name="Panel" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainer3/ButtonMaterialTool"]
 clip_contents = true
 layout_mode = 1
 anchors_preset = 3
@@ -687,7 +711,7 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/panel = ExtResource("12_rh0pf")
 
-[node name="Label" type="Label" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/HBoxContainer3/Button8/Panel"]
+[node name="Label" type="Label" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainer3/ButtonMaterialTool/Panel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -701,7 +725,7 @@ text = "8"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="DropDownButton" type="Button" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/HBoxContainer3" node_paths=PackedStringArray("attached_control")]
+[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainer3" node_paths=PackedStringArray("attached_control")]
 layout_mode = 2
 tooltip_text = "Choose a Material"
 theme_override_styles/normal = ExtResource("20_ibnk4")
@@ -710,14 +734,17 @@ theme_override_styles/pressed = ExtResource("21_oijav")
 theme_override_styles/focus = ExtResource("5_rq1a8")
 toggle_mode = true
 action_mode = 0
+button_group = SubResource("ButtonGroup_ftpix")
 shortcut = SubResource("Shortcut_tn1no")
 text = "▼"
 script = ExtResource("22_e8bxn")
 folded_in_symbol = "▲"
 folded_out_symbol = "▼"
-attached_control = NodePath("../../../../../../MaterialPanel")
+attached_control = NodePath("../../../../../../PanelContainerMaterial")
+hide_after_click_on_attached_control = true
 
-[node name="Button9" type="Button" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar"]
+[node name="ButtonLockTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
+unique_name_in_owner = true
 self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
@@ -734,7 +761,7 @@ icon = ExtResource("26_n03lr")
 expand_icon = true
 script = ExtResource("11_6a6rl")
 
-[node name="Panel" type="Panel" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/Button9"]
+[node name="Panel" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/ButtonLockTool"]
 clip_contents = true
 layout_mode = 1
 anchors_preset = 3
@@ -749,7 +776,7 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/panel = ExtResource("12_rh0pf")
 
-[node name="Label" type="Label" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer/ToolBar/Button9/Panel"]
+[node name="Label" type="Label" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/ButtonLockTool/Panel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -763,7 +790,7 @@ text = "9"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="PanelGradient2" type="Panel" parent="TopLeftBlockPanel/TopLeftBlockMarginContainer/VBoxContainer"]
+[node name="PanelGradient2" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 theme_override_styles/panel = ExtResource("7_lp6ld")
@@ -778,6 +805,49 @@ offset_top = -27.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = ExtResource("27_qasec")
+
+[node name="MarginContainer" type="MarginContainer" parent="BottomPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="HBoxContainer" type="HBoxContainer" parent="BottomPanel/MarginContainer"]
+layout_mode = 2
+alignment = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="BottomPanel/MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_right = 30
+
+[node name="LabelMessage" type="Label" parent="BottomPanel/MarginContainer/HBoxContainer/MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HBoxContainerCameraSpeed" type="HBoxContainer" parent="BottomPanel/MarginContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="BottomPanel/MarginContainer/HBoxContainer/HBoxContainerCameraSpeed"]
+layout_mode = 2
+theme = ExtResource("29_j817h")
+text = "Camera speed x"
+
+[node name="LabelCameraSpeed" type="Label" parent="BottomPanel/MarginContainer/HBoxContainer/HBoxContainerCameraSpeed"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(58, 40)
+layout_mode = 2
+size_flags_vertical = 0
+theme = ExtResource("13_v6fq4")
+theme_override_styles/normal = ExtResource("29_accpp")
+text = "0.25"
+vertical_alignment = 1
+clip_text = true
 
 [node name="TODOLabel" type="Label" parent="."]
 visible = false
@@ -795,40 +865,45 @@ edit -> undo redo copy, paste, cut, duplicate, clear, settings
 assets -> edit color palettes, edit material palettes, edit spawnable shapes
 help -> open manual"
 
-[node name="BottomLeftBlockPanel" type="PanelContainer" parent="."]
-layout_mode = 1
-anchors_preset = 2
+[node name="PanelContainerBottomLeftBlock" type="PanelContainer" parent="."]
+layout_mode = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_top = -188.0
+offset_top = -201.0
 offset_right = 560.0
-offset_bottom = -27.0
+offset_bottom = -48.0
 grow_vertical = 0
 theme_override_styles/panel = ExtResource("28_k504t")
 
-[node name="MarginContainer" type="MarginContainer" parent="BottomLeftBlockPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainerBottomLeftBlock"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 6
 
-[node name="VBoxContainer" type="VBoxContainer" parent="BottomLeftBlockPanel/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainerBottomLeftBlock/MarginContainer"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Label" type="Label" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer"]
+[node name="Label" type="Label" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("2_3wo47")
 theme_override_colors/font_color = Color(0.913725, 0.913725, 0.913725, 1)
 text = "Snapping Options"
 
-[node name="PanelGradient" type="Panel" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer"]
+[node name="PanelGradient" type="Panel" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 theme_override_styles/panel = ExtResource("7_lp6ld")
 
-[node name="CheckBox" type="Button" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 21
+alignment = 1
+
+[node name="ButtonLocalTransform" type="Button" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 23)
 layout_mode = 2
 theme = ExtResource("2_3wo47")
@@ -838,36 +913,53 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_2bitl")
 theme_override_styles/focus = ExtResource("5_rq1a8")
 toggle_mode = true
 action_mode = 0
-text = "local transform enabled"
+text = " local transform enabled "
 
-[node name="PanelGradient2" type="Panel" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer"]
+[node name="ButtonSnapping" type="Button" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 23)
+layout_mode = 2
+theme = ExtResource("2_3wo47")
+theme_override_styles/normal = SubResource("StyleBoxFlat_57say")
+theme_override_styles/hover = SubResource("StyleBoxFlat_57say")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_2bitl")
+theme_override_styles/focus = ExtResource("5_rq1a8")
+toggle_mode = true
+button_pressed = true
+action_mode = 0
+text = " Snapping Enabled "
+
+[node name="PanelGradient2" type="Panel" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 theme_override_styles/panel = ExtResource("7_lp6ld")
 
-[node name="HBoxContainerSnapIncrements" type="HBoxContainer" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer"]
+[node name="HBoxContainerSnapIncrements" type="HBoxContainer" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="HBoxContainerPositionUnits" type="HBoxContainer" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements"]
+[node name="HBoxContainerPositionUnits" type="HBoxContainer" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements"]
 layout_mode = 2
 
-[node name="VBoxContainerLeft" type="VBoxContainer" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits"]
+[node name="VBoxContainerLeft" type="VBoxContainer" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits"]
 layout_mode = 2
 
-[node name="LineEdit" type="LineEdit" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits/VBoxContainerLeft"]
+[node name="LineEditUnitStep" type="LineEdit" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits/VBoxContainerLeft"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(95, 40)
 layout_mode = 2
 theme = ExtResource("13_v6fq4")
 theme_override_styles/normal = ExtResource("29_accpp")
 theme_override_styles/focus = ExtResource("5_rq1a8")
-text = "8888.8"
+text = "0.1"
+script = ExtResource("32_5rtk1")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits/VBoxContainerLeft"]
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits/VBoxContainerLeft"]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="DoubleButton" type="Button" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits/VBoxContainerLeft/HBoxContainer"]
+[node name="ButtonUnitDouble" type="Button" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits/VBoxContainerLeft/HBoxContainer"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(48, 19)
 layout_mode = 2
 theme = ExtResource("2_3wo47")
@@ -879,7 +971,8 @@ theme_override_styles/focus = ExtResource("5_rq1a8")
 action_mode = 0
 text = "x2"
 
-[node name="HalfButton" type="Button" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits/VBoxContainerLeft/HBoxContainer"]
+[node name="ButtonUnitHalf" type="Button" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits/VBoxContainerLeft/HBoxContainer"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(48, 19)
 layout_mode = 2
 theme = ExtResource("2_3wo47")
@@ -891,11 +984,12 @@ theme_override_styles/focus = ExtResource("5_rq1a8")
 action_mode = 0
 text = "÷2"
 
-[node name="VBoxContainerRight" type="VBoxContainer" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits"]
+[node name="VBoxContainerRight" type="VBoxContainer" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits"]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="Button" type="Button" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits/VBoxContainerRight"]
+[node name="ButtonUnitIncrement" type="Button" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits/VBoxContainerRight"]
+unique_name_in_owner = true
 clip_contents = true
 custom_minimum_size = Vector2(19, 0)
 layout_mode = 2
@@ -907,7 +1001,8 @@ theme_override_styles/focus = ExtResource("5_rq1a8")
 action_mode = 0
 text = "➕"
 
-[node name="Button2" type="Button" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits/VBoxContainerRight"]
+[node name="ButtonUnitDecrement" type="Button" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits/VBoxContainerRight"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(19, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
@@ -918,40 +1013,45 @@ theme_override_styles/focus = ExtResource("5_rq1a8")
 action_mode = 0
 text = "➖"
 
-[node name="LineEdit" type="LineEdit" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits"]
+[node name="LineEditUnitStepIncrementStep" type="LineEdit" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(58, 40)
 layout_mode = 2
 size_flags_vertical = 0
 theme = ExtResource("13_v6fq4")
 theme_override_styles/normal = ExtResource("29_accpp")
 theme_override_styles/focus = ExtResource("5_rq1a8")
-text = "0.25"
+text = "0.05"
+script = ExtResource("32_5rtk1")
 
-[node name="Label" type="Label" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits"]
+[node name="Label" type="Label" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits"]
 layout_mode = 2
 size_flags_vertical = 5
 theme = ExtResource("2_3wo47")
 text = "units"
 
-[node name="HBoxContainerRotationDegrees" type="HBoxContainer" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements"]
+[node name="HBoxContainerRotationDegrees" type="HBoxContainer" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements"]
 layout_mode = 2
 
-[node name="VBoxContainerLeft" type="VBoxContainer" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees"]
+[node name="VBoxContainerLeft" type="VBoxContainer" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees"]
 layout_mode = 2
 
-[node name="LineEdit" type="LineEdit" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees/VBoxContainerLeft"]
+[node name="LineEditRotationStep" type="LineEdit" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees/VBoxContainerLeft"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(95, 40)
 layout_mode = 2
 theme = ExtResource("13_v6fq4")
 theme_override_styles/normal = ExtResource("29_accpp")
 theme_override_styles/focus = ExtResource("5_rq1a8")
-text = "8888.8"
+text = "15"
+script = ExtResource("32_5rtk1")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees/VBoxContainerLeft"]
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees/VBoxContainerLeft"]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="DoubleButton" type="Button" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees/VBoxContainerLeft/HBoxContainer"]
+[node name="ButtonRotationDouble" type="Button" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees/VBoxContainerLeft/HBoxContainer"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(48, 19)
 layout_mode = 2
 theme = ExtResource("2_3wo47")
@@ -963,7 +1063,8 @@ theme_override_styles/focus = ExtResource("5_rq1a8")
 action_mode = 0
 text = "x2"
 
-[node name="HalfButton" type="Button" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees/VBoxContainerLeft/HBoxContainer"]
+[node name="ButtonRotationHalf" type="Button" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees/VBoxContainerLeft/HBoxContainer"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(48, 19)
 layout_mode = 2
 theme = ExtResource("2_3wo47")
@@ -975,11 +1076,12 @@ theme_override_styles/focus = ExtResource("5_rq1a8")
 action_mode = 0
 text = "÷2"
 
-[node name="VBoxContainerRight" type="VBoxContainer" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees"]
+[node name="VBoxContainerRight" type="VBoxContainer" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees"]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="Button" type="Button" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees/VBoxContainerRight"]
+[node name="ButtonRotationIncrement" type="Button" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees/VBoxContainerRight"]
+unique_name_in_owner = true
 clip_contents = true
 custom_minimum_size = Vector2(19, 0)
 layout_mode = 2
@@ -991,7 +1093,8 @@ theme_override_styles/focus = ExtResource("5_rq1a8")
 action_mode = 0
 text = "➕"
 
-[node name="Button2" type="Button" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees/VBoxContainerRight"]
+[node name="ButtonRotationDecrement" type="Button" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees/VBoxContainerRight"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(19, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
@@ -1002,7 +1105,8 @@ theme_override_styles/focus = ExtResource("5_rq1a8")
 action_mode = 0
 text = "➖"
 
-[node name="LineEdit" type="LineEdit" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees"]
+[node name="LineEditRotationStepIncrementStep" type="LineEdit" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(58, 40)
 layout_mode = 2
 size_flags_vertical = 0
@@ -1010,15 +1114,16 @@ theme = ExtResource("13_v6fq4")
 theme_override_styles/normal = ExtResource("29_accpp")
 theme_override_styles/focus = ExtResource("5_rq1a8")
 text = "1"
+script = ExtResource("32_5rtk1")
 
-[node name="Label2" type="Label" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees"]
+[node name="Label2" type="Label" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees"]
 layout_mode = 2
 size_flags_vertical = 5
 theme = ExtResource("2_3wo47")
 theme_override_fonts/font = ExtResource("6_07mtu")
 text = "degrees"
 
-[node name="PanelGradient3" type="Panel" parent="BottomLeftBlockPanel/MarginContainer/VBoxContainer"]
+[node name="PanelGradient3" type="Panel" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 theme_override_styles/panel = ExtResource("7_lp6ld")
@@ -1378,8 +1483,7 @@ consider it more useful to permit linking proprietary applications with the
 library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.[/code][/indent][/indent][/indent][/indent][/indent][/indent][/indent][/indent][/indent]"])
 
-[node name="ColorPanel" type="PanelContainer" parent="."]
-unique_name_in_owner = true
+[node name="PanelContainerColor" type="PanelContainer" parent="."]
 visible = false
 layout_mode = 1
 offset_left = 122.0
@@ -1388,26 +1492,28 @@ offset_right = 490.0
 offset_bottom = 396.0
 mouse_filter = 2
 theme_override_styles/panel = ExtResource("12_rh0pf")
+metadata/_edit_lock_ = true
+metadata/_edit_group_ = true
 
-[node name="MarginContainer" type="MarginContainer" parent="ColorPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainerColor"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 2
 theme_override_constants/margin_bottom = 10
 
-[node name="ScrollContainer" type="ScrollContainer" parent="ColorPanel/MarginContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="PanelContainerColor/MarginContainer"]
 layout_mode = 2
 horizontal_scroll_mode = 0
 
-[node name="ColorPanelGridContainer" type="GridContainer" parent="ColorPanel/MarginContainer/ScrollContainer"]
+[node name="GridContainerColorPanel" type="GridContainer" parent="PanelContainerColor/MarginContainer/ScrollContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/h_separation = 4
 theme_override_constants/v_separation = 4
 columns = 16
 
-[node name="Button" type="Button" parent="ColorPanel/MarginContainer/ScrollContainer/ColorPanelGridContainer"]
+[node name="Button" type="Button" parent="PanelContainerColor/MarginContainer/ScrollContainer/GridContainerColorPanel"]
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_o5gdi")
@@ -1417,8 +1523,7 @@ theme_override_styles/focus = SubResource("StyleBoxEmpty_cn6d1")
 toggle_mode = true
 action_mode = 0
 
-[node name="MaterialPanel" type="PanelContainer" parent="."]
-unique_name_in_owner = true
+[node name="PanelContainerMaterial" type="PanelContainer" parent="."]
 visible = false
 clip_contents = true
 layout_mode = 1
@@ -1428,23 +1533,26 @@ offset_right = 573.0
 offset_bottom = 396.0
 mouse_filter = 2
 theme_override_styles/panel = ExtResource("12_rh0pf")
+metadata/_edit_lock_ = true
+metadata/_edit_group_ = true
 
-[node name="MarginContainer" type="MarginContainer" parent="MaterialPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainerMaterial"]
 layout_mode = 2
 theme_override_constants/margin_left = 4
 theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 4
 
-[node name="ScrollContainer" type="ScrollContainer" parent="MaterialPanel/MarginContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="PanelContainerMaterial/MarginContainer"]
 layout_mode = 2
 scroll_vertical_custom_step = 14.0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MaterialPanel/MarginContainer/ScrollContainer"]
+[node name="VBoxContainerMaterialPanel" type="VBoxContainer" parent="PanelContainerMaterial/MarginContainer/ScrollContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 3
 
-[node name="Button" type="Button" parent="MaterialPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+[node name="Button" type="Button" parent="PanelContainerMaterial/MarginContainer/ScrollContainer/VBoxContainerMaterialPanel"]
 custom_minimum_size = Vector2(0, 29)
 layout_mode = 2
 theme = ExtResource("2_3wo47")
@@ -1452,23 +1560,26 @@ theme_override_styles/normal = ExtResource("33_53mnp")
 theme_override_styles/hover = ExtResource("33_53mnp")
 theme_override_styles/pressed = ExtResource("34_31jf6")
 theme_override_styles/focus = ExtResource("5_rq1a8")
+action_mode = 0
 text = "Wood"
 icon = ExtResource("36_inycq")
 expand_icon = true
 
-[node name="PartPanel" type="PanelContainer" parent="."]
-unique_name_in_owner = true
+[node name="PanelContainerPart" type="PanelContainer" parent="."]
+visible = false
 clip_contents = true
 layout_direction = 2
 layout_mode = 1
-offset_left = 131.0
+offset_left = 122.0
 offset_top = 103.0
 offset_right = 343.0
-offset_bottom = 181.0
+offset_bottom = 167.0
 mouse_filter = 2
 theme_override_styles/panel = ExtResource("12_rh0pf")
+metadata/_edit_lock_ = true
+metadata/_edit_group_ = true
 
-[node name="MarginContainer" type="MarginContainer" parent="PartPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainerPart"]
 clip_contents = true
 layout_mode = 2
 theme_override_constants/margin_left = 4
@@ -1476,41 +1587,47 @@ theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 4
 
-[node name="GridContainer" type="GridContainer" parent="PartPanel/MarginContainer"]
+[node name="PartPanelGridContainer" type="GridContainer" parent="PanelContainerPart/MarginContainer"]
+unique_name_in_owner = true
 clip_contents = true
 layout_mode = 2
 columns = 2
 
-[node name="Button" type="Button" parent="PartPanel/MarginContainer/GridContainer"]
+[node name="Button" type="Button" parent="PanelContainerPart/MarginContainer/PartPanelGridContainer"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+theme = ExtResource("2_3wo47")
 theme_override_styles/normal = ExtResource("33_53mnp")
 theme_override_styles/hover = ExtResource("33_53mnp")
 theme_override_styles/pressed = ExtResource("34_31jf6")
 theme_override_styles/focus = ExtResource("5_rq1a8")
+action_mode = 0
 text = "Cuboid"
 
-[node name="Button2" type="Button" parent="PartPanel/MarginContainer/GridContainer"]
+[node name="Button2" type="Button" parent="PanelContainerPart/MarginContainer/PartPanelGridContainer"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+theme = ExtResource("2_3wo47")
 theme_override_styles/normal = ExtResource("33_53mnp")
 theme_override_styles/hover = ExtResource("33_53mnp")
 theme_override_styles/pressed = ExtResource("34_31jf6")
 theme_override_styles/focus = ExtResource("5_rq1a8")
 text = "Wedge"
 
-[node name="Button3" type="Button" parent="PartPanel/MarginContainer/GridContainer"]
+[node name="Button3" type="Button" parent="PanelContainerPart/MarginContainer/PartPanelGridContainer"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+theme = ExtResource("2_3wo47")
 theme_override_styles/normal = ExtResource("33_53mnp")
 theme_override_styles/hover = ExtResource("33_53mnp")
 theme_override_styles/pressed = ExtResource("34_31jf6")
 theme_override_styles/focus = ExtResource("5_rq1a8")
 text = "Cylinder"
 
-[node name="Button4" type="Button" parent="PartPanel/MarginContainer/GridContainer"]
+[node name="Button4" type="Button" parent="PanelContainerPart/MarginContainer/PartPanelGridContainer"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+theme = ExtResource("2_3wo47")
 theme_override_styles/normal = ExtResource("33_53mnp")
 theme_override_styles/hover = ExtResource("33_53mnp")
 theme_override_styles/pressed = ExtResource("34_31jf6")

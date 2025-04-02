@@ -1,43 +1,180 @@
 extends Control
-class_name UIV2
+class_name UI
 
 "TODO"#add create color button function, material button function, part button function
 
-static var signals : Array[Callable]
+#ui naming convention: prefix the default node name with what kind of ui it corresponds too
 
-#top menu bar
-static var mb_top_bar : MenuBar
+#top left block
+	#top menu bar
+#static var mb_top_bar : MenuBar
 static var pm_file : PopupMenu
 static var pm_edit : PopupMenu
 static var pm_assets : PopupMenu
 static var pm_help : PopupMenu
 
 
-#tool bar
+	#tool bar
 static var b_drag_tool : Button
 static var b_move_tool : Button
 static var b_rotate_tool : Button
 static var b_scale_tool : Button
 static var b_spawn_part : Button
-static var b_dropdown_part : Button
+#static var b_dropdown_part : Button
 static var b_delete_tool : Button
 static var b_paint_tool : Button
-static var b_dropdown_color : Button
+#static var b_dropdown_color : Button
 static var b_material_tool : Button
-static var b_dropdown_material : Button
+#static var b_dropdown_material : Button
 static var b_lock_tool : Button
 
+	#selector panels (specifically the containers of the buttons)
+static var gc_paint_panel : GridContainer
+static var vbc_material_panel : VBoxContainer
+static var gc_part_panel : GridContainer
+
+
+#bottom left block
+static var b_local_transform : Button
+static var b_snapping_enabled : Button
+static var hbc_snap_increments : HBoxContainer
+
+	#units snapping options
+static var le_unit_step : LineEdit
+static var le_unit_step_increment_step : LineEdit
+static var b_unit_increment : Button
+static var b_unit_decrement : Button
+static var b_unit_double : Button
+static var b_unit_half : Button
+
+	#rotation snapping options
+static var le_rotation_step : LineEdit
+static var le_rotation_step_increment_step : LineEdit
+static var b_rotation_increment : Button
+static var b_rotation_decrement : Button
+static var b_rotation_double : Button
+static var b_rotation_half : Button
+
+
+#bottom bar
+static var l_camera_speed : Label
+static var l_message : Label
 
 #array of control nodes which are iterated over to check if the mouse is over ui
 static var no_drag_ui : Array[Control]
 
+#array of numeric line edits
+static var numeric_line_edit_array : Array[LineEdit]
 
 
-
-static func initialize(tree_access : Node):
+func initialize(
+	on_spawn_pressed : Callable,
+	on_tool_selected : Callable,
+	main_on_snap_button_pressed : Callable,
+	main_on_snap_text_changed : Callable,
+	on_local_transform_active_set : Callable,
+	on_snapping_active_set : Callable,
+	on_color_selected : Callable):
 	
-	pass
+#assign all ui nodes
+	#top left block
+		#top menu bar
+	#mb_top_bar = %TopBar
+	pm_file = %File
+	pm_edit = %Edit
+	pm_assets = %Assets
+	pm_help = %Help
+	
+		#tool bar
+	b_drag_tool = %ButtonDragTool
+	b_move_tool = %ButtonMoveTool
+	b_rotate_tool = %ButtonRotateTool
+	b_scale_tool = %ButtonScaleTool
+	b_spawn_part = %ButtonSpawnPart
+	b_delete_tool = %ButtonDeleteTool
+	b_paint_tool = %ButtonPaintTool
+	b_material_tool = %ButtonMaterialTool
+	b_lock_tool = %ButtonLockTool
+	
+	
+		#selector panels (specifically the containers of the buttons)
+	gc_paint_panel = %GridContainerColorPanel
+	vbc_material_panel = %VBoxContainerMaterialPanel
+	gc_part_panel = %PartPanelGridContainer
+	
+		#bottom left block
+	b_local_transform = %ButtonLocalTransform
+	b_snapping_enabled = %ButtonSnapping
+	
+		#units snapping options
+	le_unit_step = %LineEditUnitStep
+	le_unit_step_increment_step = %LineEditUnitStepIncrementStep
+	b_unit_increment = %ButtonUnitIncrement
+	b_unit_decrement = %ButtonUnitDecrement
+	b_unit_double = %ButtonUnitDouble
+	b_unit_half = %ButtonUnitHalf
+	
+		#rotation snapping options
+	le_rotation_step = %LineEditRotationStep
+	le_rotation_step_increment_step = %LineEditRotationStepIncrementStep
+	b_rotation_increment = %ButtonRotationIncrement
+	b_rotation_decrement = %ButtonRotationDecrement
+	b_rotation_double = %ButtonRotationDouble
+	b_rotation_half = %ButtonRotationHalf
+	
+		#bottom bar
+	l_camera_speed = %LabelCameraSpeed
+	l_message = %LabelMessage
+	
+	
+	no_drag_ui = [
+		$PanelContainerTopLeftBlock,
+		$PanelContainerBottomLeftBlock,
+		$DocumentDisplayManual,
+		$DocumentDisplayLicense,
+		$PanelContainerBottomLeftBlock,
+		$PanelContainerColor,
+		$PanelContainerMaterial,
+		$PanelContainerPart
+	]
+	
+	b_snapping_enabled.toggled.connect(on_snapping_active_set)
+	b_local_transform.toggled.connect(on_local_transform_active_set)
+	
+	le_rotation_step.text_changed.connect(main_on_snap_text_changed.bind(le_rotation_step))
+	le_unit_step.text_changed.connect(main_on_snap_text_changed.bind(le_unit_step))
+	
+	b_rotation_increment.pressed.connect(main_on_snap_button_pressed.bind(b_rotation_increment))
+	b_rotation_decrement.pressed.connect(main_on_snap_button_pressed.bind(b_rotation_decrement))
+	b_rotation_double.pressed.connect(main_on_snap_button_pressed.bind(b_rotation_double))
+	b_rotation_half.pressed.connect(main_on_snap_button_pressed.bind(b_rotation_half))
+	b_unit_increment.pressed.connect(main_on_snap_button_pressed.bind(b_unit_increment))
+	b_unit_decrement.pressed.connect(main_on_snap_button_pressed.bind(b_unit_decrement))
+	b_unit_double.pressed.connect(main_on_snap_button_pressed.bind(b_unit_double))
+	b_unit_half.pressed.connect(main_on_snap_button_pressed.bind(b_unit_half))
+	
+	
+	
+	b_drag_tool.pressed.connect(on_tool_selected.bind(b_drag_tool))
+	b_move_tool.pressed.connect(on_tool_selected.bind(b_move_tool))
+	b_rotate_tool.pressed.connect(on_tool_selected.bind(b_rotate_tool))
+	b_scale_tool.pressed.connect(on_tool_selected.bind(b_scale_tool))
+	b_paint_tool.pressed.connect(on_tool_selected.bind(b_paint_tool))
+	b_material_tool.pressed.connect(on_tool_selected.bind(b_material_tool))
+	b_lock_tool.pressed.connect(on_tool_selected.bind(b_lock_tool))
+	b_spawn_part.pressed.connect(on_spawn_pressed.bind(b_spawn_part))
 
+
+
+func _input(event):
+	if event is InputEventKey:
+		if event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER:
+			var focus_owner : Control = get_viewport().gui_get_focus_owner()
+			if focus_owner is LineEdit:
+				focus_owner.release_focus()
+
+
+#signals
 static func select_tool(
 	button : Button,
 	selected_tool_handle_array : Array[TransformHandle],
@@ -117,8 +254,47 @@ static func select_tool(
 	return r_dict
 
 
+static func on_snap_text_changed(line_edit : LineEditNumeric):
+	var r_dict : Dictionary = {}
+	r_dict.rotational_snap_increment = le_rotation_step.true_value
+	r_dict.positional_snap_increment = le_unit_step.true_value
+	return r_dict
+
+
+static func on_snap_button_pressed(button : Button, positional_snap_increment : float, rotational_snap_increment : float):
+	match button:
+		b_rotation_increment:
+			rotational_snap_increment = rotational_snap_increment + le_rotation_step_increment_step.true_value
+		b_rotation_decrement:
+			rotational_snap_increment = rotational_snap_increment - le_rotation_step_increment_step.true_value
+		b_rotation_double:
+			rotational_snap_increment = rotational_snap_increment * 2
+		b_rotation_half:
+			rotational_snap_increment = rotational_snap_increment * 0.5
+		b_unit_increment:
+			positional_snap_increment = positional_snap_increment + le_unit_step_increment_step.true_value
+		b_unit_decrement:
+			positional_snap_increment = positional_snap_increment - le_unit_step_increment_step.true_value
+		b_unit_double:
+			positional_snap_increment = positional_snap_increment * 2
+		b_unit_half:
+			positional_snap_increment = positional_snap_increment * 0.5
+	
+	positional_snap_increment = max(positional_snap_increment, 0)
+	rotational_snap_increment = max(rotational_snap_increment, 0)
+	
+	le_rotation_step.text = str(rotational_snap_increment)
+	le_unit_step.text = str(positional_snap_increment)
+	
+	var r_dict : Dictionary = {}
+	r_dict.rotational_snap_increment = rotational_snap_increment
+	r_dict.positional_snap_increment = positional_snap_increment
+	return r_dict
+
+
 #tooltip styling
-static var tooltip_panel : StyleBox = preload("res://editor/data_ui/styles/panel_styles/tooltip_panel.tres")
+"TODO"#throw these filepaths into dataloader
+static var tooltip_panel : StyleBox = preload("res://editor/data_ui/styles/panel_styles/tooltip_panel.tres")#DataLoader.ui_tooltip_panel
 static var tooltip_font : Theme = preload("res://editor/data_ui/styles/font_styles/t_sci_fi_regular.tres")
 
 static func custom_tooltip(for_text : String):

@@ -18,9 +18,8 @@ var lock_position : Vector3
 var lock_zoom : float = 0
 
 
-func initialize(camera_speed_label : Label, camera_zoom_label : Label):
+func initialize(camera_speed_label : Label):
 	camera_speed_label.text = str(default_velocity)
-	camera_zoom_label.text = str("x0")
 
 
 func cam_input(
@@ -29,7 +28,6 @@ func cam_input(
 	selected_parts_array : Array[Part],
 	selected_parts_abb : ABB,
 	msg_label : Label,
-	camera_zoom_label : Label,
 	camera_speed_label : Label
 	):
 	
@@ -45,7 +43,6 @@ func cam_input(
 			
 			global_position = lock_position + basis.z * lock_zoom
 			is_locked_on = true
-			camera_zoom_label.text = "x" + str(round(lock_zoom * 10) * 0.1)
 			msg_label.text = "camera locked on"
 	
 	#if any movement keys are pressed, stop locking onto parts
@@ -99,7 +96,7 @@ func cam_input(
 					velocity = clamp(velocity / speed_scale, min_speed, max_speed)
 		
 		camera_speed_label.text = str(round(velocity * 10) * 0.1)
-		camera_zoom_label.text = "x" + str(round(lock_zoom * 10) * 0.1)
+
 
 func cam_process(
 		delta : float,

@@ -5,11 +5,10 @@ class_name DropDownButton
 
 @export var folded_in_symbol : String = "▼"
 @export var folded_out_symbol : String = "▲"
-
 @export var attached_control : Control
-#@export var control_to_give_focus_to : Control
+#MAKE SURE to set all the buttons in this control to have the action_mode "button press"
+#so that it gets triggered before the attached control disappears
 @export var hide_after_click_on_attached_control : bool = false
-#unpress if click happens outside of attached control
 
 
 # Called when the node enters the scene tree for the first time.
@@ -21,7 +20,6 @@ func _init():
 	text = folded_in_symbol
 
 func on_drop_down_toggled(button_toggled : bool):
-	print("button_toggled:  ",  button_toggled)
 	if button_toggled:
 		text = folded_in_symbol
 	else:
@@ -29,10 +27,7 @@ func on_drop_down_toggled(button_toggled : bool):
 	
 	if attached_control != null:
 		attached_control.visible = button_toggled
-	
-	
-	#if control_to_give_focus_to != null:
-	#	control_to_give_focus_to.grab_focus()
+
 
 func _input(event):
 	if event is InputEventMouseButton:
