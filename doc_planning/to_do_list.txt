@@ -1,0 +1,70 @@
+reimplement color buttons
+implement part type picking
+	(use dataloader to dynamically load them from /editor_data)
+
+implement material picking
+	(use dataloader to dynamically load them from /editor_data)
+
+
+write topbar signals and business logic
+show selected color/part/material in message bar when corresponding tool is selected
+
+disable all controls when any menu is open
+	(export array of menu control nodes and if any of them are visible, return in _input())
+
+take care of materials
+	(use the shader my friend gave)
+	(add at least 5 for testing)
+
+implement coloring tool
+implement material tool
+
+use dataloader to save and load parts
+	(think of a better data structure or way to store material files)
+
+make an icon for rotation pivot tool
+implement rotation pivot tool
+
+fix issues with scaling tool
+	(scale gets snapped in all axes when using the tool on just one axis)
+	(when dragging a handle too far negative the whole part moves that direction)
+	(when holding shift the amount of mouse movement needed is wrong)
+	(bad architecture with half the code spread between main and transformhandleutils)
+
+fix issues with drag tool
+	(should snap by closest corner)
+implement snapping for wedge face
+
+
+clean up/segregate main into a higher level view
+figure out what data can be hidden behind namespace facades
+what data or variables can be segregated out of main and how far
+
+reduce code duplication in snapping code
+
+write code for: ctrl+z, +y, +c, +x, +v, +d, delete
+possibly add ui buttons for undo and redo
+settings menu? dataloader settings csv?
+
+figure out the exact steps of what the save load import export dialogs should do
+
+
+save as
+save
+load
+import obj
+export obj
+export to godot project -> make sure all required materials are there -> find all instances of the previously exported meshes and replace them, recolor them the way they were colored before replacing
+
+asset manager menus for color palette, material palette, part type palette (include default parts? checkbox)
+	option to mass import things with visible parallel arrays (left to right for example albedo image files, then below another array which has the normal maps then below the material names, etc)
+
+write instructions manual
+
+v0.2
+implement subassemblies and/or grouping of parts
+implement part inspector
+implement automatic hidden face reduction algorithm
+implement csg
+v0.3
+implement uv mapping

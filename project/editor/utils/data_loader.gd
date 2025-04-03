@@ -3,9 +3,6 @@ class_name DataLoader
 
 
 
-
-
-
 #read colors from file
 static func read_colors_and_create_colors(file_as_string : String):
 	var lines : PackedStringArray = file_as_string.split("\n")

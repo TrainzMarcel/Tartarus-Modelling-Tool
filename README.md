@@ -24,7 +24,7 @@ v0.1
 	x RT3 implement selecting of parts; not holding shift will only select single parts, holding shift will allow for selection of several parts
 	  RT3 tools 1-4 (dragging, linearly translating, rotating and scaling) have the same base dragging and selecting behavior, but, tools 2-4 render interactive handles for their primary purpose
 	x RT4 tool 2 will be used for linear translation of blocks either in global axes or axes relative to said block
-	  RT5 tool 3 will be used to rotate again in global or relative axes
+	x RT5 tool 3 will be used to rotate again in global or relative axes
 	  RT6 the rotation pivot for a part should be adjustable
 	  RT7 tool 4 will be for scaling singular parts
 	  RT8 spawning of parts (cuboids, wedges, cylinders, spheres)
@@ -37,7 +37,7 @@ v0.1
 	x IC1 camera	controlled linearly by wasd and rotated by right clicking and dragging
 	x IC2 tool 2	linearly translating is done by dragging one of 6 arrows, x arrows in red, y arrows in green, z arrows in blue and global or relative input is toggled by a checkbox or a keybind
 	  IC3 tool 2	there will also be a small square for each axis, which allows users to move parts planarly
-	  IC4 tool 3	rotating is done by dragging one of 3 rings, x rotation in red, y rotation in green and z rotation in blue
+	x IC4 tool 3	rotating is done by dragging one of 3 rings, x rotation in red, y rotation in green and z rotation in blue
 	  IC5 tool 3	will have an extra button next to it, labeled "change pivot" where the parts pivot will be shown and be moveable by tool 2
 	  IC6 tool 4	scaling is done by dragging one of 6 spheres, x spheres in red, y spheres in green and z spheres in blue
 	  IC7 tool 4	holding ctrl will force the part to stay in the same position and scaling to work in both directions of the axis
@@ -55,14 +55,14 @@ v0.1
 	MODEL EXPORT (everything related to model exporting)
 	  ME1 possibility to export as .obj with materials and colors
 	  ME2 possibility to automatically set up materials in an input godot project, on models the material slots will be named after the material they use, with a number after to distinguish between any different colors (since u need a new material for every extra color on a model) and this way whenever a model is imported it will utilize the shared material
-	  ME3 every model with said specifically named material slots that is i	mported in a project with these shared materials, has the materials assigned automatically
+	  ME3 every model with said specifically named material slots that is imported in a project with these shared materials, has the materials assigned automatically
 	  ME4 if an existing model is reimported/overwritten, update all the nodes with this model to the newest version, keeping the assigned materials as well as possible (i think i can only do this using a plugin)
 	  ME5 possibility to save filepaths for fast and easy reimporting
 
 
 	MISC
 	  MI1 saving of models using csv files
-	  MI2 loading of models
+	  MI2 loading of obj or gltf models
 	  MI3 automated build/export chain
 
 

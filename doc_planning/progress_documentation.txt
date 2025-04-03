@@ -54,3 +54,4 @@
 28.3. designed logo, added ExpandPanel class
 31.3. fixed dropdown button issues, restructured repo
 2.4. finished color, material and part picker uis, made new ui functional, added dataloader util, added numericlineedit class, moved ui functions out of automatedcolorpicker
+3.4. made a to do list to keep track of what needs to get done

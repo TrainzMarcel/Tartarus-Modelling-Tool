@@ -79,6 +79,7 @@ static func full_color_sort(grid_container : GridContainer, color_array : Array[
 				color_array[index_2] = temp
 				
 				if using_color_name_array:
+					temp = color_name_array[index_1]
 					color_name_array[index_1] = color_name_array[index_2]
 					color_name_array[index_2] = temp
 				
@@ -103,6 +104,7 @@ static func full_color_sort(grid_container : GridContainer, color_array : Array[
 				color_array[index_2] = temp
 				
 				if using_color_name_array:
+					temp = color_name_array[index_1]
 					color_name_array[index_1] = color_name_array[index_2]
 					color_name_array[index_2] = temp
 				
@@ -147,6 +149,7 @@ static func full_color_sort(grid_container : GridContainer, color_array : Array[
 					color_array[index_2] = temp
 					
 					if using_color_name_array:
+						temp = color_name_array[index_1]
 						color_name_array[index_1] = color_name_array[index_2]
 						color_name_array[index_2] = temp
 					
@@ -171,6 +174,7 @@ static func full_color_sort(grid_container : GridContainer, color_array : Array[
 				grayscale_color_array[index_2] = temp
 				
 				if using_color_name_array:
+					temp = grayscale_color_name_array[index_1]
 					grayscale_color_name_array[index_1] = grayscale_color_name_array[index_2]
 					grayscale_color_name_array[index_2] = temp
 				

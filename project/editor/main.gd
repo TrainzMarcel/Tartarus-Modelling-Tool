@@ -111,8 +111,10 @@ var selected_tool_handle_array : Array[TransformHandle]
 
 
 #conditionals-------------------------------------------------------------------
+#main override for when ui like a document view or an asset menu or a file explorer is open
+var is_input_active : bool = true
+
 var mouse_button_held : bool = false
-#gets set in on_tool_selected
 #gets set in on_tool_selected
 var is_drag_tool : bool = false
 #this bool is meant for non drag tools which dont need selecting but still need hovering and clicking functionality

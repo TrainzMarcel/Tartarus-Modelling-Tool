@@ -133,11 +133,22 @@ func initialize(
 		$DocumentDisplayManual,
 		$DocumentDisplayLicense,
 		$PanelContainerBottomLeftBlock,
-		$PanelContainerColor,
-		$PanelContainerMaterial,
-		$PanelContainerPart
+		$PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool/DropDownButton/PanelContainerColor,
+		$PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerMaterialTool/DropDownButton/PanelContainerMaterial,
+		$PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPart
 	]
 	
+#initialize picker/selector menus
+	var r_dict : Dictionary = DataLoader.read_colors_and_create_colors(FileAccess.get_file_as_string("res://editor/data_editor/colors/default_color_codes.txt"))
+	var r_dict_2 : Dictionary = AutomatedColorPalette.full_color_sort(gc_paint_panel, r_dict.color_array, r_dict.color_name_array)
+	
+	UI.create_color_buttons(gc_paint_panel, on_color_selected, r_dict_2.color_array, r_dict.color_name_array)
+	#DataLoader.read_parts_and_create_parts()
+	#UI.create_part_buttons(gc_part_panel, on_part_selected, r_dict_3.part_array)
+	#DataLoader.read_materials_and_create_materials()
+	#UI.create_material_buttons()
+	
+#connect signals
 	b_snapping_enabled.toggled.connect(on_snapping_active_set)
 	b_local_transform.toggled.connect(on_local_transform_active_set)
 	
@@ -163,6 +174,8 @@ func initialize(
 	b_material_tool.pressed.connect(on_tool_selected.bind(b_material_tool))
 	b_lock_tool.pressed.connect(on_tool_selected.bind(b_lock_tool))
 	b_spawn_part.pressed.connect(on_spawn_pressed.bind(b_spawn_part))
+	
+	
 
 
 
@@ -173,6 +186,31 @@ func _input(event):
 			if focus_owner is LineEdit:
 				focus_owner.release_focus()
 
+#helper functions
+static func create_color_buttons(parent : Control, on_color_selected : Callable, color_array : Array[Color], color_name_array : Array[String]):
+	
+	#unload existing nodes (when for example, color palette changes
+	var existing_nodes : Array[Node] = parent.get_children()
+	var sample_button : Button = existing_nodes[0]
+	
+	#delete all but first button
+	var i : int = 1
+	while i < existing_nodes.size():
+		existing_nodes[i].queue_free()
+		i = i + 1
+	
+	i = 0
+	while i < color_array.size():
+		var new : Button = sample_button.duplicate()
+		new.self_modulate = color_array[i]
+		new.tooltip_text = color_name_array[i]
+		new.set_script(preload("res://editor/classes/ui_editor/tooltip_assign.gd"))
+		new.pressed.connect(on_color_selected.bind(new))
+		parent.add_child(new)
+		i = i + 1
+	sample_button.queue_free()
+	
+	
 
 #signals
 static func select_tool(
