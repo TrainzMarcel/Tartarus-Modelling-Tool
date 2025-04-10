@@ -15,50 +15,50 @@ The .csv file does not contain a header but rather section headers for every dat
 So for example, a default data.csv file could look like:
 
 ```
-::COLOR::
+::COLORPALETTE::
 343c9dd8-cccd-44c1-a7d4-7145e1b10056
 242,243,243,White
 161,165,162,Grey
 249,233,153,Light yellow
 215,197,154,Brick yellow
 194,218,184,Light green (Mint)
-::MATERIAL::
+::MATERIALPALETTE::
 213213c9-ba0b-43be-b984-023243fff2e8
 wood_01_albedo.jpg,wood_01_normal.jpg,0.6,0.2 (MORE VALUES TO BE WORKED OUT DEPENDING ON SHADER)
-::PARTTYPE::
+::PARTPALETTE::
 d6e6bb70-e3b9-44d1-9baf-7cd97c141311
 box.gltf,0,Cuboid
 sphere.gltf,0,Sphere
 wedge.gltf,1,Wedge
-::PART::
+::MODEL::
 f6961e4d-3b93-402c-b769-c14faa16220f
-0.2,5.6,0.3,1.0,2.0,3.0,0.1,0.3,0.1,0.3,0,0,0
-2.0,3.0,0.1,0.3,0.2,5.6,0.3,1.0,0.1,0.3,0,1,0
-0.2,5.6,0.3,1.0,0.2,5.6,0.3,1.0,0.1,0.3,1,2,3
-2.0,3.0,0.1,0.0,2.0,3.0,0.1,0.3,0.1,0.3,0,1,2
-0.2,5.6,0.2,5.6,0.3,1.0,0.1,0.3,0.1,0.3,1,0,1
+0.2,5.6,0.3,1.0,2.0,3.0,0.1,0.3,0.1,0.3,0,0,0,0,0,0
+2.0,3.0,0.1,0.3,0.2,5.6,0.3,1.0,0.1,0.3,0,0,0,1,0,0
+0.2,5.6,0.3,1.0,0.2,5.6,0.3,1.0,0.1,0.3,0,1,0,2,0,3
+2.0,3.0,0.1,0.0,2.0,3.0,0.1,0.3,0.1,0.3,0,0,0,1,0,2
+0.2,5.6,0.2,5.6,0.3,1.0,0.1,0.3,0.1,0.3,0,1,0,0,0,1
 ```
 
 A data.csv file with commentary:
 ```
 #this is a comment
 #this contains the full color palette used in the model
-::COLOR::
-color_palette_uuid
+::COLORPALETTE::
+uuid
 r, g, b, name
 #this contains the material palette used in the model
-::MATERIAL::
-material_palette_uuid
+::MATERIALPALETTE::
+uuid
 filename_albedo, filename_normal,...
 #this contains the primitives palette used
-::PARTTYPE::
-part_type_palette_uuid
+::PARTPALETTE::
+uuid
 filename_mesh, collider_type (0 = box, 1 = wedge), name
 #i feel that saving the collider type just for wedges is important
 #the actual list of primitives in a model, ids are implicit in the order of the palettes data
-::PART::
-model_uuid
-size.x, size.y, size.z, pos.x, pos.y, pos.z, quat.w, quat.x, quat.y, quat.z, colorid, materialid, shapeid
+::MODEL::
+uuid
+size.x, size.y, size.z, pos.x, pos.y, pos.z, quat.w, quat.x, quat.y, quat.z, colorpaletteid, colorid, materialpaletteid, materialid, parttypepaletteid, parttypeid
 ```
 
 >**🔵Note🔵**
@@ -74,53 +74,52 @@ size.x, size.y, size.z, pos.x, pos.y, pos.z, quat.w, quat.x, quat.y, quat.z, col
 >**🔵Note🔵**
 > For the future, if there needs to be a new format, simply specify a new header, e.g. ::COLORV2::. This is how versioning will be handled. Also for the future when there are procedural meshes, give them uuids when saving depending on whether their values are the same or not instead of being like blender where the user has to manually deal with linked data
 
-### Header ::COLOR::
+### Header ::COLORPALETTE::
 
 |line number (relative)|raw values example|variable name|data type (gdscript)|purpose|
 |-|-|-|-|-|
-|0|::COLOR::|```header```|String|start of a color data block.
-|1|FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF|```color_palette_uuid```|String|to distinguish between color palettes.
-|2 - ``n``|0-255,0-255,0-255,color name|```r, g, b, name```|int, int, int, String|actual color data.
+|0|::COLORPALETTE::|```header```|String|start of a color data block.
+|1|FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF, Default Color Palette, Color palette which ships with the editor|```uuid, name, description```|String, String, String|to distinguish between color palettes.
+|2 - ``n``|0-255,0-255,0-255,color name|```r, g, b, name, description```|int, int, int, String|actual color data.
 
 
-### Header ::MATERIAL::
+### Header ::MATERIALPALETTE::
 
 |line number (relative)|raw value example|variable name|data type (gdscript)|purpose|
 |-|-|-|-|-|
-|0|::MATERIAL::|```header```|String|start of a material data block.
-|1|FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF|```material_palette_uuid```|String|to distinguish between material palettes.
+|0|::MATERIALPALETTE::|```header```|String|start of a material data block.
+|1|FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF, Default Material Palette, Material palette which ships with the editor|```uuid, name, description```|String, String, String|to distinguish between material palettes.
 |2 - ``n``|wood_0_albedo.jpg, wood_0_normal.jpg, 0, 0|```filename_albedo, filename_normal, normal_strength, color_strength (MORE VALUES TO BE WORKED OUT DEPENDING ON SHADER)```|String, String|optional (requires that recipient has the same material palette), filepaths to material image files.
 
 
-### Header ::PARTTYPE::
+### Header ::PARTTYPEPALETTE::
 
 |line number (relative)|raw value example|variable name|data type (gdscript)|purpose|
 |-|-|-|-|-|
-|0|::PARTTYPE::|```header```|String|start of a color data block.
-|1|FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF|```part_type_palette_uuid```|String|to distinguish between material palettes.
-|2 - ``n``||```filename_mesh, collider_type, mesh_name```|String, int, String|actual color data.
+|0|::PARTPALETTE::|```header```|String|start of a part type data block.
+|1|FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF, Default Part Palette, Default part palette which ships with the editor.|```uuid, name, description```|String, String, String|to distinguish between material palettes.
+|2 - ``n``||```filename_mesh, collider_type, mesh_name```|String, int, String|actual part type data.
 
-### Header ::PART::
+### Header ::MODEL::
 
 |line number (relative)|raw value example|variable name|data type (gdscript)|purpose|
 |-|-|-|-|-|
-|0|::PART::|```header```|String|start of a color data block.
-|1|FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF|```model_uuid```|String|to distinguish between models.
-|2 - ``n``|0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0|```size.x, size.y, size.z, pos.x, pos.y, pos.z, quat.w, quat.x, quat.y, quat.z, colorid, materialid, shapeid```|float, float, float, float, float, float, float, float, float, float, int, int, int| data of each part in a model.
+|0|::MODEL::|```header```|String|start of a model parts data block.
+|1|FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF,First Model,My first model|```uuid, name, description, part_count```|String, String, String, int|to distinguish between models.
+|2 - ``n``|0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0|```size.x, size.y, size.z, pos.x, pos.y, pos.z, quat.w, quat.x, quat.y, quat.z, colorpaletteid, colorid, materialpaletteid, materialid, parttypepaletteid, parttypeid```|float, float, float, float, float, float, float, float, float, float, int, int, int, int, int, int| data of each part in a model.
 
 
 
 ## Loading steps
-(get rid of ur mental barrier its not that hard)
-### Readi
-- unzip the .tmv or .tmvp file
+
+### Preparing the data
+- Unzip the .tmv or .tmvp file
+
 - get the .csv inside and turn it into an array of strings, each line becoming one array item
 
-### Meow
-### Meow
-### ;
+ - use the section headers to load the different data
 
-
+TODO
 
 
 
@@ -130,7 +129,7 @@ size.x, size.y, size.z, pos.x, pos.y, pos.z, quat.w, quat.x, quat.y, quat.z, col
 ## Saving steps
 TODO
 
-
+markdown preset stuff
 > **⚠️Warning⚠️**
 > type notable things here
 
