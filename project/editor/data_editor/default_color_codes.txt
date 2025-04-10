@@ -1,0 +1,209 @@
+::COLOR::
+67cd09e1-0ac6-4432-9abe-47307e33c8dc
+242,243,243,White
+161,165,162,Grey
+249,233,153,Light yellow
+215,197,154,Brick yellow
+194,218,184,Light green (Mint)
+232,186,200,Light reddish violet
+128,187,219,Pastel Blue
+203,132,66,Light orange brown
+204,142,105,Nougat
+196,40,28,Bright red
+196,112,160,Med. reddish violet
+13,105,172,Bright blue
+245,205,48,Bright yellow
+98,71,50,Earth orange
+27,42,53,Black
+109,110,108,Dark grey
+40,127,71,Dark green
+161,196,140,Medium green
+243,207,155,Lig. Yellowich orange
+75,151,75,Bright green
+160,95,53,Dark orange
+193,202,222,Light bluish violet
+236,236,236,Transparent
+205,84,75,Tr. Red
+193,223,240,Tr. Lg blue
+123,182,232,Tr. Blue
+247,241,141,Tr. Yellow
+180,210,228,Light blue
+217,133,108,Tr. Flu. Reddish orange
+132,182,141,Tr. Green
+248,241,132,Tr. Flu. Green
+236,232,222,Phosph. White
+238,196,182,Light red
+218,134,122,Medium red
+110,153,202,Medium blue
+199,193,183,Light grey
+107,50,124,Bright violet
+226,155,64,Br. yellowish orange
+218,133,65,Bright orange
+0,143,156,Bright bluish green
+104,92,67,Earth yellow
+67,84,147,Bright bluish violet
+191,183,177,Tr. Brown
+104,116,172,Medium bluish violet
+229,173,200,Tr. Medi. reddish violet
+199,210,60,Med. yellowish green
+85,165,175,Med. bluish green
+183,215,213,Light bluish green
+164,189,71,Br. yellowish green
+217,228,167,Lig. yellowish green
+231,172,88,Med. yellowish orange
+211,111,76,Br. reddish orange
+146,57,120,Bright reddish violet
+234,184,146,Light orange
+165,165,203,Tr. Bright bluish violet
+220,188,129,Gold
+174,122,89,Dark nougat
+156,163,168,Silver
+213,115,61,Neon orange
+216,221,86,Neon green
+116,134,157,Sand blue
+135,124,144,Sand violet
+224,152,100,Medium orange
+149,138,115,Sand yellow
+32,58,86,Earth blue
+39,70,45,Earth green
+207,226,247,Tr. Flu. Blue
+121,136,161,Sand blue metallic
+149,142,163,Sand violet metallic
+147,135,103,Sand yellow metallic
+87,88,87,Dark grey metallic
+22,29,50,Black metallic
+171,173,172,Light grey metallic
+120,144,130,Sand green
+149,121,119,Sand red
+123,46,47,Dark red
+255,246,123,Tr. Flu. Yellow
+225,164,194,Tr. Flu. Red
+117,108,98,Gun metallic
+151,105,91,Red flip/flop
+180,132,85,Yellow flip/flop
+137,135,136,Silver flip/flop
+215,169,75,Curry
+249,214,46,Fire Yellow
+232,171,45,Flame yellowish orange
+105,64,40,Reddish brown
+207,96,36,Flame reddish orange
+163,162,165,Medium stone grey
+70,103,164,Royal blue
+35,71,139,Dark Royal blue
+142,66,133,Bright reddish lilac
+99,95,98,Dark stone grey
+130,138,93,Lemon metalic
+229,228,223,Light stone grey
+176,142,68,Dark Curry
+112,149,120,Faded green
+121,181,181,Turquoise
+159,195,233,Light Royal blue
+108,129,183,Medium Royal blue
+144,76,42,Rust
+124,92,70,Brown
+150,112,159,Reddish lilac
+107,98,155,Lilac
+167,169,206,Light lilac
+205,98,152,Bright purple
+228,173,200,Light purple
+220,144,149,Light pink
+240,213,160,Light brick yellow
+235,184,127,Warm yellowish orange
+253,234,141,Cool yellow
+125,187,221,Dove blue
+52,43,117,Medium lilac
+80,109,84,Slime green
+91,93,105,Smoky grey
+0,16,176,Dark blue
+44,101,29,Parsley green
+82,124,174,Steel blue
+51,88,130,Storm blue
+16,42,220,Lapis
+61,21,133,Dark indigo
+52,142,64,Sea green
+91,154,76,Shamrock
+159,161,172,Fossil
+89,34,89,Mulberry
+31,128,29,Forest green
+159,173,192,Cadet blue
+9,137,207,Electric blue
+123,0,123,Eggplant
+124,156,107,Moss
+138,171,133,Artichoke
+185,196,177,Sage green
+202,203,209,Ghost grey
+167,94,155,Lilac
+123,47,123,Plum
+148,190,129,Olivine
+168,189,153,Laurel green
+223,223,222,Quill grey
+151,0,0,Crimson
+177,229,166,Mint
+152,194,219,Baby blue
+255,152,220,Carnation pink
+255,89,89,Persimmon
+117,0,0,Maroon
+239,184,56,Gold
+248,217,109,Daisy orange
+231,231,236,Pearl
+199,212,228,Fog
+255,148,148,Salmon
+190,104,98,Terra Cotta
+86,36,36,Cocoa
+241,231,199,Wheat
+254,243,187,Buttermilk
+224,178,208,Mauve
+212,144,189,Sunrise
+150,85,85,Tawny
+143,76,42,Rust
+211,190,150,Cashmere
+226,220,188,Khaki
+237,234,234,Lily white
+233,218,218,Seashell
+136,62,62,Burgundy
+188,155,93,Cork
+199,172,120,Burlap
+202,191,163,Beige
+187,179,178,Oyster
+108,88,75,Pine Cone
+160,132,79,Fawn brown
+149,137,136,Hurricane grey
+171,168,158,Cloudy grey
+175,148,131,Linen
+150,103,102,Copper
+86,66,54,Dirt brown
+126,104,63,Bronze
+105,102,92,Flint
+90,76,66,Dark taupe
+106,57,9,Burnt Sienna
+248,248,248,Institutional white
+205,205,205,Mid gray
+17,17,17,Really black
+255,0,0,Really red
+180,128,255,Alder
+163,75,75,Dusty Rose
+193,190,66,Olive
+255,255,0,New Yeller
+0,0,255,Really blue
+0,32,96,Navy blue
+33,84,185,Deep blue
+4,175,236,Cyan
+170,85,0,CGA brown
+170,0,170,Magenta
+255,102,204,Pink
+255,175,0,Deep orange
+18,238,212,Teal
+0,255,255,Toothpaste
+0,255,0,Lime green
+58,125,21,Camo
+127,142,100,Grime
+140,91,159,Lavender
+175,221,255,Pastel light blue
+255,201,201,Pastel orange
+177,167,255,Pastel violet
+159,243,233,Pastel blue-green
+204,255,204,Pastel green
+255,255,204,Pastel yellow
+255,204,153,Pastel brown
+98,37,209,Royal purple
+255,0,191,Hot pink

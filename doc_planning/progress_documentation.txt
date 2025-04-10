@@ -54,4 +54,6 @@
 28.3. designed logo, added ExpandPanel class
 31.3. fixed dropdown button issues, restructured repo
 2.4. finished color, material and part picker uis, made new ui functional, added dataloader util, added numericlineedit class, moved ui functions out of automatedcolorpicker
-3.4. made a to do list to keep track of what needs to get done
+3.4. made a to do list to keep track of what needs to get done, started working out how best to save models and asset palettes
+4.4. continued to study possibilities for saving models and asset palettes, made first draft of save data structure, added uuid util in preparation for saving
+7.4. further worked on save data planning, created rotation pivot icon

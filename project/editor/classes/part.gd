@@ -2,10 +2,14 @@ extends StaticBody3D
 class_name Part
 
 #exclude from export
-@export var baseplate : bool = false
-
+@export var exclude : bool = false
 #make immovable
 @export var locked : bool = false
+
+#for tracking how many and what palettes were used in a model
+var used_color_palette : WorkspaceData.ColorPalette
+var used_material_palette : WorkspaceData.MaterialPalette
+var used_part_type_palette : WorkspaceData.PartTypePalette
 
 @export_enum("Cuboid:0", "Wedge:1", "Cylinder:2", "Sphere:3") var part_shape = 0#:
 	#set(value):
@@ -53,8 +57,6 @@ class_name Part
 				
 
 
-#pivot vec3 local to the node
-@export var part_pivot : Vector3 = Vector3.ZERO
 
 #material setter
 @export var part_material : Material:

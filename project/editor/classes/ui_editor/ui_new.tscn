@@ -1,4 +1,4 @@
-[gd_scene load_steps=70 format=3 uid="uid://cwt02lxvderye"]
+[gd_scene load_steps=71 format=3 uid="uid://cwt02lxvderye"]
 
 [ext_resource type="Script" path="res://editor/classes/ui_editor/ui_new.gd" id="1_8kn7b"]
 [ext_resource type="StyleBox" uid="uid://bkbmbfniourik" path="res://editor/data_ui/styles/panel_styles/panel_rounded_bottom.tres" id="1_pntfv"]
@@ -17,6 +17,7 @@
 [ext_resource type="Texture2D" uid="uid://cm53rvlp32ixw" path="res://editor/data_ui/assets/move_tool.png" id="14_q0855"]
 [ext_resource type="Texture2D" uid="uid://bx7h4ex7khrgr" path="res://editor/data_ui/assets/rotate_tool.png" id="15_1l4gu"]
 [ext_resource type="Texture2D" uid="uid://cfl4sq61yn4bu" path="res://editor/data_ui/assets/scale_tool.png" id="16_cgmjl"]
+[ext_resource type="Texture2D" uid="uid://dwwjn5neg02hd" path="res://editor/data_ui/assets/change_pivot_tool.png" id="17_ccyt1"]
 [ext_resource type="StyleBox" uid="uid://dgoxx4aa0p6rt" path="res://editor/data_ui/styles/button_and_line_edit_styles/tool_bar/button_and_dropdown_left/hover_normal.tres" id="17_gahws"]
 [ext_resource type="StyleBox" uid="uid://x1frdk5b4pb8" path="res://editor/data_ui/styles/button_and_line_edit_styles/tool_bar/button_and_dropdown_left/pressed.tres" id="18_riof3"]
 [ext_resource type="Texture2D" uid="uid://cc4xfiowj8pcq" path="res://editor/data_ui/assets/spawn_tool.png" id="19_wgrgr"]
@@ -460,8 +461,7 @@ theme_override_styles/focus = ExtResource("5_rq1a8")
 toggle_mode = true
 action_mode = 0
 button_group = SubResource("ButtonGroup_71ghl")
-text = "todo: add
-pivot icon"
+icon = ExtResource("17_ccyt1")
 expand_icon = true
 script = ExtResource("11_6a6rl")
 
@@ -805,9 +805,9 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -294.0
+offset_left = -350.0
 offset_top = 8.0
-offset_bottom = 338.0
+offset_bottom = 323.0
 grow_horizontal = 0
 grow_vertical = 0
 mouse_filter = 2
@@ -816,25 +816,32 @@ metadata/_edit_group_ = true
 
 [node name="MarginContainer" type="MarginContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool/DropDownButton/PanelContainerColor"]
 layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 7
 theme_override_constants/margin_right = 2
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_bottom = 7
 
 [node name="ScrollContainer" type="ScrollContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool/DropDownButton/PanelContainerColor/MarginContainer"]
 layout_mode = 2
 horizontal_scroll_mode = 0
 
-[node name="GridContainerColorPanel" type="GridContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool/DropDownButton/PanelContainerColor/MarginContainer/ScrollContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool/DropDownButton/PanelContainerColor/MarginContainer/ScrollContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 7
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 5
+
+[node name="GridContainerColorPanel" type="GridContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool/DropDownButton/PanelContainerColor/MarginContainer/ScrollContainer/MarginContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/h_separation = 4
-theme_override_constants/v_separation = 4
+theme_override_constants/v_separation = 3
 columns = 15
 
-[node name="Button" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool/DropDownButton/PanelContainerColor/MarginContainer/ScrollContainer/GridContainerColorPanel"]
+[node name="Button" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool/DropDownButton/PanelContainerColor/MarginContainer/ScrollContainer/MarginContainer/GridContainerColorPanel"]
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_o5gdi")

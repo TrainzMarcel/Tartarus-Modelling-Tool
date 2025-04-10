@@ -178,7 +178,6 @@ Institutional white, 248, 248, 248
 Mid gray, 205, 205, 205
 Really black, 17, 17, 17
 Really red, 255, 0, 0
-Deep orange, 255, 176, 0
 Alder, 180, 128, 255
 Dusty Rose, 163, 75, 75
 Olive, 193, 190, 66

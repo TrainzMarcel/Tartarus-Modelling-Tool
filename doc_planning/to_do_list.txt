@@ -1,9 +1,25 @@
-reimplement color buttons
+x reimplement color buttons
+
+add a readme to specify .tmv and .tmvp files
+
+describe the process for:
+saving a model
+loading a model
+
 implement part type picking
 	(use dataloader to dynamically load them from /editor_data)
 
+unify the naming scheme in ui for rotation vs degrees
+
+take care of materials
+	(use the shader my friend gave)
+	(add at least 5 for testing)
+
 implement material picking
 	(use dataloader to dynamically load them from /editor_data)
+
+create icon for .tmv (tesseract)
+create icon for .tmvp (wooden art palette)
 
 
 write topbar signals and business logic
@@ -12,17 +28,13 @@ show selected color/part/material in message bar when corresponding tool is sele
 disable all controls when any menu is open
 	(export array of menu control nodes and if any of them are visible, return in _input())
 
-take care of materials
-	(use the shader my friend gave)
-	(add at least 5 for testing)
-
 implement coloring tool
 implement material tool
 
 use dataloader to save and load parts
 	(think of a better data structure or way to store material files)
 
-make an icon for rotation pivot tool
+x make an icon for rotation pivot tool
 implement rotation pivot tool
 
 fix issues with scaling tool
@@ -67,4 +79,5 @@ implement part inspector
 implement automatic hidden face reduction algorithm
 implement csg
 v0.3
+possibly binary save files if not in v0.2
 implement uv mapping

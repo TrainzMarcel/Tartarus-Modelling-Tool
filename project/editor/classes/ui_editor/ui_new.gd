@@ -142,7 +142,7 @@ func initialize(
 	var r_dict : Dictionary = DataLoader.read_colors_and_create_colors(FileAccess.get_file_as_string("res://editor/data_editor/colors/default_color_codes.txt"))
 	var r_dict_2 : Dictionary = AutomatedColorPalette.full_color_sort(gc_paint_panel, r_dict.color_array, r_dict.color_name_array)
 	
-	UI.create_color_buttons(gc_paint_panel, on_color_selected, r_dict_2.color_array, r_dict.color_name_array)
+	UI.create_color_buttons(gc_paint_panel, on_color_selected, r_dict_2.color_array, r_dict_2.color_name_array)
 	#DataLoader.read_parts_and_create_parts()
 	#UI.create_part_buttons(gc_part_panel, on_part_selected, r_dict_3.part_array)
 	#DataLoader.read_materials_and_create_materials()
