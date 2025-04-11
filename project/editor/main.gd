@@ -140,9 +140,16 @@ func _ready():
 	cam.initialize(UI.l_camera_speed)
 	TransformHandleUtils.initialize_transform_handle_root(transform_handle_root)
 	
+	#load default palettes
+	var r_dict : Dictionary = WorkspaceData.load_data_from_tmv("res://editor/data_editor/default.tmvp")
+	WorkspaceData.available_color_palette_array.append_array(r_dict.color_palette_array)
+	WorkspaceData.available_material_palette_array.append_array(r_dict.material_palette_array)
+	WorkspaceData.available_part_type_palette_array.append_array(r_dict.part_type_palette_array)
+	#WorkspaceData.selec
+	
 	
 	HyperDebug.initialize(debug_active, workspace)
-	#for convienience sakes so my console isnt covered up every time i start the software
+	#for convenience sakes so my console isnt covered up every time i start the software
 	get_window().position = Vector2(1920*0.5 - 1152 * 0.3, 0)
 
 

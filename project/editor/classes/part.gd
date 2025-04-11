@@ -6,15 +6,18 @@ class_name Part
 #make immovable
 @export var locked : bool = false
 
+var collider_type : int = 0
+
 #for tracking how many and what palettes were used in a model
 var used_color_palette : WorkspaceData.ColorPalette
 var used_material_palette : WorkspaceData.MaterialPalette
 var used_part_type_palette : WorkspaceData.PartTypePalette
 
-@export_enum("Cuboid:0", "Wedge:1", "Cylinder:2", "Sphere:3") var part_shape = 0#:
-	#set(value):
-	#set the uhh collider and mesh to the corresponding shape
-	
+"TODO"#for scaling custom meshes correctly, add a function that gets the meshes aabb while it is un-rotated
+#set the parts scale to the meshes aabb and save that scale
+#use that mesh scale value to keep the mesh in the parts bounds
+#for the time being custom part meshes will just have a box collider
+
 @export var part_scale : Vector3 = Vector3(0.4, 0.2, 0.8):
 #size with setter
 	set(value):
@@ -23,39 +26,19 @@ var used_part_type_palette : WorkspaceData.PartTypePalette
 		if part_collider_node == null or part_mesh_node == null:
 			return
 		#implement the different shapes
-		match part_shape:
+		match collider_type:
 		#cuboid
 			0:
 				var shape : BoxShape3D = part_collider_node.shape
 				shape.size = part_scale
 		#wedge
 			1:
+				"TODO"#implement wedge collider
 				pass
-		#cylinder
-			2:
-				pass
-		#sphere
-			3:
-				pass
-			
 	
-		#implement the different shapes
-		match part_shape:
-		#cuboid
-			0:
-				var mesh_res : BoxMesh = part_mesh_node.mesh
-				mesh_res.size = part_scale
-		#wedge
-			1:
-				pass
-		#cylinder
-			2:
-				pass
-		#sphere
-			3:
-				pass
-				
-
+		
+		var mesh_res : BoxMesh = part_mesh_node.mesh
+		part_mesh_node.scale = part_scale
 
 
 #material setter
@@ -65,7 +48,7 @@ var used_part_type_palette : WorkspaceData.PartTypePalette
 		if part_mesh_node != null:
 			part_mesh_node.material_override = value
 
-#material setter
+#color setter
 @export var part_color : Color:
 	set(value):
 		part_color = value

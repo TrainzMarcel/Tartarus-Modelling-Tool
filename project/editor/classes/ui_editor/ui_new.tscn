@@ -606,10 +606,10 @@ text = "▼"
 script = ExtResource("22_e8bxn")
 folded_in_symbol = "▲"
 folded_out_symbol = "▼"
-attached_control = NodePath("PanelContainerPart")
+attached_control = NodePath("PanelContainerPartType")
 hide_after_click_on_attached_control = true
 
-[node name="PanelContainerPart" type="PanelContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton"]
+[node name="PanelContainerPartType" type="PanelContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton"]
 visible = false
 clip_contents = true
 layout_direction = 2
@@ -626,7 +626,7 @@ mouse_filter = 2
 theme_override_styles/panel = ExtResource("12_rh0pf")
 metadata/_edit_group_ = true
 
-[node name="MarginContainer" type="MarginContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPart"]
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType"]
 clip_contents = true
 layout_mode = 2
 theme_override_constants/margin_left = 4
@@ -634,13 +634,13 @@ theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 4
 
-[node name="PartPanelGridContainer" type="GridContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPart/MarginContainer"]
+[node name="PartPanelGridContainer" type="GridContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType/MarginContainer"]
 unique_name_in_owner = true
 clip_contents = true
 layout_mode = 2
 columns = 2
 
-[node name="Button" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPart/MarginContainer/PartPanelGridContainer"]
+[node name="Button" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType/MarginContainer/PartPanelGridContainer"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 theme = ExtResource("2_3wo47")
@@ -651,7 +651,7 @@ theme_override_styles/focus = ExtResource("5_rq1a8")
 action_mode = 0
 text = "Cuboid"
 
-[node name="Button2" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPart/MarginContainer/PartPanelGridContainer"]
+[node name="Button2" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType/MarginContainer/PartPanelGridContainer"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 theme = ExtResource("2_3wo47")
@@ -661,7 +661,7 @@ theme_override_styles/pressed = ExtResource("34_31jf6")
 theme_override_styles/focus = ExtResource("5_rq1a8")
 text = "Wedge"
 
-[node name="Button3" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPart/MarginContainer/PartPanelGridContainer"]
+[node name="Button3" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType/MarginContainer/PartPanelGridContainer"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 theme = ExtResource("2_3wo47")
@@ -671,7 +671,7 @@ theme_override_styles/pressed = ExtResource("34_31jf6")
 theme_override_styles/focus = ExtResource("5_rq1a8")
 text = "Cylinder"
 
-[node name="Button4" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPart/MarginContainer/PartPanelGridContainer"]
+[node name="Button4" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType/MarginContainer/PartPanelGridContainer"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 theme = ExtResource("2_3wo47")

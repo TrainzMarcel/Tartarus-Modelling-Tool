@@ -57,3 +57,6 @@
 3.4. made a to do list to keep track of what needs to get done, started working out how best to save models and asset palettes
 4.4. continued to study possibilities for saving models and asset palettes, made first draft of save data structure, added uuid util in preparation for saving
 7.4. further worked on save data planning, created rotation pivot icon
+9.4. continued working on save data planning
+10.4. continued working on workspacedata (formerly dataloader)
+11.4. continued working on workspacedata, did not think it would be so hard to read in the save files i designed

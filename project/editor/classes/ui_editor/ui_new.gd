@@ -135,12 +135,19 @@ func initialize(
 		$PanelContainerBottomLeftBlock,
 		$PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool/DropDownButton/PanelContainerColor,
 		$PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerMaterialTool/DropDownButton/PanelContainerMaterial,
-		$PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPart
+		$PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType
 	]
 	
 #initialize picker/selector menus
-	var r_dict : Dictionary = DataLoader.read_colors_and_create_colors(FileAccess.get_file_as_string("res://editor/data_editor/colors/default_color_codes.txt"))
+	var r_dict : Dictionary = WorkspaceData.read_colors_and_create_colors(FileAccess.get_file_as_string("res://editor/data_editor/default_color_codes.txt"))
+	
 	var r_dict_2 : Dictionary = AutomatedColorPalette.full_color_sort(gc_paint_panel, r_dict.color_array, r_dict.color_name_array)
+	
+	var default_palette : WorkspaceData.ColorPalette = WorkspaceData.ColorPalette.new()
+	default_palette.color_array = r_dict_2.color_array
+	default_palette.color_name_array = r_dict_2.color_name_array
+	WorkspaceData.available_color_palette_array.append(default_palette)
+	WorkspaceData.selected_color_palette = default_palette
 	
 	UI.create_color_buttons(gc_paint_panel, on_color_selected, r_dict_2.color_array, r_dict_2.color_name_array)
 	#DataLoader.read_parts_and_create_parts()
@@ -209,8 +216,18 @@ static func create_color_buttons(parent : Control, on_color_selected : Callable,
 		parent.add_child(new)
 		i = i + 1
 	sample_button.queue_free()
-	
-	
+
+
+#todo: regenerate color buttons based on data in WorkspaceData
+static func update_color_panel():
+	pass
+
+static func update_material_panel():
+	pass
+
+static func update_part_type_panel():
+	pass
+
 
 #signals
 static func select_tool(

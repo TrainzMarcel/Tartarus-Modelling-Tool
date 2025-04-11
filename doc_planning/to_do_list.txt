@@ -7,17 +7,18 @@ saving a model
 loading a model
 
 implement part type picking
-	(use dataloader to dynamically load them from /editor_data)
-
-unify the naming scheme in ui for rotation vs degrees
+	(use modeldatamanager to dynamically load them from /editor_data)
 
 take care of materials
 	(use the shader my friend gave)
 	(add at least 5 for testing)
 
 implement material picking
-	(use dataloader to dynamically load them from /editor_data)
+	(use modeldatamanager to dynamically load them from /editor_data)
 
+
+
+unify the naming scheme in ui for rotation vs degrees
 create icon for .tmv (tesseract)
 create icon for .tmvp (wooden art palette)
 
