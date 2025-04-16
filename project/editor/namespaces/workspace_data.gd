@@ -257,11 +257,9 @@ static func data_to_string_array(section_header : String, header_data : Array[St
 	lines.append_array(data_blocks_as_lines)
 	return lines
 
-#unfinished
+"TODO"
 static func bundle_tmv(save_name : String, save_filepath : String, file_names : Array[String]):
 	var writer : ZIPPacker = ZIPPacker.new()
-	
-	
 	var err := writer.open(save_filepath + save_name)
 	if err != OK:
 		return err
@@ -269,21 +267,25 @@ static func bundle_tmv(save_name : String, save_filepath : String, file_names : 
 	for file in file_names:
 		writer.write_file(FileAccess.get_file_as_bytes(save_filepath + save_name))
 	writer.close_file()
-	
 	writer.close()
+	#return (local? absolute?) file names
 
-#unfinished
 static func unbundle_tmv():
-	
 	pass
 
-#load file and turn it into objects
-static func load_data_from_tmv(file_path : String, is_palette_file : bool):
-	
-	var file = FileAccess.get_file_as_string(file_path)
-	var lines = file.split("\\n")
-	return string_array_to_data(lines)
+static func load_data_file(file_path : String):
+	return#return above classes as dict
 
+static func save_data_file(file_path : String, file_as_string_array : PackedStringArray):
+	pass
+
+static func data_to_tmv_line(data : Array):
+	return#return packedstringarray
+
+
+static func tmv_line_to_data(line : String):
+	return#return one of the classes
+	#or possibly an array of data which can be assigned to a class based on the last section header?
 
 
 static func get_used_palettes_from_workspace(workspace : Node):
@@ -387,8 +389,10 @@ static func save_data_to_tmv(
 		lines.append_array(data_to_string_array(
 			section_header_dict.model,
 			[str(UUID.v4()), save_model.name, save_model.description],
-			[size_x, size_y, size_z, pos_x, pos_y, pos_z, quat_w, quat_x, quat_y, quat_z, c_p_id, c_id, m_p_id, m_id, p_t_p_id, p_t_id]
-			
+			[size_x, size_y, size_z,
+			pos_x, pos_y, pos_z,
+			quat_w, quat_x, quat_y, quat_z,
+			c_p_id, c_id, m_p_id, m_id, p_t_p_id, p_t_id]
 		))
 	
 	file_names.append(filepath + "data.csv")
