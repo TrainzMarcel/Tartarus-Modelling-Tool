@@ -23,7 +23,7 @@ static var default_material : StandardMaterial3D = StandardMaterial3D.new()
 static var default_mesh : Mesh = BoxMesh.new()
 
 #used to tell functions what datatype to convert a string to (see data_to_csv_line())
-enum DataType {t_integer, t_float, t_string}
+enum DataType {t_integer, t_float, t_string, t_color}
 
 #section headers in an attempt to make functions more flexible
 const section_header_dict : Dictionary = {
@@ -34,8 +34,33 @@ const section_header_dict : Dictionary = {
 }
 
 
-
-
+#tell functions how to load and save each section header
+class DataLoadInstruction:
+	var section_header : String
+	#object to move file data into or out of
+	#nvm
+	#var data_object : Object
+	
+	#line relative to last section header
+	var line : int = 0
+	#these are the condition for which lines to trigger which loading routines
+	#an example would be [line == 1, line > 1]
+	#to have index 0 for when the line == 1 and index 1 for when the line is greater than 1
+	var line_instruction : Array[bool]
+	
+	#stringname of properties to set and get
+	#if a property is of type array, use .append instead of set()
+	var line_data : Array[Array]
+	# = [["uuid", "name", "description"], ["color","color_name"]]
+	
+	#color should automatically know that it uses 3 columns instead of 1
+	#DataType.Mesh or .Material should automatically know to load a resource instead
+	#(resource loading should be done in its own function)
+	#[[DataType.t_string, DataType.t_string, DataType.String], [DataType.Color, DataType.String]]
+	var line_data_type : Array[Array]
+	
+	
+	
 
 #classes responsible for storing data
 class Model:
@@ -225,37 +250,6 @@ static func string_array_to_data(lines : PackedStringArray):
 	#finally, return the dictionary after the loop
 	return r_dict
 
-static func data_to_string_array(section_header : String, header_data : Array[String], data_blocks : Array[Array]):
-	var lines : PackedStringArray = []
-	var header_data_as_line : String = ""
-	var data_blocks_as_lines : PackedStringArray = []
-	var i : int = 0
-	var j : int = 0
-	
-	while i < header_data.size():
-		header_data_as_line = header_data_as_line + str(header_data[i])
-		i = i + 1
-		#if this is not the last unit of data, add a comma
-		if i < header_data.size():
-			header_data_as_line = header_data_as_line + ","
-	
-	while j < data_blocks.size():
-		i = 0
-		var line : String = ""
-		while i < data_blocks[j].size():
-			line = line + data_blocks[j][i]
-			i = i + 1
-			#if this is not the last unit of data, add a comma
-			if i < header_data.size():
-				line = line + ","
-		data_blocks_as_lines.append(line)
-		j = j + 1
-	
-	
-	lines.append(section_header)
-	lines.append(header_data_as_line)
-	lines.append_array(data_blocks_as_lines)
-	return lines
 
 "TODO"
 static func bundle_tmv(save_name : String, save_filepath : String, file_names : Array[String]):
@@ -274,17 +268,78 @@ static func unbundle_tmv():
 	pass
 
 static func load_data_file(file_path : String):
+	#unbundle_tmv()
+	#for i in returned file names
+	#i.get_file_as_lines.split("\n")
+		#for j in lines:
+			
+			
+			
+			
+	#graow
+	#GRAOW
+	
 	return#return above classes as dict
 
+#take objects in workspace and turn them into a file
 static func save_data_file(file_path : String, file_as_string_array : PackedStringArray):
 	pass
 
 static func data_to_tmv_line(data : Array):
 	return#return packedstringarray
 
+static func validate_section_header(line : String):
+	return section_header_dict.values().has(line)
 
-static func tmv_line_to_data(line : String):
-	return#return one of the classes
+#this tells the program how to read every line after section header
+static func tmv_line_to_data(existing_data, mode : String, line : String, delimiter : String, section_header_line : int, i : int):
+	#start at the line after the section_header as mode needs to be set from outside
+	var i_relative : int = i - section_header_line
+	var data : PackedStringArray = line.split(delimiter)
+	var new_data : Object
+	if mode == section_header_dict.color_palette:
+		#read second header, construct class
+		if i_relative == 1:
+			new_data = ColorPalette.new()
+			new_data.uuid = data[0]
+			new_data.name = data[1]
+			new_data.description = data[2]
+		elif i_relative > 1 and existing_data is ColorPalette:
+			var color : Color = Color()
+			color.r8 = int(data[0])
+			color.g8 = int(data[1])
+			color.b8 = int(data[2])
+			existing_data.color_array.append(color)
+			existing_data.color_name_array.append(data[3])
+	elif mode == section_header_dict.material_palette:
+		if i_relative == 1:
+			new_data = MaterialPalette.new()
+			new_data.uuid = data[0]
+			new_data.name = data[1]
+			new_data.description = data[2]
+		elif i_relative > 1 and existing_data is MaterialPalette:
+			
+			"TODO"#save data to see if this approach works and then read it in
+			#see: Shader.get_shader_uniform_list()
+			existing_data.material_array.append()#data[0])
+			existing_data.material_name_array.append(data[1])
+			
+			"TODO"#figure this process out for meshes
+			#var image = Image.load_from_file("res://square.png")
+			#$TextureRect.texture = ImageTexture.create_from_image(image)
+			
+	elif mode == section_header_dict.part_type_palette:
+		if i_relative == 1:
+			new_data = PartTypePalette.new()
+			new_data.name = data[1]
+			new_data.description = data[2]
+			
+	elif mode == section_header_dict.model:
+		if i_relative == 1:
+			new_data = Model.new()
+		
+		pass
+	return new_data
 	#or possibly an array of data which can be assigned to a class based on the last section header?
 
 
@@ -317,92 +372,6 @@ static func get_used_palettes_from_workspace(workspace : Node):
 	return r_dict
 
 
-
-#take objects in workspace and turn them into a file
-static func save_data_to_tmv(
-	save_name : String,
-	filepath : String,
-	file_names : PackedStringArray,
-	save_color_palette_array : Array[ColorPalette],
-	save_material_palette_array : Array[MaterialPalette],
-	save_part_type_palette_array : Array[PartTypePalette],
-	save_model : Model
-	):
-	
-#this will be data.csv
-	var lines : PackedStringArray = []
-#file_names keeps track of all references to bundle in the zip later
-#that means all tres files and their and data.csv
-	
-	
-	#embed the palettes used into the save file
-	#for each color palette
-	for j in save_color_palette_array:
-		#unpack rgb into individual arrays
-		var r_values : PackedInt32Array = j.color_array.map(func(color): return color.r8)
-		var g_values : PackedInt32Array = j.color_array.map(func(color): return color.g8)
-		var b_values : PackedInt32Array = j.color_array.map(func(color): return color.b8)
-		lines.append_array(data_to_string_array(
-			section_header_dict.color_palette, 
-			[j.uuid, j.name, j.description], 
-			[r_values, g_values, b_values, j.color_name_array]
-			))
-	
-	for k in save_material_palette_array:
-		var resource_path_array : PackedStringArray = k.material_array.map(func(material): return material.resource_path)
-		file_names.append_array(resource_path_array)
-		lines.append_array(data_to_string_array(
-			section_header_dict.material_palette,
-			[k.uuid, k.name, k.description],
-			[resource_path_array, k.material_name_array]
-		))
-	
-	for l in save_part_type_palette_array:
-		var resource_path_array : PackedStringArray = l.mesh_array.map(func(mesh): return mesh.resource_path)
-		file_names.append_array(resource_path_array)
-		lines.append_array(data_to_string_array(
-			section_header_dict.part_type_palette,
-			[l.uuid, l.name, l.description],
-			[resource_path_array, l.mesh_name_array, l.collider_type]
-			))
-	
-	#if saving a model
-	#pack EVERYTHING
-	if save_model != null:
-		var size_x : PackedStringArray = save_model.part_array.map(func(part): return str(part.part_scale.x))
-		var size_y : PackedStringArray = save_model.part_array.map(func(part): return str(part.part_scale.y))
-		var size_z : PackedStringArray = save_model.part_array.map(func(part): return str(part.part_scale.z))
-		var pos_x : PackedStringArray = save_model.part_array.map(func(part): return str(part.global_position.x))
-		var pos_y : PackedStringArray = save_model.part_array.map(func(part): return str(part.global_position.y))
-		var pos_z : PackedStringArray = save_model.part_array.map(func(part): return str(part.global_position.z))
-		var quat_w : PackedStringArray = save_model.part_array.map(func(part): return str(part.quaternion.w))
-		var quat_x : PackedStringArray = save_model.part_array.map(func(part): return str(part.quaternion.x))
-		var quat_y : PackedStringArray = save_model.part_array.map(func(part): return str(part.quaternion.y))
-		var quat_z : PackedStringArray = save_model.part_array.map(func(part): return str(part.quaternion.z))
-		var c_p_id : PackedStringArray = save_model.part_array.map(func(part):return str(save_color_palette_array.find(part.used_color_palette)))
-		var c_id : PackedStringArray = save_model.part_array.map(func(part): return str(part.used_color_palette.color_array.find(part.part_color)))
-		var m_p_id : PackedStringArray = save_model.part_array.map(func(part): return str(save_material_palette_array.find(part.used_material_palette)))
-		var m_id : PackedStringArray = save_model.part_array.map(func(part): return str(part.used_material_palette.material_array.find(part.part_material)))
-		var p_t_p_id : PackedStringArray = save_model.part_array.map(func(part): return str(save_part_type_palette_array.find(part.used_part_type_palette)))
-		var p_t_id : PackedStringArray = save_model.part_array.map(func(part): return str(part.used_part_type_palette.mesh_array.find(part.part_mesh)))
-		
-		lines.append_array(data_to_string_array(
-			section_header_dict.model,
-			[str(UUID.v4()), save_model.name, save_model.description],
-			[size_x, size_y, size_z,
-			pos_x, pos_y, pos_z,
-			quat_w, quat_x, quat_y, quat_z,
-			c_p_id, c_id, m_p_id, m_id, p_t_p_id, p_t_id]
-		))
-	
-	file_names.append(filepath + "data.csv")
-	#create data.csv file
-	var file = FileAccess.open(filepath + "data.csv", FileAccess.WRITE)
-	for line in lines:
-		file.store_line(line)
-	file.close()
-	
-	return file_names
 
 
 #old function
