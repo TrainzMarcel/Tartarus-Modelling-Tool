@@ -1,7 +1,7 @@
 [gd_scene load_steps=14 format=3 uid="uid://bln1og3mu36mh"]
 
-[ext_resource type="StyleBox" uid="uid://ccuocdfe5fudm" path="res://editor/data_ui/styles/panel_styles/panel_rounded_all.tres" id="1_75oe6"]
 [ext_resource type="Script" path="res://editor/classes/ui_document_display/document_display.gd" id="2_8rlph"]
+[ext_resource type="StyleBox" uid="uid://fvm4br3npkws" path="res://editor/data_ui/styles/panel_styles/window_panel.tres" id="2_du7yf"]
 [ext_resource type="Theme" uid="uid://nxn5uapgdhhx" path="res://editor/data_ui/styles/font_styles/t_sci_fi_regular.tres" id="3_cn5wq"]
 [ext_resource type="StyleBox" uid="uid://bdapxi8kfkyap" path="res://editor/data_ui/styles/button_and_line_edit_styles/bottom_bar/mini_button/hover_normal.tres" id="4_ubajj"]
 [ext_resource type="StyleBox" uid="uid://l8wdqqom1c4k" path="res://editor/data_ui/styles/button_and_line_edit_styles/bottom_bar/mini_button/pressed.tres" id="5_08pjf"]
@@ -38,7 +38,7 @@ offset_right = 517.0
 offset_bottom = 259.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = ExtResource("1_75oe6")
+theme_override_styles/panel = ExtResource("2_du7yf")
 
 [node name="MarginContainer" type="MarginContainer" parent="Panel"]
 layout_mode = 1

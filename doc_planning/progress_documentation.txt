@@ -60,3 +60,8 @@
 9.4. continued working on save data planning
 10.4. continued working on workspacedata (formerly dataloader)
 11.4. continued working on workspacedata, did not think it would be so hard to read in the save files i designed
+16.4. further refine architecture of workspacedata
+21.4. further refine architecture of workspacedata (thought of using an save/load instruction object to persist any kind of data just by configuring instructions for the program on how to do so (like telling it which lines have which columns and data types in them)
+25.4. started working on ui to manage palettes, mostly finished data_to_tmv_line() function
+28.4. brainstormed ui/ux of managing palettes, came to conclusion that saving, loading, import, export, adding, deleting and equipping palettes should be shared by one window, with the top bar only there to switch between palette creator types and palette list display
+30.4. created material palette tab ui, considered adding standalone assets to models which are saved separate from any palettes, will be saved under section header ::STANDALONEASSETS:: and parts with these assets assigned will have -1 as palette id and null as palette reference in the editor

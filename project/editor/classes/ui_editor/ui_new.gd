@@ -1,5 +1,5 @@
 extends Control
-class_name UI
+class_name EditorUI
 
 "TODO"#add create color button function, material button function, part button function
 
@@ -149,7 +149,7 @@ func initialize(
 	WorkspaceData.available_color_palette_array.append(default_palette)
 	WorkspaceData.selected_color_palette = default_palette
 	
-	UI.create_color_buttons(gc_paint_panel, on_color_selected, r_dict_2.color_array, r_dict_2.color_name_array)
+	EditorUI.create_color_buttons(gc_paint_panel, on_color_selected, r_dict_2.color_array, r_dict_2.color_name_array)
 	#DataLoader.read_parts_and_create_parts()
 	#UI.create_part_buttons(gc_part_panel, on_part_selected, r_dict_3.part_array)
 	#DataLoader.read_materials_and_create_materials()
@@ -356,7 +356,7 @@ static func custom_tooltip(for_text : String):
 	var tooltip : Label = Label.new()
 	for_text = for_text
 	tooltip.text = for_text.replace("(", "[ ").replace(")", " ]").replace("\n", " ")
-	tooltip.theme = UI.tooltip_font
+	tooltip.theme = EditorUI.tooltip_font
 	tooltip.add_theme_stylebox_override("normal", tooltip_panel)
 	tooltip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return tooltip

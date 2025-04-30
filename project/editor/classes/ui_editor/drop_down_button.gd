@@ -43,7 +43,7 @@ func _input(event):
 
 #custom tooltip related functions
 func _make_custom_tooltip(for_text : String):
-	return UI.custom_tooltip(for_text)
+	return EditorUI.custom_tooltip(for_text)
 
 func _enter_tree():
 	if not Engine.is_editor_hint():

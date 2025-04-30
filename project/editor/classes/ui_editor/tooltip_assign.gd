@@ -1,7 +1,7 @@
 extends Control
 
 func _make_custom_tooltip(for_text : String):
-	return UI.custom_tooltip(for_text)
+	return EditorUI.custom_tooltip(for_text)
 
 func _enter_tree():
 	get_tree().node_added.connect(on_node_added)

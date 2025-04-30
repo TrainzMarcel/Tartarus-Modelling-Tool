@@ -1,4 +1,5 @@
 extends Control
+class_name DocumentDisplay
 
 @export_multiline var contents : Array[String]
 @export var marker_1_brighter : String = "[bgcolor=#f0ff007b]"

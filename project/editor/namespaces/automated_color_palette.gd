@@ -48,7 +48,6 @@ static func get_grayscale(color : Color, epsilon : int):
 		return true
 	return false
 
-"TODO"#test
 static func full_color_sort(grid_container : GridContainer, color_array : Array[Color], color_name_array : Array[String] = []):
 	
 	#set up required variables

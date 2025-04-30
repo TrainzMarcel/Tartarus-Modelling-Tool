@@ -5,6 +5,13 @@ class_name WorkspaceData
 "TODO"#make data pairs telling a loading function
 #what columns come after the csv section headers (::PART::, ::COLOR::,..)
 
+#on startup, load these palettes
+const folder_startup_palettes : String = "user://startup_palettes"
+
+const folder_saved_models : String = "user://settings/"
+
+const filepath_startup_palettes : String = ""
+
 #currently selected palettes in the editor
 #make the setters into ui events to reload x panel uis
 #or manually call a function after setting these
@@ -23,7 +30,7 @@ static var default_material : StandardMaterial3D = StandardMaterial3D.new()
 static var default_mesh : Mesh = BoxMesh.new()
 
 #used to tell functions what datatype to convert a string to (see data_to_csv_line())
-enum DataType {t_integer, t_float, t_string, t_color}
+enum DataType {t_int, t_float, t_string, t_color, t_material, t_mesh, t_part}
 
 #section headers in an attempt to make functions more flexible
 const section_header_dict : Dictionary = {
@@ -33,24 +40,62 @@ const section_header_dict : Dictionary = {
 	model = "::MODEL::"
 }
 
+#instructions to load and save each data object
+static var persist_instruction_array : Array[PersistInstruction] = [
+	initialize_instruction(
+		ColorPalette.new(),
+		section_header_dict.color_palette,
+		[WorkspaceData.is_equal, WorkspaceData.is_greater],
+		[1, 1],
+		[["uuid", "name", "description"], ["color_array", "color_name_array"]],
+		[[DataType.t_string, DataType.t_string, DataType.t_string], [DataType.t_color, DataType.t_string]]
+	),
+	initialize_instruction(
+		MaterialPalette.new(),
+		section_header_dict.material_palette,
+		[WorkspaceData.is_equal, WorkspaceData.is_greater],
+		[1, 1],
+		[["uuid", "name", "description"], ["material_array", "material_name_array"]],
+		[[DataType.t_string, DataType.t_string, DataType.t_string], [DataType.t_material, DataType.t_string]]
+	),
+	initialize_instruction(
+		PartTypePalette.new(),
+		section_header_dict.part_type_palette,
+		[WorkspaceData.is_equal, WorkspaceData.is_greater],
+		[1, 1],
+		[["uuid", "name", "description"], ["mesh_array", "mesh_name_array", "collider_type_array"]],
+		[[DataType.t_string, DataType.t_string, DataType.t_string], [DataType.t_mesh, DataType.t_string, DataType.t_int]]
+	),
+	initialize_instruction(
+		Model.new(),
+		section_header_dict.model,
+		[WorkspaceData.is_equal, WorkspaceData.is_greater],
+		[1, 1],
+		[["uuid", "name", "description", "part_count"], ["part_array"]],
+		[[DataType.t_string, DataType.t_string, DataType.t_string, DataType.t_int], [DataType.t_part]]
+	)
+]
 
 #tell functions how to load and save each section header
-class DataLoadInstruction:
+class PersistInstruction:
 	var section_header : String
-	#object to move file data into or out of
-	#nvm
-	#var data_object : Object
 	
-	#line relative to last section header
-	var line : int = 0
+	#object type to move file data into (loading) or out of (saving)
+	var data_object : Object
+	
 	#these are the condition for which lines to trigger which loading routines
 	#an example would be [line == 1, line > 1]
-	#to have index 0 for when the line == 1 and index 1 for when the line is greater than 1
-	var line_instruction : Array[bool]
+	#to return index 0 for when the line == 1 and index 1 for when the line is greater than 1
+	#MUST only return true or false
+	var line_condition : Array[Callable]
+	#second argument for each line instruction
+	#also serves as number to subtract from line_relative when an array is being read from and saved
+	#because the actual data starts at line 1 and so value[0] would be missed
+	var line_condition_second_arg : Array[int]
 	
 	#stringname of properties to set and get
 	#if a property is of type array, use .append instead of set()
-	var line_data : Array[Array]
+	var line_data_name : Array[Array]
 	# = [["uuid", "name", "description"], ["color","color_name"]]
 	
 	#color should automatically know that it uses 3 columns instead of 1
@@ -58,9 +103,32 @@ class DataLoadInstruction:
 	#(resource loading should be done in its own function)
 	#[[DataType.t_string, DataType.t_string, DataType.String], [DataType.Color, DataType.String]]
 	var line_data_type : Array[Array]
+
+static func initialize_instruction(
+	data_object : Object,
+	section_header : String,
+	line_condition : Array[Callable],
+	line_condition_second_arg : Array[int],
+	line_data_name : Array[Array],
+	line_data_type : Array[Array]
+	):
 	
-	
-	
+	var new : PersistInstruction = PersistInstruction.new()
+	new.data_object = data_object
+	new.section_header = section_header
+	new.line_condition = line_condition
+	new.line_condition_second_arg = line_condition_second_arg
+	new.line_data_name = line_data_name
+	new.line_data_type = line_data_type
+	return new
+
+
+#i have to make these operations into callables for class above
+static func is_greater(a : int, b : int):
+	return a > b
+
+static func is_equal(a : int, b : int):
+	return a == b
 
 #classes responsible for storing data
 class Model:
@@ -104,168 +172,15 @@ class PartTypePalette:
 	var collider_type_array : Array[int]
 
 
-#returns null if no match
-static func get_index_according_to_uuid(input_uuid : String, input_array : Array):
-	var i : int = 0
-	while i < input_array.size():
-		if input_array[i].uuid == input_uuid:
-			return i
-		i = i + 1
-	return null
-
-
-#returns null if invalid index
-static func get_uuid_according_to_index(input_index : int, input_array : Array):
-	if input_array.size() > input_index:
-		return input_array[input_index].uuid
-	return null
-
-
-static func string_array_to_data(lines : PackedStringArray):
-	var i : int = 0
-	var mode : String
-	var second_header : bool = false
-	var terminate_data_block : bool = false
-	var data : Object
-	#configure return dictionary
-	var r_dict : Dictionary = {}
-	r_dict.color_palette_array = []
-	r_dict.material_palette_array = []
-	r_dict.part_type_palette_array = []
-	r_dict.model = null
+static func initialize():
+	#var r_dict : Dictionary = WorkspaceData.load_data_from_tmv("res://editor/data_editor/default.tmvp")
+	#WorkspaceData.available_color_palette_array.append_array(r_dict.color_palette_array)
+	#WorkspaceData.available_material_palette_array.append_array(r_dict.material_palette_array)
+	#WorkspaceData.available_part_type_palette_array.append_array(r_dict.part_type_palette_array)
+	#WorkspaceData.selec
 	
-	#start to iterate through the lines
-	while i < lines.size():
-		var line : String = lines[i]
-		var line_split : PackedStringArray = line.split(",")
-		var is_header = line_split.size() == 1
-		
-	#terminate previous data block and add it to the return dictionary
-		if is_header:
-			if mode == section_header_dict.color_palette:
-				r_dict.color_palette_array.append(data)
-			elif mode == section_header_dict.material_palette:
-				r_dict.material_palette_array.append(data)
-			elif mode == section_header_dict.part_type_palette:
-				r_dict.part_type_palette_array.append(data)
-			elif mode == section_header_dict.model:
-				r_dict.model = data
-			
-		#start next data block
-			if line == section_header_dict.color_palette:
-				mode = line
-				second_header = true
-				data = ColorPalette.new()
-				continue
-			elif line == section_header_dict.material_palette:
-				mode = line
-				second_header = true
-				data = MaterialPalette.new()
-				continue
-			elif line == section_header_dict.part_type_palette:
-				mode = line
-				second_header = true
-				data = PartTypePalette.new()
-				continue
-			elif line == section_header_dict.model:
-				mode = line
-				second_header = true
-				data = Model.new()
-		
-		
-		#fill data
-	#color palette loading
-		if mode == section_header_dict.color_palette:
-			if second_header:
-				data.uuid = line_split[0]
-				data.name = line_split[1]
-				data.description = line_split[2]
-				second_header = false
-			else:
-				var color : Color = Color8(int(line_split[0]), int(line_split[1]), int(line_split[2]))
-				data.color_array.append(color)
-				data.color_name_array.append(line_split[3])
-	#material palette loading
-		elif mode == section_header_dict.material_palette:
-			if second_header:
-				data.uuid = line_split[0]
-				data.name = line_split[1]
-				data.description = line_split[2]
-				second_header = false
-			else:
-				data.material_array.append(ResourceLoader.load(line_split[0]))
-				data.material_name_array.append(line_split[1])
-	#part type palette loading
-		elif mode == section_header_dict.part_type_palette:
-			if second_header:
-				data.uuid = line_split[0]
-				data.name = line_split[1]
-				data.description = line_split[2]
-				second_header = false
-			else:
-				data.mesh_array.append(ResourceLoader.load(line_split[0]))
-				data.mesh_name_array.append(line_split[1])
-				data.collider_type_array.append(int(line_split[2]))
-		#model loading
-		elif mode == section_header_dict.model:
-			if second_header:
-				data.uuid = line_split[0]
-				data.name = line_split[1]
-				data.description = line_split[2]
-				data.part_count = int(line_split[3])
-				second_header = false
-			else:
-				var new : Part = Part.new()
-				new.part_scale.x = float(line_split[0])
-				new.part_scale.y = float(line_split[1])
-				new.part_scale.z = float(line_split[2])
-				
-				new.global_position.x = float(line_split[3])
-				new.global_position.y = float(line_split[4])
-				new.global_position.z = float(line_split[5])
-				
-				new.quaternion.w = float(line_split[6])
-				new.quaternion.x = float(line_split[7])
-				new.quaternion.y = float(line_split[8])
-				new.quaternion.z = float(line_split[9])
-				
-			#assign color palette data
-				new.used_color_palette = r_dict.color_palette_array[int(line_split[10])]
-				new.part_color = new.used_color_palette.color_array[int(line_split[11])]
-				
-			#assign material palette data
-				new.used_material_palette = r_dict.material_palette_array[int(line_split[12])]
-				new.part_material = new.used_material_palette_array.material_array[int(line_split[13])]
-				
-			#assign part type palette data
-				new.used_part_type_palette = r_dict.part_type_palette_array[int(line_split[14])]
-				new.part_mesh_node.mesh = new.used_part_type_palette.mesh_array[int(line_split[15])]
-				
-				data.part_array.append(new)
-		
-		
-		
-		i = i + 1
-	
-	#finally, return the dictionary after the loop
-	return r_dict
-
-
-"TODO"
-static func bundle_tmv(save_name : String, save_filepath : String, file_names : Array[String]):
-	var writer : ZIPPacker = ZIPPacker.new()
-	var err := writer.open(save_filepath + save_name)
-	if err != OK:
-		return err
-	writer.start_file(save_name)
-	for file in file_names:
-		writer.write_file(FileAccess.get_file_as_bytes(save_filepath + save_name))
-	writer.close_file()
-	writer.close()
-	#return (local? absolute?) file names
-
-static func unbundle_tmv():
 	pass
+
 
 static func load_data_file(file_path : String):
 	#unbundle_tmv()
@@ -285,62 +200,211 @@ static func load_data_file(file_path : String):
 static func save_data_file(file_path : String, file_as_string_array : PackedStringArray):
 	pass
 
-static func data_to_tmv_line(data : Array):
-	return#return packedstringarray
 
+#feed correct instruction object according to section header
+static func data_to_tmv_line(data_object : Object, line_relative : int, instruction : PersistInstruction, delimiter : String, extra_data : Dictionary):
+	#select which instructions to use depending on the condition in line_instruction and line_
+	var selected : int = get_index_of_line_instruction(instruction, line_relative)
+	var line_output : PackedStringArray = []
+	var i : int = 0
+	var j : int = 0
+	
+	while i < instruction.line_data_name[selected].size():
+		
+		#get property from its name
+		var property = data_object.get(instruction.line_data_name[line_relative][i])
+		var property_get
+		
+		#get the property
+		if property is Array:
+			#find array index by subtracting line_relative by the second arg of the line condition
+			#that way, greater_than(line_relative, 5) for example will also be subtracted by 5 if theres 5 lines of other data
+			"CAUTION"#probably should make this its own array instead of using line_condition_second_arg
+			property_get = property[line_relative - instruction.line_condition_second_arg[selected]]
+		else:
+			property_get = property
+		
+		#convert the property
+		#do nothing
+		if instruction.line_data_type[selected][i] == DataType.t_string:
+			line_output.append(property_get)
+		#leverage str()
+		elif instruction.line_data_type[selected][i] == DataType.t_int or instruction.data_type == DataType.t_float:
+			line_output.append(str(property_get))
+		#leverage str() but over 3 columns/indices
+		elif instruction.line_data_type[selected][i] == DataType.t_color:
+			#skip 2 more indices because a color takes up 3 columns
+			i = i + 2
+			line_output.append(str(property_get.r))
+			line_output.append(str(property_get.g))
+			line_output.append(str(property_get.b))
+		elif instruction.line_data_type[selected][i] == DataType.t_material:
+			pass
+			"TODO"#save material resource function
+			#add the materials filenames to save folder and add the resource filename in here
+		elif instruction.line_data_type[selected][i] == DataType.t_mesh:
+			pass
+			"TODO"#save mesh resource function
+		elif instruction.line_data_type[selected][i] == DataType.t_part:
+			#skip 15 more indices because a part takes up 16 columns
+			i = i + 15
+			line_output.append(str(property_get.part_scale.x))
+			line_output.append(str(property_get.part_scale.y))
+			line_output.append(str(property_get.part_scale.z))
+			
+			line_output.append(str(property_get.global_position.x))
+			line_output.append(str(property_get.global_position.y))
+			line_output.append(str(property_get.global_position.z))
+			
+			line_output.append(str(property_get.quaternion.w))
+			line_output.append(str(property_get.quaternion.x))
+			line_output.append(str(property_get.quaternion.y))
+			line_output.append(str(property_get.quaternion.z))
+			
+			
+			#create mappings to avoid using .find() 6 times when parsing a part
+			extra_data = create_palette_mappings(extra_data)
+			
+			#write ids for used palettes and used assets in said palettes
+			var prev_index : int = 0
+			var index : int = 0
+			
+			#get index of used color palette
+			index = extra_data.color_palette_array[extra_data.color_palette_mapping[property_get.used_color_palette]]
+			line_output.append(str(index))
+			prev_index = index
+			index = extra_data.color_palette_array[prev_index].color_array[extra_data.color_palette_entry_mapping_array[property_get.part_color]]
+			line_output.append(str(index))
+			
+			
+			#get index of used material palette
+			index = extra_data.material_palette_array[extra_data.material_palette_mapping[property_get.used_material_palette]]
+			line_output.append(str(index))
+			prev_index = index
+			index = extra_data.material_palette_array[prev_index].material_array[extra_data.material_palette_entry_mapping_array[property_get.part_material]]
+			line_output.append(str(index))
+			
+			
+			#get index of used part palette
+			index = extra_data.part_type_palette_array[extra_data.part_type_palette_mapping_array[property_get.used_part_type_palette]]
+			line_output.append(str(index))
+			prev_index = index
+			index = extra_data.part_type_palette_array[prev_index].mesh_array[extra_data.part_type_palette_entry_mapping_array[property_get.part_mesh_node.mesh]]
+		
+		i = i + 1
+	
+	return delimiter.join(line_output)
+
+
+#this tells the program how to read every line after section header
+static func tmv_line_to_data(data_object : Object, line_relative : int, instruction : PersistInstruction, delimiter : String, line : String):
+	#start at the line after the section_header as mode needs to be set from outside
+	var data : PackedStringArray = line.split(delimiter)
+	var i : int = 0
+	
+	
+	
+	#{t_int, t_float, t_string, t_color, t_material, t_mesh}
+	if instruction.data_type == DataType.t_int or instruction.data_type == DataType.t_float:
+		pass
+	
+	if instruction.data_type == DataType.t_string:
+		pass
+	
+	while i < data.size():
+		
+		
+		pass
+		
+		
+	
+	
+	
+	
+	#duplicate object from instruction
+	if data_object == null:
+		data_object = ClassDB.instantiate(instruction.data_object.get_class())
+	
+	
+	
+	
+	
+	
+	
+	return data_object
+	#or possibly an array of data which can be assigned to a class based on the last section header?
+
+
+"TODO"
+static func bundle_tmv(save_name : String, save_filepath : String, file_names : Array[String]):
+	var writer : ZIPPacker = ZIPPacker.new()
+	var err := writer.open(save_filepath + save_name)
+	if err != OK:
+		return err
+	writer.start_file(save_name)
+	for file in file_names:
+		writer.write_file(FileAccess.get_file_as_bytes(save_filepath + save_name))
+	writer.close_file()
+	writer.close()
+	#return file names (not paths)
+
+
+static func unbundle_tmv():
+	pass
+
+
+#helper functions
 static func validate_section_header(line : String):
 	return section_header_dict.values().has(line)
 
-#this tells the program how to read every line after section header
-static func tmv_line_to_data(existing_data, mode : String, line : String, delimiter : String, section_header_line : int, i : int):
-	#start at the line after the section_header as mode needs to be set from outside
-	var i_relative : int = i - section_header_line
-	var data : PackedStringArray = line.split(delimiter)
-	var new_data : Object
-	if mode == section_header_dict.color_palette:
-		#read second header, construct class
-		if i_relative == 1:
-			new_data = ColorPalette.new()
-			new_data.uuid = data[0]
-			new_data.name = data[1]
-			new_data.description = data[2]
-		elif i_relative > 1 and existing_data is ColorPalette:
-			var color : Color = Color()
-			color.r8 = int(data[0])
-			color.g8 = int(data[1])
-			color.b8 = int(data[2])
-			existing_data.color_array.append(color)
-			existing_data.color_name_array.append(data[3])
-	elif mode == section_header_dict.material_palette:
-		if i_relative == 1:
-			new_data = MaterialPalette.new()
-			new_data.uuid = data[0]
-			new_data.name = data[1]
-			new_data.description = data[2]
-		elif i_relative > 1 and existing_data is MaterialPalette:
-			
-			"TODO"#save data to see if this approach works and then read it in
-			#see: Shader.get_shader_uniform_list()
-			existing_data.material_array.append()#data[0])
-			existing_data.material_name_array.append(data[1])
-			
-			"TODO"#figure this process out for meshes
-			#var image = Image.load_from_file("res://square.png")
-			#$TextureRect.texture = ImageTexture.create_from_image(image)
-			
-	elif mode == section_header_dict.part_type_palette:
-		if i_relative == 1:
-			new_data = PartTypePalette.new()
-			new_data.name = data[1]
-			new_data.description = data[2]
-			
-	elif mode == section_header_dict.model:
-		if i_relative == 1:
-			new_data = Model.new()
-		
-		pass
-	return new_data
-	#or possibly an array of data which can be assigned to a class based on the last section header?
+static func get_index_of_line_instruction(instruction : PersistInstruction, line_relative : int):
+	var i : int = 0
+	while i < instruction.line_instruction.size():
+		if instruction.line_instruction[line_relative].call(line_relative, instruction.line_instruction_second_arg[i]):
+			return i
+		i = i + 1
+
+
+static func create_mapping(input_data : Array[Object]):
+	var i : int = 0
+	var map : Dictionary = {}
+	
+	while i < input_data.size():
+		#reverse the keys with the values in input_data
+		map[input_data[i]] = i
+		i = i + 1
+	
+	return map
+
+
+static func create_palette_mappings(input_dict : Dictionary):
+	#assigning palette ids and asset ids
+	#if input_dict doesnt have mappings, make them
+	#mappings are used to convert references to ids faster
+	if not input_dict.keys().has("color_palette_array"):
+		#parallel arrays
+		input_dict.color_palette_mapping = create_mapping(input_dict.color_palette_array)
+		input_dict.color_entry_mapping_array = []
+		for i in input_dict.color_palette_array:
+			input_dict.color_entry_mapping_array.append(create_mapping(i.color_array))
+	
+	
+	if not input_dict.keys().has("material_palette_array"):
+		#parallel arrays
+		input_dict.material_palette_mapping = create_mapping(input_dict.material_palette_array)
+		input_dict.material_entry_mapping_array = []
+		for j in input_dict.material_palette_array:
+			input_dict.material_entry_mapping_array.append(create_mapping(j.material_array))
+	
+	
+	if not input_dict.keys().has("part_type_palette_array"):
+		#parallel arrays
+		input_dict.part_type_palette_mapping = create_mapping(input_dict.part_type_palette_array)
+		input_dict.part_type_entry_mapping_array = []
+		for k in input_dict.part_type_palette_array:
+			input_dict.part_type_entry_mapping_array.append(create_mapping(k.mesh_array))
+	
+	return input_dict
 
 
 static func get_used_palettes_from_workspace(workspace : Node):
@@ -372,7 +436,32 @@ static func get_used_palettes_from_workspace(workspace : Node):
 	return r_dict
 
 
+#returns null if no match
+static func get_index_according_to_uuid(input_uuid : String, input_array : Array):
+	var i : int = 0
+	while i < input_array.size():
+		if input_array[i].uuid == input_uuid:
+			return i
+		i = i + 1
+	return null
 
+
+#returns null if invalid index
+static func get_uuid_according_to_index(input_index : int, input_array : Array):
+	if input_array.size() > input_index:
+		return input_array[input_index].uuid
+	return null
+
+
+static func dispatch_instruction(section_header : String):
+	for i in persist_instruction_array:
+		if i.section_header == section_header:
+			return i
+
+
+#
+static func load_default_palettes():
+	pass
 
 #old function
 #read colors from file

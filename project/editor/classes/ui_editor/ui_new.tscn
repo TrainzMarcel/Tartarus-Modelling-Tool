@@ -1,4 +1,4 @@
-[gd_scene load_steps=71 format=3 uid="uid://cwt02lxvderye"]
+[gd_scene load_steps=72 format=3 uid="uid://cwt02lxvderye"]
 
 [ext_resource type="Script" path="res://editor/classes/ui_editor/ui_new.gd" id="1_8kn7b"]
 [ext_resource type="StyleBox" uid="uid://bkbmbfniourik" path="res://editor/data_ui/styles/panel_styles/panel_rounded_bottom.tres" id="1_pntfv"]
@@ -39,6 +39,7 @@
 [ext_resource type="StyleBox" uid="uid://0h1muoc1ycaj" path="res://editor/data_ui/styles/button_and_line_edit_styles/material_list_and_part_list/hover_normal.tres" id="33_53mnp"]
 [ext_resource type="StyleBox" uid="uid://cf35g1rgpap53" path="res://editor/data_ui/styles/button_and_line_edit_styles/material_list_and_part_list/pressed.tres" id="34_31jf6"]
 [ext_resource type="Texture2D" uid="uid://du7navikebxm7" path="res://editor/data_editor/materials/image_files/wood_01_albedo.jpg" id="36_inycq"]
+[ext_resource type="PackedScene" uid="uid://l0ophoiqj4dk" path="res://editor/classes/ui_asset_manager/asset_manager.tscn" id="40_bo26w"]
 
 [sub_resource type="ButtonGroup" id="ButtonGroup_71ghl"]
 allow_unpress = true
@@ -240,9 +241,9 @@ item_1/text = "[Ctrl + S] Save"
 item_1/id = 0
 item_2/text = "Load"
 item_2/id = 1
-item_3/text = "Import"
+item_3/text = "Import Model"
 item_3/id = 3
-item_4/text = "Export"
+item_4/text = "Export Model"
 item_4/id = 4
 
 [node name="Edit" type="PopupMenu" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/TopBar"]
@@ -277,13 +278,13 @@ item_9/disabled = true
 unique_name_in_owner = true
 theme_override_fonts/font = ExtResource("6_07mtu")
 item_count = 3
-item_0/text = "Edit Color Palettes"
+item_0/text = "Open Asset Manager"
 item_0/id = 0
 item_0/disabled = true
-item_1/text = "Edit Material Palettes"
+item_1/text = "Open Palette Import/Export Dialog"
 item_1/id = 1
 item_1/disabled = true
-item_2/text = "Edit Spawnable Parts"
+item_2/text = "Add standalone mesh to this model"
 item_2/id = 2
 item_2/disabled = true
 
@@ -923,6 +924,7 @@ hide_after_click_on_attached_control = true
 [node name="PanelContainerMaterial" type="PanelContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerMaterialTool/DropDownButton"]
 visible = false
 clip_contents = true
+custom_minimum_size = Vector2(230, 293)
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 1.0
@@ -1705,3 +1707,7 @@ proprietary programs.  If your program is a subroutine library, you may
 consider it more useful to permit linking proprietary applications with the
 library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.[/code][/indent][/indent][/indent][/indent][/indent][/indent][/indent][/indent][/indent]"])
+
+[node name="AssetManager" parent="." instance=ExtResource("40_bo26w")]
+visible = false
+layout_mode = 1

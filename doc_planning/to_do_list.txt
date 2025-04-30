@@ -1,10 +1,8 @@
 x reimplement color buttons
 
-add a readme to specify .tmv and .tmvp files
+x add a readme to specify .tmv and .tmvp files
 
-describe the process for:
-saving a model
-loading a model
+create ui for palette/asset management
 
 implement part type picking
 	(use modeldatamanager to dynamically load them from /editor_data)

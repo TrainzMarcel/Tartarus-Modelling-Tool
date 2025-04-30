@@ -18,7 +18,7 @@ class_name Main
 
 #all related todos eliminated (for the time being)
 #   Main
-# x UI
+# x EditorUI
 #   SnapUtils
 #   HyperDebug
 #   ABB
@@ -37,7 +37,7 @@ class_name Main
 @export var workspace : Node
 @export var transform_handle_root : TransformHandleRoot
 @export var hover_selection_box : SelectionBox
-@export var ui_node : UI
+@export var ui_node : EditorUI
 
 
 #overlapping data (used by both dragging and handles)--------------------------------
@@ -137,15 +137,11 @@ func _ready():
 	on_color_selected
 	)
 	
-	cam.initialize(UI.l_camera_speed)
+	cam.initialize(EditorUI.l_camera_speed)
 	TransformHandleUtils.initialize_transform_handle_root(transform_handle_root)
 	
 	#load default palettes
-	var r_dict : Dictionary = WorkspaceData.load_data_from_tmv("res://editor/data_editor/default.tmvp")
-	WorkspaceData.available_color_palette_array.append_array(r_dict.color_palette_array)
-	WorkspaceData.available_material_palette_array.append_array(r_dict.material_palette_array)
-	WorkspaceData.available_part_type_palette_array.append_array(r_dict.part_type_palette_array)
-	#WorkspaceData.selec
+	WorkspaceData.initialize()
 	
 	
 	HyperDebug.initialize(debug_active, workspace)
@@ -158,7 +154,7 @@ func _input(event):
 #start by setting all control variables
 	#check validity of selecting
 	#is_drag_tool is set by func on_tool_selected
-	var is_ui_hovered : bool = ui_hover_check(UI.no_drag_ui)
+	var is_ui_hovered : bool = ui_hover_check(EditorUI.no_drag_ui)
 	is_selecting_allowed = is_drag_tool and not is_ui_hovered
 	is_selecting_allowed = is_selecting_allowed and Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED
 	
@@ -427,12 +423,12 @@ func _input(event):
 					selected_parts_array[0].part_scale = result.part_scale
 					selected_parts_abb.extents = result.part_scale
 					Main.redraw_all_selection_boxes(selection_box_array)
-					UI.l_message.text = "Scale: " + str(selected_parts_array[0].part_scale)
+					EditorUI.l_message.text = "Scale: " + str(selected_parts_array[0].part_scale)
 					
 				if result.modify_position:
 					apply_snap_position(result.transform.origin)
 					if not result.modify_scale:
-						UI.l_message.text = "Translation: " + str(result.scalar * dragged_handle.direction_vector)
+						EditorUI.l_message.text = "Translation: " + str(result.scalar * dragged_handle.direction_vector)
 					
 				if result.modify_rotation:
 					if local_transform_active:
@@ -440,7 +436,7 @@ func _input(event):
 					else:
 						var global_direction_vector : Vector3 = transform_handle_root.basis * dragged_handle.direction_vector
 						apply_snap_rotation(abb_initial_transform.basis.rotated(global_direction_vector, result.angle_relative), selected_parts_abb.transform.basis)
-					UI.l_message.text = "Angle: " + str(rad_to_deg(result.angle_relative))
+					EditorUI.l_message.text = "Angle: " + str(rad_to_deg(result.angle_relative))
 				
 				Main.set_transform_handle_root_position(transform_handle_root, result.transform, local_transform_active, selected_tool_handle_array)
 	
@@ -448,7 +444,7 @@ func _input(event):
 	prev_hovered_handle = hovered_handle
 	
 	#camera controls
-	cam.cam_input(event, second_cam, selected_parts_array, selected_parts_abb, UI.l_message, UI.l_camera_speed)
+	cam.cam_input(event, second_cam, selected_parts_array, selected_parts_abb, EditorUI.l_message, EditorUI.l_camera_speed)
 
 
 func _process(delta : float):
@@ -677,7 +673,7 @@ static func set_transform_handle_root_position(root : TransformHandleRoot, new_t
 #set selected state and is_drag_tool
 "TODO"#put all the things one has to edit to add a new tool to transformhandleroot, into one file
 func on_tool_selected(button):
-	var r_dict = UI.select_tool(
+	var r_dict = EditorUI.select_tool(
 		button,
 		selected_tool_handle_array,
 		selected_tool,
@@ -709,13 +705,13 @@ func on_color_selected(button):
 
 
 func main_on_snap_text_changed(line_edit):
-	var r_dict = UI.main_on_snap_text_changed(line_edit, positional_snap_increment, rotational_snap_increment)
+	var r_dict = EditorUI.main_on_snap_text_changed(line_edit, positional_snap_increment, rotational_snap_increment)
 	positional_snap_increment = r_dict.positional_snap_increment
 	rotational_snap_increment = r_dict.rotational_snap_increment
 
 
 func main_on_snap_button_pressed(button):
-	var r_dict = UI.on_snap_button_pressed(button, positional_snap_increment, rotational_snap_increment)
+	var r_dict = EditorUI.on_snap_button_pressed(button, positional_snap_increment, rotational_snap_increment)
 	positional_snap_increment = r_dict.positional_snap_increment
 	rotational_snap_increment = r_dict.rotational_snap_increment
 
