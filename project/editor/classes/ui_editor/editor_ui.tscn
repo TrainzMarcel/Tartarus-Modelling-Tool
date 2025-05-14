@@ -1,6 +1,6 @@
-[gd_scene load_steps=72 format=3 uid="uid://cwt02lxvderye"]
+[gd_scene load_steps=66 format=3 uid="uid://cwt02lxvderye"]
 
-[ext_resource type="Script" path="res://editor/classes/ui_editor/ui_new.gd" id="1_8kn7b"]
+[ext_resource type="Script" path="res://editor/classes/ui_editor/editor_ui.gd" id="1_mcko4"]
 [ext_resource type="StyleBox" uid="uid://bkbmbfniourik" path="res://editor/data_ui/styles/panel_styles/panel_rounded_bottom.tres" id="1_pntfv"]
 [ext_resource type="Theme" uid="uid://nxn5uapgdhhx" path="res://editor/data_ui/styles/font_styles/t_sci_fi_regular.tres" id="2_3wo47"]
 [ext_resource type="StyleBox" uid="uid://584xxlr8f35n" path="res://editor/data_ui/styles/button_and_line_edit_styles/top_bar/hover_normal.tres" id="3_u2fg2"]
@@ -36,9 +36,6 @@
 [ext_resource type="StyleBox" uid="uid://l8wdqqom1c4k" path="res://editor/data_ui/styles/button_and_line_edit_styles/bottom_bar/mini_button/pressed.tres" id="31_a6skq"]
 [ext_resource type="Script" path="res://editor/classes/ui_editor/line_edit_numeric.gd" id="32_5rtk1"]
 [ext_resource type="PackedScene" uid="uid://bln1og3mu36mh" path="res://editor/classes/ui_document_display/document_display.tscn" id="32_epjev"]
-[ext_resource type="StyleBox" uid="uid://0h1muoc1ycaj" path="res://editor/data_ui/styles/button_and_line_edit_styles/material_list_and_part_list/hover_normal.tres" id="33_53mnp"]
-[ext_resource type="StyleBox" uid="uid://cf35g1rgpap53" path="res://editor/data_ui/styles/button_and_line_edit_styles/material_list_and_part_list/pressed.tres" id="34_31jf6"]
-[ext_resource type="Texture2D" uid="uid://du7navikebxm7" path="res://editor/data_editor/materials/image_files/wood_01_albedo.jpg" id="36_inycq"]
 [ext_resource type="PackedScene" uid="uid://l0ophoiqj4dk" path="res://editor/classes/ui_asset_manager/asset_manager.tscn" id="40_bo26w"]
 
 [sub_resource type="ButtonGroup" id="ButtonGroup_71ghl"]
@@ -121,26 +118,6 @@ unicode = 55
 [sub_resource type="Shortcut" id="Shortcut_s6i4f"]
 events = [SubResource("InputEventKey_7j2p7")]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o5gdi"]
-bg_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_juvd7"]
-bg_color = Color(1, 1, 1, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_cn6d1"]
-
 [sub_resource type="InputEventKey" id="InputEventKey_3xrrq"]
 device = -1
 keycode = 56
@@ -202,7 +179,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-script = ExtResource("1_8kn7b")
+script = ExtResource("1_mcko4")
 metadata/_edit_lock_ = true
 
 [node name="PanelContainerTopLeftBlock" type="PanelContainer" parent="."]
@@ -450,6 +427,7 @@ vertical_alignment = 2
 
 [node name="ButtonChangePivotTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
 unique_name_in_owner = true
+visible = false
 self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
@@ -611,6 +589,7 @@ attached_control = NodePath("PanelContainerPartType")
 hide_after_click_on_attached_control = true
 
 [node name="PanelContainerPartType" type="PanelContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton"]
+unique_name_in_owner = true
 visible = false
 clip_contents = true
 layout_direction = 2
@@ -640,47 +619,6 @@ unique_name_in_owner = true
 clip_contents = true
 layout_mode = 2
 columns = 2
-
-[node name="Button" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType/MarginContainer/PartPanelGridContainer"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-theme = ExtResource("2_3wo47")
-theme_override_styles/normal = ExtResource("33_53mnp")
-theme_override_styles/hover = ExtResource("33_53mnp")
-theme_override_styles/pressed = ExtResource("34_31jf6")
-theme_override_styles/focus = ExtResource("5_rq1a8")
-action_mode = 0
-text = "Cuboid"
-
-[node name="Button2" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType/MarginContainer/PartPanelGridContainer"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-theme = ExtResource("2_3wo47")
-theme_override_styles/normal = ExtResource("33_53mnp")
-theme_override_styles/hover = ExtResource("33_53mnp")
-theme_override_styles/pressed = ExtResource("34_31jf6")
-theme_override_styles/focus = ExtResource("5_rq1a8")
-text = "Wedge"
-
-[node name="Button3" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType/MarginContainer/PartPanelGridContainer"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-theme = ExtResource("2_3wo47")
-theme_override_styles/normal = ExtResource("33_53mnp")
-theme_override_styles/hover = ExtResource("33_53mnp")
-theme_override_styles/pressed = ExtResource("34_31jf6")
-theme_override_styles/focus = ExtResource("5_rq1a8")
-text = "Cylinder"
-
-[node name="Button4" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType/MarginContainer/PartPanelGridContainer"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-theme = ExtResource("2_3wo47")
-theme_override_styles/normal = ExtResource("33_53mnp")
-theme_override_styles/hover = ExtResource("33_53mnp")
-theme_override_styles/pressed = ExtResource("34_31jf6")
-theme_override_styles/focus = ExtResource("5_rq1a8")
-text = "Sphere"
 
 [node name="ButtonDeleteTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
 unique_name_in_owner = true
@@ -780,7 +718,7 @@ text = "7"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool" node_paths=PackedStringArray("attached_control")]
+[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool" node_paths=PackedStringArray("attached_control", "attached_button")]
 layout_mode = 2
 tooltip_text = "Choose a color"
 theme_override_styles/normal = ExtResource("20_ibnk4")
@@ -796,6 +734,7 @@ script = ExtResource("22_e8bxn")
 folded_in_symbol = "▲"
 folded_out_symbol = "▼"
 attached_control = NodePath("PanelContainerColor")
+attached_button = NodePath("../ButtonPaintTool")
 hide_after_click_on_attached_control = true
 
 [node name="PanelContainerColor" type="PanelContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool/DropDownButton"]
@@ -841,16 +780,6 @@ size_flags_vertical = 3
 theme_override_constants/h_separation = 4
 theme_override_constants/v_separation = 3
 columns = 15
-
-[node name="Button" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool/DropDownButton/PanelContainerColor/MarginContainer/ScrollContainer/MarginContainer/GridContainerColorPanel"]
-custom_minimum_size = Vector2(18, 18)
-layout_mode = 2
-theme_override_styles/normal = SubResource("StyleBoxFlat_o5gdi")
-theme_override_styles/hover = SubResource("StyleBoxFlat_o5gdi")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_juvd7")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_cn6d1")
-toggle_mode = true
-action_mode = 0
 
 [node name="HBoxContainerMaterialTool" type="HBoxContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
 layout_mode = 2
@@ -903,7 +832,7 @@ text = "8"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerMaterialTool" node_paths=PackedStringArray("attached_control")]
+[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerMaterialTool" node_paths=PackedStringArray("attached_control", "attached_button")]
 layout_mode = 2
 tooltip_text = "Choose a Material"
 theme_override_styles/normal = ExtResource("20_ibnk4")
@@ -919,6 +848,7 @@ script = ExtResource("22_e8bxn")
 folded_in_symbol = "▲"
 folded_out_symbol = "▼"
 attached_control = NodePath("PanelContainerMaterial")
+attached_button = NodePath("../ButtonMaterialTool")
 hide_after_click_on_attached_control = true
 
 [node name="PanelContainerMaterial" type="PanelContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerMaterialTool/DropDownButton"]
@@ -953,19 +883,6 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 3
-
-[node name="Button" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerMaterialTool/DropDownButton/PanelContainerMaterial/MarginContainer/ScrollContainer/VBoxContainerMaterialPanel"]
-custom_minimum_size = Vector2(0, 29)
-layout_mode = 2
-theme = ExtResource("2_3wo47")
-theme_override_styles/normal = ExtResource("33_53mnp")
-theme_override_styles/hover = ExtResource("33_53mnp")
-theme_override_styles/pressed = ExtResource("34_31jf6")
-theme_override_styles/focus = ExtResource("5_rq1a8")
-action_mode = 0
-text = "Wood"
-icon = ExtResource("36_inycq")
-expand_icon = true
 
 [node name="ButtonLockTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
 unique_name_in_owner = true

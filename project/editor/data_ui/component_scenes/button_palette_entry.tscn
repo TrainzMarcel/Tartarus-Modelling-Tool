@@ -1,0 +1,28 @@
+[gd_scene load_steps=5 format=3 uid="uid://bqtvf26majfbc"]
+
+[ext_resource type="StyleBox" uid="uid://c3yy373mpphkj" path="res://editor/data_ui/styles/button_and_line_edit_styles/tool_bar/button_regular/hover_normal.tres" id="1_6qawc"]
+[ext_resource type="StyleBox" uid="uid://srkvy1wv8a2t" path="res://editor/data_ui/styles/button_and_line_edit_styles/tool_bar/button_regular/pressed.tres" id="2_kho5r"]
+[ext_resource type="StyleBox" uid="uid://cjs2pnpup0ys7" path="res://editor/data_ui/styles/button_and_line_edit_styles/focus_invisible.tres" id="3_1ujtq"]
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_adgu1"]
+
+[node name="ButtonPaletteEntry" type="Button"]
+custom_minimum_size = Vector2(336, 60)
+theme_override_styles/normal = ExtResource("1_6qawc")
+theme_override_styles/hover = ExtResource("1_6qawc")
+theme_override_styles/pressed = ExtResource("2_kho5r")
+theme_override_styles/focus = ExtResource("3_1ujtq")
+toggle_mode = true
+button_group = SubResource("ButtonGroup_adgu1")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 2.0
+offset_right = -3.0
+offset_bottom = -2.0
+grow_horizontal = 2
+grow_vertical = 2

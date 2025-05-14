@@ -74,7 +74,10 @@ func initialize(
 	main_on_snap_text_changed : Callable,
 	on_local_transform_active_set : Callable,
 	on_snapping_active_set : Callable,
-	on_color_selected : Callable):
+	on_color_selected : Callable,
+	on_material_selected : Callable,
+	on_part_type_selected : Callable
+	):
 	
 #assign all ui nodes
 	#top left block
@@ -139,17 +142,22 @@ func initialize(
 	]
 	
 #initialize picker/selector menus
-	var r_dict : Dictionary = WorkspaceData.read_colors_and_create_colors(FileAccess.get_file_as_string("res://editor/data_editor/default_color_codes.txt"))
+	#future
+	#var default_palette : WorkspaceData.ColorPalette = WorkspaceData.ColorPalette.new()
+	#default_palette.color_array = r_dict_2.color_array
+	#default_palette.color_name_array = r_dict_2.color_name_array
+	#WorkspaceData.available_color_palette_array.append(default_palette)
+	#WorkspaceData.equipped_color_palette = default_palette
 	
+	
+	var r_dict : Dictionary = WorkspaceData.read_colors_and_create_colors(FileAccess.get_file_as_string(FilePathRegistry.data_file_color))
 	var r_dict_2 : Dictionary = AutomatedColorPalette.full_color_sort(gc_paint_panel, r_dict.color_array, r_dict.color_name_array)
-	
-	var default_palette : WorkspaceData.ColorPalette = WorkspaceData.ColorPalette.new()
-	default_palette.color_array = r_dict_2.color_array
-	default_palette.color_name_array = r_dict_2.color_name_array
-	WorkspaceData.available_color_palette_array.append(default_palette)
-	WorkspaceData.selected_color_palette = default_palette
-	
 	EditorUI.create_color_buttons(gc_paint_panel, on_color_selected, r_dict_2.color_array, r_dict_2.color_name_array)
+	EditorUI.create_material_buttons(on_material_selected)
+	EditorUI.create_part_type_buttons(on_part_type_selected)
+	
+	
+	
 	#DataLoader.read_parts_and_create_parts()
 	#UI.create_part_buttons(gc_part_panel, on_part_selected, r_dict_3.part_array)
 	#DataLoader.read_materials_and_create_materials()
@@ -180,25 +188,27 @@ func initialize(
 	b_paint_tool.pressed.connect(on_tool_selected.bind(b_paint_tool))
 	b_material_tool.pressed.connect(on_tool_selected.bind(b_material_tool))
 	b_lock_tool.pressed.connect(on_tool_selected.bind(b_lock_tool))
-	b_spawn_part.pressed.connect(on_spawn_pressed.bind(b_spawn_part))
+	b_spawn_part.pressed.connect(on_spawn_pressed)
 	
-	
 
 
-
+#theoretically should work for all ui in the program
+#releases focus if user presses enter while focused into line or text edit
 func _input(event):
 	if event is InputEventKey:
-		if event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER:
+		if (event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER) and not event.shift_pressed:
 			var focus_owner : Control = get_viewport().gui_get_focus_owner()
-			if focus_owner is LineEdit:
+			if focus_owner is LineEdit or focus_owner is TextEdit:
 				focus_owner.release_focus()
 
+
 #helper functions
+"TODO"#replace this with generic function
 static func create_color_buttons(parent : Control, on_color_selected : Callable, color_array : Array[Color], color_name_array : Array[String]):
 	
 	#unload existing nodes (when for example, color palette changes
 	var existing_nodes : Array[Node] = parent.get_children()
-	var sample_button : Button = existing_nodes[0]
+	var sample_button : Button = load(FilePathRegistry.scene_color_button).instantiate()
 	
 	#delete all but first button
 	var i : int = 1
@@ -211,22 +221,57 @@ static func create_color_buttons(parent : Control, on_color_selected : Callable,
 		var new : Button = sample_button.duplicate()
 		new.self_modulate = color_array[i]
 		new.tooltip_text = color_name_array[i]
-		new.set_script(preload("res://editor/classes/ui_editor/tooltip_assign.gd"))
 		new.pressed.connect(on_color_selected.bind(new))
 		parent.add_child(new)
 		i = i + 1
 	sample_button.queue_free()
 
 
-#todo: regenerate color buttons based on data in WorkspaceData
-static func update_color_panel():
-	pass
+static func create_part_type_buttons(on_part_type_selected : Callable):
+	var file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_part)
+	var parts_list : Array[Mesh] = []
+	
+	for path in file_list:
+		parts_list.append(ResourceLoader.load(FilePathRegistry.data_folder_part + path, "Mesh"))
+	Main.available_part_types = parts_list
+	
+	var new_buttons : Array = UIUtils.update_list_ui(
+	EditorUI.gc_part_panel,
+	func(data_item, button):
+		#strip .tres
+		button.text = data_item.left(-5)
+		button.pressed.connect(on_part_type_selected.bind(button))
+		return button,
+	preload(FilePathRegistry.scene_material_part_type_button).instantiate(),
+	file_list
+	)
+	
+	
+	Main.button_part_type_mapping = WorkspaceData.create_mapping(new_buttons)
 
-static func update_material_panel():
-	pass
 
-static func update_part_type_panel():
-	pass
+
+static func create_material_buttons(on_material_selected):
+	var file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_material)
+	var materials_list : Array[Material] = []
+	
+	for path in file_list:
+		materials_list.append(ResourceLoader.load(FilePathRegistry.data_folder_material + path, "Material"))
+	Main.available_materials = materials_list
+	
+	var new_buttons : Array = UIUtils.update_list_ui(
+	EditorUI.vbc_material_panel,
+	func(data_item, button):
+		#strip .tres
+		button.text = data_item.left(-5).capitalize()
+		button.pressed.connect(on_material_selected.bind(button))
+		return button,
+	preload(FilePathRegistry.scene_material_part_type_button).instantiate(),
+	file_list
+	)
+	
+	
+	Main.button_material_mapping = WorkspaceData.create_mapping(new_buttons)
 
 
 #signals
@@ -348,9 +393,8 @@ static func on_snap_button_pressed(button : Button, positional_snap_increment : 
 
 
 #tooltip styling
-"TODO"#throw these filepaths into dataloader
-static var tooltip_panel : StyleBox = preload("res://editor/data_ui/styles/panel_styles/tooltip_panel.tres")#DataLoader.ui_tooltip_panel
-static var tooltip_font : Theme = preload("res://editor/data_ui/styles/font_styles/t_sci_fi_regular.tres")
+static var tooltip_panel : StyleBox = preload(FilePathRegistry.style_tooltip_panel)
+static var tooltip_font : Theme = preload(FilePathRegistry.style_font_tooltip)
 
 static func custom_tooltip(for_text : String):
 	var tooltip : Label = Label.new()

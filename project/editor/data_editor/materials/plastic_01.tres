@@ -1,0 +1,20 @@
+[gd_resource type="ShaderMaterial" load_steps=5 format=3 uid="uid://bb6vk8pt2gc1p"]
+
+[ext_resource type="Shader" path="res://editor/data_editor/materials/shader/mat_1.gdshader" id="1_lckle"]
+[ext_resource type="Texture2D" uid="uid://bg5wyol6eqlu3" path="res://editor/data_editor/materials/image_files/plastic_01_albedo.jpg" id="2_iseu0"]
+[ext_resource type="Texture2D" uid="uid://ctee0rgd6vhy8" path="res://editor/data_editor/materials/image_files/plastic_01_normal.jpg" id="3_48th3"]
+[ext_resource type="Texture2D" uid="uid://bdeejkle6tmjk" path="res://editor/data_editor/materials/image_files/plastic_01_roughness.jpg" id="4_xmqbu"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_lckle")
+shader_parameter/mixed_color_ratio = 0.77
+shader_parameter/contrast = 0.18
+shader_parameter/roughness = 0.72
+shader_parameter/metallic_texture_channel = null
+shader_parameter/specular = 0.0
+shader_parameter/metallic = 0.0
+shader_parameter/normal_scale = 0.685001
+shader_parameter/texture_albedo = ExtResource("2_iseu0")
+shader_parameter/texture_roughness = ExtResource("4_xmqbu")
+shader_parameter/texture_normal = ExtResource("3_48th3")

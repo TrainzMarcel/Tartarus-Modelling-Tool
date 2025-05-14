@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://l0ophoiqj4dk"]
+[gd_scene load_steps=22 format=3 uid="uid://l0ophoiqj4dk"]
 
 [ext_resource type="Theme" uid="uid://nxn5uapgdhhx" path="res://editor/data_ui/styles/font_styles/t_sci_fi_regular.tres" id="1_77u40"]
 [ext_resource type="Script" path="res://editor/classes/ui_asset_manager/asset_manager.gd" id="1_k5532"]
@@ -11,9 +11,10 @@
 [ext_resource type="StyleBox" uid="uid://cweor237iacfe" path="res://editor/data_ui/styles/panel_styles/gradient_panel.tres" id="8_eoe1e"]
 [ext_resource type="StyleBox" uid="uid://ux7uqdijiwdh" path="res://editor/data_ui/styles/panel_styles/submenu_panel.tres" id="9_msisq"]
 [ext_resource type="Script" path="res://editor/classes/ui_editor/tooltip_assign.gd" id="11_cnews"]
-[ext_resource type="StyleBox" uid="uid://0h1muoc1ycaj" path="res://editor/data_ui/styles/button_and_line_edit_styles/material_list_and_part_list/hover_normal.tres" id="11_opfut"]
-[ext_resource type="StyleBox" uid="uid://cf35g1rgpap53" path="res://editor/data_ui/styles/button_and_line_edit_styles/material_list_and_part_list/pressed.tres" id="12_cevxn"]
+[ext_resource type="StyleBox" uid="uid://0h1muoc1ycaj" path="res://editor/data_ui/styles/button_and_line_edit_styles/material_and_part_type_list/hover_normal.tres" id="11_opfut"]
+[ext_resource type="StyleBox" uid="uid://cf35g1rgpap53" path="res://editor/data_ui/styles/button_and_line_edit_styles/material_and_part_type_list/pressed.tres" id="12_cevxn"]
 [ext_resource type="Texture2D" uid="uid://du7navikebxm7" path="res://editor/data_editor/materials/image_files/wood_01_albedo.jpg" id="13_ka4yu"]
+[ext_resource type="PackedScene" uid="uid://bqtvf26majfbc" path="res://editor/data_ui/component_scenes/button_palette_entry.tscn" id="14_6q4ch"]
 
 [sub_resource type="ButtonGroup" id="ButtonGroup_3mpa5"]
 
@@ -46,7 +47,7 @@ corner_radius_bottom_left = 6
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_7131x"]
 
-[sub_resource type="ButtonGroup" id="ButtonGroup_adgu1"]
+[sub_resource type="ButtonGroup" id="ButtonGroup_1nx64"]
 
 [node name="AssetManager" type="Control"]
 layout_mode = 3
@@ -157,7 +158,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.5
 
-[node name="ClosePageButton" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerTopBar"]
+[node name="ButtonClosePage" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerTopBar"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
@@ -380,18 +381,9 @@ theme_override_styles/panel = ExtResource("8_eoe1e")
 [node name="MaterialShaderInput" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerMaterialPalette/VBoxContainer"]
 layout_mode = 2
 
-[node name="TextureRect" type="TextureRect" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerMaterialPalette/VBoxContainer/MaterialShaderInput"]
+[node name="ButtonAlbedoNew2" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerMaterialPalette/VBoxContainer/MaterialShaderInput"]
 custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
-
-[node name="ButtonAlbedoNew" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerMaterialPalette/VBoxContainer/MaterialShaderInput/TextureRect"]
-custom_minimum_size = Vector2(43, 43)
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 tooltip_text = "Create a new empty Palette"
 theme = ExtResource("1_77u40")
 theme_override_colors/font_color = Color(0.105882, 0.913725, 0.156863, 1)
@@ -405,6 +397,17 @@ theme_override_styles/pressed = ExtResource("7_0ii5n")
 theme_override_styles/focus = ExtResource("4_epl7b")
 action_mode = 0
 text = "➕"
+
+[node name="TextureRect" type="TextureRect" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerMaterialPalette/VBoxContainer/MaterialShaderInput/ButtonAlbedoNew2"]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
 
 [node name="ButtonAlbedoNew" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerMaterialPalette/VBoxContainer/MaterialShaderInput"]
 custom_minimum_size = Vector2(43, 43)
@@ -425,7 +428,7 @@ action_mode = 0
 text = "➖"
 
 [node name="ControlSpacer" type="Control" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerMaterialPalette/VBoxContainer/MaterialShaderInput"]
-custom_minimum_size = Vector2(20, 0)
+custom_minimum_size = Vector2(15, 0)
 layout_mode = 2
 
 [node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerMaterialPalette/VBoxContainer/MaterialShaderInput"]
@@ -481,7 +484,7 @@ action_mode = 0
 text = "➖"
 
 [node name="ControlSpacer" type="Control" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerMaterialPalette/VBoxContainer/MaterialShaderInput2"]
-custom_minimum_size = Vector2(20, 0)
+custom_minimum_size = Vector2(15, 0)
 layout_mode = 2
 
 [node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerMaterialPalette/VBoxContainer/MaterialShaderInput2"]
@@ -496,7 +499,7 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="ControlSpacer" type="Control" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerMaterialPalette/VBoxContainer/MaterialNumberInput"]
-custom_minimum_size = Vector2(20, 0)
+custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 
 [node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerMaterialPalette/VBoxContainer/MaterialNumberInput"]
@@ -511,7 +514,7 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="ControlSpacer" type="Control" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerMaterialPalette/VBoxContainer/MaterialNumberInput2"]
-custom_minimum_size = Vector2(20, 0)
+custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 
 [node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerMaterialPalette/VBoxContainer/MaterialNumberInput2"]
@@ -612,6 +615,268 @@ text = "Wood"
 icon = ExtResource("13_ka4yu")
 expand_icon = true
 
+[node name="HBoxContainerPartTypePalette" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer"]
+layout_mode = 2
+text = "Set the part type's properties"
+
+[node name="MenuBar" type="OptionButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer"]
+visible = false
+layout_mode = 2
+item_count = 2
+popup/item_0/text = "Shader 1"
+popup/item_0/id = 0
+popup/item_1/text = "Shader 2"
+popup/item_1/id = 1
+
+[node name="GradientPanel" type="Panel" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("8_eoe1e")
+
+[node name="MeshInput" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer"]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer/MeshInput"]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+
+[node name="ButtonAlbedoNew" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer/MeshInput/TextureRect"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+tooltip_text = "Create a new empty Palette"
+theme = ExtResource("1_77u40")
+theme_override_colors/font_color = Color(0.105882, 0.913725, 0.156863, 1)
+theme_override_colors/font_pressed_color = Color(0.105882, 0.913725, 0.156863, 1)
+theme_override_colors/font_hover_color = Color(0.105882, 0.913725, 0.156863, 1)
+theme_override_colors/font_focus_color = Color(0.105882, 0.913725, 0.156863, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.105882, 0.913725, 0.156863, 1)
+theme_override_styles/normal = ExtResource("6_7ty8c")
+theme_override_styles/hover = ExtResource("6_7ty8c")
+theme_override_styles/pressed = ExtResource("7_0ii5n")
+theme_override_styles/focus = ExtResource("4_epl7b")
+action_mode = 0
+text = "➕"
+
+[node name="ButtonAlbedoNew" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer/MeshInput"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_vertical = 0
+tooltip_text = "Create a new empty Palette"
+theme = ExtResource("1_77u40")
+theme_override_colors/font_color = Color(0.913725, 0.152941, 0.231373, 1)
+theme_override_colors/font_pressed_color = Color(0.913725, 0.152941, 0.231373, 1)
+theme_override_colors/font_hover_color = Color(0.913725, 0.152941, 0.231373, 1)
+theme_override_colors/font_focus_color = Color(0.913725, 0.152941, 0.231373, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.913725, 0.152941, 0.231373, 1)
+theme_override_styles/normal = ExtResource("6_7ty8c")
+theme_override_styles/hover = ExtResource("6_7ty8c")
+theme_override_styles/pressed = ExtResource("7_0ii5n")
+theme_override_styles/focus = ExtResource("4_epl7b")
+action_mode = 0
+text = "➖"
+
+[node name="ControlSpacer" type="Control" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer/MeshInput"]
+custom_minimum_size = Vector2(15, 0)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer/MeshInput"]
+layout_mode = 2
+size_flags_vertical = 0
+text = "Mesh"
+
+[node name="MaterialNumberInput" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer"]
+layout_mode = 2
+
+[node name="OptionButton" type="OptionButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer/MaterialNumberInput"]
+layout_mode = 2
+item_count = 2
+popup/item_0/text = "Box"
+popup/item_0/id = 0
+popup/item_1/text = "Wedge"
+popup/item_1/id = 1
+
+[node name="ControlSpacer" type="Control" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer/MaterialNumberInput"]
+custom_minimum_size = Vector2(46, 0)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer/MaterialNumberInput"]
+layout_mode = 2
+size_flags_vertical = 0
+text = "Collider Type"
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2"]
+layout_mode = 2
+
+[node name="ButtonAddPartType" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2/HBoxContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 0
+theme = ExtResource("1_77u40")
+theme_override_styles/normal = ExtResource("6_7ty8c")
+theme_override_styles/hover = ExtResource("6_7ty8c")
+theme_override_styles/pressed = ExtResource("7_0ii5n")
+theme_override_styles/focus = ExtResource("4_epl7b")
+action_mode = 0
+text = "  Add Part Type  "
+
+[node name="ButtonDeletePartType" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2/HBoxContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 0
+theme = ExtResource("1_77u40")
+theme_override_styles/normal = ExtResource("6_7ty8c")
+theme_override_styles/hover = ExtResource("6_7ty8c")
+theme_override_styles/pressed = ExtResource("7_0ii5n")
+theme_override_styles/focus = ExtResource("4_epl7b")
+action_mode = 0
+text = "  Delete Part Type  "
+
+[node name="ButtonSortPartType" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 0
+theme = ExtResource("1_77u40")
+theme_override_styles/normal = ExtResource("6_7ty8c")
+theme_override_styles/hover = ExtResource("6_7ty8c")
+theme_override_styles/pressed = ExtResource("7_0ii5n")
+theme_override_styles/focus = ExtResource("4_epl7b")
+action_mode = 0
+text = "  Sort Part Types  "
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2/HBoxContainer2"]
+custom_minimum_size = Vector2(43, 25)
+layout_mode = 2
+theme = ExtResource("1_77u40")
+text = "  Part Type Name:  "
+vertical_alignment = 1
+
+[node name="LineEditColorName" type="LineEdit" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2/HBoxContainer2"]
+custom_minimum_size = Vector2(194, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxFlat_0fj0e")
+theme_override_styles/focus = ExtResource("4_epl7b")
+
+[node name="PanelContainerMaterial" type="PanelContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2"]
+visible = false
+clip_contents = true
+custom_minimum_size = Vector2(230, 0)
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+theme_override_styles/panel = ExtResource("9_msisq")
+metadata/_edit_group_ = true
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2/PanelContainerMaterial"]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+
+[node name="VBoxContainerMaterialPanel" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2/PanelContainerMaterial/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 3
+
+[node name="Button" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2/PanelContainerMaterial/MarginContainer/VBoxContainerMaterialPanel"]
+custom_minimum_size = Vector2(0, 29)
+layout_mode = 2
+theme = ExtResource("1_77u40")
+theme_override_styles/normal = ExtResource("11_opfut")
+theme_override_styles/hover = ExtResource("11_opfut")
+theme_override_styles/pressed = ExtResource("12_cevxn")
+theme_override_styles/focus = ExtResource("4_epl7b")
+action_mode = 0
+text = "Wood"
+icon = ExtResource("13_ka4yu")
+expand_icon = true
+
+[node name="PanelContainerPartType" type="PanelContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2"]
+clip_contents = true
+layout_direction = 2
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 3
+mouse_filter = 2
+theme_override_styles/panel = ExtResource("9_msisq")
+metadata/_edit_group_ = true
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2/PanelContainerPartType"]
+clip_contents = true
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="PartPanelGridContainer" type="GridContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2/PanelContainerPartType/MarginContainer"]
+unique_name_in_owner = true
+clip_contents = true
+layout_mode = 2
+columns = 2
+
+[node name="Button" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2/PanelContainerPartType/MarginContainer/PartPanelGridContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme = ExtResource("1_77u40")
+theme_override_styles/normal = ExtResource("11_opfut")
+theme_override_styles/hover = ExtResource("11_opfut")
+theme_override_styles/pressed = ExtResource("12_cevxn")
+theme_override_styles/focus = ExtResource("4_epl7b")
+action_mode = 0
+text = "Cuboid"
+
+[node name="Button2" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2/PanelContainerPartType/MarginContainer/PartPanelGridContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme = ExtResource("1_77u40")
+theme_override_styles/normal = ExtResource("11_opfut")
+theme_override_styles/hover = ExtResource("11_opfut")
+theme_override_styles/pressed = ExtResource("12_cevxn")
+theme_override_styles/focus = ExtResource("4_epl7b")
+text = "Wedge"
+
+[node name="Button3" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2/PanelContainerPartType/MarginContainer/PartPanelGridContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme = ExtResource("1_77u40")
+theme_override_styles/normal = ExtResource("11_opfut")
+theme_override_styles/hover = ExtResource("11_opfut")
+theme_override_styles/pressed = ExtResource("12_cevxn")
+theme_override_styles/focus = ExtResource("4_epl7b")
+text = "Cylinder"
+
+[node name="Button4" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/ScrollContainerLeft/MarginContainer/VBoxContainer/HBoxContainerPartTypePalette/VBoxContainer2/PanelContainerPartType/MarginContainer/PartPanelGridContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme = ExtResource("1_77u40")
+theme_override_styles/normal = ExtResource("11_opfut")
+theme_override_styles/hover = ExtResource("11_opfut")
+theme_override_styles/pressed = ExtResource("12_cevxn")
+theme_override_styles/focus = ExtResource("4_epl7b")
+text = "Sphere"
+
 [node name="PanelContainerRight" type="PanelContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody"]
 layout_mode = 2
 theme_override_styles/panel = ExtResource("9_msisq")
@@ -628,36 +893,16 @@ theme_override_constants/margin_bottom = 6
 custom_minimum_size = Vector2(350, 0)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/PanelContainerRight/MarginContainer/VBoxContainer"]
+[node name="LabelEquippedPalette" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/PanelContainerRight/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Equipped Color Palette (Visible in editor)"
 
-[node name="EquippedPaletteEntry" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/PanelContainerRight/MarginContainer/VBoxContainer"]
+[node name="ButtonEquippedPaletteEntry" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/PanelContainerRight/MarginContainer/VBoxContainer" instance=ExtResource("14_6q4ch")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(336, 60)
 layout_mode = 2
-size_flags_horizontal = 0
-theme_override_styles/normal = ExtResource("2_d2pgt")
-theme_override_styles/hover = ExtResource("2_d2pgt")
-theme_override_styles/pressed = ExtResource("3_a4we1")
-theme_override_styles/focus = ExtResource("4_epl7b")
-toggle_mode = true
-button_group = SubResource("ButtonGroup_adgu1")
-
-[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/PanelContainerRight/MarginContainer/VBoxContainer/EquippedPaletteEntry"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 5.0
-offset_top = 2.0
-offset_right = -3.0
-offset_bottom = -2.0
-grow_horizontal = 2
-grow_vertical = 2
-text = "Default Color Palette
-343c9dd8-cccd-44c1-a7d4-7145e1b10056 "
+button_group = SubResource("ButtonGroup_1nx64")
 
 [node name="GradientPanel" type="Panel" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/PanelContainerRight/MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 2)
@@ -732,14 +977,13 @@ alignment = 2
 unique_name_in_owner = true
 custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
-size_flags_horizontal = 3
 theme = ExtResource("1_77u40")
 theme_override_styles/normal = ExtResource("6_7ty8c")
 theme_override_styles/hover = ExtResource("6_7ty8c")
 theme_override_styles/pressed = ExtResource("7_0ii5n")
 theme_override_styles/focus = ExtResource("4_epl7b")
 action_mode = 0
-text = "Import/Export"
+text = "  Import/Export  "
 
 [node name="ButtonPaletteSave" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/PanelContainerRight/MarginContainer/VBoxContainer/PaletteListHeaderHBoxContainer2"]
 unique_name_in_owner = true
@@ -755,6 +999,7 @@ text = " Save "
 
 [node name="ButtonPaletteSaveAs" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/PanelContainerRight/MarginContainer/VBoxContainer/PaletteListHeaderHBoxContainer2"]
 unique_name_in_owner = true
+visible = false
 custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
 theme = ExtResource("1_77u40")
@@ -789,30 +1034,6 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-
-[node name="ButtonPaletteEntry" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/PanelContainerRight/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainerPaletteEntry"]
-custom_minimum_size = Vector2(336, 60)
-layout_mode = 2
-theme_override_styles/normal = ExtResource("2_d2pgt")
-theme_override_styles/hover = ExtResource("2_d2pgt")
-theme_override_styles/pressed = ExtResource("3_a4we1")
-theme_override_styles/focus = ExtResource("4_epl7b")
-toggle_mode = true
-button_group = SubResource("ButtonGroup_adgu1")
-
-[node name="Label" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainerMain/HBoxContainerBody/PanelContainerRight/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainerPaletteEntry/ButtonPaletteEntry"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 5.0
-offset_top = 2.0
-offset_right = -3.0
-offset_bottom = -2.0
-grow_horizontal = 2
-grow_vertical = 2
-text = "Default Color Palette
-343c9dd8-cccd-44c1-a7d4-7145e1b10056 "
 
 [node name="Label" type="Label" parent="."]
 visible = false

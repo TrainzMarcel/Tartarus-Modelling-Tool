@@ -1,6 +1,6 @@
 [gd_resource type="ShaderMaterial" load_steps=4 format=3 uid="uid://dscydtkjdxpus"]
 
-[ext_resource type="Shader" path="res://editor/data_editor/materials/mat_1.gdshader" id="1_uiqp2"]
+[ext_resource type="Shader" path="res://editor/data_editor/materials/shader/mat_1.gdshader" id="1_uiqp2"]
 [ext_resource type="Texture2D" uid="uid://du7navikebxm7" path="res://editor/data_editor/materials/image_files/wood_01_albedo.jpg" id="2_r0u51"]
 [ext_resource type="Texture2D" uid="uid://cynafa7nsgncw" path="res://editor/data_editor/materials/image_files/wood_01_normal.jpg" id="3_ljhbj"]
 

@@ -33,11 +33,10 @@ var used_part_type_palette : WorkspaceData.PartTypePalette
 				shape.size = part_scale
 		#wedge
 			1:
-				"TODO"#implement wedge collider
-				pass
+				var shape : ConvexPolygonShape3D = ConvexPolygonShape3D.new()
+				shape.points = scale_wedge_collider(value, wedge_collider_points)
 	
 		
-		var mesh_res : BoxMesh = part_mesh_node.mesh
 		part_mesh_node.scale = part_scale
 
 
@@ -73,10 +72,29 @@ func _ready():
 	set_collision_mask_value(1, false)
 	set_collision_mask_value(2, true)
 	
+	
 	part_mesh_node = MeshInstance3D.new()
 	part_mesh_node.owner = get_tree().edited_scene_root
 	add_child(part_mesh_node)
-	part_mesh_node.mesh = BoxMesh.new()
+	part_mesh_node.mesh = preload(FilePathRegistry.data_default_part)
+	part_mesh_node.material_override = preload(FilePathRegistry.data_default_material)
+	part_color = Color.WHITE
+	
 	
 #only set this after its initialized (does not run through setter if mesh or collider are null)
 	part_scale = part_scale
+
+var wedge_collider_points : PackedVector3Array = [
+	Vector3(-0.5, -0.5, -0.5),
+	Vector3(-0.5, -0.5, 0.5),
+	Vector3(-0.5, 0.5, -0.5),
+	Vector3(-0.5, 0.5, 0.5),
+	Vector3(0.5, -0.5, -0.5),
+	Vector3(0.5, -0.5, 0.5)
+]
+
+func scale_wedge_collider(scale_to : Vector3, wedge_collider_points : PackedVector3Array):
+	for i in wedge_collider_points:
+		i = i * scale_to
+	
+	return wedge_collider_points

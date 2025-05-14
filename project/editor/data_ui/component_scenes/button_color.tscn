@@ -1,0 +1,33 @@
+[gd_scene load_steps=5 format=3 uid="uid://delfb72x2kq0q"]
+
+[ext_resource type="Script" path="res://editor/classes/ui_editor/tooltip_assign.gd" id="1_crv5d"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o5gdi"]
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_juvd7"]
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_cn6d1"]
+
+[node name="Button" type="Button"]
+custom_minimum_size = Vector2(18, 18)
+theme_override_styles/normal = SubResource("StyleBoxFlat_o5gdi")
+theme_override_styles/hover = SubResource("StyleBoxFlat_o5gdi")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_juvd7")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_cn6d1")
+toggle_mode = true
+action_mode = 0
+script = ExtResource("1_crv5d")

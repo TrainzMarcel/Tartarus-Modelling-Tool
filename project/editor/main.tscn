@@ -1,15 +1,17 @@
-[gd_scene load_steps=22 format=3 uid="uid://hul5x10ptumj"]
+[gd_scene load_steps=23 format=3 uid="uid://hul5x10ptumj"]
 
 [ext_resource type="Script" path="res://editor/main.gd" id="1_4xdr8"]
 [ext_resource type="PackedScene" uid="uid://c01nu37bjhxsi" path="res://editor/classes/camera/free_look_camera.tscn" id="2_n3tr4"]
-[ext_resource type="PackedScene" uid="uid://cwt02lxvderye" path="res://editor/classes/ui_editor/ui_new.tscn" id="6_whu6r"]
+[ext_resource type="PrismMesh" uid="uid://0ecdpejpomxu" path="res://editor/data_editor/parts/wedge.tres" id="5_r4uva"]
+[ext_resource type="PackedScene" uid="uid://cwt02lxvderye" path="res://editor/classes/ui_editor/editor_ui.tscn" id="6_whu6r"]
 [ext_resource type="Script" path="res://editor/classes/part.gd" id="7_nrd43"]
 [ext_resource type="PackedScene" uid="uid://clfcgcedn47iy" path="res://editor/classes/transform_handles/transform_handle_root.tscn" id="7_wy0x5"]
 [ext_resource type="Material" uid="uid://dg0pq3t4uvees" path="res://editor/classes/selection_box/highlight_mat.res" id="8_4p0vi"]
+[ext_resource type="Shader" path="res://editor/data_editor/materials/shader/mat_1.gdshader" id="8_ce3a6"]
 [ext_resource type="Script" path="res://editor/classes/selection_box/selection_box.gd" id="9_n7hy1"]
-[ext_resource type="Shader" path="res://editor/data_editor/materials/mat_1.gdshader" id="9_ys456"]
 [ext_resource type="Texture2D" uid="uid://du7navikebxm7" path="res://editor/data_editor/materials/image_files/wood_01_albedo.jpg" id="10_5s45i"]
 [ext_resource type="Texture2D" uid="uid://cynafa7nsgncw" path="res://editor/data_editor/materials/image_files/wood_01_normal.jpg" id="11_5r5hq"]
+[ext_resource type="BoxMesh" uid="uid://enpvvrschyx2" path="res://editor/data_editor/parts/cuboid.tres" id="12_awj2i"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_jgeb0"]
 sky_top_color = Color(0.168627, 0.470588, 0.690196, 1)
@@ -34,19 +36,13 @@ tonemap_mode = 2
 [sub_resource type="World3D" id="World3D_15twx"]
 environment = SubResource("Environment_ye61o")
 
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_3mjn7"]
-points = PackedVector3Array(-0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5)
-
-[sub_resource type="PrismMesh" id="PrismMesh_du6vf"]
-left_to_right = 0.0
-
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_427c6"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_qw8wq"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_b2n2e"]
 render_priority = 0
-shader = ExtResource("9_ys456")
-shader_parameter/mixed_color_ratio = 0.61
-shader_parameter/contrast = 0.3
+shader = ExtResource("8_ce3a6")
+shader_parameter/mixed_color_ratio = 0.73
+shader_parameter/contrast = 0.6
 shader_parameter/roughness = 0.0
 shader_parameter/metallic_texture_channel = null
 shader_parameter/specular = 0.0
@@ -55,10 +51,92 @@ shader_parameter/normal_scale = 7.6e-07
 shader_parameter/texture_albedo = ExtResource("10_5s45i")
 shader_parameter/texture_normal = ExtResource("11_5r5hq")
 
-[sub_resource type="BoxMesh" id="BoxMesh_f0y8v"]
-
 [sub_resource type="BoxMesh" id="BoxMesh_1k2vc"]
 size = Vector3(0.075, 3.76, 5.82)
+
+[sub_resource type="Shader" id="Shader_ketcj"]
+code = "// NOTE: Shader automatically converted from Godot Engine 4.1.stable's StandardMaterial3D.
+
+shader_type spatial;
+render_mode blend_mix,depth_draw_opaque,cull_back,diffuse_burley,specular_schlick_ggx;
+uniform vec4 albedo : source_color;
+uniform sampler2D texture_albedo : source_color,filter_linear_mipmap,repeat_enable;
+uniform float point_size : hint_range(0,128);
+uniform float roughness : hint_range(0,1);
+uniform sampler2D texture_metallic : hint_default_white,filter_linear_mipmap,repeat_enable;
+uniform vec4 metallic_texture_channel;
+uniform sampler2D texture_roughness : hint_roughness_r,filter_linear_mipmap,repeat_enable;
+uniform float specular;
+uniform float metallic;
+uniform sampler2D texture_normal : hint_roughness_normal,filter_linear_mipmap,repeat_enable;
+uniform float normal_scale : hint_range(-16,16);
+varying vec3 uv1_triplanar_pos;
+uniform float uv1_blend_sharpness;
+varying vec3 uv1_power_normal;
+uniform vec3 uv1_scale;
+uniform vec3 uv1_offset;
+uniform vec3 uv2_scale;
+uniform vec3 uv2_offset;
+
+
+void vertex() {
+	TANGENT = vec3(0.0,0.0,-1.0) * abs(NORMAL.x);
+	TANGENT+= vec3(1.0,0.0,0.0) * abs(NORMAL.y);
+	TANGENT+= vec3(1.0,0.0,0.0) * abs(NORMAL.z);
+	TANGENT = normalize(TANGENT);
+	BINORMAL = vec3(0.0,1.0,0.0) * abs(NORMAL.x);
+	BINORMAL+= vec3(0.0,0.0,-1.0) * abs(NORMAL.y);
+	BINORMAL+= vec3(0.0,1.0,0.0) * abs(NORMAL.z);
+	BINORMAL = normalize(BINORMAL);
+	uv1_power_normal=pow(abs(mat3(MODEL_MATRIX) * NORMAL),vec3(uv1_blend_sharpness));
+	uv1_triplanar_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0f)).xyz * uv1_scale + uv1_offset;
+	uv1_power_normal/=dot(uv1_power_normal,vec3(1.0));
+	uv1_triplanar_pos *= vec3(1.0,-1.0, 1.0);
+}
+
+
+
+
+vec4 triplanar_texture(sampler2D p_sampler,vec3 p_weights,vec3 p_triplanar_pos) {
+	vec4 samp=vec4(0.0);
+	samp+= texture(p_sampler,p_triplanar_pos.xy) * p_weights.z;
+	samp+= texture(p_sampler,p_triplanar_pos.xz) * p_weights.y;
+	samp+= texture(p_sampler,p_triplanar_pos.zy * vec2(-1.0,1.0)) * p_weights.x;
+	return samp;
+}
+
+
+void fragment() {
+	vec4 albedo_tex = triplanar_texture(texture_albedo,uv1_power_normal,uv1_triplanar_pos);
+	ALBEDO = albedo.rgb * albedo_tex.rgb;
+	float metallic_tex = dot(triplanar_texture(texture_metallic,uv1_power_normal,uv1_triplanar_pos),metallic_texture_channel);
+	METALLIC = metallic_tex * metallic;
+	vec4 roughness_texture_channel = vec4(1.0,0.0,0.0,0.0);
+	float roughness_tex = dot(triplanar_texture(texture_roughness,uv1_power_normal,uv1_triplanar_pos),roughness_texture_channel);
+	ROUGHNESS = roughness_tex * roughness;
+	SPECULAR = specular;
+	NORMAL_MAP = triplanar_texture(texture_normal,uv1_power_normal,uv1_triplanar_pos).rgb;
+	NORMAL_MAP_DEPTH = normal_scale;
+}
+"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_alhtu"]
+render_priority = 0
+shader = SubResource("Shader_ketcj")
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/point_size = 1.0
+shader_parameter/roughness = 1.0
+shader_parameter/metallic_texture_channel = null
+shader_parameter/specular = 0.5
+shader_parameter/metallic = 0.0
+shader_parameter/normal_scale = 1.0
+shader_parameter/uv1_blend_sharpness = 1.0
+shader_parameter/uv1_scale = Vector3(1, 1, 1)
+shader_parameter/uv1_offset = Vector3(0, 0, 0)
+shader_parameter/uv2_scale = Vector3(1, 1, 1)
+shader_parameter/uv2_offset = Vector3(0, 0, 0)
+shader_parameter/texture_albedo = ExtResource("10_5s45i")
+shader_parameter/texture_normal = ExtResource("11_5r5hq")
 
 [node name="Main" type="Node3D" node_paths=PackedStringArray("cam", "second_cam", "workspace", "transform_handle_root", "hover_selection_box", "ui_node")]
 script = ExtResource("1_4xdr8")
@@ -104,16 +182,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3)
 fov = 90.0
 
 [node name="EditorUI" parent="." instance=ExtResource("6_whu6r")]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -8)
-shape = SubResource("ConvexPolygonShape3D_3mjn7")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="CollisionShape3D"]
-mesh = SubResource("PrismMesh_du6vf")
-
-[node name="StaticBody3D" type="StaticBody3D" parent="CollisionShape3D"]
-collision_mask = 2
 
 [node name="Workspace" type="Node" parent="."]
 
@@ -183,42 +251,54 @@ part_scale = Vector3(0.2, 0.2, 0.8)
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("8_4p0vi")
-mesh = SubResource("ImmediateMesh_427c6")
+mesh = SubResource("ImmediateMesh_qw8wq")
 skeleton = NodePath("../..")
 script = ExtResource("9_n7hy1")
 box_scale = Vector3(1, 1, 1)
 
 [node name="MeshInstance3Dshadertest" type="MeshInstance3D" parent="Workspace"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 4.85845)
 visible = false
 material_override = SubResource("ShaderMaterial_b2n2e")
-instance_shader_parameters/color = Color(0.2052, 0.34504, 0.57, 1)
-mesh = SubResource("BoxMesh_f0y8v")
+mesh = ExtResource("12_awj2i")
 
 [node name="MeshInstance3D3shadertest" type="MeshInstance3D" parent="Workspace"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 3)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 8.43239)
 visible = false
 material_override = SubResource("ShaderMaterial_b2n2e")
-instance_shader_parameters/color = Color(0.254902, 0.305882, 1, 1)
-mesh = SubResource("BoxMesh_f0y8v")
+mesh = ExtResource("12_awj2i")
 
 [node name="MeshInstance3D5shadertest" type="MeshInstance3D" parent="Workspace"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 2.79426, 3.235)
 visible = false
 material_override = SubResource("ShaderMaterial_b2n2e")
-instance_shader_parameters/color = Color(0.309804, 0.160784, 0.0666667, 1)
 mesh = SubResource("BoxMesh_1k2vc")
 
 [node name="MeshInstance3D4shadertest" type="MeshInstance3D" parent="Workspace"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 2)
 visible = false
 material_override = SubResource("ShaderMaterial_b2n2e")
-instance_shader_parameters/color = Color(0, 0, 0, 1)
-mesh = SubResource("BoxMesh_f0y8v")
+mesh = ExtResource("12_awj2i")
 
 [node name="MeshInstance3D2shadertest" type="MeshInstance3D" parent="Workspace"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 2.66872, -4, 0, 5.23597)
+visible = false
+material_override = SubResource("ShaderMaterial_alhtu")
+mesh = ExtResource("12_awj2i")
+
+[node name="MeshInstance3D2shadertest2" type="MeshInstance3D" parent="Workspace"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 7.69384)
 visible = false
 material_override = SubResource("ShaderMaterial_b2n2e")
-instance_shader_parameters/color = Color(0.0627451, 1, 1, 1)
-mesh = SubResource("BoxMesh_f0y8v")
+mesh = ExtResource("12_awj2i")
+
+[node name="MeshInstance3D2shadertest3" type="MeshInstance3D" parent="Workspace"]
+transform = Transform3D(1.00215, 0, 0, 0, 1.00215, 0, 0, 0, 1.00215, -4, 1.30885, 7.34075)
+visible = false
+mesh = ExtResource("5_r4uva")
+
+[node name="MeshInstance3D2shadertest4" type="MeshInstance3D" parent="Workspace"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 1.30885, 5.96439)
+visible = false
+material_override = SubResource("ShaderMaterial_b2n2e")
+mesh = ExtResource("12_awj2i")

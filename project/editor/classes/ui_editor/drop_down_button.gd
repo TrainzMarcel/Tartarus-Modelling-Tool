@@ -1,11 +1,13 @@
 @tool
 extends Button
 class_name DropDownButton
-
+#this is for the color material and part type selectors
 
 @export var folded_in_symbol : String = "▼"
 @export var folded_out_symbol : String = "▲"
 @export var attached_control : Control
+#button to press if this drop down gets pressed
+@export var attached_button : Button
 #MAKE SURE to set all the buttons in this control to have the action_mode "button press"
 #so that it gets triggered before the attached control disappears
 @export var hide_after_click_on_attached_control : bool = false
@@ -14,7 +16,7 @@ class_name DropDownButton
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	toggle_mode = true
-	toggled.connect(on_drop_down_toggled)
+	self.toggled.connect(on_drop_down_toggled)
 
 func _init():
 	text = folded_in_symbol
@@ -22,6 +24,9 @@ func _init():
 func on_drop_down_toggled(button_toggled : bool):
 	if button_toggled:
 		text = folded_in_symbol
+		if attached_button != null:
+			attached_button.button_pressed = true
+			attached_button.pressed.emit()
 	else:
 		text = folded_out_symbol
 	

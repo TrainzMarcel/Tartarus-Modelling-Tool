@@ -19,7 +19,8 @@ varying vec3 uv1_triplanar_pos;
 varying vec3 uv1_power_normal;
 //uniform vec3 uv1_scale = vec3(1.0);
 //uniform vec3 uv1_offset;
-
+varying vec3 basis_scale;
+varying mat3 basis;
 
 void vertex() {
 	TANGENT = vec3(0.0,0.0,-1.0) * abs(NORMAL.x);
@@ -32,10 +33,24 @@ void vertex() {
 	BINORMAL = normalize(BINORMAL);
 	//1.0 used to be triplanar blend sharpness parameter
 	uv1_power_normal=pow(abs(NORMAL),vec3(1.0));
-	uv1_triplanar_pos = VERTEX;// * uv1_scale + uv1_offset;
+	//made shader work with mesh size but not mesh position or rotation(good)
+	basis = mat3(MODEL_MATRIX);
+	basis_scale = vec3(length(basis[0]), length(basis[1]), length(basis[2]));
+	uv1_triplanar_pos = (basis_scale * vec3(VERTEX)).xyz;
+	//uv1_triplanar_pos = VERTEX;// * uv1_scale + uv1_offset
 	uv1_power_normal/=dot(uv1_power_normal,vec3(1.0));
 	uv1_triplanar_pos *= vec3(1.0,-1.0, 1.0);
 }
+
+
+
+//void vertex() {
+	//uv1_power_normal=pow(abs(mat3(MODEL_MATRIX) * NORMAL),vec3(uv1_blend_sharpness));
+	//uv1_triplanar_pos = (mat3(MODEL_MATRIX) * vec3(VERTEX)).xyz;
+	//uv1_power_normal/=dot(uv1_power_normal,vec3(1.0));
+	//uv1_triplanar_pos *= vec3(1.0,-1.0, 1.0);
+//}
+
 
 
 vec4 triplanar_texture(sampler2D p_sampler,vec3 p_weights,vec3 p_triplanar_pos) {

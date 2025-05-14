@@ -6,7 +6,7 @@ class_name WorkspaceData
 #what columns come after the csv section headers (::PART::, ::COLOR::,..)
 
 #on startup, load these palettes
-const folder_startup_palettes : String = "user://startup_palettes"
+const folder_startup_palettes : String = "user://palettes"
 
 const folder_saved_models : String = "user://settings/"
 
@@ -15,9 +15,9 @@ const filepath_startup_palettes : String = ""
 #currently selected palettes in the editor
 #make the setters into ui events to reload x panel uis
 #or manually call a function after setting these
-static var selected_color_palette : ColorPalette
-static var selected_material_palette : MaterialPalette
-static var selected_part_type_palette : PartTypePalette
+static var equipped_color_palette : ColorPalette
+static var equipped_material_palette : MaterialPalette
+static var equipped_part_type_palette : PartTypePalette
 
 #arrays of all palettes available to select
 static var available_color_palette_array : Array[ColorPalette]
@@ -30,6 +30,7 @@ static var default_material : StandardMaterial3D = StandardMaterial3D.new()
 static var default_mesh : Mesh = BoxMesh.new()
 
 #used to tell functions what datatype to convert a string to (see data_to_csv_line())
+#there is a datatype enum in globalscope but it doesnt include material mesh or part types
 enum DataType {t_int, t_float, t_string, t_color, t_material, t_mesh, t_part}
 
 #section headers in an attempt to make functions more flexible
@@ -365,7 +366,7 @@ static func get_index_of_line_instruction(instruction : PersistInstruction, line
 		i = i + 1
 
 
-static func create_mapping(input_data : Array[Object]):
+static func create_mapping(input_data : Array):
 	var i : int = 0
 	var map : Dictionary = {}
 	
@@ -458,10 +459,6 @@ static func dispatch_instruction(section_header : String):
 		if i.section_header == section_header:
 			return i
 
-
-#
-static func load_default_palettes():
-	pass
 
 #old function
 #read colors from file

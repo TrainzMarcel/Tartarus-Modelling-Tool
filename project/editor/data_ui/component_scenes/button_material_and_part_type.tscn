@@ -1,0 +1,14 @@
+[gd_scene load_steps=5 format=3 uid="uid://da14d4meesky7"]
+
+[ext_resource type="Theme" uid="uid://nxn5uapgdhhx" path="res://editor/data_ui/styles/font_styles/t_sci_fi_regular.tres" id="1_1k5bi"]
+[ext_resource type="StyleBox" uid="uid://0h1muoc1ycaj" path="res://editor/data_ui/styles/button_and_line_edit_styles/material_and_part_type_list/hover_normal.tres" id="2_vq2px"]
+[ext_resource type="StyleBox" uid="uid://cf35g1rgpap53" path="res://editor/data_ui/styles/button_and_line_edit_styles/material_and_part_type_list/pressed.tres" id="3_4fk7a"]
+[ext_resource type="StyleBox" uid="uid://cjs2pnpup0ys7" path="res://editor/data_ui/styles/button_and_line_edit_styles/focus_invisible.tres" id="4_dsq8f"]
+
+[node name="ButtonMaterialAndPartType" type="Button"]
+custom_minimum_size = Vector2(100, 26)
+theme = ExtResource("1_1k5bi")
+theme_override_styles/normal = ExtResource("2_vq2px")
+theme_override_styles/hover = ExtResource("2_vq2px")
+theme_override_styles/pressed = ExtResource("3_4fk7a")
+theme_override_styles/focus = ExtResource("4_dsq8f")

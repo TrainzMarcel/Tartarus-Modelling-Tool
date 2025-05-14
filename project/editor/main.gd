@@ -66,10 +66,14 @@ var selected_tool : SelectedToolEnum = SelectedToolEnum.none
 #gets set in on_color_selected
 var selected_color : Color
 #gets set in on_material_selected
-var selected_material : ShaderMaterial
+var selected_material : Material
+static var button_material_mapping : Dictionary
+static var available_materials : Array[Material]
 #gets set in on_part_type_selected
-"TODO"#plan how this will work exactly
-#var selected_part : Part.part_shape
+var selected_part_type : Mesh
+static var button_part_type_mapping : Dictionary
+static var available_part_types : Array[Mesh]
+
 
 #dragging data------------------------------------------------------------------
 #raw ray result
@@ -134,13 +138,16 @@ func _ready():
 	main_on_snap_text_changed,
 	on_local_transform_active_set,
 	on_snapping_active_set,
-	on_color_selected
+	on_color_selected,
+	on_material_selected,
+	on_part_type_selected
 	)
 	
 	cam.initialize(EditorUI.l_camera_speed)
 	TransformHandleUtils.initialize_transform_handle_root(transform_handle_root)
 	
 	#load default palettes
+	"TODO"
 	WorkspaceData.initialize()
 	
 	
@@ -158,12 +165,12 @@ func _input(event):
 	is_selecting_allowed = is_drag_tool and not is_ui_hovered
 	is_selecting_allowed = is_selecting_allowed and Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED
 	
-	#if selecting is allowed, hovering is allowed as well
+	#if selecting is not allowed, hovering can still be allowed
 	#hovering is not allowed if cursor is captured or over ui
-	is_hovering_allowed = is_selecting_allowed
-	is_hovering_allowed = is_hovering_allowed and Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED
+	#is_hovering_allowed = is_selecting_allowed
+	is_hovering_allowed = Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED
 	is_hovering_allowed = is_hovering_allowed and not is_ui_hovered
-	
+	print(is_hovering_allowed)
 	
 #do raycasting, set hovered_handle
 #if handle wasnt found, raycast and set hovered_part, render selectionbox around hovered_part
@@ -284,7 +291,7 @@ func _input(event):
 				elif is_part_hovered and not is_selecting_allowed:
 					
 					if selected_tool == SelectedToolEnum.t_material:
-						hovered_part.part_material = preload("res://editor/data_editor/materials/mat_1.tres")
+						hovered_part.part_material = selected_material
 					
 					if selected_tool == SelectedToolEnum.t_color:
 						hovered_part.part_color = selected_color
@@ -461,7 +468,7 @@ func ui_hover_check(ui_list : Array[Control]):
 
 #this stuff was ugly so i put them into functions
 #collision mask is no longer needed but ill keep it just in case
-func raycast(node : Node3D, from : Vector3, to : Vector3, exclude : Array[RID] = [], collision_mask : Array[int] = []):
+func raycast(node : Node3D, from : Vector3, to : Vector3, exclude : Array[RID] = [], collision_mask : Array[int] = [1]):
 	var ray_param : PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.new()
 	ray_param.from = from
 	ray_param.to = to
@@ -472,7 +479,7 @@ func raycast(node : Node3D, from : Vector3, to : Vector3, exclude : Array[RID] =
 
 
 #raycast from cam to where the mouse is pointing, works in ortho mode too
-func raycast_mouse_pos(cam : Camera3D, exclude : Array[RID] = [], collision_mask : Array[int] = []):
+func raycast_mouse_pos(cam : Camera3D, exclude : Array[RID] = [], collision_mask : Array[int] = [1]):
 	#project ray origin simply returns the camera position, EXCEPT,
 	#when camera is set to orthogonal
 	return raycast(
@@ -685,23 +692,40 @@ func on_tool_selected(button):
 		selection_box_array,
 		offset_abb_to_selected_array
 		)
-	
 	selected_tool_handle_array = r_dict.selected_tool_handle_array
 	is_drag_tool = r_dict.is_drag_tool
 	selected_tool = r_dict.selected_tool
+	print(selected_tool)
 	selected_parts_array = r_dict.selected_parts_array
 	offset_abb_to_selected_array = r_dict.offset_abb_to_selected_array
 
 
-#
 func on_spawn_pressed():
 	var new_part : Part = Part.new()
 	workspace.add_child(new_part)
-	new_part.global_position = cam.global_position + part_spawn_distance * -cam.basis.z
+	var ray_result = raycast(cam, cam.global_position, -cam.basis.z * raycast_length, [], [1])
+	if ray_result.is_empty():
+		new_part.global_position = cam.global_position + part_spawn_distance * -cam.basis.z
+	else:
+		new_part.global_position = ray_result.position
+	new_part.part_mesh_node.mesh = selected_part_type
+	"TODO"#bad code here
+	if selected_part_type == available_part_types[1]:
+		new_part.part_scale = Vector3(0.4, 0.8, 0.4)
+	elif selected_part_type == available_part_types[2]:
+		new_part.part_scale = Vector3(0.8, 0.8, 0.8)
 
 
-func on_color_selected(button):
-	selected_color = button.modulate
+func on_color_selected(button : Button):
+	selected_color = button.self_modulate
+
+
+func on_part_type_selected(button : Button):
+	selected_part_type = available_part_types[button_part_type_mapping[button]]
+
+
+func on_material_selected(button : Button):
+	selected_material = available_materials[button_material_mapping[button]]
 
 
 func main_on_snap_text_changed(line_edit):
