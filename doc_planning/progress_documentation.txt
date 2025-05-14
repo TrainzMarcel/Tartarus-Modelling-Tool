@@ -65,5 +65,5 @@
 25.4. started working on ui to manage palettes, mostly finished data_to_tmv_line() function
 28.4. brainstormed ui/ux of managing palettes, came to conclusion that saving, loading, import, export, adding, deleting and equipping palettes should be shared by one window, with the top bar only there to switch between palette creator types and palette list display
 30.4. created material palette tab ui, considered adding standalone assets to models which are saved separate from any palettes, will be saved under section header ::STANDALONEASSETS:: and parts with these assets assigned will have -1 as palette id and null as palette reference in the editor
-12.5. decided to stop working on palettes for now and to instead have it load everything from the data folder without using my save file specification
-14.5. fixed uv stretching problems with shader, considered ways to clean up the programs architecture (API style abstractions)
+12.5. decided to stop working on palettes for now and to instead have it load everything from the data folder without using my save file specification. added a bunch of assets for testing.
+14.5. fixed uv stretching problems with shader, considered ways to clean up the programs architecture (API style abstractions), major rework of the programs architecture using the previous considerations, reformed WorkspaceData into WorkspaceManager and mostly used it like an API in main, kept all the old save/load code inside, moved all ui events in Main into MainUIEvents

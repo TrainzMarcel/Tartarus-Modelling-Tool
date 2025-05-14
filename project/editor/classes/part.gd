@@ -9,9 +9,9 @@ class_name Part
 var collider_type : int = 0
 
 #for tracking how many and what palettes were used in a model
-var used_color_palette : WorkspaceData.ColorPalette
-var used_material_palette : WorkspaceData.MaterialPalette
-var used_part_type_palette : WorkspaceData.PartTypePalette
+#var used_color_palette : WorkspaceManager.ColorPalette
+#var used_material_palette : WorkspaceManager.MaterialPalette
+#var used_part_type_palette : WorkspaceManager.PartTypePalette
 
 "TODO"#for scaling custom meshes correctly, add a function that gets the meshes aabb while it is un-rotated
 #set the parts scale to the meshes aabb and save that scale
@@ -78,6 +78,7 @@ func _ready():
 	add_child(part_mesh_node)
 	part_mesh_node.mesh = preload(FilePathRegistry.data_default_part)
 	part_mesh_node.material_override = preload(FilePathRegistry.data_default_material)
+	print(part_mesh_node.material_override)
 	part_color = Color.WHITE
 	
 	

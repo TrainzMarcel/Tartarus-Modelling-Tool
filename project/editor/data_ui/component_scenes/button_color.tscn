@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://delfb72x2kq0q"]
+[gd_scene load_steps=6 format=3 uid="uid://delfb72x2kq0q"]
 
 [ext_resource type="Script" path="res://editor/classes/ui_editor/tooltip_assign.gd" id="1_crv5d"]
 
@@ -22,6 +22,8 @@ corner_radius_bottom_left = 6
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_cn6d1"]
 
+[sub_resource type="ButtonGroup" id="ButtonGroup_b8kqw"]
+
 [node name="Button" type="Button"]
 custom_minimum_size = Vector2(18, 18)
 theme_override_styles/normal = SubResource("StyleBoxFlat_o5gdi")
@@ -30,4 +32,5 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_juvd7")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_cn6d1")
 toggle_mode = true
 action_mode = 0
+button_group = SubResource("ButtonGroup_b8kqw")
 script = ExtResource("1_crv5d")

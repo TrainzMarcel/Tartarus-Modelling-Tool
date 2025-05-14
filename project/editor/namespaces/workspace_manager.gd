@@ -1,17 +1,267 @@
 extends RefCounted
-class_name WorkspaceData
+class_name WorkspaceManager
 
-"TODO"#eventually put filepath constants in here or in a dictionary in here
-"TODO"#make data pairs telling a loading function
-#what columns come after the csv section headers (::PART::, ::COLOR::,..)
+#was meant to handle saving and loading but i dropped that for now
+#now handles selection logic and selection box logic
+
+static var hover_selection_box : SelectionBox
+static var workspace : Node
+
+
+#gets set in on_color_selected
+static var selected_color : Color
+#static var button_color_mapping : Dictionary
+#static var available_colors : Array[Color]
+#gets set in on_material_selected
+static var selected_material : Material
+static var button_material_mapping : Dictionary
+static var available_materials : Array[Material]
+#gets set in on_part_type_selected
+static var selected_part_type : Mesh
+static var button_part_type_mapping : Dictionary
+static var available_part_types : Array[Mesh]
+
+#!!!selected_parts_array, offset_dragged_to_selected_array and selection_box_array are parallel arrays!!!
+static var selected_parts_array : Array[Part] = []
+static var offset_abb_to_selected_array : Array[Vector3] = []
+#offset from the dragged parts position to the raycast hit position
+static var selection_box_array : Array[SelectionBox] = []
+
+
+static func initialize(workspace : Node, hover_selection_box : SelectionBox):
+	WorkspaceManager.workspace = workspace
+	WorkspaceManager.hover_selection_box = hover_selection_box
+	
+	var file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_part)
+	var parts_list : Array[Mesh] = []
+	
+	for path in file_list:
+		parts_list.append(ResourceLoader.load(FilePathRegistry.data_folder_part + path, "Mesh"))
+	WorkspaceManager.available_part_types = parts_list
+	
+	file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_material)
+	var materials_list : Array[Material] = []
+	
+	for path in file_list:
+		materials_list.append(ResourceLoader.load(FilePathRegistry.data_folder_material + path, "Material"))
+	WorkspaceManager.available_materials = materials_list
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	#var r_dict : Dictionary = WorkspaceManager.load_data_from_tmv("res://editor/data_editor/default.tmvp")
+	#WorkspaceManager.available_color_palette_array.append_array(r_dict.color_palette_array)
+	#WorkspaceManager.available_material_palette_array.append_array(r_dict.material_palette_array)
+	#WorkspaceManager.available_part_type_palette_array.append_array(r_dict.part_type_palette_array)
+	#WorkspaceManager.selec
+
+
+static func spawn_part(raycast_length : float, part_spawn_distance : float, cam : FreeLookCamera):
+	var new_part : Part = Part.new()
+	workspace.add_child(new_part)
+	var ray_result = Main.raycast(cam, cam.global_position, -cam.basis.z * raycast_length, [], [1])
+	if ray_result.is_empty():
+		new_part.global_position = cam.global_position + part_spawn_distance * -cam.basis.z
+	else:
+		new_part.global_position = ray_result.position
+	new_part.part_mesh_node.mesh = selected_part_type
+	"TODO"#bad code here
+	#set default scale
+	if selected_part_type == available_part_types[1]:
+		new_part.part_scale = Vector3(0.4, 0.8, 0.4)
+	elif selected_part_type == available_part_types[2]:
+		new_part.part_scale = Vector3(0.8, 0.8, 0.8)
+
+
+#instance and fit selection box to a part as child of workspace node and add it to the array
+static func part_instance_selection_box(assigned_part : Part):
+	var new : SelectionBox = SelectionBox.new()
+	selection_box_array.append(new)
+	workspace.add_child(new)
+	new.assigned_node = assigned_part
+	new.box_scale = assigned_part.part_scale
+	new.global_transform = assigned_part.global_transform
+	var mat : StandardMaterial3D = preload("res://editor/classes/selection_box/selection_box_mat.res")
+	new.material_override = mat
+
+
+static func selection_remove_part(hovered_part):
+	delete_selection_box(hovered_part)
+	#erase the same index as hovered_part
+	offset_abb_to_selected_array.remove_at(selected_parts_array.find(hovered_part))
+	selected_parts_array.erase(hovered_part)
+
+
+static func selection_add_part(hovered_part : Part, dragged_part : Part):
+	selected_parts_array.append(hovered_part)
+	part_instance_selection_box(hovered_part)
+	offset_abb_to_selected_array.append(hovered_part.global_position - dragged_part.global_position)
+
+
+static func selection_set_to_part(hovered_part : Part, dragged_part : Part):
+	selected_parts_array = [hovered_part]
+	offset_abb_to_selected_array = [hovered_part.global_position - dragged_part.global_position]
+	WorkspaceManager.clear_all_selection_boxes(selection_box_array)
+	part_instance_selection_box(hovered_part)
+
+
+static func selection_clear():
+	selected_parts_array.clear()
+	WorkspaceManager.clear_all_selection_boxes(selection_box_array)
+	offset_abb_to_selected_array.clear()
+
+
+static func refresh_offset_abb_to_selected_array(selected_parts_abb : ABB):
+	var i : int = 0
+	offset_abb_to_selected_array.clear()
+	while i < selected_parts_array.size():
+		offset_abb_to_selected_array.append(selected_parts_array[i].global_position - selected_parts_abb.transform.origin)
+		i = i + 1
+
+
+#delete all selection boxes and clear 
+static func clear_all_selection_boxes(selection_box_array : Array[SelectionBox]):
+	for i in selection_box_array:
+		if Main.safety_check(i):
+			i.queue_free()
+	selection_box_array.clear()
+
+
+#only used for scale tool
+static func redraw_all_selection_boxes():
+	for i in selection_box_array:
+		if Main.safety_check(i):
+			if i.assigned_node is Part:
+				i.box_scale = i.assigned_node.part_scale
+				i.box_update()
+
+
+#delete selection box whos assigned_node matches the parameter
+static func delete_selection_box(assigned_part : Node3D):
+	for i in selection_box_array:
+		if Main.safety_check(i):
+			if i.assigned_node == assigned_part:
+				selection_box_array.erase(i)
+				i.queue_free()
+				return
+
+
+"TODO"#unit test somehow?
+static func part_hover_selection_box(part : Part, is_hovering_allowed : bool):
+	if is_hovering_allowed and Main.safety_check(part):
+		hover_selection_box.visible = true
+		hover_selection_box.global_transform = part.global_transform
+		hover_selection_box.box_scale = part.part_scale
+	else:
+		hover_selection_box.visible = false
+
+
+#position only
+static func apply_snap_position(input_absolute : Vector3, selected_parts_abb : ABB, transform_handle_root : TransformHandleRoot):
+	selected_parts_abb.transform.origin = input_absolute
+	transform_handle_root.transform.origin = selected_parts_abb.transform.origin
+	
+	var d_input = {}
+	d_input.transform = selected_parts_abb.transform
+	d_input.extents = selected_parts_abb.extents
+	HyperDebug.actions.abb_visualize.do(d_input)
+	
+	var i : int = 0
+	while i < selected_parts_array.size():
+		selected_parts_array[i].global_position = selected_parts_abb.transform.origin + offset_abb_to_selected_array[i]
+		selection_box_array[i].global_transform = selected_parts_array[i].global_transform
+		i = i + 1
+
+
+"TODO"#rename
+static func selection_apply_rotation(difference : Basis, ray_result : Dictionary, selected_parts_abb : ABB):
+	var i : int = 0
+	while i < selected_parts_array.size():
+		#rotate offset_dragged_to_selected_array vector by the difference basis
+		offset_abb_to_selected_array[i] = difference * offset_abb_to_selected_array[i]
+		#move part to ray_result.position for easier pivoting
+		if not ray_result.is_empty():
+			selected_parts_array[i].global_position = ray_result.position
+		else:
+			selected_parts_array[i].global_position = selected_parts_abb.transform.origin
+		
+		
+		#rotate this part
+		selected_parts_array[i].basis = difference * selected_parts_array[i].basis
+		
+		#move it back out along the newly rotated offset_dragged_to_selected_array vector
+		selected_parts_array[i].global_position = selected_parts_abb.transform.origin + offset_abb_to_selected_array[i]
+		#copy transform
+		selection_box_array[i].global_transform = selected_parts_array[i].global_transform
+		i = i + 1
+
+
+static func create_mapping(input_data : Array):
+	var i : int = 0
+	var map : Dictionary = {}
+	
+	while i < input_data.size():
+		#reverse the keys with the values in input_data
+		map[input_data[i]] = i
+		i = i + 1
+	
+	return map
+
+
+#old function
+#read colors from file
+static func read_colors_and_create_colors(file_as_string : String):
+	var lines : PackedStringArray = file_as_string.split("\n")
+	var color_array : Array[Color] = []
+	var color_name_array : Array[String] = []
+	var i : int = 0
+	
+	#read data
+	#iterate through each line
+	while i < lines.size():
+		#get data in each line
+		var data : PackedStringArray = lines[i].split(",")
+		
+		"DEBUG"
+		if data[0] == "#":
+			continue
+		
+		#strip spaces that come after commas
+		for j in data:
+			j.lstrip(" ")
+		
+		#configure arrays
+		if data.size() == 4:
+			color_name_array.append(data[3])
+			color_array.append(Color8(int(data[0]), int(data[1]), int(data[2])))
+		i = i + 1
+	
+	var r_dict : Dictionary = {}
+	r_dict.color_array = color_array
+	r_dict.color_name_array = color_name_array
+	return r_dict
+
+
+#defaults for load/save error cases
+#static var default_color : Color = Color.WHITE
+#static var default_material : StandardMaterial3D = StandardMaterial3D.new()
+#static var default_mesh : Mesh = BoxMesh.new()
 
 #on startup, load these palettes
-const folder_startup_palettes : String = "user://palettes"
+#const folder_startup_palettes : String = "user://palettes"
+#const folder_saved_models : String = "user://models/"
 
-const folder_saved_models : String = "user://settings/"
-
-const filepath_startup_palettes : String = ""
-
+"""
 #currently selected palettes in the editor
 #make the setters into ui events to reload x panel uis
 #or manually call a function after setting these
@@ -23,11 +273,6 @@ static var equipped_part_type_palette : PartTypePalette
 static var available_color_palette_array : Array[ColorPalette]
 static var available_material_palette_array : Array[MaterialPalette]
 static var available_part_type_palette_array : Array[PartTypePalette]
-
-#defaults for error cases
-static var default_color : Color = Color.WHITE
-static var default_material : StandardMaterial3D = StandardMaterial3D.new()
-static var default_mesh : Mesh = BoxMesh.new()
 
 #used to tell functions what datatype to convert a string to (see data_to_csv_line())
 #there is a datatype enum in globalscope but it doesnt include material mesh or part types
@@ -46,7 +291,7 @@ static var persist_instruction_array : Array[PersistInstruction] = [
 	initialize_instruction(
 		ColorPalette.new(),
 		section_header_dict.color_palette,
-		[WorkspaceData.is_equal, WorkspaceData.is_greater],
+		[WorkspaceManager.is_equal, WorkspaceManager.is_greater],
 		[1, 1],
 		[["uuid", "name", "description"], ["color_array", "color_name_array"]],
 		[[DataType.t_string, DataType.t_string, DataType.t_string], [DataType.t_color, DataType.t_string]]
@@ -54,7 +299,7 @@ static var persist_instruction_array : Array[PersistInstruction] = [
 	initialize_instruction(
 		MaterialPalette.new(),
 		section_header_dict.material_palette,
-		[WorkspaceData.is_equal, WorkspaceData.is_greater],
+		[WorkspaceManager.is_equal, WorkspaceManager.is_greater],
 		[1, 1],
 		[["uuid", "name", "description"], ["material_array", "material_name_array"]],
 		[[DataType.t_string, DataType.t_string, DataType.t_string], [DataType.t_material, DataType.t_string]]
@@ -62,7 +307,7 @@ static var persist_instruction_array : Array[PersistInstruction] = [
 	initialize_instruction(
 		PartTypePalette.new(),
 		section_header_dict.part_type_palette,
-		[WorkspaceData.is_equal, WorkspaceData.is_greater],
+		[WorkspaceManager.is_equal, WorkspaceManager.is_greater],
 		[1, 1],
 		[["uuid", "name", "description"], ["mesh_array", "mesh_name_array", "collider_type_array"]],
 		[[DataType.t_string, DataType.t_string, DataType.t_string], [DataType.t_mesh, DataType.t_string, DataType.t_int]]
@@ -70,7 +315,7 @@ static var persist_instruction_array : Array[PersistInstruction] = [
 	initialize_instruction(
 		Model.new(),
 		section_header_dict.model,
-		[WorkspaceData.is_equal, WorkspaceData.is_greater],
+		[WorkspaceManager.is_equal, WorkspaceManager.is_greater],
 		[1, 1],
 		[["uuid", "name", "description", "part_count"], ["part_array"]],
 		[[DataType.t_string, DataType.t_string, DataType.t_string, DataType.t_int], [DataType.t_part]]
@@ -171,17 +416,6 @@ class PartTypePalette:
 	var mesh_array : Array[Mesh]
 	var mesh_name_array : Array[String]
 	var collider_type_array : Array[int]
-
-
-static func initialize():
-	#var r_dict : Dictionary = WorkspaceData.load_data_from_tmv("res://editor/data_editor/default.tmvp")
-	#WorkspaceData.available_color_palette_array.append_array(r_dict.color_palette_array)
-	#WorkspaceData.available_material_palette_array.append_array(r_dict.material_palette_array)
-	#WorkspaceData.available_part_type_palette_array.append_array(r_dict.part_type_palette_array)
-	#WorkspaceData.selec
-	
-	pass
-
 
 static func load_data_file(file_path : String):
 	#unbundle_tmv()
@@ -366,18 +600,6 @@ static func get_index_of_line_instruction(instruction : PersistInstruction, line
 		i = i + 1
 
 
-static func create_mapping(input_data : Array):
-	var i : int = 0
-	var map : Dictionary = {}
-	
-	while i < input_data.size():
-		#reverse the keys with the values in input_data
-		map[input_data[i]] = i
-		i = i + 1
-	
-	return map
-
-
 static func create_palette_mappings(input_dict : Dictionary):
 	#assigning palette ids and asset ids
 	#if input_dict doesnt have mappings, make them
@@ -459,39 +681,6 @@ static func dispatch_instruction(section_header : String):
 		if i.section_header == section_header:
 			return i
 
-
-#old function
-#read colors from file
-static func read_colors_and_create_colors(file_as_string : String):
-	var lines : PackedStringArray = file_as_string.split("\n")
-	var color_array : Array[Color] = []
-	var color_name_array : Array[String] = []
-	var i : int = 0
-	
-	#read data
-	#iterate through each line
-	while i < lines.size():
-		#get data in each line
-		var data : PackedStringArray = lines[i].split(",")
-		
-		"DEBUG"
-		if data[0] == "#":
-			continue
-		
-		#strip spaces that come after commas
-		for j in data:
-			j.lstrip(" ")
-		
-		#configure arrays
-		if data.size() == 4:
-			color_name_array.append(data[3])
-			color_array.append(Color8(int(data[0]), int(data[1]), int(data[2])))
-		i = i + 1
-	
-	var r_dict : Dictionary = {}
-	r_dict.color_array = color_array
-	r_dict.color_name_array = color_name_array
-	return r_dict
-
 "TODO"#add config read function, add material read function, add part model read function
 "TODO"#also add all the filepaths in here
+"""

@@ -143,14 +143,14 @@ func initialize(
 	
 #initialize picker/selector menus
 	#future
-	#var default_palette : WorkspaceData.ColorPalette = WorkspaceData.ColorPalette.new()
+	#var default_palette : WorkspaceManager.ColorPalette = WorkspaceManager.ColorPalette.new()
 	#default_palette.color_array = r_dict_2.color_array
 	#default_palette.color_name_array = r_dict_2.color_name_array
-	#WorkspaceData.available_color_palette_array.append(default_palette)
-	#WorkspaceData.equipped_color_palette = default_palette
+	#WorkspaceManager.available_color_palette_array.append(default_palette)
+	#WorkspaceManager.equipped_color_palette = default_palette
 	
 	
-	var r_dict : Dictionary = WorkspaceData.read_colors_and_create_colors(FileAccess.get_file_as_string(FilePathRegistry.data_file_color))
+	var r_dict : Dictionary = WorkspaceManager.read_colors_and_create_colors(FileAccess.get_file_as_string(FilePathRegistry.data_file_color))
 	var r_dict_2 : Dictionary = AutomatedColorPalette.full_color_sort(gc_paint_panel, r_dict.color_array, r_dict.color_name_array)
 	EditorUI.create_color_buttons(gc_paint_panel, on_color_selected, r_dict_2.color_array, r_dict_2.color_name_array)
 	EditorUI.create_material_buttons(on_material_selected)
@@ -188,7 +188,7 @@ func initialize(
 	b_paint_tool.pressed.connect(on_tool_selected.bind(b_paint_tool))
 	b_material_tool.pressed.connect(on_tool_selected.bind(b_material_tool))
 	b_lock_tool.pressed.connect(on_tool_selected.bind(b_lock_tool))
-	b_spawn_part.pressed.connect(on_spawn_pressed)
+	b_spawn_part.pressed.connect(on_spawn_pressed.bind(Main.raycast_length, Main.part_spawn_distance, Main.cam))
 	
 
 
@@ -208,6 +208,7 @@ static func create_color_buttons(parent : Control, on_color_selected : Callable,
 	
 	#unload existing nodes (when for example, color palette changes
 	var existing_nodes : Array[Node] = parent.get_children()
+	
 	var sample_button : Button = load(FilePathRegistry.scene_color_button).instantiate()
 	
 	#delete all but first button
@@ -229,11 +230,6 @@ static func create_color_buttons(parent : Control, on_color_selected : Callable,
 
 static func create_part_type_buttons(on_part_type_selected : Callable):
 	var file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_part)
-	var parts_list : Array[Mesh] = []
-	
-	for path in file_list:
-		parts_list.append(ResourceLoader.load(FilePathRegistry.data_folder_part + path, "Mesh"))
-	Main.available_part_types = parts_list
 	
 	var new_buttons : Array = UIUtils.update_list_ui(
 	EditorUI.gc_part_panel,
@@ -247,17 +243,12 @@ static func create_part_type_buttons(on_part_type_selected : Callable):
 	)
 	
 	
-	Main.button_part_type_mapping = WorkspaceData.create_mapping(new_buttons)
+	WorkspaceManager.button_part_type_mapping = WorkspaceManager.create_mapping(new_buttons)
 
 
 
 static func create_material_buttons(on_material_selected):
 	var file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_material)
-	var materials_list : Array[Material] = []
-	
-	for path in file_list:
-		materials_list.append(ResourceLoader.load(FilePathRegistry.data_folder_material + path, "Material"))
-	Main.available_materials = materials_list
 	
 	var new_buttons : Array = UIUtils.update_list_ui(
 	EditorUI.vbc_material_panel,
@@ -271,87 +262,7 @@ static func create_material_buttons(on_material_selected):
 	)
 	
 	
-	Main.button_material_mapping = WorkspaceData.create_mapping(new_buttons)
-
-
-#signals
-static func select_tool(
-	button : Button,
-	selected_tool_handle_array : Array[TransformHandle],
-	selected_tool : Main.SelectedToolEnum,
-	is_drag_tool : bool,
-	transform_handle_root : TransformHandleRoot,
-	selected_parts_abb : ABB,
-	local_transform_active : bool,
-	selected_parts_array : Array[Part],
-	selection_box_array : Array[SelectionBox],
-	offset_abb_to_selected_array : Array[Vector3]
-	):
-	
-	if not selected_tool_handle_array.is_empty():
-		TransformHandleUtils.set_tool_handle_array_active(selected_tool_handle_array, false)
-	
-	var has_associated_transform_handles : bool = false
-	"TODO"#if selected tool has selection drop down then tell the user what is selected with bottom bar text
-	if button.button_pressed:
-		match button:
-			b_drag_tool:
-				selected_tool = Main.SelectedToolEnum.t_drag
-				has_associated_transform_handles = false
-				is_drag_tool = true
-			b_move_tool:
-				selected_tool = Main.SelectedToolEnum.t_move
-				has_associated_transform_handles = true
-				is_drag_tool = true
-			b_rotate_tool:
-				selected_tool = Main.SelectedToolEnum.t_rotate
-				has_associated_transform_handles = true
-				is_drag_tool = true
-			b_scale_tool:
-				selected_tool = Main.SelectedToolEnum.t_scale
-				has_associated_transform_handles = true
-				is_drag_tool = true
-			b_material_tool:
-				selected_tool = Main.SelectedToolEnum.t_material
-				has_associated_transform_handles = false
-				is_drag_tool = false
-			b_paint_tool:
-				selected_tool = Main.SelectedToolEnum.t_color
-				has_associated_transform_handles = false
-				is_drag_tool = false
-			b_lock_tool:
-				selected_tool = Main.SelectedToolEnum.t_lock
-				has_associated_transform_handles = false
-				is_drag_tool = false
-	else:
-		selected_tool = Main.SelectedToolEnum.none
-		has_associated_transform_handles = false
-		is_drag_tool = false
-	
-	if has_associated_transform_handles:
-		selected_tool_handle_array = transform_handle_root.tool_handle_array[selected_tool]
-	else:
-		selected_tool_handle_array = []
-	
-	if is_drag_tool:
-		if has_associated_transform_handles:
-			Main.set_transform_handle_root_position(transform_handle_root, selected_parts_abb.transform, local_transform_active, selected_tool_handle_array)
-			if selected_parts_array.size() > 0:
-				TransformHandleUtils.set_tool_handle_array_active(selected_tool_handle_array, true)
-		
-	else:
-		selected_parts_array.clear()
-		Main.clear_all_selection_boxes(selection_box_array)
-		offset_abb_to_selected_array.clear()
-	
-	
-	var r_dict : Dictionary = {}
-	r_dict.selected_tool = selected_tool
-	r_dict.selected_tool_handle_array = selected_tool_handle_array
-	r_dict.is_drag_tool = is_drag_tool
-	r_dict.selected_parts_array = selected_parts_array
-	r_dict.offset_abb_to_selected_array = offset_abb_to_selected_array
-	return r_dict
+	WorkspaceManager.button_material_mapping = WorkspaceManager.create_mapping(new_buttons)
 
 
 static func on_snap_text_changed(line_edit : LineEditNumeric):
