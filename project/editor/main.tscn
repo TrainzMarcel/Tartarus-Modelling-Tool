@@ -140,7 +140,6 @@ shader_parameter/texture_normal = ExtResource("11_5r5hq")
 
 [node name="Main" type="Node3D" node_paths=PackedStringArray("e_cam", "second_cam", "e_workspace", "e_transform_handle_root", "hover_selection_box", "ui_node")]
 script = ExtResource("1_4xdr8")
-debug_active = null
 e_cam = NodePath("Camera3D")
 second_cam = NodePath("SubViewportContainer/SubViewport/Camera3D")
 e_workspace = NodePath("Workspace")

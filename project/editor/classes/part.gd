@@ -25,6 +25,10 @@ var collider_type : int = 0
 		
 		if part_collider_node == null or part_mesh_node == null:
 			return
+		
+		if part_collider_node.shape == null:
+			return
+		
 		#implement the different shapes
 		match collider_type:
 		#cuboid
@@ -59,28 +63,33 @@ var collider_type : int = 0
 var part_collider_node : CollisionShape3D
 var part_mesh_node : MeshInstance3D
 
-# Called when the node enters the scene tree for the first time.
-func _ready():
-	
-#initialize
-	#assign collider when added to scene tree
+
+func _init():
 	part_collider_node = CollisionShape3D.new()
-	part_collider_node.owner = get_tree().edited_scene_root
-	add_child(part_collider_node)
-	part_collider_node.shape = BoxShape3D.new()
+	part_mesh_node = MeshInstance3D.new()
+	
 	#set collision mask to not collide with other parts
 	set_collision_mask_value(1, false)
 	set_collision_mask_value(2, true)
 	
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	if part_collider_node.shape == null:
+		part_collider_node.shape = BoxShape3D.new()
 	
-	part_mesh_node = MeshInstance3D.new()
-	part_mesh_node.owner = get_tree().edited_scene_root
-	add_child(part_mesh_node)
-	part_mesh_node.mesh = preload(FilePathRegistry.data_default_part)
+	if part_mesh_node.mesh == null:
+		part_mesh_node.mesh = preload(FilePathRegistry.data_default_part)
+	
 	part_mesh_node.material_override = preload(FilePathRegistry.data_default_material)
-	print(part_mesh_node.material_override)
 	part_color = Color.WHITE
 	
+	add_child(part_collider_node)
+	part_collider_node.owner = get_tree().edited_scene_root
+	
+	add_child(part_mesh_node)
+	part_mesh_node.owner = get_tree().edited_scene_root
 	
 #only set this after its initialized (does not run through setter if mesh or collider are null)
 	part_scale = part_scale

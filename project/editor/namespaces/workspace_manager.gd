@@ -2,7 +2,7 @@ extends RefCounted
 class_name WorkspaceManager
 
 #was meant to handle saving and loading but i dropped that for now
-#now handles selection logic and selection box logic
+#now handles selection logic, selection box logic and undo redo logic
 
 static var hover_selection_box : SelectionBox
 static var workspace : Node
@@ -17,9 +17,9 @@ static var selected_material : Material
 static var button_material_mapping : Dictionary
 static var available_materials : Array[Material]
 #gets set in on_part_type_selected
-static var selected_part_type : Mesh
+static var selected_part_type : Part
 static var button_part_type_mapping : Dictionary
-static var available_part_types : Array[Mesh]
+static var available_part_types : Array[Part]
 
 #!!!selected_parts_array, offset_dragged_to_selected_array and selection_box_array are parallel arrays!!!
 static var selected_parts_array : Array[Part] = []
@@ -28,19 +28,14 @@ static var offset_abb_to_selected_array : Array[Vector3] = []
 static var selection_box_array : Array[SelectionBox] = []
 
 
+
 static func initialize(workspace : Node, hover_selection_box : SelectionBox):
 	WorkspaceManager.workspace = workspace
 	WorkspaceManager.hover_selection_box = hover_selection_box
 	
+	#colors are stored in color buttons (self_modulate) but im not sure if thats a good thing
 	#get part types and materials from .tres files
-	var file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_part)
-	var parts_list : Array[Mesh] = []
-	
-	for path in file_list:
-		parts_list.append(ResourceLoader.load(FilePathRegistry.data_folder_part + path, "Mesh"))
-	WorkspaceManager.available_part_types = parts_list
-	
-	file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_material)
+	var file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_material)
 	var materials_list : Array[Material] = []
 	
 	for path in file_list:
@@ -49,16 +44,24 @@ static func initialize(workspace : Node, hover_selection_box : SelectionBox):
 	
 	
 	
+	file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_part)
+	var parts_list : Array[Part] = []
 	
+	for path in file_list:
+		var new : Part = Part.new()
+		new.part_mesh_node.mesh = ResourceLoader.load(FilePathRegistry.data_folder_part + path, "Mesh")
+		
+		parts_list.append(new)
 	
+	#set default scale
+	#cylinder
+	parts_list[1].part_scale = Vector3(0.4, 0.8, 0.4)
+	#sphere
+	parts_list[2].part_scale = Vector3(0.8, 0.8, 0.8)
 	
-	
-	
-	
-	
-	
-	
-	
+	WorkspaceManager.available_part_types = parts_list
+	if available_part_types.size() > 0:
+		selected_part_type = available_part_types[0]
 	
 	#var r_dict : Dictionary = WorkspaceManager.load_data_from_tmv("res://editor/data_editor/default.tmvp")
 	#WorkspaceManager.available_color_palette_array.append_array(r_dict.color_palette_array)
@@ -67,25 +70,55 @@ static func initialize(workspace : Node, hover_selection_box : SelectionBox):
 	#WorkspaceManager.selec
 
 
-static func spawn_part(raycast_length : float, part_spawn_distance : float, cam : FreeLookCamera):
-	var new_part : Part = Part.new()
+#part functions-----------------------------------------------------------------
+static func part_spawn(raycast_length : float, part_spawn_distance : float, cam : FreeLookCamera):
+	var new_part : Part = selected_part_type.duplicate()
+	new_part.part_mesh_node = selected_part_type.part_mesh_node.duplicate()
+	new_part.part_collider_node = selected_part_type.part_collider_node.duplicate()
+	
+	
 	workspace.add_child(new_part)
 	var ray_result = Main.raycast(cam, cam.global_position, -cam.basis.z * raycast_length, [], [1])
 	if ray_result.is_empty():
 		new_part.global_position = cam.global_position + part_spawn_distance * -cam.basis.z
 	else:
 		new_part.global_position = ray_result.position
-	new_part.part_mesh_node.mesh = selected_part_type
-	"TODO"#bad code here
-	#set default scale
-	if selected_part_type == available_part_types[1]:
-		new_part.part_scale = Vector3(0.4, 0.8, 0.4)
-	elif selected_part_type == available_part_types[2]:
-		new_part.part_scale = Vector3(0.8, 0.8, 0.8)
 
 
+static func part_delete(hovered_part : Part):
+	hovered_part.queue_free()
+
+
+#selection functions------------------------------------------------------------
+static func selection_remove_part(hovered_part):
+	selection_box_delete_on_part(hovered_part)
+	#erase the same index as hovered_part
+	offset_abb_to_selected_array.remove_at(selected_parts_array.find(hovered_part))
+	selected_parts_array.erase(hovered_part)
+
+
+static func selection_add_part(hovered_part : Part, dragged_part : Part):
+	selected_parts_array.append(hovered_part)
+	selection_box_instance_on_part(hovered_part)
+	offset_abb_to_selected_array.append(hovered_part.global_position - dragged_part.global_position)
+
+
+static func selection_set_to_part(hovered_part : Part, dragged_part : Part):
+	selected_parts_array = [hovered_part]
+	offset_abb_to_selected_array = [hovered_part.global_position - dragged_part.global_position]
+	WorkspaceManager.selection_boxes_clear_all(selection_box_array)
+	selection_box_instance_on_part(hovered_part)
+
+
+static func selection_clear():
+	selected_parts_array.clear()
+	WorkspaceManager.selection_boxes_clear_all(selection_box_array)
+	offset_abb_to_selected_array.clear()
+
+
+#selection box functions--------------------------------------------------------
 #instance and fit selection box to a part as child of workspace node and add it to the array
-static func part_instance_selection_box(assigned_part : Part):
+static func selection_box_instance_on_part(assigned_part : Part):
 	var new : SelectionBox = SelectionBox.new()
 	selection_box_array.append(new)
 	workspace.add_child(new)
@@ -96,42 +129,8 @@ static func part_instance_selection_box(assigned_part : Part):
 	new.material_override = mat
 
 
-static func selection_remove_part(hovered_part):
-	delete_selection_box(hovered_part)
-	#erase the same index as hovered_part
-	offset_abb_to_selected_array.remove_at(selected_parts_array.find(hovered_part))
-	selected_parts_array.erase(hovered_part)
-
-
-static func selection_add_part(hovered_part : Part, dragged_part : Part):
-	selected_parts_array.append(hovered_part)
-	part_instance_selection_box(hovered_part)
-	offset_abb_to_selected_array.append(hovered_part.global_position - dragged_part.global_position)
-
-
-static func selection_set_to_part(hovered_part : Part, dragged_part : Part):
-	selected_parts_array = [hovered_part]
-	offset_abb_to_selected_array = [hovered_part.global_position - dragged_part.global_position]
-	WorkspaceManager.clear_all_selection_boxes(selection_box_array)
-	part_instance_selection_box(hovered_part)
-
-
-static func selection_clear():
-	selected_parts_array.clear()
-	WorkspaceManager.clear_all_selection_boxes(selection_box_array)
-	offset_abb_to_selected_array.clear()
-
-
-static func refresh_offset_abb_to_selected_array(selected_parts_abb : ABB):
-	var i : int = 0
-	offset_abb_to_selected_array.clear()
-	while i < selected_parts_array.size():
-		offset_abb_to_selected_array.append(selected_parts_array[i].global_position - selected_parts_abb.transform.origin)
-		i = i + 1
-
-
 #delete all selection boxes and clear 
-static func clear_all_selection_boxes(selection_box_array : Array[SelectionBox]):
+static func selection_boxes_clear_all(selection_box_array : Array[SelectionBox]):
 	for i in selection_box_array:
 		if Main.safety_check(i):
 			i.queue_free()
@@ -139,7 +138,7 @@ static func clear_all_selection_boxes(selection_box_array : Array[SelectionBox])
 
 
 #only used for scale tool
-static func redraw_all_selection_boxes():
+static func selection_boxes_redraw_all():
 	for i in selection_box_array:
 		if Main.safety_check(i):
 			if i.assigned_node is Part:
@@ -148,7 +147,7 @@ static func redraw_all_selection_boxes():
 
 
 #delete selection box whos assigned_node matches the parameter
-static func delete_selection_box(assigned_part : Node3D):
+static func selection_box_delete_on_part(assigned_part : Node3D):
 	for i in selection_box_array:
 		if Main.safety_check(i):
 			if i.assigned_node == assigned_part:
@@ -158,13 +157,22 @@ static func delete_selection_box(assigned_part : Node3D):
 
 
 "TODO"#unit test somehow?
-static func part_hover_selection_box(part : Part, is_hovering_allowed : bool):
+static func selection_box_hover_on_part(part : Part, is_hovering_allowed : bool):
 	if is_hovering_allowed and Main.safety_check(part):
 		hover_selection_box.visible = true
 		hover_selection_box.global_transform = part.global_transform
 		hover_selection_box.box_scale = part.part_scale
 	else:
 		hover_selection_box.visible = false
+
+
+#utils
+static func refresh_offset_abb_to_selected_array(selected_parts_abb : ABB):
+	var i : int = 0
+	offset_abb_to_selected_array.clear()
+	while i < selected_parts_array.size():
+		offset_abb_to_selected_array.append(selected_parts_array[i].global_position - selected_parts_abb.transform.origin)
+		i = i + 1
 
 
 #position only
@@ -184,7 +192,6 @@ static func apply_snap_position(input_absolute : Vector3, selected_parts_abb : A
 		i = i + 1
 
 
-"TODO"#rename
 static func selection_apply_rotation(difference : Basis, ray_result : Dictionary, selected_parts_abb : ABB):
 	var i : int = 0
 	while i < selected_parts_array.size():

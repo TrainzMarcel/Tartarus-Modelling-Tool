@@ -54,6 +54,10 @@ static var transform_handle_root : TransformHandleRoot
 static var positional_snap_increment : float = 0.1
 static var rotational_snap_increment : float = 15
 static var snapping_active : bool = true
+#
+static var drag_confirmed : bool = false
+var initial_drag_event : InputEvent
+
 #bounding box of selected parts for positional snapping
 static var selected_parts_abb : ABB = ABB.new()
 #local vector pointing from bounding box to rotation pivot
@@ -104,7 +108,7 @@ var prev_hovered_handle : TransformHandle
 #initial transform to make snapping work with transformhandles
 var abb_initial_transform : Transform3D
 var abb_initial_extents : Vector3
-var initial_event : InputEvent
+var initial_handle_event : InputEvent
 #determines if transform axes will be local to the selection or global
 static var local_transform_active : bool = false
 #fixed distance of camera to transformhandleroot
@@ -115,7 +119,7 @@ static var selected_tool_handle_array : Array[TransformHandle]
 
 #conditionals-------------------------------------------------------------------
 #main override for when ui like a document view or an asset menu or a file explorer is open
-var is_input_active : bool = true
+static var is_input_active : bool = true
 
 var mouse_button_held : bool = false
 #gets set in on_tool_selected
@@ -136,7 +140,7 @@ func _ready():
 	
 	#parameterized signals to make them more explicit and visible
 	ui_node.initialize(
-	WorkspaceManager.spawn_part,
+	WorkspaceManager.part_spawn,
 	MainUIEvents.select_tool,
 	MainUIEvents.on_snap_button_pressed,
 	MainUIEvents.on_snap_text_changed,
@@ -158,10 +162,12 @@ func _ready():
 
 # Called every input event.
 func _input(event):
+	if ui_menu_block_check(EditorUI.ui_menu) or not is_input_active:
+		return
 #start by setting all control variables
 	#check validity of selecting
 	#is_drag_tool is set by func on_tool_selected
-	var is_ui_hovered : bool = ui_hover_check(EditorUI.no_drag_ui)
+	var is_ui_hovered : bool = ui_hover_check(EditorUI.ui_no_drag)
 	is_selecting_allowed = is_drag_tool and not is_ui_hovered
 	is_selecting_allowed = is_selecting_allowed and Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED
 	
@@ -188,7 +194,7 @@ func _input(event):
 					TransformHandleUtils.set_transform_handle_highlight(prev_hovered_handle, false, false)
 				
 				hovered_part = part_hover_check()
-				WorkspaceManager.part_hover_selection_box(hovered_part, is_hovering_allowed)
+				WorkspaceManager.selection_box_hover_on_part(hovered_part, is_hovering_allowed)
 			#handle was detected
 			else:
 				
@@ -225,7 +231,7 @@ func _input(event):
 					dragged_handle = hovered_handle
 					abb_initial_transform = selected_parts_abb.transform
 					abb_initial_extents = selected_parts_abb.extents
-					initial_event = event
+					initial_handle_event = event
 					TransformHandleUtils.set_transform_handle_highlight(dragged_handle, true, false)
 					#hide hover selection_box because it does not move with transforms
 					hover_selection_box.visible = false
@@ -239,6 +245,8 @@ func _input(event):
 					
 				dragged_handle = null
 				mouse_button_held = false
+				#drag has a tolerance of a few pixels before it starts
+				drag_confirmed = false
 	
 	
 #selection behavior:
@@ -262,7 +270,7 @@ func _input(event):
 							#dragging on an already selected part
 							if WorkspaceManager.selected_parts_array.has(hovered_part) and hovered_part == dragged_part:
 								dragged_part = null
-							WorkspaceManager.remove_part_from_selection(hovered_part)
+							WorkspaceManager.selection_remove_part(hovered_part)
 				#hovered part is not in selection
 					else:
 					#shift is held
@@ -297,8 +305,10 @@ func _input(event):
 	#post click checks
 			"TODO"#preceding part of program needs to be restructured to eliminate redundancies
 			#mainly as the selection array needs to be updated before abb gets updated, as calculate_extents depends on the selection array
+			#
 			if WorkspaceManager.selected_parts_array.size() > 0 and is_selecting_allowed:
 				
+				#refresh bounding box
 				selected_parts_abb = SnapUtils.calculate_extents(selected_parts_abb, WorkspaceManager.selected_parts_array[0], WorkspaceManager.selected_parts_array)
 				
 				#debug
@@ -352,6 +362,7 @@ func _input(event):
 				#rotate around part vector which is closest to cam.basis.x
 				if Input.is_key_pressed(KEY_T):
 					var r_dict = SnapUtils.find_closest_vector_abs(initial_rotation, cam.basis.x, true)
+					#flip vector if they are opposed
 					if r_dict.vector.dot(cam.basis.x) < 0:
 						r_dict.vector = -r_dict.vector
 					initial_rotation = initial_rotation.rotated(r_dict.vector.normalized(), PI * 0.5)
@@ -373,7 +384,11 @@ func _input(event):
 #dragging (parts AND transform handles) happens here
 	if event is InputEventMouseMotion:
 		#parts dragging under this if
-		if mouse_button_held and not ray_result.is_empty() and is_selecting_allowed:
+		"TODO TODO TODO"
+		if mouse_button_held and not ray_result.is_empty() and is_selecting_allowed:# and (initial_handle_event.position - event.position.length()) > 10:
+			if initial_drag_event == null:
+				initial_drag_event = event
+			
 			if Main.safety_check(dragged_part):
 				if Main.safety_check(hovered_part):
 					if not SnapUtils.part_rectilinear_alignment_check(dragged_part, hovered_part):
@@ -406,7 +421,7 @@ func _input(event):
 					transform_handle_root,
 					abb_initial_extents,
 					abb_initial_transform,
-					initial_event,
+					initial_handle_event,
 					event,
 					cam,
 					positional_snap_increment,
@@ -421,7 +436,7 @@ func _input(event):
 				if result.modify_scale:
 					WorkspaceManager.selected_parts_array[0].part_scale = result.part_scale
 					selected_parts_abb.extents = result.part_scale
-					WorkspaceManager.redraw_all_selection_boxes()
+					WorkspaceManager.selection_boxes_redraw_all()
 					EditorUI.l_message.text = "Scale: " + str(WorkspaceManager.selected_parts_array[0].part_scale)
 					
 				if result.modify_position:
@@ -447,6 +462,8 @@ func _input(event):
 
 
 func _process(delta : float):
+	if ui_menu_block_check(EditorUI.ui_menu) or not is_input_active:
+		return
 	cam.cam_process(delta, second_cam, transform_handle_root, transform_handle_scale, selected_tool_handle_array, selected_parts_abb)
 
 
@@ -454,6 +471,14 @@ func _process(delta : float):
 func ui_hover_check(ui_list : Array[Control]):
 	for i in ui_list:
 		if Rect2(i.global_position, i.size).has_point(get_viewport().get_mouse_position()) and i.visible:
+			return true
+	return false
+
+
+#returns true if any menus are open
+func ui_menu_block_check(menu_list : Array[Control]):
+	for i in menu_list:
+		if i.visible:
 			return true
 	return false
 

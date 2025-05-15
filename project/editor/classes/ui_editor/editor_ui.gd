@@ -63,7 +63,11 @@ static var l_camera_speed : Label
 static var l_message : Label
 
 #array of control nodes which are iterated over to check if the mouse is over ui
-static var no_drag_ui : Array[Control]
+static var ui_no_drag : Array[Control]
+
+#array of control nodes which are iterated over to check if any menus are open
+#and blocking the editor view
+static var ui_menu : Array[Control]
 
 #document displays
 static var dd_manual : DocumentDisplay
@@ -73,7 +77,7 @@ static var dd_license : DocumentDisplay
 
 
 func initialize(
-	on_spawn_pressed : Callable,
+	part_spawn : Callable,
 	on_tool_selected : Callable,
 	main_on_snap_button_pressed : Callable,
 	main_on_snap_text_changed : Callable,
@@ -142,13 +146,18 @@ func initialize(
 	dd_manual = %DocumentDisplayManual
 	dd_license = %DocumentDisplayLicense
 	
-	
-	no_drag_ui = [
-		$PanelContainerTopLeftBlock,
-		$PanelContainerBottomLeftBlock,
+	ui_menu = [
 		%DocumentDisplayManual,
 		%DocumentDisplayLicense,
+		$AssetManager
+	]
+	
+	ui_no_drag = [
+		$PanelContainerTopLeftBlock,
 		$PanelContainerBottomLeftBlock,
+		$BottomPanel,
+		%DocumentDisplayManual,
+		%DocumentDisplayLicense,
 		$PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool/DropDownButton/PanelContainerColor,
 		$PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerMaterialTool/DropDownButton/PanelContainerMaterial,
 		$PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType
@@ -201,7 +210,7 @@ func initialize(
 	b_paint_tool.pressed.connect(on_tool_selected.bind(b_paint_tool))
 	b_material_tool.pressed.connect(on_tool_selected.bind(b_material_tool))
 	b_lock_tool.pressed.connect(on_tool_selected.bind(b_lock_tool))
-	b_spawn_part.pressed.connect(on_spawn_pressed.bind(Main.raycast_length, Main.part_spawn_distance, Main.cam))
+	b_spawn_part.pressed.connect(part_spawn.bind(Main.raycast_length, Main.part_spawn_distance, Main.cam))
 	
 	pm_file.id_pressed.connect(on_top_bar_id_pressed.bind(pm_file))
 	pm_edit.id_pressed.connect(on_top_bar_id_pressed.bind(pm_edit))
