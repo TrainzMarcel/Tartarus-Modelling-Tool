@@ -32,6 +32,7 @@ static func initialize(workspace : Node, hover_selection_box : SelectionBox):
 	WorkspaceManager.workspace = workspace
 	WorkspaceManager.hover_selection_box = hover_selection_box
 	
+	#get part types and materials from .tres files
 	var file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_part)
 	var parts_list : Array[Mesh] = []
 	

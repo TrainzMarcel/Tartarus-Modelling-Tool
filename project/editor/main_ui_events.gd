@@ -4,12 +4,12 @@ class_name MainUIEvents
 #this namespace serves as a central registry for ui events that
 #interact with namespaces or classes other than their own
 
-"TODO"#put all the things one has to edit to add a new tool to transformhandleroot into one file (if possible)
+
 #set selected state and is_drag_tool
 static func select_tool(button : Button):
 	if not Main.selected_tool_handle_array.is_empty():
 		TransformHandleUtils.set_tool_handle_array_active(Main.selected_tool_handle_array, false)
-	
+	"TODO"#use dynamic dispatch here with a dict mapping instead of this ugly match thing
 	var has_associated_transform_handles : bool = false
 	if button.button_pressed:
 		match button:
@@ -102,3 +102,68 @@ static func on_local_transform_active_set(active):
 
 static func on_snapping_active_set(active):
 	Main.snapping_active = active
+
+#i already tried doing a dynamic dispatch with function arrays, it sucked
+#if else is much more readable in this case
+static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
+	#file dropdown----------------------
+	if pm == EditorUI.pm_file:
+		if id == 0:
+			#save (model) as
+			pass
+		elif id == 1:
+			#save (model)
+			pass
+		elif id == 2:
+			#load model
+			pass
+		elif id == 3:
+			#import model (planned: .gltf, .obj)
+			pass
+		elif id == 4:
+			#export model (planned: .gltf, .obj)
+			pass
+		
+	#edit dropdown----------------------
+	elif pm == EditorUI.pm_edit:
+		if id == 0:
+			#undo
+			pass
+		elif id == 1:
+			#redo
+			pass
+		elif id == 3:
+			#ctrl a select all
+			pass
+		elif id == 4:
+			#ctrl c copy selection
+			pass
+		elif id == 5:
+			#ctrl v paste selection
+			pass
+		elif id == 6:
+			#ctrl x cut selection
+			pass
+		elif id == 7:
+			#ctrl d duplicate selection
+			pass
+		elif id == 8:
+			#delete clear selection
+			pass
+		elif id == 8:
+			#settings window
+			pass
+		
+		
+		#asset manager stuff, not implemented yet, dropped for v0.1
+	#asset dropdown---------------------
+	elif pm == EditorUI.pm_assets:
+		pass
+		
+		
+	#help dropdown----------------------
+	elif pm == EditorUI.pm_help:
+		if id == 0:
+			EditorUI.dd_manual.popup()
+		elif id == 1:
+			EditorUI.dd_license.popup()

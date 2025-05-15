@@ -9,6 +9,18 @@ class_name Main
 #future idea: put selection box around selected_parts_abb as a visual cue (still keeping the selectionboxes of individual parts)
 #future idea 2: recolor selection box to red if 2 selected parts are overlapping perfectly
 
+"TODO"#for tomorrow 15.5.: implement all ctrl + key functions
+#including undo and redo
+#that OR fix snapping, scaling and rest of transform code
+#pivot move tool
+#also implement selection box coloring depending on tool
+#delete tool
+#add events to open document displays
+"TODO"#add is_hover_tool
+"TODO"#put all the things one has to edit to add a new tool to transformhandleroot into one file (if possible)
+#this would involve creating a centralized data object array to hold the properties of each tool
+#as well as making a mapping for ui buttons -> tool data object
+
 
 "TODO" #CONTROL F TODO
 
@@ -17,9 +29,9 @@ class_name Main
 # x EditorUI
 #   SnapUtils
 #   HyperDebug
-#   ABB
-#   TransformHandle
-#   TransformHandleRoot
+# x ABB
+# x TransformHandle
+# x TransformHandleRoot
 #   TransformHandleUtils
 
 
@@ -108,7 +120,6 @@ var is_input_active : bool = true
 var mouse_button_held : bool = false
 #gets set in on_tool_selected
 static var is_drag_tool : bool = false
-"TODO"#add is_hover_tool
 #this bool is meant for non drag tools which dont need selecting but still need hovering and clicking functionality
 var is_hovering_allowed : bool = false
 #this bool is meant for drag tools, if this is enabled then hovering_allowed is also enabled
@@ -123,6 +134,7 @@ func _ready():
 	transform_handle_root = e_transform_handle_root
 	cam = e_cam
 	
+	#parameterized signals to make them more explicit and visible
 	ui_node.initialize(
 	WorkspaceManager.spawn_part,
 	MainUIEvents.select_tool,
@@ -132,7 +144,8 @@ func _ready():
 	MainUIEvents.on_snapping_active_set,
 	MainUIEvents.on_color_selected,
 	MainUIEvents.on_material_selected,
-	MainUIEvents.on_part_type_selected
+	MainUIEvents.on_part_type_selected,
+	MainUIEvents.on_top_bar_id_pressed
 	)
 	
 	cam.initialize(EditorUI.l_camera_speed)
@@ -191,6 +204,7 @@ func _input(event):
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
+				#important control variable
 				mouse_button_held = true
 				#if there is a mouse click off ui, release focus
 				if not is_ui_hovered:
@@ -208,18 +222,18 @@ func _input(event):
 				if Main.safety_check(hovered_handle):
 					#ONLY set dragged_handle if its null
 					#if not Main.safety_check(dragged_handle):
-						dragged_handle = hovered_handle
-						abb_initial_transform = selected_parts_abb.transform
-						abb_initial_extents = selected_parts_abb.extents
-						initial_event = event
-						TransformHandleUtils.set_transform_handle_highlight(dragged_handle, true)
-						#hide hover selection_box because it does not move with transforms
-						hover_selection_box.visible = false
+					dragged_handle = hovered_handle
+					abb_initial_transform = selected_parts_abb.transform
+					abb_initial_extents = selected_parts_abb.extents
+					initial_event = event
+					TransformHandleUtils.set_transform_handle_highlight(dragged_handle, true, false)
+					#hide hover selection_box because it does not move with transforms
+					hover_selection_box.visible = false
 				
 			else:
 				dragged_part = null
 				if Main.safety_check(dragged_handle):
-					TransformHandleUtils.set_transform_handle_highlight(dragged_handle, false)
+					TransformHandleUtils.set_transform_handle_highlight(dragged_handle, false, false)
 				if Main.safety_check(hovered_handle):
 					TransformHandleUtils.set_transform_handle_highlight(hovered_handle, false, true)
 					

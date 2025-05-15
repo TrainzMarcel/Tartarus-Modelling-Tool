@@ -7,11 +7,13 @@ class_name EditorUI
 
 #top left block
 	#top menu bar
-#static var mb_top_bar : MenuBar
 static var pm_file : PopupMenu
 static var pm_edit : PopupMenu
 static var pm_assets : PopupMenu
 static var pm_help : PopupMenu
+
+#mapping from pm to array index
+static var pm_top_mapping : Dictionary
 
 
 	#tool bar
@@ -63,8 +65,11 @@ static var l_message : Label
 #array of control nodes which are iterated over to check if the mouse is over ui
 static var no_drag_ui : Array[Control]
 
-#array of numeric line edits
-static var numeric_line_edit_array : Array[LineEdit]
+#document displays
+static var dd_manual : DocumentDisplay
+static var dd_license : DocumentDisplay
+
+
 
 
 func initialize(
@@ -76,17 +81,21 @@ func initialize(
 	on_snapping_active_set : Callable,
 	on_color_selected : Callable,
 	on_material_selected : Callable,
-	on_part_type_selected : Callable
+	on_part_type_selected : Callable,
+	on_top_bar_id_pressed : Callable
 	):
 	
 #assign all ui nodes
 	#top left block
 		#top menu bar
-	#mb_top_bar = %TopBar
+	#mb_top_bar = %MenuBarTop
 	pm_file = %File
 	pm_edit = %Edit
 	pm_assets = %Assets
 	pm_help = %Help
+	#dict key to array index
+	pm_top_mapping = WorkspaceManager.create_mapping(%MenuBarTop.get_children())
+	
 	
 		#tool bar
 	b_drag_tool = %ButtonDragTool
@@ -129,12 +138,16 @@ func initialize(
 	l_camera_speed = %LabelCameraSpeed
 	l_message = %LabelMessage
 	
+	#document displays
+	dd_manual = %DocumentDisplayManual
+	dd_license = %DocumentDisplayLicense
+	
 	
 	no_drag_ui = [
 		$PanelContainerTopLeftBlock,
 		$PanelContainerBottomLeftBlock,
-		$DocumentDisplayManual,
-		$DocumentDisplayLicense,
+		%DocumentDisplayManual,
+		%DocumentDisplayLicense,
 		$PanelContainerBottomLeftBlock,
 		$PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool/DropDownButton/PanelContainerColor,
 		$PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerMaterialTool/DropDownButton/PanelContainerMaterial,
@@ -190,6 +203,10 @@ func initialize(
 	b_lock_tool.pressed.connect(on_tool_selected.bind(b_lock_tool))
 	b_spawn_part.pressed.connect(on_spawn_pressed.bind(Main.raycast_length, Main.part_spawn_distance, Main.cam))
 	
+	pm_file.id_pressed.connect(on_top_bar_id_pressed.bind(pm_file))
+	pm_edit.id_pressed.connect(on_top_bar_id_pressed.bind(pm_edit))
+	pm_assets.id_pressed.connect(on_top_bar_id_pressed.bind(pm_assets))
+	pm_help.id_pressed.connect(on_top_bar_id_pressed.bind(pm_help))
 
 
 #theoretically should work for all ui in the program

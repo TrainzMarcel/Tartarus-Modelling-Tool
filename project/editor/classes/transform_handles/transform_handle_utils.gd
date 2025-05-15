@@ -205,7 +205,7 @@ static func set_tool_handle_array_active(bundle : Array, input : bool):
 
 
 "TODO"#cleaner parameters, like an enum or set color
-static func set_transform_handle_highlight(handle : TransformHandle, drag : bool, hover : bool = false):
+static func set_transform_handle_highlight(handle : TransformHandle, drag : bool, hover : bool):
 	if drag:
 		for i in handle.mesh_array:
 			i.material_override.albedo_color = handle.color_drag
