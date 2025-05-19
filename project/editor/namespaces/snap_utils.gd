@@ -96,10 +96,10 @@ static func snap_position(
 	dragged_part : Part,
 	hovered_part : Part,
 	selected_parts_abb : ABB,
-	drag_offset : Vector3,
 	positional_snap_increment : float,
 	snapping_active : bool
 	):
+	
 	
 	var normal : Vector3 = ray_result.normal
 	
@@ -109,43 +109,74 @@ static func snap_position(
 	
 	#inverse for transforming everything to local space of the hovered part
 	var inverse : Transform3D = hovered_part.global_transform.inverse()
+	
 	#transformed local variables
 	var ray_result_local_position : Vector3 = inverse * ray_result.position
 	var normal_local : Vector3 = inverse.basis * normal
-	var drag_offset_local : Vector3 = inverse.basis * drag_offset
+	"TODO"#this is terrible
+	#drag_offset needs to be abstracted much better
+	#utility functions should always get everything passed in by parameters
+	var drag_offset_local : Vector3 = inverse.basis * WorkspaceManager.drag_offset
 	
-	#normal "bump"
-	var drag_offset_local_without_normal_component = drag_offset_local - (drag_offset_local.dot(normal_local) * normal_local)
+	#normal "bump" (to prevent dragged part from intersecting hovered part when dragging)
+	"TODO"#make this into a function (like get_surface_height_by_unit_vector())
+	var drag_offset_local_planar = drag_offset_local - (drag_offset_local.dot(normal_local) * normal_local)
+	var drag_offset_local_normal = normal_local * (side_length * 0.5)
 	
-	drag_offset_local = normal_local * (side_length * 0.5) + drag_offset_local_without_normal_component
+	"TODO"#make normal_local * (side_length * 0.5) into a function (like get_surface_height_by_unit_vector())
+	#reassign this value with the new normal height (again to prevent intersecting)
+	drag_offset_local = drag_offset_local_normal + drag_offset_local_planar
 	
-	var result_local = ray_result_local_position + drag_offset_local
-	
+	#local coordinate of dragged part
+	var result_local : Vector3 = ray_result_local_position + drag_offset_local
 	
 	#if one parts side length is even and one is odd
 	#add half of a snap increment to offset it away
 	var dragged_part_local : Basis = inverse.basis * dragged_part.basis
-	var dragged_part_side_lengths_local : Vector3 = SnapUtils.get_side_lengths_local(dragged_part.part_scale, dragged_part_local)
+	var dragged_part_scale_local : Vector3 = SnapUtils.get_scale_local(dragged_part.part_scale, dragged_part_local)
 	
-	var i : int = 0
 	
 	"TODO"#make selection snap by the closest corner of ray_result.position
+	var result_local_snap : Vector3 = result_local
 	if snapping_active:
+		
+		var i : int = 0
 		while i < 3:
 			#dont snap normal direction, only planar directions
 			if abs(normal_local.dot(Basis.IDENTITY[i])) > 0.9:
 				i = i + 1
 				continue
 			
-			result_local[i] = snapped(result_local[i], positional_snap_increment)
-			var side_1_odd : bool = SnapUtils.is_odd_with_snap_size(hovered_part.part_scale[i], positional_snap_increment)
-			var side_2_odd : bool = SnapUtils.is_odd_with_snap_size(dragged_part_side_lengths_local[i], positional_snap_increment)
-			if side_1_odd != side_2_odd:
-				result_local[i] = result_local[i] + positional_snap_increment * 0.5
+			#1. get closest corner of hovered part to ray_result_local_position
+			#or more specifically if its on the positive or negative side of the current vector
+			var hovered_corner_sign : float = -signf(ray_result_local_position[i])
+			var hovered_corner : float = hovered_corner_sign * hovered_part.part_scale[i] * 0.5
+			
+			#2. get vector of dragged corner for dragged part
+			var dragged_corner_sign : float = signf(drag_offset_local[i])
+			var dragged_corner : float = dragged_corner_sign * dragged_part_scale_local[i] * 0.5
+			var dragged_corner_position : float = dragged_corner + result_local[i]
+			
+			#3. new var snap(d. part corner - canvas part corner)
+			result_local_snap[i] = (result_local_snap[i] + hovered_corner) - dragged_corner
+			result_local_snap[i] = snapped(result_local_snap[i], positional_snap_increment)
+			result_local_snap[i] = (result_local_snap[i] - hovered_corner) + dragged_corner
+			
+			if i == 2:
+				print("Z ---------------------------------------------------------------------------")
+				print("dragged scale            ", dragged_part_scale_local)
+				print("hovered scale            ", hovered_part.part_scale)
+				print("dragged_corner           ", dragged_corner)
+				print("hovered_corner           ", hovered_corner)
+				print("result local snap        ", result_local_snap[i])
+			#4. return this value
+			
+			#result_local_snap[i] = snapped(result_local_snap[i], positional_snap_increment)
+			
 			i = i + 1
 	
-	#apply this to dragged_part, 
-	var result : Vector3 = hovered_part.global_transform * result_local
+	#transform to global space and apply this to dragged_part
+	var result : Vector3 = hovered_part.global_transform * result_local_snap
 	return result
 
 
@@ -175,6 +206,15 @@ static func find_closest_vector_abs(search_array, target : Vector3, is_search_ar
 		dot = highest_dot,
 		vector = closest_vec
 	}
+	return return_dict
+
+
+#automatically flips vector if its opposing target
+static func find_closest_vector(search_array, target : Vector3, is_search_array_basis : bool):
+	var return_dict = find_closest_vector_abs(search_array, target, is_search_array_basis)
+	if return_dict.vector.dot(target) < 0:
+		return_dict.vector = -return_dict.vector
+	
 	return return_dict
 
 
@@ -228,7 +268,8 @@ static func is_odd_with_snap_size(input : float, snap_increment : float):
 
 
 #assuming part rotation is rectilinear
-static func get_side_lengths_local(part_scale : Vector3, part_rotation : Basis):
+"TODO"#rename this to s
+static func get_scale_local(part_scale : Vector3, part_rotation : Basis):
 	return abs(part_rotation * part_scale)
 
 

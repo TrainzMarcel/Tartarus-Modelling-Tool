@@ -2,26 +2,44 @@
 extends MeshInstance3D
 class_name SelectionBox
 
+
 #debug
 @export var debug_update : bool = false:
 	set(val):
 		debug_update = false
 		box_update()
 
+
 @export var box_scale : Vector3 = Vector3(0.4, 0.2, 0.8):
 	set(val):
 		box_scale = val
 		box_update()
+
+
 @export var box_thickness : float = 0.015:
 	set(val):
 		box_thickness = val
 		box_update()
 
-var assigned_node : Node3D = null
 
-#unused
-#@export var box_color : Color
+func material_highlighter():
+	material_override = preload("res://editor/classes/selection_box/highlight_mat.res")
+
+
+func material_regular():
+	material_override = preload("res://editor/classes/selection_box/selection_box_mat.res")
+
+
+func material_regular_color(color : Color):
+	#i have no idea what subresources this material could have but without them, the color appears very pale
+	material_override = preload("res://editor/classes/selection_box/selection_box_mat.res").duplicate(true)
+	material_override.albedo_color = color
+	material_override.emission = color
+
+
+var assigned_node : Node3D = null
 #dont forget to generate material
+
 
 func draw_quad(i_mesh : ImmediateMesh, vec_a : Vector3, vec_b : Vector3, vec_c : Vector3, vec_d : Vector3, normal : Vector3):
 	i_mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)

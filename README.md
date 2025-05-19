@@ -14,8 +14,9 @@ v0.1
 	x RV1 implement 3d selection box
 	x RV2 use the selection box to denote every selected part
 	x RV3 use the selection box with a flashing highlighter material for any hovered part
-	  RV4 paint tool, using the selection box and setting color of the selection box to the selected color in the paint tool, not meant for dragging
-	  RV5 material tool also uses the selection box and colors it orange
+	x RV4 paint tool, using the selection box and setting color of the selection box to the selected color in the paint tool, not meant for dragging
+	x RV5 material tool also uses the selection box and colors it orange
+	x RV6 delete tool also uses the selection box and colors it red
 
 
 	TOOLS (functionality for editing)
@@ -46,7 +47,7 @@ v0.1
 	x IC10 dragging	pressing r will always rotate a dragged part (or group of parts) around the surface normal
 	x IC11 dragging	pressing t will always rotate a dragged part (or group of parts) around the horizontal axis from the camera
 	x IC12 camera	hitting f when any number of parts is selected should center the camera on them
-	  IC13 dragging	ability to copy, cut or paste selections of parts using ctrl, c, v and x and duplicate with ctrl d
+	  IC13 dragging	ability to copy, cut or paste selections of parts using ctrl, c, v and x, select all with ctrl a, undo and redo with ctrl z and y and duplicate with ctrl d
 	x IC14 tool 5	implement coloring tool which tints a part with the desired paint when clicked on
 	x IC15 tool 6	implement material tool which changes a parts material (still keeping its tint)
 	x IC16 tool 2	add checkbox or hotkey to switch between global axes and local part axes

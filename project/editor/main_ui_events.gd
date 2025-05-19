@@ -12,6 +12,9 @@ static func select_tool(button : Button):
 	"TODO"#use dynamic dispatch here with a dict mapping instead of this ugly match thing
 	var has_associated_transform_handles : bool = false
 	if button.button_pressed:
+		#all tools require hovering over parts and detecting them
+		Main.is_hover_tool = true
+		WorkspaceManager.hover_selection_box.material_highlighter()
 		match button:
 			EditorUI.b_drag_tool:
 				Main.selected_tool = Main.SelectedToolEnum.t_drag
@@ -33,14 +36,17 @@ static func select_tool(button : Button):
 				Main.selected_tool = Main.SelectedToolEnum.t_material
 				has_associated_transform_handles = false
 				Main.is_drag_tool = false
+				WorkspaceManager.hover_selection_box.material_regular_color(Color.ORANGE)
 			EditorUI.b_paint_tool:
 				Main.selected_tool = Main.SelectedToolEnum.t_color
 				has_associated_transform_handles = false
 				Main.is_drag_tool = false
+				WorkspaceManager.hover_selection_box.material_regular_color(WorkspaceManager.selected_color)
 			EditorUI.b_delete_tool:
 				Main.selected_tool = Main.SelectedToolEnum.t_delete
 				has_associated_transform_handles = false
 				Main.is_drag_tool = false
+				WorkspaceManager.hover_selection_box.material_regular_color(Color.RED)
 			EditorUI.b_lock_tool:
 				Main.selected_tool = Main.SelectedToolEnum.t_lock
 				has_associated_transform_handles = false
@@ -49,6 +55,7 @@ static func select_tool(button : Button):
 		Main.selected_tool = Main.SelectedToolEnum.none
 		has_associated_transform_handles = false
 		Main.is_drag_tool = false
+		Main.is_hover_tool = false
 	
 	if has_associated_transform_handles:
 		Main.selected_tool_handle_array = Main.transform_handle_root.tool_handle_array[Main.selected_tool]
@@ -66,11 +73,12 @@ static func select_tool(button : Button):
 
 
 static func on_spawn_pressed():
-	WorkspaceManager.spawn_part(Main.raycast_length, Main.part_spawn_distance, Main.cam)
+	WorkspaceManager.part_spawn(WorkspaceManager.selected_part_type)
 
 
 static func on_color_selected(button : Button):
 	WorkspaceManager.selected_color = button.self_modulate
+	WorkspaceManager.hover_selection_box.material_regular_color(button.self_modulate)
 	EditorUI.l_message.text = button.tooltip_text + " selected"
 
 
@@ -121,7 +129,7 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 			#import model (planned: .gltf, .obj)
 			pass
 		elif id == 4:
-			#export model (planned: .gltf, .obj)
+			#export model
 			pass
 		
 	#edit dropdown----------------------

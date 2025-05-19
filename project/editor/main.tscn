@@ -36,7 +36,7 @@ tonemap_mode = 2
 [sub_resource type="World3D" id="World3D_15twx"]
 environment = SubResource("Environment_ye61o")
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_dfqek"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_5rw20"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_b2n2e"]
 render_priority = 0
@@ -138,13 +138,13 @@ shader_parameter/uv2_offset = Vector3(0, 0, 0)
 shader_parameter/texture_albedo = ExtResource("10_5s45i")
 shader_parameter/texture_normal = ExtResource("11_5r5hq")
 
-[node name="Main" type="Node3D" node_paths=PackedStringArray("e_cam", "second_cam", "e_workspace", "e_transform_handle_root", "hover_selection_box", "ui_node")]
+[node name="Main" type="Node3D" node_paths=PackedStringArray("e_cam", "second_cam", "e_workspace", "e_transform_handle_root", "e_hover_selection_box", "ui_node")]
 script = ExtResource("1_4xdr8")
 e_cam = NodePath("Camera3D")
 second_cam = NodePath("SubViewportContainer/SubViewport/Camera3D")
 e_workspace = NodePath("Workspace")
 e_transform_handle_root = NodePath("SubViewportContainer/SubViewport/TransformHandleRoot")
-hover_selection_box = NodePath("Workspace/HoverSelectionBox")
+e_hover_selection_box = NodePath("Workspace/HoverSelectionBox")
 ui_node = NodePath("EditorUI")
 transform_handle_scale = 7.0
 
@@ -251,7 +251,7 @@ part_scale = Vector3(0.2, 0.2, 0.8)
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("8_4p0vi")
-mesh = SubResource("ImmediateMesh_dfqek")
+mesh = SubResource("ImmediateMesh_5rw20")
 skeleton = NodePath("../..")
 script = ExtResource("9_n7hy1")
 box_scale = Vector3(1, 1, 1)

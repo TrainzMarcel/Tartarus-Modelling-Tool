@@ -1,5 +1,5 @@
 11.7. started work on 3d level editor software
-12.7. started to implemente spawning, dragging and visual selection of cuboids
+12.7. started to implement spawning, dragging and visual selection of cuboids
 17.7. finished implementing selection box
 
 24.7. implementing dragging
@@ -67,3 +67,5 @@
 30.4. created material palette tab ui, considered adding standalone assets to models which are saved separate from any palettes, will be saved under section header ::STANDALONEASSETS:: and parts with these assets assigned will have -1 as palette id and null as palette reference in the editor
 12.5. decided to stop working on palettes for now and to instead have it load everything from the data folder without using my save file specification. added a bunch of assets for testing.
 14.5. fixed uv stretching problems with shader, considered ways to clean up the programs architecture (API style abstractions), major rework of the programs architecture using the previous considerations, reformed WorkspaceData into WorkspaceManager and mostly used it like an API in main, kept all the old save/load code inside, moved all ui events in Main into MainUIEvents
+15.5. researched undo redo systems and whether i should make my own, cleaned up part.gd a little bit, made top bar ui functional using MainUIEvents
+16.5. made selection box get colored according to tool used (paint tool = selected color, material tool = orange, delete tool = red), added is_hover_tool flag, added a 10 pixel tolerance for starting a drag, reworked snap_position() to snap by corner of dragged and hovered part

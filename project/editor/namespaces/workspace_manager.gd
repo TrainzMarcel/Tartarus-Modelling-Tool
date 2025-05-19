@@ -4,10 +4,12 @@ class_name WorkspaceManager
 #was meant to handle saving and loading but i dropped that for now
 #now handles selection logic, selection box logic and undo redo logic
 
+#dependencies
 static var hover_selection_box : SelectionBox
 static var workspace : Node
 
 
+#asset data
 #gets set in on_color_selected
 static var selected_color : Color
 #static var button_color_mapping : Dictionary
@@ -21,12 +23,15 @@ static var selected_part_type : Part
 static var button_part_type_mapping : Dictionary
 static var available_part_types : Array[Part]
 
+#
 #!!!selected_parts_array, offset_dragged_to_selected_array and selection_box_array are parallel arrays!!!
 static var selected_parts_array : Array[Part] = []
 static var offset_abb_to_selected_array : Array[Vector3] = []
 #offset from the dragged parts position to the raycast hit position
 static var selection_box_array : Array[SelectionBox] = []
 
+#vector pointing from ray_result.position to selected_parts_abb
+static var drag_offset : Vector3
 
 
 static func initialize(workspace : Node, hover_selection_box : SelectionBox):
@@ -71,22 +76,27 @@ static func initialize(workspace : Node, hover_selection_box : SelectionBox):
 
 
 #part functions-----------------------------------------------------------------
-static func part_spawn(raycast_length : float, part_spawn_distance : float, cam : FreeLookCamera):
+static func part_spawn(selected_part_type : Part):
 	var new_part : Part = selected_part_type.duplicate()
 	new_part.part_mesh_node = selected_part_type.part_mesh_node.duplicate()
 	new_part.part_collider_node = selected_part_type.part_collider_node.duplicate()
 	
 	
 	workspace.add_child(new_part)
-	var ray_result = Main.raycast(cam, cam.global_position, -cam.basis.z * raycast_length, [], [1])
+	var ray_result = Main.raycast(Main.cam, Main.cam.global_position, -Main.cam.basis.z * Main.raycast_length, [], [1])
 	if ray_result.is_empty():
-		new_part.global_position = cam.global_position + part_spawn_distance * -cam.basis.z
+		new_part.global_position = Main.cam.global_position + Main.part_spawn_distance * -Main.cam.basis.z
 	else:
 		new_part.global_position = ray_result.position
 
 
 static func part_delete(hovered_part : Part):
 	hovered_part.queue_free()
+
+"TODO"#work on ctrl+key functions
+#shouldnt be hard
+static func selection_delete():
+	pass
 
 
 #selection functions------------------------------------------------------------
@@ -106,8 +116,20 @@ static func selection_add_part(hovered_part : Part, dragged_part : Part):
 static func selection_set_to_part(hovered_part : Part, dragged_part : Part):
 	selected_parts_array = [hovered_part]
 	offset_abb_to_selected_array = [hovered_part.global_position - dragged_part.global_position]
-	WorkspaceManager.selection_boxes_clear_all(selection_box_array)
+	selection_boxes_clear_all(selection_box_array)
 	selection_box_instance_on_part(hovered_part)
+
+
+#for undo operations
+#warning untested
+static func selection_set_to_part_array(input : Array[Part], dragged_part : Part):
+	selected_parts_array = input
+	offset_abb_to_selected_array.clear()
+	selection_boxes_clear_all(selection_box_array)
+	
+	for part in input:
+		offset_abb_to_selected_array.append(part.global_position - dragged_part.global_position)
+		selection_box_instance_on_part(part)
 
 
 static func selection_clear():
@@ -192,6 +214,27 @@ static func apply_snap_position(input_absolute : Vector3, selected_parts_abb : A
 		i = i + 1
 
 
+#rotation only
+"TODO"#parameterize everything for clarity and to prevent bugs
+static func apply_snap_rotation(rotated_basis : Basis,
+	original_basis : Basis):
+	
+	#calculate difference between original basis and new basis
+	var difference : Basis = rotated_basis * original_basis.inverse()
+	drag_offset = difference * drag_offset
+	
+	#rotate the offset_abb_to_selected_array vector by the difference between the
+	#original basis and rotated basis
+	WorkspaceManager.selection_apply_rotation(difference, Main.ray_result, Main.selected_parts_abb)
+	
+	#rotate abb
+	Main.selected_parts_abb.transform.basis = difference * Main.selected_parts_abb.transform.basis
+	
+	
+	Main.set_transform_handle_root_position(Main.transform_handle_root, Main.selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
+
+
+#for dragging
 static func selection_apply_rotation(difference : Basis, ray_result : Dictionary, selected_parts_abb : ABB):
 	var i : int = 0
 	while i < selected_parts_array.size():
@@ -214,6 +257,7 @@ static func selection_apply_rotation(difference : Basis, ray_result : Dictionary
 		i = i + 1
 
 
+#did not know where to put this function
 static func create_mapping(input_data : Array):
 	var i : int = 0
 	var map : Dictionary = {}

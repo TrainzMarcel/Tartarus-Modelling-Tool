@@ -77,8 +77,8 @@ static var dd_license : DocumentDisplay
 
 
 func initialize(
-	part_spawn : Callable,
-	on_tool_selected : Callable,
+	on_spawn_pressed : Callable,
+	select_tool : Callable,
 	main_on_snap_button_pressed : Callable,
 	main_on_snap_text_changed : Callable,
 	on_local_transform_active_set : Callable,
@@ -203,14 +203,15 @@ func initialize(
 	
 	
 	
-	b_drag_tool.pressed.connect(on_tool_selected.bind(b_drag_tool))
-	b_move_tool.pressed.connect(on_tool_selected.bind(b_move_tool))
-	b_rotate_tool.pressed.connect(on_tool_selected.bind(b_rotate_tool))
-	b_scale_tool.pressed.connect(on_tool_selected.bind(b_scale_tool))
-	b_paint_tool.pressed.connect(on_tool_selected.bind(b_paint_tool))
-	b_material_tool.pressed.connect(on_tool_selected.bind(b_material_tool))
-	b_lock_tool.pressed.connect(on_tool_selected.bind(b_lock_tool))
-	b_spawn_part.pressed.connect(part_spawn.bind(Main.raycast_length, Main.part_spawn_distance, Main.cam))
+	b_drag_tool.pressed.connect(select_tool.bind(b_drag_tool))
+	b_move_tool.pressed.connect(select_tool.bind(b_move_tool))
+	b_rotate_tool.pressed.connect(select_tool.bind(b_rotate_tool))
+	b_scale_tool.pressed.connect(select_tool.bind(b_scale_tool))
+	b_delete_tool.pressed.connect(select_tool.bind(b_delete_tool))
+	b_paint_tool.pressed.connect(select_tool.bind(b_paint_tool))
+	b_material_tool.pressed.connect(select_tool.bind(b_material_tool))
+	b_lock_tool.pressed.connect(select_tool.bind(b_lock_tool))
+	b_spawn_part.pressed.connect(on_spawn_pressed)
 	
 	pm_file.id_pressed.connect(on_top_bar_id_pressed.bind(pm_file))
 	pm_edit.id_pressed.connect(on_top_bar_id_pressed.bind(pm_edit))
