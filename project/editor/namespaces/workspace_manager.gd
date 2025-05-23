@@ -8,6 +8,8 @@ class_name WorkspaceManager
 static var hover_selection_box : SelectionBox
 static var workspace : Node
 
+#bounding box of selected parts for positional snapping
+static var selected_parts_abb : ABB = ABB.new()
 
 #asset data
 #gets set in on_color_selected
@@ -23,12 +25,18 @@ static var selected_part_type : Part
 static var button_part_type_mapping : Dictionary
 static var available_part_types : Array[Part]
 
-#
+
 #!!!selected_parts_array, offset_dragged_to_selected_array and selection_box_array are parallel arrays!!!
-static var selected_parts_array : Array[Part] = []
 static var offset_abb_to_selected_array : Array[Vector3] = []
 #offset from the dragged parts position to the raycast hit position
 static var selection_box_array : Array[SelectionBox] = []
+static var selected_parts_array : Array[Part] = []:
+	set(val):
+		selected_parts_array = val
+		refresh_bounding_box()
+
+#for copy pasting
+static var parts_clipboard : Array[Part] = []
 
 #vector pointing from ray_result.position to selected_parts_abb
 static var drag_offset : Vector3
@@ -76,27 +84,42 @@ static func initialize(workspace : Node, hover_selection_box : SelectionBox):
 
 
 #part functions-----------------------------------------------------------------
+#only meant for spawning a part from the part spawn button
 static func part_spawn(selected_part_type : Part):
-	var new_part : Part = selected_part_type.duplicate()
-	new_part.part_mesh_node = selected_part_type.part_mesh_node.duplicate()
-	new_part.part_collider_node = selected_part_type.part_collider_node.duplicate()
-	
-	
+	var new_part : Part = selected_part_type.copy()
 	workspace.add_child(new_part)
 	var ray_result = Main.raycast(Main.cam, Main.cam.global_position, -Main.cam.basis.z * Main.raycast_length, [], [1])
 	if ray_result.is_empty():
-		new_part.global_position = Main.cam.global_position + Main.part_spawn_distance * -Main.cam.basis.z
+		new_part.transform.origin = Main.cam.global_position + Main.part_spawn_distance * -Main.cam.basis.z
 	else:
-		new_part.global_position = ray_result.position
+		new_part.transform.origin = ray_result.position
+	return new_part
 
 
 static func part_delete(hovered_part : Part):
 	hovered_part.queue_free()
 
-"TODO"#work on ctrl+key functions
-#shouldnt be hard
-static func selection_delete():
-	pass
+
+static func part_copy(part : Part):
+	var new_part : Part = selected_part_type.duplicate()
+	new_part.part_mesh_node = selected_part_type.part_mesh_node.duplicate()
+	new_part.part_collider_node = selected_part_type.part_collider_node.duplicate()
+
+
+static func refresh_bounding_box():
+	if not Main.safety_check(selected_parts_array[0]):
+		return
+	selected_parts_abb = SnapUtils.calculate_extents(selected_parts_abb, selected_parts_array[0], selected_parts_array)
+	#debug
+	var d_input = {}
+	d_input.transform = WorkspaceManager.selected_parts_abb.transform
+	d_input.extents = WorkspaceManager.selected_parts_abb.extents
+	HyperDebug.actions.abb_visualize.do(d_input)
+	
+	
+	#refresh offset abb to selected array
+	#this array is used for transforming the whole selection with the position of the abb
+	WorkspaceManager.refresh_offset_abb_to_selected_array()
 
 
 #selection functions------------------------------------------------------------
@@ -107,35 +130,269 @@ static func selection_remove_part(hovered_part):
 	selected_parts_array.erase(hovered_part)
 
 
-static func selection_add_part(hovered_part : Part, dragged_part : Part):
+static func selection_add_part(hovered_part : Part, abb_orientation : Part):
 	selected_parts_array.append(hovered_part)
 	selection_box_instance_on_part(hovered_part)
-	offset_abb_to_selected_array.append(hovered_part.global_position - dragged_part.global_position)
+	offset_abb_to_selected_array.append(hovered_part.transform.origin - abb_orientation.transform.origin)
 
 
-static func selection_set_to_part(hovered_part : Part, dragged_part : Part):
+static func selection_set_to_workspace():
+	selection_clear()
+	var workspace_parts = workspace.get_children().filter(func(part):
+		return part is Part
+		)
+	
+	for i in workspace_parts:
+		selection_add_part(i, workspace_parts[0])
+
+
+static func selection_set_to_part(hovered_part : Part, abb_orientation : Part):
 	selected_parts_array = [hovered_part]
-	offset_abb_to_selected_array = [hovered_part.global_position - dragged_part.global_position]
-	selection_boxes_clear_all(selection_box_array)
+	offset_abb_to_selected_array = [hovered_part.global_position]
+	selection_boxes_clear_all()
 	selection_box_instance_on_part(hovered_part)
 
 
 #for undo operations
 #warning untested
-static func selection_set_to_part_array(input : Array[Part], dragged_part : Part):
-	selected_parts_array = input
-	offset_abb_to_selected_array.clear()
-	selection_boxes_clear_all(selection_box_array)
+static func selection_set_to_part_array(input : Array[Part], abb_orientation : Part):
+	selection_clear()
 	
 	for part in input:
-		offset_abb_to_selected_array.append(part.global_position - dragged_part.global_position)
-		selection_box_instance_on_part(part)
+		selection_add_part(part, abb_orientation)
 
 
 static func selection_clear():
 	selected_parts_array.clear()
-	WorkspaceManager.selection_boxes_clear_all(selection_box_array)
+	selection_boxes_clear_all()
 	offset_abb_to_selected_array.clear()
+
+
+"TODO"#work on ctrl+key functions
+#shouldnt be hard
+static func selection_delete():
+	for i in selected_parts_array:
+		i.queue_free()
+	selection_clear()
+
+
+#untested
+static func selection_copy():
+	parts_clipboard.clear()
+	for i in selected_parts_array:
+		parts_clipboard.append(i.copy())
+
+
+static func selection_paste():
+	"TODO"#add status message bottom bar
+	if not parts_clipboard.is_empty():
+		selection_clear()
+		for i in parts_clipboard:
+			var copy : Part = i.copy()
+			workspace.add_child(copy)
+			selection_add_part(copy, copy)
+		refresh_bounding_box()
+		Main.set_transform_handle_root_position(Main.transform_handle_root, selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
+
+
+static func selection_duplicate():
+	parts_clipboard.clear()
+	for i in selected_parts_array:
+		var copy : Part = i.copy()
+		workspace.add_child(copy)
+
+
+#position only
+static func selection_move(input_absolute : Vector3):
+	selected_parts_abb.transform.origin = input_absolute
+	Main.transform_handle_root.transform.origin = input_absolute
+	var d_input = {}
+	d_input.transform = selected_parts_abb.transform
+	d_input.extents = selected_parts_abb.extents
+	HyperDebug.actions.abb_visualize.do(d_input)
+	
+	var i : int = 0
+	while i < selected_parts_array.size():
+		selected_parts_array[i].transform.origin = selected_parts_abb.transform.origin + offset_abb_to_selected_array[i]
+		selection_box_array[i].transform.origin = selected_parts_array[i].transform.origin
+		i = i + 1
+	#move transform handles with selection
+	Main.set_transform_handle_root_position(Main.transform_handle_root, selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
+
+
+#rotation only
+"TODO"#parameterize everything for clarity and to prevent bugs
+static func selection_rotate(rotated_basis : Basis, original_basis : Basis):#TODO , point_local : Vector3 = Vector3.ZERO):
+	
+	#calculate difference between original basis and new basis
+	var difference : Basis = rotated_basis * original_basis.inverse()
+	drag_offset = difference * drag_offset
+	
+	#rotate the offset_abb_to_selected_array vector by the difference between the
+	#original basis and rotated basis
+	var i : int = 0
+	while i < selected_parts_array.size():
+		#rotate offset_dragged_to_selected_array vector by the difference basis
+		offset_abb_to_selected_array[i] = difference * offset_abb_to_selected_array[i]
+		#move part to ray_result.position for easier pivoting
+		if not Main.ray_result.is_empty():
+			selected_parts_array[i].global_position = Main.ray_result.position
+		else:
+			selected_parts_array[i].global_position = selected_parts_abb.transform.origin
+		
+		
+		#rotate this part
+		selected_parts_array[i].basis = difference * selected_parts_array[i].basis
+		
+		#move it back out along the newly rotated offset_dragged_to_selected_array vector
+		selected_parts_array[i].global_position = selected_parts_abb.transform.origin + offset_abb_to_selected_array[i]
+		#copy transform
+		selection_box_array[i].global_transform = selected_parts_array[i].global_transform
+		i = i + 1
+	
+	#rotate abb
+	selected_parts_abb.transform.basis = difference * selected_parts_abb.transform.basis
+	
+	#move transform handles with selection
+	Main.set_transform_handle_root_position(Main.transform_handle_root, selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
+
+
+#scale_absolute meaning it will set the scale of the selection bounding box to this value
+#must call selection_move after this function due to the updated offset_abb_to_selected_array
+static func selection_scale(scale_absolute : Vector3):
+	#dont do anything if scale is the same
+	if scale_absolute == selected_parts_abb.extents:
+		return
+	
+	#scaling singular parts is easy
+	if selected_parts_array.size() == 1:
+		selected_parts_array[0].part_scale = scale_absolute
+		selected_parts_abb.extents = scale_absolute
+		selection_boxes_redraw_all()
+		Main.set_transform_handle_root_position(Main.transform_handle_root, selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
+		return
+	
+	
+	#!!scalable_parts and local_scales are parallel arrays!!
+	var scalable_parts : Array[Part]
+	var local_scales : Array[Vector3] = []
+	#!!selected_parts_array, offset_abb_to_selected_array and local_offsets are parallel arrays!!
+	#offset_abb_to_selected_array is in global space
+	var local_offsets : Array[Vector3] = []
+	var inverse : Basis = selected_parts_abb.transform.basis.inverse()
+	#shorthand
+	var ext : Vector3 = selected_parts_abb.extents
+	#loop
+	var i : int = 0
+	var j : int = 0
+	
+	
+	
+	#parts can only be scaled along their basis vectors
+	#so only work on parts that are rectilinearly aligned with the bounding box
+	scalable_parts = selected_parts_array.filter(func(part):
+		return SnapUtils.part_rectilinear_alignment_check(selected_parts_abb.transform.basis, part.basis)
+	)
+	
+	
+	#first get the local scale of each scalable part
+	for i_a in scalable_parts:
+		var abb_basis = selected_parts_abb.transform.basis
+		var p = i_a.basis
+		var s = i_a.part_scale
+		
+		#world space scale vector
+		var world_scale = p * s
+		
+		#bounding box local vector
+		var diff_forward = abb_basis.inverse()
+		var local_scale_abb = diff_forward * world_scale
+		
+		#set any negative components to not be negative
+		local_scale_abb.x = abs(local_scale_abb.x)
+		local_scale_abb.y = abs(local_scale_abb.y)
+		local_scale_abb.z = abs(local_scale_abb.z)
+		local_scales.append(local_scale_abb)
+		i = i + 1
+	
+	#then get the local offsets to the bounding box of each selected part
+	for i_b in offset_abb_to_selected_array:
+		var new : Vector3 = i_b * selected_parts_abb.transform.basis
+		local_offsets.append(new)
+	
+	
+	#work on each dimension individually
+	i = 0
+	while i < 3:
+		#if this dimension is already scaled correctly, go to next iteration
+		if scale_absolute[i] == ext[i]:
+			i = i + 1
+			continue
+		
+		#only scale scalable parts
+		#scale each scalable part in relation to bounding box
+		j = 0
+		while j < scalable_parts.size():
+			#get relative scale from 0 to 1 depending on how much space the part takes up in the bounding box
+			var new_scale : float = local_scales[j][i] / ext[i]
+			new_scale = lerp(0.0, scale_absolute[i], new_scale)
+			local_scales[j][i] = new_scale
+			j = j + 1
+		
+		
+		
+		j = 0
+		#move all parts in relation to where they are in the bounding box
+		while j < selected_parts_array.size():
+			#get relative position from -1 to 1 depending on how close to the edge of the bounding box a part is
+			var pos : float = local_offsets[j][i] / ext[i]
+			pos = lerp(0.0, scale_absolute[i], pos)
+			local_offsets[j][i] = pos
+			j = j + 1
+		
+		selected_parts_abb.extents[i] = scale_absolute[i]
+		i = i + 1
+	
+	
+	#im sad to admit i needed chatgpt to figure this one out
+	#reassign transformed local scales to part-space scales
+	var i_d : int = 0
+	while i_d < scalable_parts.size():
+		var abb_basis = selected_parts_abb.transform.basis
+		var p = scalable_parts[i_d].basis
+		var s = scalable_parts[i_d].part_scale
+		
+		#abb local to world
+		var world_scale_again = abb_basis * local_scales[i_d]
+		
+		#world space to part space
+		var diff_reverse = p.inverse()
+		var local_scale = diff_reverse * world_scale_again
+		
+		local_scale.x = abs(local_scale.x)
+		local_scale.y = abs(local_scale.y)
+		local_scale.z = abs(local_scale.z)
+		scalable_parts[i_d].part_scale = local_scale
+		i_d = i_d + 1
+	
+	
+	#reassign transformed local offsets to global offset array
+	offset_abb_to_selected_array.clear()
+	for i_g in local_offsets:
+		offset_abb_to_selected_array.append(i_g * inverse)
+	
+	selection_boxes_redraw_all()
+	#move transform handles with selection
+	Main.set_transform_handle_root_position(Main.transform_handle_root, selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
+
+
+#undo redo system---------------------------------------------------------------
+static func undo():
+	print("UNDO")
+
+
+static func redo():
+	print("REDO")
 
 
 #selection box functions--------------------------------------------------------
@@ -146,13 +403,13 @@ static func selection_box_instance_on_part(assigned_part : Part):
 	workspace.add_child(new)
 	new.assigned_node = assigned_part
 	new.box_scale = assigned_part.part_scale
-	new.global_transform = assigned_part.global_transform
+	new.transform = assigned_part.transform
 	var mat : StandardMaterial3D = preload("res://editor/classes/selection_box/selection_box_mat.res")
 	new.material_override = mat
 
 
 #delete all selection boxes and clear 
-static func selection_boxes_clear_all(selection_box_array : Array[SelectionBox]):
+static func selection_boxes_clear_all():
 	for i in selection_box_array:
 		if Main.safety_check(i):
 			i.queue_free()
@@ -188,72 +445,33 @@ static func selection_box_hover_on_part(part : Part, is_hovering_allowed : bool)
 		hover_selection_box.visible = false
 
 
+#might remove this
+#this function was meant to toggle the visibility of selectionboxes but it was unreliable
+#func selection_box_toggle_visibility(part : Part, make_visible : bool):
+#	if not safety_check(part):
+#		return
+#
+#	if make_visible:
+#		for i in selection_box_array:
+#			if safety_check(i):
+#				if i.assigned_node == part:
+#					i.visible = false
+#					break
+#	else:
+#		for i in selection_box_array:
+#			if safety_check(i):
+#				if i.assigned_node == part:
+#					i.visible = true
+#					break
+#		hover_selection_box.visible = false
+
+
 #utils
-static func refresh_offset_abb_to_selected_array(selected_parts_abb : ABB):
+static func refresh_offset_abb_to_selected_array():
 	var i : int = 0
 	offset_abb_to_selected_array.clear()
 	while i < selected_parts_array.size():
-		offset_abb_to_selected_array.append(selected_parts_array[i].global_position - selected_parts_abb.transform.origin)
-		i = i + 1
-
-
-#position only
-static func apply_snap_position(input_absolute : Vector3, selected_parts_abb : ABB, transform_handle_root : TransformHandleRoot):
-	selected_parts_abb.transform.origin = input_absolute
-	transform_handle_root.transform.origin = selected_parts_abb.transform.origin
-	
-	var d_input = {}
-	d_input.transform = selected_parts_abb.transform
-	d_input.extents = selected_parts_abb.extents
-	HyperDebug.actions.abb_visualize.do(d_input)
-	
-	var i : int = 0
-	while i < selected_parts_array.size():
-		selected_parts_array[i].global_position = selected_parts_abb.transform.origin + offset_abb_to_selected_array[i]
-		selection_box_array[i].global_transform = selected_parts_array[i].global_transform
-		i = i + 1
-
-
-#rotation only
-"TODO"#parameterize everything for clarity and to prevent bugs
-static func apply_snap_rotation(rotated_basis : Basis,
-	original_basis : Basis):
-	
-	#calculate difference between original basis and new basis
-	var difference : Basis = rotated_basis * original_basis.inverse()
-	drag_offset = difference * drag_offset
-	
-	#rotate the offset_abb_to_selected_array vector by the difference between the
-	#original basis and rotated basis
-	WorkspaceManager.selection_apply_rotation(difference, Main.ray_result, Main.selected_parts_abb)
-	
-	#rotate abb
-	Main.selected_parts_abb.transform.basis = difference * Main.selected_parts_abb.transform.basis
-	
-	
-	Main.set_transform_handle_root_position(Main.transform_handle_root, Main.selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
-
-
-#for dragging
-static func selection_apply_rotation(difference : Basis, ray_result : Dictionary, selected_parts_abb : ABB):
-	var i : int = 0
-	while i < selected_parts_array.size():
-		#rotate offset_dragged_to_selected_array vector by the difference basis
-		offset_abb_to_selected_array[i] = difference * offset_abb_to_selected_array[i]
-		#move part to ray_result.position for easier pivoting
-		if not ray_result.is_empty():
-			selected_parts_array[i].global_position = ray_result.position
-		else:
-			selected_parts_array[i].global_position = selected_parts_abb.transform.origin
-		
-		
-		#rotate this part
-		selected_parts_array[i].basis = difference * selected_parts_array[i].basis
-		
-		#move it back out along the newly rotated offset_dragged_to_selected_array vector
-		selected_parts_array[i].global_position = selected_parts_abb.transform.origin + offset_abb_to_selected_array[i]
-		#copy transform
-		selection_box_array[i].global_transform = selected_parts_array[i].global_transform
+		offset_abb_to_selected_array.append(selected_parts_array[i].transform.origin - selected_parts_abb.transform.origin)
 		i = i + 1
 
 

@@ -1,163 +1,71 @@
 extends RefCounted
 class_name TransformHandleUtils
 
-"TODO"#rename variables better
 "TODO"#comment better
 "TODO"#add a max distance in case user drags too far
 #make sure to test this with orthogonal camera in the future
-static func transform(
-		active_handle : TransformHandle,
-		transform_handle_root : Node3D,
-		abb_initial_extents : Vector3,
-		handle_initial_transform : Transform3D,
-		initial_event : InputEventMouse,
-		event : InputEventMouseMotion,
+
+
+#return delta of how far to move depending on if ctrl is held
+static func input_scale_linear_move(
 		cam : Camera3D,
-		p_snap_increment : float,
-		r_snap_increment : float,
-		snapping_active : bool,
+		active_handle : TransformHandle,
+		global_vector : Vector3,
+		cam_normal : Vector3,
+		cam_normal_initial : Vector3,
 		is_ctrl_pressed : bool,
-		is_shift_pressed : bool
 	):
 	
-	#return transform
-	var r_dict : Dictionary = {
-		transform = Transform3D(),
-		basis_relative = 0.0,
-		part_scale = Vector3(),
-		modify_position = false,
-		modify_rotation = false,
-		modify_scale = false
-	}
-	
-	#direction_vector of active_handle transformed from local to global space (local to active_handle)
-	var global_vector : Vector3 = (transform_handle_root.transform.basis * active_handle.direction_vector).normalized()
-	#for rotation purposes (prevents weird wobbles from happening)
-	var global_vector_initial : Vector3 = (handle_initial_transform.basis * active_handle.direction_vector).normalized()
-	var cam_normal : Vector3 = cam.project_ray_normal(event.position)
-	var cam_normal_initial : Vector3 = cam.project_ray_normal(initial_event.position)
-	
-	#future note: make it possible to scale selections or groupings if all parts are rectilinearly aligned
-	match active_handle.direction_type:
-		TransformHandle.DirectionTypeEnum.axis_move:
-			
-			var term_1 : float = linear_move(cam, active_handle, global_vector, cam_normal, cam_normal_initial)
-			
-			if snapping_active:
-				term_1 = snapped(term_1, p_snap_increment)
-			
-			#absolute defined as the original position plus the amount the user dragged
-			#add the snapped term and take away the original position along the vector axis
-			r_dict.transform.origin = (term_1 * global_vector) + handle_initial_transform.origin
-			r_dict.transform.basis = handle_initial_transform.basis
-			r_dict.scalar = term_1
-			r_dict.modify_position = true
-		TransformHandle.DirectionTypeEnum.axis_rotate:
-			#need a plane which is placed right on the ring
-			#get distance from origin point (and with the dot product whether the plane is in
-			#negative space or not, to flip plane_cam_d)
-			var plane_cam_d = active_handle.global_position.dot(global_vector)
-			
-			#create plane which cursor would land on if it was put in 3d space
-			var plane_ring : Plane = Plane(global_vector, plane_cam_d)
-			var cam_normal_initial_plane = plane_ring.intersects_ray(cam.global_position, cam_normal_initial)
-			var cam_normal_plane = plane_ring.intersects_ray(cam.global_position, cam_normal)
-			
-			HyperDebug.actions.transform_handle_rotation_visualize.do({
-				origin_position = plane_ring.d * plane_ring.normal,
-				input_vector = plane_ring.normal
-				})
-			
-			#fallback value if intersects_ray fails
-			var term_1 = Vector3.ZERO
-			var term_2 = Vector3.ZERO
-			if cam_normal_initial_plane != null and cam_normal_plane != null:
-				term_1 = cam_normal_initial_plane - active_handle.global_position
-				term_2 = cam_normal_plane - active_handle.global_position
-			
-			var angle = term_1.angle_to(term_2)
-			angle = angle * sign(term_1.cross(term_2).dot(global_vector))
-			
-			var angle_snapped = angle
-			if snapping_active:
-				angle_snapped = deg_to_rad(snapped(rad_to_deg(angle_snapped), r_snap_increment))
-			
-			#absolute defined as the original position plus the amount the user dragged
-			r_dict.transform.basis = handle_initial_transform.basis.rotated(global_vector_initial, angle_snapped).orthonormalized()
-			r_dict.angle_relative = angle_snapped
-			r_dict.transform.origin = handle_initial_transform.origin
-			r_dict.modify_rotation = true
-		TransformHandle.DirectionTypeEnum.plane_move:
-			print("PLANE MOVE")#coming probably in v0.2
-		TransformHandle.DirectionTypeEnum.axis_scale:
-			
-			var term_1 : float = linear_move(cam, active_handle, global_vector, cam_normal, cam_normal_initial)
-			
-			if snapping_active:
-				term_1 = snapped(term_1, p_snap_increment)
-			
-			#control: makes part not move and scale toward both directions
-			#shift: makes part scale toward all directions proportionally
-			#shift + control: makes part not move and scale toward all directions proportionally
-			
-			#set this with ctrl and shift
-			var multiplier = 0.5
-			if Input.is_key_pressed(KEY_CTRL):
-				multiplier = 0
-				term_1 = term_1 * 2
-			
-			
-			var local : Vector3 = active_handle.direction_vector
-			
-			#if local x y or z are negative, set scalar to be negative
-			var i = 0
-			while i < 3:
-				if local[i] < 0 and not Input.is_key_pressed(KEY_SHIFT):
-					term_1 = -term_1
-				i = i + 1
-			
-			
-			var scale_min : Vector3 = abb_initial_extents + term_1 * local
-			var scale_diff : Vector3 = term_1 * local
-			
-			
-			if Input.is_key_pressed(KEY_SHIFT):
-				var percentage = (abb_initial_extents.dot(local) + term_1) / abb_initial_extents.dot(local)
-				scale_min = abb_initial_extents + abb_initial_extents * percentage
-				scale_diff = abb_initial_extents * percentage
-			
-			
-			
-			"TODO"#this loop sucks because it affects all dimensions and not just the one which is being scaled
-			i = 0
-			while i < 3:
-				
-				scale_min[i] = max(scale_min[i], p_snap_increment)
-				i = i + 1
-			
-			r_dict.part_scale = scale_min
-			
-			
-			r_dict.transform.origin = handle_initial_transform.origin + handle_initial_transform.basis * (scale_diff * local * multiplier)
-	
-			
-			
-			
-			
-			#absolute defined as the original position plus the amount the user dragged
-			#add the snapped term and take away the original position along the vector axis
-			#r_dict.transform.origin = (term_1 * global_vector) + handle_initial_transform.origin
-			r_dict.transform.basis = handle_initial_transform.basis
-			#r_dict.part_scale = (term_1 * active_handle.direction_vector)
-			#r_dict.scalar = term_1
-			r_dict.modify_position = true
-			r_dict.modify_scale = true
-	
-	#next would be to implement scaling tool, spawning of parts, color and material tool, material shader, then saving and loading, then wedges, better snapping, pivot point and export import pipeline
-	return r_dict
+	#ctrl: scale both sides, no movement
+	if is_ctrl_pressed:
+		return 0.0
+	return input_linear_move(cam, active_handle, global_vector, cam_normal, cam_normal_initial)
 
 
-static func linear_move(cam : Camera3D, active_handle : TransformHandle, global_vector : Vector3, cam_normal : Vector3, cam_normal_initial : Vector3):
+#process input for transform handles that rotate
+static func input_rotation(
+		cam : Camera3D,
+		active_handle : TransformHandle,
+		global_vector : Vector3,
+		cam_normal : Vector3,
+		cam_normal_initial : Vector3
+	):
+	#need a plane which is placed right on the ring
+	#get distance from origin point (and with the dot product whether the plane is in
+	#negative space or not, to flip plane_cam_d)
+	var plane_cam_d = active_handle.global_position.dot(global_vector)
+	
+	#create plane which cursor would land on if it was put in 3d space
+	var plane_ring : Plane = Plane(global_vector, plane_cam_d)
+	var cam_normal_initial_plane = plane_ring.intersects_ray(cam.global_position, cam_normal_initial)
+	var cam_normal_plane = plane_ring.intersects_ray(cam.global_position, cam_normal)
+	
+	HyperDebug.actions.transform_handle_rotation_visualize.do({
+		origin_position = plane_ring.d * plane_ring.normal,
+		input_vector = plane_ring.normal
+		})
+	
+	#fallback value if intersects_ray fails
+	var term_1 = Vector3.ZERO
+	var term_2 = Vector3.ZERO
+	if cam_normal_initial_plane != null and cam_normal_plane != null:
+		term_1 = cam_normal_initial_plane - active_handle.global_position
+		term_2 = cam_normal_plane - active_handle.global_position
+	
+	var angle = term_1.angle_to(term_2)
+	#figure out direction of angle and return
+	return angle * sign(term_1.cross(term_2).dot(global_vector))
+
+
+#process input for transform handles that move linearly
+#that includes scaling handles
+static func input_linear_move(
+		cam : Camera3D,
+		active_handle : TransformHandle,
+		global_vector : Vector3,
+		cam_normal : Vector3,
+		cam_normal_initial : Vector3
+	):
 	#need a plane which acts like a sprite that rotates around the handles direction_vector
 	#vector pointing from handle to camera.global_position
 	var vec : Vector3 = cam.global_position - active_handle.global_position
@@ -175,10 +83,6 @@ static func linear_move(cam : Camera3D, active_handle : TransformHandle, global_
 	#create plane which cursor would land on if it was put in 3d space
 	var plane_cam : Plane = Plane(vec, plane_cam_d)
 	
-	
-	
-	
-	
 	#vector pointing to mouse position projected onto the plane
 	var cam_normal_plane = plane_cam.intersects_ray(cam.global_position, cam_normal)
 	var cam_normal_plane_initial = plane_cam.intersects_ray(cam.global_position, cam_normal_initial)
@@ -195,6 +99,14 @@ static func linear_move(cam : Camera3D, active_handle : TransformHandle, global_
 		#get the difference between (current projected mouse position) and (initial projected mouse position)
 		term_1 = cam_normal_plane.dot(global_vector) - cam_normal_plane_initial.dot(global_vector)
 	return term_1
+
+
+"TODO"
+static func input_planar_move():
+	
+	
+	
+	pass
 
 
 static func set_tool_handle_array_active(bundle : Array, input : bool):

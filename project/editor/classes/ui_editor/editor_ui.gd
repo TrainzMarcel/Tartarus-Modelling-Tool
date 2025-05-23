@@ -292,44 +292,6 @@ static func create_material_buttons(on_material_selected):
 	WorkspaceManager.button_material_mapping = WorkspaceManager.create_mapping(new_buttons)
 
 
-static func on_snap_text_changed(line_edit : LineEditNumeric):
-	var r_dict : Dictionary = {}
-	r_dict.rotational_snap_increment = le_rotation_step.true_value
-	r_dict.positional_snap_increment = le_unit_step.true_value
-	return r_dict
-
-
-static func on_snap_button_pressed(button : Button, positional_snap_increment : float, rotational_snap_increment : float):
-	match button:
-		b_rotation_increment:
-			rotational_snap_increment = rotational_snap_increment + le_rotation_step_increment_step.true_value
-		b_rotation_decrement:
-			rotational_snap_increment = rotational_snap_increment - le_rotation_step_increment_step.true_value
-		b_rotation_double:
-			rotational_snap_increment = rotational_snap_increment * 2
-		b_rotation_half:
-			rotational_snap_increment = rotational_snap_increment * 0.5
-		b_unit_increment:
-			positional_snap_increment = positional_snap_increment + le_unit_step_increment_step.true_value
-		b_unit_decrement:
-			positional_snap_increment = positional_snap_increment - le_unit_step_increment_step.true_value
-		b_unit_double:
-			positional_snap_increment = positional_snap_increment * 2
-		b_unit_half:
-			positional_snap_increment = positional_snap_increment * 0.5
-	
-	positional_snap_increment = max(positional_snap_increment, 0)
-	rotational_snap_increment = max(rotational_snap_increment, 0)
-	
-	le_rotation_step.text = str(rotational_snap_increment)
-	le_unit_step.text = str(positional_snap_increment)
-	
-	var r_dict : Dictionary = {}
-	r_dict.rotational_snap_increment = rotational_snap_increment
-	r_dict.positional_snap_increment = positional_snap_increment
-	return r_dict
-
-
 #tooltip styling
 static var tooltip_panel : StyleBox = preload(FilePathRegistry.style_tooltip_panel)
 static var tooltip_font : Theme = preload(FilePathRegistry.style_font_tooltip)

@@ -2,29 +2,85 @@ extends RefCounted
 class_name SnapUtils
 
 
-static func average_position_part(input : Array[Part]):
-	var sum : Vector3 = Vector3.ZERO
-	for i in input:
-		sum = sum + i.global_position
-	return sum / input.size()
+#take input from transform handle and return a global-space vector3 to apply
+static func transform_handle_snap_position(input : float, handle_unit_vector_global : Vector3, initial_position : Vector3, positional_snap_increment : float, snapping_active : bool):
+	if snapping_active:
+		return (snappedf(input, positional_snap_increment) * handle_unit_vector_global) + initial_position
+	else:
+		return (input * handle_unit_vector_global) + initial_position
 
 
-#if anybody is confused about this calculation
-#https://docs.godotengine.org/en/4.1/tutorials/physics/physics_introduction.html#code-example
-static func calculate_collision_layer(input_layers_to_enable : Array[int]):
-	if not input_layers_to_enable.is_empty():
-		var sum : int = 0
-		for i in input_layers_to_enable:
-			sum = int(sum + pow(2, i - 1))
-		
-		return sum
+#take input from transform handle and return a global-space basis to apply
+static func transform_handle_snap_rotation(input_angle : float, input_basis : Basis, handle_unit_vector_global : Vector3, rotational_snap_increment : float, snapping_active : bool):
+	if snapping_active:
+		return input_basis.rotated(handle_unit_vector_global, snappedf(input_angle, rotational_snap_increment))
+	else:
+		return input_basis.rotated(handle_unit_vector_global, input_angle)
+
+
+#dont move when minimum distance is reached
+static func scaling_clamp(input : float, handle_unit_vector_local : Vector3, initial_extents : Vector3, positional_snap_increment : float, snapping_active : bool):
+	#scaling vector index
+	var index : int = max_axis_index_abs(handle_unit_vector_local)
+	var handle_sign : int = sign(handle_unit_vector_local[index])
+	var side_length : float = initial_extents[index] + input# * handle_sign
+	
+	
+	if side_length < positional_snap_increment:
+		input = -initial_extents[index] + positional_snap_increment
+	
+	return input
+
+
+#take input from transform handle and return a local-space scale vector3 to apply
+static func transform_handle_snap_scale(input : float,
+	handle_unit_vector_local : Vector3,
+	initial_extents : Vector3,
+	positional_snap_increment : float,
+	snapping_active : bool,
+	is_ctrl_pressed : bool,
+	is_shift_pressed : bool
+	):
+	
+	#scaling vector index
+	var index : int = max_axis_index_abs(handle_unit_vector_local)
+	var handle_sign : int = sign(handle_unit_vector_local[index])
+	
+	
+	#snap
+	if snapping_active:
+		input = snappedf(input, positional_snap_increment)
+	
+	
+	#ctrl: scale both sides with no movement
+	if is_ctrl_pressed:
+		input = input * 2
+	
+	var result : Vector3 = initial_extents + input * handle_sign * handle_unit_vector_local
+	
+	if is_shift_pressed:
+		var percentage = (initial_extents[index] + input) / initial_extents[index]
+		result = initial_extents * percentage
+	
+	if is_ctrl_pressed and not is_shift_pressed:
+		result[index] = initial_extents[index] + input# * handle_sign
+	
+	
+	#clamp minimum size
+	if snapping_active:
+		result[index] = max(result[index], positional_snap_increment)
+	else:
+		#clamp to 0 if snapping is off
+		result[index] = max(result[index], 0)
+	
+	return result
 
 
 #input is meant to be the part-to-be-rotated's basis
 "TODO"#unit test and make above comment better
-#res://editor/debug_and_unit_tests/unit_test.gd
-static func snap_rotation(input : Basis, ray_result : Dictionary):
-	var input_2 : Basis = ray_result.collider.basis
+static func drag_snap_rotation_to_hovered(input : Basis, ray_result : Dictionary):
+	var hovered_part : Part = ray_result.collider
+	var input_2 : Basis = hovered_part.basis
 	var i : int = 0
 	var closest_vector_1 : Vector3
 	var closest_vector_2 : Vector3
@@ -68,12 +124,12 @@ static func snap_rotation(input : Basis, ray_result : Dictionary):
 	var vec_1 : Vector3
 		#remember, 1 = parallel vectors, 0 = perpendicular, -1 = opposing vectors
 		#the closer to 0 the better in this case
-	if abs(ray_result.collider.basis.x.dot(closest_vector_2)) < abs(ray_result.collider.basis.y.dot(closest_vector_2)):
+	if abs(hovered_part.basis.x.dot(closest_vector_2)) < abs(hovered_part.basis.y.dot(closest_vector_2)):
 		#canvas.basis.x is closer to 0
-		vec_1 = ray_result.collider.basis.x
+		vec_1 = hovered_part.basis.x
 	else:
 		#canvas.basis.y is closer to 0
-		vec_1 = ray_result.collider.basis.y
+		vec_1 = hovered_part.basis.y
 	
 	
 #iterate over all 3 vectors and again find closest absolute dot product
@@ -91,16 +147,16 @@ static func snap_rotation(input : Basis, ray_result : Dictionary):
 
 
 #planar positional snap, returns global vector3 position of dragged part
-static func snap_position(
+static func drag_snap_position_to_hovered(
 	ray_result : Dictionary,
 	dragged_part : Part,
-	hovered_part : Part,
 	selected_parts_abb : ABB,
 	positional_snap_increment : float,
 	snapping_active : bool
 	):
 	
 	
+	var hovered_part : Part = ray_result.collider
 	var normal : Vector3 = ray_result.normal
 	
 	#first find closest basis vectors to normal vector and use that to determine which side length of the abb to use
@@ -129,14 +185,13 @@ static func snap_position(
 	
 	#local coordinate of dragged part
 	var result_local : Vector3 = ray_result_local_position + drag_offset_local
-	
 	#if one parts side length is even and one is odd
 	#add half of a snap increment to offset it away
 	var dragged_part_local : Basis = inverse.basis * dragged_part.basis
 	var dragged_part_scale_local : Vector3 = SnapUtils.get_scale_local(dragged_part.part_scale, dragged_part_local)
 	
 	
-	"TODO"#make selection snap by the closest corner of ray_result.position
+	#make selection snap by the closest corner of ray_result.position
 	var result_local_snap : Vector3 = result_local
 	if snapping_active:
 		
@@ -162,23 +217,31 @@ static func snap_position(
 			result_local_snap[i] = snapped(result_local_snap[i], positional_snap_increment)
 			result_local_snap[i] = (result_local_snap[i] - hovered_corner) + dragged_corner
 			
-			if i == 2:
-				print("Z ---------------------------------------------------------------------------")
-				print("dragged scale            ", dragged_part_scale_local)
-				print("hovered scale            ", hovered_part.part_scale)
-				print("dragged_corner           ", dragged_corner)
-				print("hovered_corner           ", hovered_corner)
-				print("result local snap        ", result_local_snap[i])
+			#if i == 2:
+				#print("Z ---------------------------------------------------------------------------")
+				#print("dragged scale            ", dragged_part_scale_local)
+				#print("hovered scale            ", hovered_part.part_scale)
+				#print("dragged_corner           ", dragged_corner)
+				#print("hovered_corner           ", hovered_corner)
+				#print("result local snap        ", result_local_snap)
+				#print("result local             ", result_local)
 			#4. return this value
-			
-			#result_local_snap[i] = snapped(result_local_snap[i], positional_snap_increment)
-			
 			i = i + 1
 	
 	#transform to global space and apply this to dragged_part
 	var result : Vector3 = hovered_part.global_transform * result_local_snap
 	return result
 
+
+static func max_axis_index_abs(vector : Vector3):
+	#scaling vector index
+	var index : int = 0
+	if abs(vector.x) > 0:
+		return 0
+	elif abs(vector.y) > 0:
+		return 1
+	elif abs(vector.z) > 0:
+		return 2
 
 #returns index of most parallel vector to target vector, no matter if its pointing the opposite way or not
 #update; removed type of search_array to allow basis as parameter
@@ -218,24 +281,22 @@ static func find_closest_vector(search_array, target : Vector3, is_search_array_
 	return return_dict
 
 
-static func part_rectilinear_alignment_check(p1 : Part, p2 : Part):
+static func part_rectilinear_alignment_check(p1 : Basis, p2 : Basis):
 	var i : int = 0
-	var p1_basis : Basis = p1.global_transform.basis
-	var p2_basis : Basis = p2.global_transform.basis
 	var is_aligned_1 : bool = false
 	var is_aligned_2 : bool = false
 	
 	#at least one of 3 vectors should evaluate to (almost) 1
 	while i < 3:
 		#this is as precise as 32bit floats can do
-		if abs(p1_basis[i].dot(p2_basis[0])) > 0.999999:
+		if abs(p1[i].dot(p2[0])) > 0.999999:
 			is_aligned_1 = true
 			break
 		i = i + 1
 	
 	i = 0
 	while i < 3:
-		if abs(p1_basis[i].dot(p2_basis[1])) > 0.999999:
+		if abs(p1[i].dot(p2[1])) > 0.999999:
 			is_aligned_2 = true
 			break
 		i = i + 1
@@ -260,6 +321,13 @@ static func part_exact_alignment(p1 : Basis, p2 : Basis):
 	return p1_mutated
 
 
+static func part_average_position(input : Array[Part]):
+	var sum : Vector3 = Vector3.ZERO
+	for i in input:
+		sum = sum + i.global_position
+	return sum / input.size()
+
+
 #return whether a number contains an odd or even amount of snap increments
 static func is_odd_with_snap_size(input : float, snap_increment : float):
 	var term_1 : float = input / snap_increment
@@ -268,14 +336,13 @@ static func is_odd_with_snap_size(input : float, snap_increment : float):
 
 
 #assuming part rotation is rectilinear
-"TODO"#rename this to s
 static func get_scale_local(part_scale : Vector3, part_rotation : Basis):
 	return abs(part_rotation * part_scale)
 
 
 "TODO"#clean up (maybe)
 static func calculate_extents(abb : ABB, rotation_origin_part : Part, parts : Array[Part]):
-	abb.transform = rotation_origin_part.global_transform
+	abb.transform = rotation_origin_part.transform
 	abb.extents = Vector3.ZERO
 	
 	var i : int = 0
@@ -284,10 +351,10 @@ static func calculate_extents(abb : ABB, rotation_origin_part : Part, parts : Ar
 		for x in [-0.5, 0.5]:
 			for y in [-0.5, 0.5]:
 				for z in [-0.5, 0.5]:
-					var corner = parts[i].global_transform.origin
-					corner = corner + parts[i].global_transform.basis.x * (x * parts[i].part_scale.x)
-					corner = corner + parts[i].global_transform.basis.y * (y * parts[i].part_scale.y)
-					corner = corner + parts[i].global_transform.basis.z * (z * parts[i].part_scale.z)
+					var corner = parts[i].transform.origin
+					corner = corner + parts[i].transform.basis.x * (x * parts[i].part_scale.x)
+					corner = corner + parts[i].transform.basis.y * (y * parts[i].part_scale.y)
+					corner = corner + parts[i].transform.basis.z * (z * parts[i].part_scale.z)
 					corners.append(corner)
 		
 		for j in corners:
@@ -295,3 +362,14 @@ static func calculate_extents(abb : ABB, rotation_origin_part : Part, parts : Ar
 		i = i + 1
 	
 	return abb
+
+
+#if anybody is confused about this calculation
+#https://docs.godotengine.org/en/4.1/tutorials/physics/physics_introduction.html#code-example
+static func calculate_collision_layer(input_layers_to_enable : Array[int]):
+	if not input_layers_to_enable.is_empty():
+		var sum : int = 0
+		for i in input_layers_to_enable:
+			sum = int(sum + pow(2, i - 1))
+		
+		return sum

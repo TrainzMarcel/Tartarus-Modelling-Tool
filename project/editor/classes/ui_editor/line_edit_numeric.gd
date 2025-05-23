@@ -12,7 +12,6 @@ func _ready():
 	regex_num_only.compile("^[a-zA-Z0-9,]*\\.?[a-zA-Z0-9,]*$") 
 	text_changed.connect(on_line_edit_numeric_text_changed)
 	on_line_edit_numeric_text_changed(text)
-# Called every frame. 'delta' is the elapsed time since the previous frame.
 
 
 func on_line_edit_numeric_text_changed(new_text):

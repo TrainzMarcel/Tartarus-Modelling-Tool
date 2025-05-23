@@ -1,4 +1,4 @@
-[gd_scene load_steps=66 format=3 uid="uid://cwt02lxvderye"]
+[gd_scene load_steps=67 format=3 uid="uid://cwt02lxvderye"]
 
 [ext_resource type="Script" path="res://editor/classes/ui_editor/editor_ui.gd" id="1_mcko4"]
 [ext_resource type="StyleBox" uid="uid://bkbmbfniourik" path="res://editor/data_ui/styles/panel_styles/panel_rounded_bottom.tres" id="1_pntfv"]
@@ -65,6 +65,26 @@ unicode = 51
 [sub_resource type="Shortcut" id="Shortcut_68ksu"]
 events = [SubResource("InputEventKey_y783w")]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0x74o"]
+bg_color = Color(0.08, 0.08, 0.08, 0.960784)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.8, 0, 0, 1)
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_detail = 4
+
+[sub_resource type="InputEventKey" id="InputEventKey_7j2p7"]
+device = -1
+ctrl_pressed = true
+keycode = 55
+unicode = 55
+
+[sub_resource type="Shortcut" id="Shortcut_s6i4f"]
+events = [SubResource("InputEventKey_7j2p7")]
+
 [sub_resource type="InputEventKey" id="InputEventKey_k11tv"]
 device = -1
 keycode = 52
@@ -108,15 +128,6 @@ unicode = 55
 
 [sub_resource type="Shortcut" id="Shortcut_r7hg2"]
 events = [SubResource("InputEventKey_shmqc")]
-
-[sub_resource type="InputEventKey" id="InputEventKey_7j2p7"]
-device = -1
-ctrl_pressed = true
-keycode = 55
-unicode = 55
-
-[sub_resource type="Shortcut" id="Shortcut_s6i4f"]
-events = [SubResource("InputEventKey_7j2p7")]
 
 [sub_resource type="InputEventKey" id="InputEventKey_3xrrq"]
 device = -1
@@ -427,17 +438,20 @@ text = "3"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="ButtonChangePivotTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
+[node name="HBoxContainerChangePivotTool" type="HBoxContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="ButtonChangePivotTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool"]
 unique_name_in_owner = true
-visible = false
 self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
-tooltip_text = "Change rotation pivot of current selection"
+tooltip_text = "Change rotation pivot"
 theme_override_font_sizes/font_size = 9
-theme_override_styles/normal = ExtResource("8_ef80w")
-theme_override_styles/hover = ExtResource("8_ef80w")
-theme_override_styles/pressed = ExtResource("9_qpats")
+theme_override_styles/normal = ExtResource("17_gahws")
+theme_override_styles/hover = ExtResource("17_gahws")
+theme_override_styles/pressed = ExtResource("18_riof3")
 theme_override_styles/focus = ExtResource("5_rq1a8")
 toggle_mode = true
 action_mode = 0
@@ -446,7 +460,7 @@ icon = ExtResource("17_ccyt1")
 expand_icon = true
 script = ExtResource("11_6a6rl")
 
-[node name="Panel" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/ButtonChangePivotTool"]
+[node name="Panel" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool/ButtonChangePivotTool"]
 visible = false
 clip_contents = true
 layout_mode = 1
@@ -462,7 +476,7 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/panel = ExtResource("12_rh0pf")
 
-[node name="Label" type="Label" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/ButtonChangePivotTool/Panel"]
+[node name="Label" type="Label" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool/ButtonChangePivotTool/Panel"]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -476,6 +490,18 @@ theme = ExtResource("13_v6fq4")
 text = "3"
 horizontal_alignment = 1
 vertical_alignment = 2
+
+[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool"]
+layout_mode = 2
+tooltip_text = "Reset pivot"
+theme_override_styles/normal = ExtResource("20_ibnk4")
+theme_override_styles/hover = ExtResource("20_ibnk4")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_0x74o")
+theme_override_styles/focus = ExtResource("5_rq1a8")
+action_mode = 0
+shortcut = SubResource("Shortcut_s6i4f")
+text = "Reset"
+script = ExtResource("11_6a6rl")
 
 [node name="ButtonScaleTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
 unique_name_in_owner = true

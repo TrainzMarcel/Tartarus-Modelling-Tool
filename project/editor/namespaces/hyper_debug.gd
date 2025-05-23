@@ -59,14 +59,14 @@ static func config(tree_access : Node):
 	HyperDebug.actions.transform_handle_rotation_visualize = Action.new()
 	HyperDebug.actions.abb_visualize = Action.new()
 	HyperDebug.actions.transform_handle_linear_visualize = Action.new()
-	HyperDebug.actions.document_viewer_asserts = Action.new()
+	#HyperDebug.actions.document_viewer_asserts = Action.new()
 	
 	
 	HyperDebug.actions.basis_print.active = false
 	HyperDebug.actions.transform_handle_rotation_visualize.active = false
 	HyperDebug.actions.abb_visualize.active = false
 	HyperDebug.actions.transform_handle_linear_visualize.active = false
-	HyperDebug.actions.document_viewer_asserts.active = false
+	#HyperDebug.actions.document_viewer_asserts.active = false
 	
 	
 	#set all actions false if debug_active is false
@@ -83,7 +83,7 @@ static func config(tree_access : Node):
 	HyperDebug.actions.transform_handle_linear_visualize.f = HyperDebug.vector_visualize
 	HyperDebug.actions.transform_handle_linear_visualize.debug_object = HyperDebug.create_debug_vector(tree_access, HyperDebug.actions.transform_handle_linear_visualize, Color(1.0, 1.0, 0.0, 0.4), true)
 	
-	HyperDebug.actions.document_viewer_asserts.f = HyperDebug.assert_wrapper
+	#HyperDebug.actions.document_viewer_asserts.f = HyperDebug.assert_wrapper
 
 
 static func create_debug_vector(tree_access : Node, action : Action, color : Color, add_plane : bool):

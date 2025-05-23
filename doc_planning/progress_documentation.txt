@@ -69,3 +69,6 @@
 14.5. fixed uv stretching problems with shader, considered ways to clean up the programs architecture (API style abstractions), major rework of the programs architecture using the previous considerations, reformed WorkspaceData into WorkspaceManager and mostly used it like an API in main, kept all the old save/load code inside, moved all ui events in Main into MainUIEvents
 15.5. researched undo redo systems and whether i should make my own, cleaned up part.gd a little bit, made top bar ui functional using MainUIEvents
 16.5. made selection box get colored according to tool used (paint tool = selected color, material tool = orange, delete tool = red), added is_hover_tool flag, added a 10 pixel tolerance for starting a drag, reworked snap_position() to snap by corner of dragged and hovered part
+19.5. prefixed SnapUtils.snap_rotation() and SnapUtils.snap_position() with drag_ to make their purpose clearer, completely rearchitected TransformHandleUtils.transform() as it was handling input and snapping
+21.5. finished rearchitecting TransformHandleUtils.transform(), implemented all ctrl + key functions except undo and redo
+22.5. implemented multi-part scaling in WorkspaceManager.selection_scale()

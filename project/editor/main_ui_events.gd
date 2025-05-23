@@ -64,7 +64,7 @@ static func select_tool(button : Button):
 	
 	if Main.is_drag_tool:
 		if has_associated_transform_handles:
-			Main.set_transform_handle_root_position(Main.transform_handle_root, Main.selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
+			Main.set_transform_handle_root_position(Main.transform_handle_root, WorkspaceManager.selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
 			if WorkspaceManager.selected_parts_array.size() > 0:
 				TransformHandleUtils.set_tool_handle_array_active(Main.selected_tool_handle_array, true)
 		
@@ -93,20 +93,40 @@ static func on_material_selected(button : Button):
 
 
 static func on_snap_text_changed(line_edit):
-	var r_dict = EditorUI.main_on_snap_text_changed(line_edit, Main.positional_snap_increment, Main.rotational_snap_increment)
-	Main.positional_snap_increment = r_dict.positional_snap_increment
-	Main.rotational_snap_increment = r_dict.rotational_snap_increment
+	Main.positional_snap_increment = float(EditorUI.le_rotation_step.text)
+	Main.rotational_snap_increment = float(EditorUI.le_unit_step.text)
 
 
 static func on_snap_button_pressed(button):
-	var r_dict = EditorUI.on_snap_button_pressed(button, Main.positional_snap_increment, Main.rotational_snap_increment)
-	Main.positional_snap_increment = r_dict.positional_snap_increment
-	Main.rotational_snap_increment = r_dict.rotational_snap_increment
+	match button:
+		EditorUI.b_rotation_increment:
+			Main.rotational_snap_increment = Main.rotational_snap_increment + EditorUI.le_rotation_step_increment_step.true_value
+		EditorUI.b_rotation_decrement:
+			Main.rotational_snap_increment = Main.rotational_snap_increment - EditorUI.le_rotation_step_increment_step.true_value
+		EditorUI.b_rotation_double:
+			Main.rotational_snap_increment = Main.rotational_snap_increment * 2
+		EditorUI.b_rotation_half:
+			Main.rotational_snap_increment = Main.rotational_snap_increment * 0.5
+		EditorUI.b_unit_increment:
+			Main.positional_snap_increment = Main.positional_snap_increment + EditorUI.le_unit_step_increment_step.true_value
+		EditorUI.b_unit_decrement:
+			Main.positional_snap_increment = Main.positional_snap_increment - EditorUI.le_unit_step_increment_step.true_value
+		EditorUI.b_unit_double:
+			Main.positional_snap_increment = Main.positional_snap_increment * 2
+		EditorUI.b_unit_half:
+			Main.positional_snap_increment = Main.positional_snap_increment * 0.5
+	
+	Main.positional_snap_increment = max(Main.positional_snap_increment, 0)
+	Main.rotational_snap_increment = max(Main.rotational_snap_increment, 0)
+	
+	EditorUI.le_unit_step.text = str(Main.positional_snap_increment)
+	EditorUI.le_rotation_step.text = str(Main.rotational_snap_increment)
+	
 
 
 static func on_local_transform_active_set(active):
 	Main.local_transform_active = active
-	Main.set_transform_handle_root_position(Main.transform_handle_root, Main.selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
+	Main.set_transform_handle_root_position(Main.transform_handle_root, WorkspaceManager.selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
 
 static func on_snapping_active_set(active):
 	Main.snapping_active = active

@@ -111,11 +111,14 @@ func cam_process(
 		return
 	
 	#camera movement
-	var direction = Vector3(
-		float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)),
-		float(Input.is_physical_key_pressed(KEY_E)) - float(Input.is_physical_key_pressed(KEY_Q)), 
-		float(Input.is_physical_key_pressed(KEY_S)) - float(Input.is_physical_key_pressed(KEY_W))
-	).normalized()
+	#dont move when ctrl is held (ctrl + a for example)
+	var direction : Vector3
+	if not Input.is_physical_key_pressed(KEY_CTRL):
+		direction = Vector3(
+			float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)),
+			float(Input.is_physical_key_pressed(KEY_E)) - float(Input.is_physical_key_pressed(KEY_Q)), 
+			float(Input.is_physical_key_pressed(KEY_S)) - float(Input.is_physical_key_pressed(KEY_W))
+		).normalized()
 	
 	if Input.is_physical_key_pressed(KEY_SHIFT): # boost
 		translate(direction * velocity * delta * boost_speed_multiplier)
