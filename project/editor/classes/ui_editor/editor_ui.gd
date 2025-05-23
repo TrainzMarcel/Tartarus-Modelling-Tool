@@ -189,8 +189,8 @@ func initialize(
 	b_snapping_enabled.toggled.connect(on_snapping_active_set)
 	b_local_transform.toggled.connect(on_local_transform_active_set)
 	
-	le_rotation_step.text_changed.connect(main_on_snap_text_changed.bind(le_rotation_step))
-	le_unit_step.text_changed.connect(main_on_snap_text_changed.bind(le_unit_step))
+	le_rotation_step.text_changed.connect(main_on_snap_text_changed)
+	le_unit_step.text_changed.connect(main_on_snap_text_changed)
 	
 	b_rotation_increment.pressed.connect(main_on_snap_button_pressed.bind(b_rotation_increment))
 	b_rotation_decrement.pressed.connect(main_on_snap_button_pressed.bind(b_rotation_decrement))

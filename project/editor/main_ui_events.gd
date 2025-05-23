@@ -92,7 +92,7 @@ static func on_material_selected(button : Button):
 	EditorUI.l_message.text = button.text + " selected"
 
 
-static func on_snap_text_changed(line_edit):
+static func on_snap_text_changed(new_text):
 	Main.positional_snap_increment = float(EditorUI.le_rotation_step.text)
 	Main.rotational_snap_increment = float(EditorUI.le_unit_step.text)
 

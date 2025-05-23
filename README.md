@@ -41,9 +41,9 @@ v0.1
 	x IC4 tool 3	rotating is done by dragging one of 3 rings, x rotation in red, y rotation in green and z rotation in blue
 	  IC5 tool 3	will have an extra button next to it, labeled "change pivot" where the parts pivot will be shown and be moveable by tool 2
 	x IC6 tool 4	scaling is done by dragging one of 6 spheres, x spheres in red, y spheres in green and z spheres in blue
-	  IC7 tool 4	holding ctrl will force the part to stay in the same position and scaling to work in both directions of the axis
-	  IC8 tool 4	shift will force scaling to work in all directions
-	  IC9 tool 4	holding both ctrl and shift will force the part to stay centered and scale in all directions
+	x IC7 tool 4	holding ctrl will force the part to stay in the same position and scaling to work in both directions of the axis
+	x IC8 tool 4	shift will force scaling to work in all directions
+	x IC9 tool 4	holding both ctrl and shift will force the part to stay centered and scale in all directions
 	x IC10 dragging	pressing r will always rotate a dragged part (or group of parts) around the surface normal
 	x IC11 dragging	pressing t will always rotate a dragged part (or group of parts) around the horizontal axis from the camera
 	x IC12 camera	hitting f when any number of parts is selected should center the camera on them

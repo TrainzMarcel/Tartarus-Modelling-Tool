@@ -1,9 +1,9 @@
-[gd_scene load_steps=36 format=3 uid="uid://hul5x10ptumj"]
+[gd_scene load_steps=24 format=3 uid="uid://hul5x10ptumj"]
 
 [ext_resource type="Script" path="res://editor/main.gd" id="1_4xdr8"]
 [ext_resource type="PackedScene" uid="uid://c01nu37bjhxsi" path="res://editor/classes/camera/free_look_camera.tscn" id="2_n3tr4"]
 [ext_resource type="PrismMesh" uid="uid://0ecdpejpomxu" path="res://editor/data_editor/parts/wedge.tres" id="5_r4uva"]
-[ext_resource type="Script" path="res://editor/classes/debug_and_unit_tests/debug_vector_3d.gd" id="6_5agbf"]
+[ext_resource type="Material" uid="uid://dscydtkjdxpus" path="res://editor/data_editor/materials/wood_01.tres" id="6_46ho7"]
 [ext_resource type="PackedScene" uid="uid://cwt02lxvderye" path="res://editor/classes/ui_editor/editor_ui.tscn" id="6_whu6r"]
 [ext_resource type="Script" path="res://editor/classes/part.gd" id="7_nrd43"]
 [ext_resource type="PackedScene" uid="uid://clfcgcedn47iy" path="res://editor/classes/transform_handles/transform_handle_root.tscn" id="7_wy0x5"]
@@ -37,85 +37,7 @@ tonemap_mode = 2
 [sub_resource type="World3D" id="World3D_15twx"]
 environment = SubResource("Environment_ye61o")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5ctal"]
-transparency = 1
-albedo_color = Color(1, 0, 0, 1)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_ccabj"]
-material = SubResource("StandardMaterial3D_5ctal")
-top_radius = 0.0
-bottom_radius = 0.2
-height = 1.0
-radial_segments = 16
-rings = 1
-cap_top = false
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ibswb"]
-transparency = 1
-albedo_color = Color(0, 1, 0, 1)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_mq71f"]
-material = SubResource("StandardMaterial3D_ibswb")
-top_radius = 0.0
-bottom_radius = 0.2
-height = 1.0
-radial_segments = 16
-rings = 1
-cap_top = false
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_83yul"]
-transparency = 1
-albedo_color = Color(0, 0, 1, 1)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_b4kk7"]
-material = SubResource("StandardMaterial3D_83yul")
-top_radius = 0.0
-bottom_radius = 0.2
-height = 1.0
-radial_segments = 16
-rings = 1
-cap_top = false
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_adh56"]
-transparency = 1
-albedo_color = Color(1, 0, 0, 1)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_0ebwf"]
-material = SubResource("StandardMaterial3D_adh56")
-top_radius = 0.0
-bottom_radius = 0.2
-height = 1.0
-radial_segments = 16
-rings = 1
-cap_top = false
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i8rjf"]
-transparency = 1
-albedo_color = Color(0, 1, 0, 1)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_3d3s7"]
-material = SubResource("StandardMaterial3D_i8rjf")
-top_radius = 0.0
-bottom_radius = 0.2
-height = 1.0
-radial_segments = 16
-rings = 1
-cap_top = false
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wiyst"]
-transparency = 1
-albedo_color = Color(0, 0, 1, 1)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_d0dbs"]
-material = SubResource("StandardMaterial3D_wiyst")
-top_radius = 0.0
-bottom_radius = 0.2
-height = 1.0
-radial_segments = 16
-rings = 1
-cap_top = false
-
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_7hxoi"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_stkso"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_b2n2e"]
 render_priority = 0
@@ -266,47 +188,11 @@ fov = 90.0
 [node name="Workspace" type="Node" parent="."]
 
 [node name="Part" type="StaticBody3D" parent="Workspace"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3, 0)
 script = ExtResource("7_nrd43")
-
-[node name="DebugVector3D" type="MeshInstance3D" parent="Workspace/Part"]
-transform = Transform3D(-4.37114e-08, 1, 4.37114e-08, 0, -4.37114e-08, 1, 1, 4.37114e-08, 1.91069e-15, 0.5, 0, 0)
-mesh = SubResource("CylinderMesh_ccabj")
-script = ExtResource("6_5agbf")
-color = Color(1, 0, 0, 1)
-
-[node name="DebugVector3D2" type="MeshInstance3D" parent="Workspace/Part"]
-transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0.5, 0)
-mesh = SubResource("CylinderMesh_mq71f")
-script = ExtResource("6_5agbf")
-color = Color(0, 1, 0, 1)
-
-[node name="DebugVector3D3" type="MeshInstance3D" parent="Workspace/Part"]
-transform = Transform3D(-1, -8.74228e-08, -3.82137e-15, 0, -4.37114e-08, 1, -8.74228e-08, 1, 4.37114e-08, 0, 0, 0.5)
-mesh = SubResource("CylinderMesh_b4kk7")
-script = ExtResource("6_5agbf")
-color = Color(0, 0, 1, 1)
-
-[node name="Part14" type="StaticBody3D" parent="Workspace"]
-transform = Transform3D(-4.37114e-08, 1, -4.37114e-08, 0, -4.37114e-08, -1, -1, -4.37114e-08, 0, 0, 0.5, 0)
-script = ExtResource("7_nrd43")
-
-[node name="DebugVector3D" type="MeshInstance3D" parent="Workspace/Part14"]
-transform = Transform3D(-4.37114e-08, 1, 4.37114e-08, 0, -4.37114e-08, 1, 1, 4.37114e-08, 1.91069e-15, 0.5, 0, 0)
-mesh = SubResource("CylinderMesh_0ebwf")
-script = ExtResource("6_5agbf")
-color = Color(1, 0, 0, 1)
-
-[node name="DebugVector3D2" type="MeshInstance3D" parent="Workspace/Part14"]
-transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0.5, 0)
-mesh = SubResource("CylinderMesh_3d3s7")
-script = ExtResource("6_5agbf")
-color = Color(0, 1, 0, 1)
-
-[node name="DebugVector3D3" type="MeshInstance3D" parent="Workspace/Part14"]
-transform = Transform3D(-1, -8.74228e-08, -3.82137e-15, 0, -4.37114e-08, 1, -8.74228e-08, 1, 4.37114e-08, 0, 0, 0.5)
-mesh = SubResource("CylinderMesh_d0dbs")
-script = ExtResource("6_5agbf")
-color = Color(0, 0, 1, 1)
+part_material = ExtResource("6_46ho7")
+part_color = Color(0.262745, 0.431373, 0.270588, 1)
+part_scale = Vector3(64, 1, 64)
 
 [node name="Part2" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -0.680444)
@@ -371,7 +257,7 @@ part_scale = Vector3(0.2, 0.2, 0.8)
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("8_4p0vi")
-mesh = SubResource("ImmediateMesh_7hxoi")
+mesh = SubResource("ImmediateMesh_stkso")
 skeleton = NodePath("../..")
 script = ExtResource("9_n7hy1")
 box_scale = Vector3(1, 1, 1)

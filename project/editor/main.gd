@@ -4,12 +4,11 @@ class_name Main
 
 "TODO"#decide whether the word "is" should be a standard part of naming bools
 "TODO"#find a good way to group variables
+"TODO"#implement selection grouping
+"TODO"#implement csg
+"TODO"#implement undo redo
+"TODO"#implement pivot move tool
 
-
-"TODO"#for tomorrow 15.5.: implement all ctrl + key functions
-#including undo and redo
-#that OR fix snapping, scaling and rest of transform code
-#pivot move tool
 
 
 "TODO"#put all the things one has to edit to add a new tool to transformhandleroot into one file (if possible)
@@ -18,18 +17,6 @@ class_name Main
 
 #future idea: put selection box around selected_parts_abb as a visual cue (still keeping the selectionboxes of individual parts)
 #future idea 2: recolor selection box to red if 2 selected parts are overlapping perfectly
-
-
-#all related todos eliminated (for the time being)
-#   Main
-# x EditorUI
-#   SnapUtils
-#   HyperDebug
-# x ABB
-# x TransformHandle
-# x TransformHandleRoot
-#   TransformHandleUtils
-
 
 @export_category("Debug")
 @export var debug_active : bool = true
@@ -373,7 +360,6 @@ func _input(event):
 			WorkspaceManager.selection_paste()
 		#duplicate
 		elif event.keycode == KEY_D and event.ctrl_pressed:
-			print("print")
 			WorkspaceManager.selection_duplicate()
 		elif event.keycode == KEY_Z and event.ctrl_pressed:
 			"TODO"
@@ -384,7 +370,6 @@ func _input(event):
 	
 	
 	#post input updates
-	#todo comment more precisely what this block even does
 	if WorkspaceManager.selected_parts_array.size() > 0 and is_selecting_allowed:
 		#important: only execute this on LEFT CLICK and NOT every input frame
 		if event is InputEventMouseButton:
@@ -405,9 +390,11 @@ func _input(event):
 					local_transform_active,
 					selected_tool_handle_array
 				)
+				#activate transform handles each input frame for some reason
 				TransformHandleUtils.set_tool_handle_array_active(selected_tool_handle_array, true)
 			
 	if WorkspaceManager.selected_parts_array.size() == 0 and is_selecting_allowed:
+		#disable tool handles of selected tool if theres nothing selected
 		TransformHandleUtils.set_tool_handle_array_active(selected_tool_handle_array, false)
 	
 #dragging (parts AND transform handles) happens here
@@ -438,7 +425,6 @@ func _input(event):
 						snapping_active
 					))
 		
-		"TODO"#get done today: refactor this a little, add backward movement limit for scaling, add relative local transform msg
 		#transform handle dragging under this if
 		#handles do not need a "canvas" collider to be dragged over
 		#so theres no check of hovered_part or hovered_handle
