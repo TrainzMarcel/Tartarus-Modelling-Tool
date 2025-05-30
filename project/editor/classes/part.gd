@@ -104,8 +104,9 @@ func _ready():
 	add_child(part_mesh_node)
 	part_mesh_node.owner = get_tree().edited_scene_root
 	
+#outdated comment, not sure if this still applies
 #only set this after its initialized (does not run through setter if mesh or collider are null)
-	part_scale = part_scale
+	reapply_part_scale(part_scale)
 
 var wedge_collider_points : PackedVector3Array = [
 	Vector3(-0.5, -0.5, -0.5),
@@ -141,9 +142,10 @@ func copy():
 	new.locked = locked
 	new.collider_type = collider_type
 	new.part_scale = part_scale
-	new.part_material = part_material.duplicate(true)
+	new.part_material = part_material.duplicate(false)
 	new.reapply_part_material(part_material)
 	#i assume (hope) this is passed by value and not by reference
 	new.part_color = part_color
 	new.reapply_part_color(part_color)
 	return new
+

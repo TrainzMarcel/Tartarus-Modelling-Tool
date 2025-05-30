@@ -259,6 +259,10 @@ static func selection_rotate(rotated_basis : Basis, original_basis : Basis):#TOD
 
 #scale_absolute meaning it will set the scale of the selection bounding box to this value
 #must call selection_move after this function due to the updated offset_abb_to_selected_array
+"TODO"#OPTIMIZE OPTIMIZE OPTIMIZE
+#https://www.reddit.com/r/godot/comments/187npcd/how_to_increase_performance/
+#https://docs.godotengine.org/en/4.1/classes/class_renderingserver.html
+#
 static func selection_scale(scale_absolute : Vector3):
 	#dont do anything if scale is the same
 	if scale_absolute == selected_parts_abb.extents:
@@ -275,10 +279,10 @@ static func selection_scale(scale_absolute : Vector3):
 	
 	#!!scalable_parts and local_scales are parallel arrays!!
 	var scalable_parts : Array[Part]
-	var local_scales : Array[Vector3] = []
+	var local_scales : PackedVector3Array = []
 	#!!selected_parts_array, offset_abb_to_selected_array and local_offsets are parallel arrays!!
 	#offset_abb_to_selected_array is in global space
-	var local_offsets : Array[Vector3] = []
+	var local_offsets : PackedVector3Array = []
 	var inverse : Basis = selected_parts_abb.transform.basis.inverse()
 	#shorthand
 	var ext : Vector3 = selected_parts_abb.extents
@@ -395,6 +399,304 @@ static func redo():
 	print("REDO")
 
 
+#save load system---------------------------------------------------------------
+static func save_model():
+	selection_set_to_workspace()
+	var used_colors : Array[Color] = []
+	var used_materials : Array[ShaderMaterial] = []
+	var used_meshes : Array[Mesh] = []
+	var color_to_int_mapping : Dictionary
+	var material_name_to_int_mapping : Dictionary
+	var mesh_to_int_mapping : Dictionary
+	var files_used : Array = []
+	var line : PackedStringArray = []
+	var line_debug : PackedStringArray = []
+	var file : PackedStringArray = []
+	
+	#get used colors
+	var i : int = 0
+	while i < selected_parts_array.size():
+		if not used_colors.has(selected_parts_array[i].part_color):
+			used_colors.append(selected_parts_array[i].part_color)
+		i = i + 1
+	
+	#get used materials
+	i = 0
+	
+	used_materials.append(selected_parts_array[0].part_material)
+	while i < selected_parts_array.size():
+		var j : int = 0
+		var has_material : bool = false
+		
+		while j < used_materials.size():
+			var base_1 = used_materials[j].resource_path.get_file()
+			var base_2 = selected_parts_array[i].part_material.resource_path.get_file()
+			if base_2 == base_1:
+				has_material = true
+				break
+			j = j + 1
+		
+		if not has_material:
+			used_materials.append(selected_parts_array[i].part_material)
+		i = i + 1
+	
+	#get used meshes
+	i = 0
+	used_meshes.append(selected_parts_array[0].part_mesh_node.mesh)
+	while i < selected_parts_array.size():
+		var j : int = 0
+		var has_mesh : bool = false
+		while j < used_meshes.size():
+			if selected_parts_array[i].part_mesh_node.mesh.resource_path.get_file() == used_meshes[j].resource_path.get_file():
+				has_mesh = true
+				break
+			j = j + 1
+			
+		if not has_mesh:
+			used_meshes.append(selected_parts_array[i].part_mesh_node.mesh)
+		i = i + 1
+	
+	#create mappings to quickly assign the used color and material ids
+	color_to_int_mapping = create_mapping(used_colors)
+	material_name_to_int_mapping = create_mapping(used_materials.map(func(input): return input.resource_path.get_file()))
+	mesh_to_int_mapping = create_mapping(used_meshes.map(func(input): return input.resource_path.get_file()))
+	
+	
+	
+	#turn colors to vec3s and add to save object
+	i = 0
+	file.append("::COLOR::")
+	while i < used_colors.size():
+		file.append(",".join([str(used_colors[i].r8), str(used_colors[i].g8), str(used_colors[i].b8)]))
+		i = i + 1
+	
+	#add materials to save object
+	i = 0
+	file.append("::MATERIAL::")
+	while i < used_materials.size():
+		files_used.append(used_materials[i].shader.resource_path)
+		line.append(used_materials[i].shader.resource_path.get_file())
+		var properties : Array = used_materials[i].shader.get_shader_uniform_list()
+		var j : int = 0
+		prints(i, "-------------------------------")
+		while j < properties.size():
+			var param = used_materials[i].get_shader_parameter(properties[j].name)
+			line_debug.append(properties[j].name)
+			if param is Texture2D:
+				files_used.append(param.resource_path)
+				line.append(param.resource_path.get_file())
+			elif param is float:
+				line.append(str(param))
+			elif param is Vector3:
+				line.append(str(param.x))
+				line.append(str(param.y))
+				line.append(str(param.z))
+			elif param is Vector4:
+				line.append(str(param.w))
+				line.append(str(param.x))
+				line.append(str(param.y))
+				line.append(str(param.z))
+			elif param == null:
+				if properties[j].type == TYPE_VECTOR3:
+					line.append("")
+					line.append("")
+					line.append("")
+				elif properties[j].type == TYPE_VECTOR4:
+					line.append("")
+					line.append("")
+					line.append("")
+					line.append("")
+				else:
+					#push_warning("null saved in workspace_manager.save_model()")
+					#print(j, "NULL SAVED")
+					line.append("")
+			else:
+				print("UNIMPLEMENTED TYPE: ", param)
+				return
+			j = j + 1
+		file.append(",".join(line))
+		line.clear()
+		i = i + 1
+	
+	#add meshes to save object
+	i = 0
+	file.append("::MESH::")
+	while i < used_meshes.size():
+		files_used.append(used_meshes[i].resource_path)
+		file.append(used_meshes[i].resource_path.get_file())
+		i = i + 1
+	
+	
+	#part data (PARALLEL ARRAYS!!)
+	i = 0
+	file.append("::MODEL::")
+	while i < selected_parts_array.size():
+		#position
+		line.append(str(selected_parts_array[i].transform.origin.x))
+		line.append(str(selected_parts_array[i].transform.origin.y))
+		line.append(str(selected_parts_array[i].transform.origin.z))
+		#scale
+		line.append(str(selected_parts_array[i].part_scale.x))
+		line.append(str(selected_parts_array[i].part_scale.y))
+		line.append(str(selected_parts_array[i].part_scale.z))
+		#rotation (quaternion kept failing at certain angles)
+		line.append(str(selected_parts_array[i].rotation_degrees.x))
+		line.append(str(selected_parts_array[i].rotation_degrees.y))
+		line.append(str(selected_parts_array[i].rotation_degrees.z))
+		#color
+		line.append(str(color_to_int_mapping[selected_parts_array[i].part_color]))
+		#material
+		line.append(str(material_name_to_int_mapping[selected_parts_array[i].part_material.resource_path.get_file()]))
+		line.append(str(mesh_to_int_mapping[selected_parts_array[i].part_mesh_node.mesh.resource_path.get_file()]))
+		file.append(",".join(line))
+		line.clear()
+		i = i + 1
+	
+	if not DirAccess.get_directories_at("user://").has("saved_models"):
+		DirAccess.make_dir_absolute("user://saved_models")
+	var file_access = FileAccess.open("user://saved_models/model_1.csv", FileAccess.WRITE)
+	file_access.flush()
+	var dir_access = DirAccess.open("user://saved_models/")
+	var zip_packer = ZIPPacker.new()
+	i = 0
+	while i < file.size():
+		file_access.store_line(file[i])
+		i = i + 1
+	file_access.close()
+	
+	files_used.append("user://saved_models/model_1.csv")
+	var error = zip_packer.open("user://saved_models/model_1.tmv")
+	"DEBUG"
+	print(error)
+	
+	i = 0
+	while i < files_used.size():
+		zip_packer.start_file(files_used[i].get_file())
+		zip_packer.write_file(FileAccess.get_file_as_bytes(files_used[i]))
+		zip_packer.close_file()
+		i = i + 1
+	
+	dir_access.remove("user://saved_models/model_1.csv")
+	zip_packer.close()
+
+
+static func load_model():
+	#no mappings required as the indices are already stored
+	var used_colors : Array[Color] = []
+	var used_materials : Array[Material] = []
+	var used_meshes : Array[Mesh] = []
+	var file : PackedStringArray = []
+	var file_bytes : PackedByteArray = []
+	var zip_reader : ZIPReader = ZIPReader.new()
+	var i : int = 0
+	zip_reader.open("user://saved_models/model_1.tmv")
+	file_bytes = zip_reader.read_file("model_1.csv")
+	file = file_bytes.get_string_from_utf8().split("\n")
+	
+	#mode from headers
+	var mode : String
+	while i < file.size():
+		if file[i] == "::COLOR::" or file[i] == "::MATERIAL::" or file[i] == "::MESH::" or file[i] == "::MODEL::":
+			mode = file[i]
+			i = i + 1
+			continue
+		
+		if file[i] == "" or file[i] == null:
+			i = i + 1
+			continue
+		
+		#processing
+		var line = file[i].split(",")
+	#load color
+		if mode == "::COLOR::":
+			used_colors.append(Color8(int(line[0]), int(line[1]), int(line[2])))
+			
+	#load material
+		elif mode == "::MATERIAL::":
+			var new : ShaderMaterial = ShaderMaterial.new()
+			var shader = Shader.new()
+			shader.code = zip_reader.read_file(line[0]).get_string_from_utf8()
+			new.shader = shader
+			
+			var properties : Array = shader.get_shader_uniform_list()
+			var j : int = 0
+			#start at 1 because line item 0 is the shader file name
+			var j_line : int = 1
+			
+			print(i, "-------------------------------------------------------------")
+			while j < properties.size():
+				var param = properties[j]#new.get_shader_parameter(properties[j].name)
+				if param.type == TYPE_OBJECT:
+					if param.hint_string == "Texture2D":
+						if zip_reader.get_files().has(line[j_line]):
+							var img = Image.new()
+							img.load_jpg_from_buffer(zip_reader.read_file(line[j_line]))
+							img.generate_mipmaps()
+							var texture : ImageTexture = ImageTexture.create_from_image(img)
+							new.set_shader_parameter(properties[j].name, texture)
+					
+				elif param.type == TYPE_FLOAT:
+					new.set_shader_parameter(properties[j].name, float(line[j_line]))
+				#surprisingly does not need to be incremented by 2, the x y z are stored as separate floats
+				elif param.type == TYPE_VECTOR3:
+					#new.set_shader_parameter(properties[j].name, float(line[j_line]))
+					var vec : Vector3 = Vector3()
+					vec.x = float(line[j_line])
+					vec.y = float(line[j_line + 1])
+					vec.z = float(line[j_line + 2])
+					new.set_shader_parameter(properties[j].name, vec)
+					j_line = j_line + 2
+				elif param.type == TYPE_VECTOR4:
+					#new.set_shader_parameter(properties[j].name, float(line[j_line]))
+					var vec : Vector4 = Vector4()
+					vec.w = float(line[j_line])
+					vec.x = float(line[j_line + 1])
+					vec.y = float(line[j_line + 2])
+					vec.z = float(line[j_line + 3])
+					new.set_shader_parameter(properties[j].name, vec)
+					j_line = j_line + 3
+				else:
+					print("UNIMPLEMENTED TYPE: ", param)
+					return
+				j_line = j_line + 1
+				j = j + 1
+			used_materials.append(new)
+			
+	#load mesh
+		elif mode == "::MESH::":
+			if line[0] != null or line[0] != "":
+				var mesh_bytes = zip_reader.read_file(line[0])
+				var f = FileAccess.open("user://saved_models/" + line[0], FileAccess.WRITE)
+				f.store_buffer(mesh_bytes)
+				f.close()
+				used_meshes.append(ResourceLoader.load("user://saved_models/" + line[0]))
+				DirAccess.remove_absolute("user://saved_models/" + line[0])
+				
+		elif mode == "::MODEL::":
+			var new : Part = Part.new()
+			#position
+			new.transform.origin.x = float(line[0])
+			new.transform.origin.y = float(line[1])
+			new.transform.origin.z = float(line[2])
+			#scale
+			new.part_scale.x = float(line[3])
+			new.part_scale.y = float(line[4])
+			new.part_scale.z = float(line[5])
+			#rotation
+			new.rotation_degrees.x = float(line[6])
+			new.rotation_degrees.y = float(line[7])
+			new.rotation_degrees.z = float(line[8])
+			#mesh
+			new.part_mesh_node.mesh = used_meshes[int(line[11])]
+			#material
+			new.part_material = used_materials[int(line[10])]
+			#color
+			new.part_color = used_colors[int(line[9])]
+			
+			workspace.add_child(new)
+		
+		i = i + 1
+
 #selection box functions--------------------------------------------------------
 #instance and fit selection box to a part as child of workspace node and add it to the array
 static func selection_box_instance_on_part(assigned_part : Part):
@@ -422,7 +724,6 @@ static func selection_boxes_redraw_all():
 		if Main.safety_check(i):
 			if i.assigned_node is Part:
 				i.box_scale = i.assigned_node.part_scale
-				i.box_update()
 
 
 #delete selection box whos assigned_node matches the parameter
@@ -488,6 +789,13 @@ static func create_mapping(input_data : Array):
 	return map
 
 
+static func color_to_vec3(color : Color):
+	return Vector3(color.r, color.g, color.b)
+
+
+static func vec3_to_color(vec : Vector3):
+	return Color(vec.x, vec.y, vec.z)
+
 #old function
 #read colors from file
 static func read_colors_and_create_colors(file_as_string : String):
@@ -522,6 +830,11 @@ static func read_colors_and_create_colors(file_as_string : String):
 	return r_dict
 
 
+
+
+
+
+"""
 #defaults for load/save error cases
 #static var default_color : Color = Color.WHITE
 #static var default_material : StandardMaterial3D = StandardMaterial3D.new()
@@ -531,7 +844,7 @@ static func read_colors_and_create_colors(file_as_string : String):
 #const folder_startup_palettes : String = "user://palettes"
 #const folder_saved_models : String = "user://models/"
 
-"""
+
 #currently selected palettes in the editor
 #make the setters into ui events to reload x panel uis
 #or manually call a function after setting these

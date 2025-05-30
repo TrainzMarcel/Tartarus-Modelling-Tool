@@ -63,7 +63,7 @@ func draw_quad(i_mesh : ImmediateMesh, vec_a : Vector3, vec_b : Vector3, vec_c :
 func draw_frame(i_mesh : ImmediateMesh, box_scale : Vector3, direction : Basis, box_thickness : float, mode = 0):
 	#direction = Basis(Vector3.RIGHT, Vector3.UP, Vector3.FORWARD)
 	#box scale corresponds directly to direction
-	var half_box_thickness = box_thickness / 2
+	var half_box_thickness = box_thickness * 0.5
 	var outer : Array[Vector3] = []
 	var inner : Array[Vector3] = []
 	var recessed : Array[Vector3] = []
@@ -73,19 +73,19 @@ func draw_frame(i_mesh : ImmediateMesh, box_scale : Vector3, direction : Basis, 
 	match mode:
 		#generate z surfaces
 		0:
-			original_vec = direction.x * box_scale.x / 2
-			original_vec = original_vec + direction.y * box_scale.y / 2
-			original_vec = original_vec + direction.z * box_scale.z / 2
+			original_vec = direction.x * box_scale.x * 0.5
+			original_vec = original_vec + direction.y * box_scale.y * 0.5
+			original_vec = original_vec + direction.z * box_scale.z * 0.5
 		#generate x surfaces
 		1:
-			original_vec = direction.x * box_scale.z / 2
-			original_vec = original_vec + direction.y * box_scale.y / 2
-			original_vec = original_vec + direction.z * box_scale.x / 2
+			original_vec = direction.x * box_scale.z * 0.5
+			original_vec = original_vec + direction.y * box_scale.y * 0.5
+			original_vec = original_vec + direction.z * box_scale.x * 0.5
 		#generate y surfaces
 		2:
-			original_vec = direction.x * box_scale.x / 2
-			original_vec = original_vec + direction.y * box_scale.z / 2
-			original_vec = original_vec + direction.z * box_scale.y / 2
+			original_vec = direction.x * box_scale.x * 0.5
+			original_vec = original_vec + direction.y * box_scale.z * 0.5
+			original_vec = original_vec + direction.z * box_scale.y * 0.5
 	
 	
 	vec = original_vec + (direction.x * half_box_thickness) + (direction.y * half_box_thickness)
@@ -123,19 +123,19 @@ func draw_frame(i_mesh : ImmediateMesh, box_scale : Vector3, direction : Basis, 
 	if mode == 1:
 		var i = 0
 		while i != inner.size():
-			inner[i] = inner[i].rotated(Vector3.UP, PI / 2)
-			outer[i] = outer[i].rotated(Vector3.UP, PI / 2)
-			recessed[i] = recessed[i].rotated(Vector3.UP, PI / 2)
+			inner[i] = inner[i].rotated(Vector3.UP, PI * 0.5)
+			outer[i] = outer[i].rotated(Vector3.UP, PI * 0.5)
+			recessed[i] = recessed[i].rotated(Vector3.UP, PI * 0.5)
 			i = i + 1
-		direction = direction.rotated(Vector3.UP, PI / 2)
+		direction = direction.rotated(Vector3.UP, PI * 0.5)
 	elif mode == 2:
 		var i = 0
 		while i != inner.size():
-			inner[i] = inner[i].rotated(Vector3.RIGHT, PI / 2)
-			outer[i] = outer[i].rotated(Vector3.RIGHT, PI / 2)
-			recessed[i] = recessed[i].rotated(Vector3.RIGHT, PI / 2)
+			inner[i] = inner[i].rotated(Vector3.RIGHT, PI * 0.5)
+			outer[i] = outer[i].rotated(Vector3.RIGHT, PI * 0.5)
+			recessed[i] = recessed[i].rotated(Vector3.RIGHT, PI * 0.5)
 			i = i + 1
-		direction = direction.rotated(Vector3.RIGHT, PI / 2)
+		direction = direction.rotated(Vector3.RIGHT, PI * 0.5)
 	
 	
 	#draw flat part of frame
@@ -161,7 +161,7 @@ func box_update():
 		i_mesh = self.mesh
 	
 	
-	var box_half_thickness = box_thickness / 2
+	var box_half_thickness = box_thickness * 0.5
 	
 	var i : int = 0
 	i_mesh.clear_surfaces()

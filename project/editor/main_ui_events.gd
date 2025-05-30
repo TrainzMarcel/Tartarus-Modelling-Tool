@@ -67,9 +67,6 @@ static func select_tool(button : Button):
 			Main.set_transform_handle_root_position(Main.transform_handle_root, WorkspaceManager.selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
 			if WorkspaceManager.selected_parts_array.size() > 0:
 				TransformHandleUtils.set_tool_handle_array_active(Main.selected_tool_handle_array, true)
-		
-	else:
-		WorkspaceManager.selection_clear()
 
 
 static func on_spawn_pressed():
@@ -141,10 +138,11 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 			pass
 		elif id == 1:
 			#save (model)
-			pass
+			
+			WorkspaceManager.save_model()
 		elif id == 2:
 			#load model
-			pass
+			WorkspaceManager.load_model()
 		elif id == 3:
 			#import model (planned: .gltf, .obj)
 			pass
@@ -156,28 +154,28 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 	elif pm == EditorUI.pm_edit:
 		if id == 0:
 			#undo
-			pass
+			WorkspaceManager.undo()
 		elif id == 1:
 			#redo
-			pass
+			WorkspaceManager.redo()
 		elif id == 3:
-			#ctrl a select all
-			pass
+			WorkspaceManager.selection_set_to_workspace()
 		elif id == 4:
 			#ctrl c copy selection
-			pass
+			WorkspaceManager.selection_copy()
 		elif id == 5:
 			#ctrl v paste selection
-			pass
+			WorkspaceManager.selection_paste()
 		elif id == 6:
 			#ctrl x cut selection
-			pass
+			WorkspaceManager.selection_copy()
+			WorkspaceManager.selection_delete()
 		elif id == 7:
 			#ctrl d duplicate selection
-			pass
+			WorkspaceManager.selection_duplicate()
 		elif id == 8:
 			#delete clear selection
-			pass
+			WorkspaceManager.selection_delete()
 		elif id == 8:
 			#settings window
 			pass

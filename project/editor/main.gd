@@ -1,16 +1,33 @@
 extends Node3D
 class_name Main
 
-
-"TODO"#decide whether the word "is" should be a standard part of naming bools
-"TODO"#find a good way to group variables
+#features
+"TODO"#implement saving and loading
+"TODO"#implement click and drag rect selecting
+"TODO"#implement pivot move tool
+"TODO"#implement undo redo
 "TODO"#implement selection grouping
 "TODO"#implement csg
-"TODO"#implement undo redo
-"TODO"#implement pivot move tool
 
 
+#performance
+"TODO"#WorkspaceManager.selection_scale() is also very slow
+"TODO"#WorkspaceManager.selection_add_part() is also a bit slow
+#could benefit from changing second parameter to a mere vector3
+"TODO"#use meshdatatool and edit existing vertices instead of clearing and reconstructing them all
+"TODO"#selectionbox script is very slow, box_update() took 170.5ms for 192 calls on my machine
+#draw_frame() had 1152 calls for 130.97ms
+#draw_quad() had 9216 calls for 113.18ms
+#itd be best if i precomputed the vertex coordinates of the selection box and just moved them or scaled them
+#instead of regenerating them every time
+#itd also be better perhaps to group a number of selectionboxes into one node.
+#same with part meshes and part colliders.
+#another fix could be to only use one selectionbox to denote selections but this might be too vague looking
 
+
+#architecture
+"TODO"#decide whether the word "is" should be a standard part of naming bools
+"TODO"#find a good way to group variables
 "TODO"#put all the things one has to edit to add a new tool to transformhandleroot into one file (if possible)
 #this would involve creating a centralized data object array to hold the properties of each tool
 #as well as making a mapping for ui buttons -> tool data object
@@ -19,7 +36,7 @@ class_name Main
 #future idea 2: recolor selection box to red if 2 selected parts are overlapping perfectly
 
 @export_category("Debug")
-@export var debug_active : bool = true
+@export var debug_active : bool = false
 
 #dependencies
 @export_category("Dependencies")
@@ -175,7 +192,7 @@ func _input(event):
 #transform handles take priority over parts
 	if event is InputEventMouseMotion:
 		if is_hovering_allowed:
-			#print("is_hovering_allowed   ", is_hovering_allowed)
+			print("is_hovering_allowed   ", is_hovering_allowed)
 			#print("is_selecting_allowed  ", is_selecting_allowed)
 			#print("is_drag_tool          ", is_drag_tool)
 			hovered_handle = handle_hover_check()
@@ -286,7 +303,7 @@ func _input(event):
 					
 		#parts hovered but selecting not allowed
 		#handle hover-only tools
-				elif is_part_hovered and not is_selecting_allowed:
+				elif is_part_hovered and not is_selecting_allowed and is_hovering_allowed:
 					
 					if selected_tool == SelectedToolEnum.t_material:
 						hovered_part.part_material = WorkspaceManager.selected_material
@@ -344,6 +361,12 @@ func _input(event):
 		elif event.keycode == KEY_DELETE:
 			if is_selecting_allowed:
 				WorkspaceManager.selection_delete()
+		#save as
+		elif event.keycode == KEY_S and event.ctrl_pressed and event.shift_pressed:
+			"TODO"
+		#save
+		elif event.keycode == KEY_S and event.ctrl_pressed:
+			"TODO"
 		#deselect all
 		elif event.keycode == KEY_A and event.ctrl_pressed and event.shift_pressed:
 			if is_selecting_allowed:
@@ -352,6 +375,10 @@ func _input(event):
 		elif event.keycode == KEY_A and event.ctrl_pressed:
 			if is_selecting_allowed:
 				WorkspaceManager.selection_set_to_workspace()
+		#cut
+		elif event.keycode == KEY_X and event.ctrl_pressed:
+			WorkspaceManager.selection_copy()
+			WorkspaceManager.selection_delete()
 		#copy
 		elif event.keycode == KEY_C and event.ctrl_pressed:
 			WorkspaceManager.selection_copy()
@@ -361,9 +388,11 @@ func _input(event):
 		#duplicate
 		elif event.keycode == KEY_D and event.ctrl_pressed:
 			WorkspaceManager.selection_duplicate()
+		#undo
 		elif event.keycode == KEY_Z and event.ctrl_pressed:
 			"TODO"
 			WorkspaceManager.undo()
+		#redo
 		elif event.keycode == KEY_Y and event.ctrl_pressed:
 			"TODO"
 			WorkspaceManager.redo()
@@ -520,7 +549,7 @@ func ui_hover_check(ui_list : Array[Control]):
 
 
 #returns true if any menus are open
-func ui_menu_block_check(menu_list : Array[Control]):
+func ui_menu_block_check(menu_list : Array):
 	for i in menu_list:
 		if i.visible:
 			return true

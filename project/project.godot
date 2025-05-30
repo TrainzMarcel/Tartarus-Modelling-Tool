@@ -29,3 +29,7 @@ window/vsync/vsync_mode=0
 
 3d_physics/layer_1="workspace"
 3d_physics/layer_2="transform_handles"
+
+[physics]
+
+common/physics_ticks_per_second=30

@@ -10,7 +10,6 @@
 [ext_resource type="Material" uid="uid://dg0pq3t4uvees" path="res://editor/classes/selection_box/highlight_mat.res" id="8_4p0vi"]
 [ext_resource type="Shader" path="res://editor/data_editor/materials/shader/mat_1.gdshader" id="8_ce3a6"]
 [ext_resource type="Script" path="res://editor/classes/selection_box/selection_box.gd" id="9_n7hy1"]
-[ext_resource type="Texture2D" uid="uid://du7navikebxm7" path="res://editor/data_editor/materials/image_files/wood_01_albedo.jpg" id="10_5s45i"]
 [ext_resource type="Texture2D" uid="uid://cynafa7nsgncw" path="res://editor/data_editor/materials/image_files/wood_01_normal.jpg" id="11_5r5hq"]
 [ext_resource type="BoxMesh" uid="uid://enpvvrschyx2" path="res://editor/data_editor/parts/cuboid.tres" id="12_awj2i"]
 
@@ -37,7 +36,10 @@ tonemap_mode = 2
 [sub_resource type="World3D" id="World3D_15twx"]
 environment = SubResource("Environment_ye61o")
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_stkso"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_qy2l3"]
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_6it0l"]
+load_path = "res://.godot/imported/wood_01_albedo.jpg-c83c0e2d873c9a75f7dbdbaef1d991a2.s3tc.ctex"
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_b2n2e"]
 render_priority = 0
@@ -49,7 +51,7 @@ shader_parameter/metallic_texture_channel = null
 shader_parameter/specular = 0.0
 shader_parameter/metallic = 0.0
 shader_parameter/normal_scale = 7.6e-07
-shader_parameter/texture_albedo = ExtResource("10_5s45i")
+shader_parameter/texture_albedo = SubResource("CompressedTexture2D_6it0l")
 shader_parameter/texture_normal = ExtResource("11_5r5hq")
 
 [sub_resource type="BoxMesh" id="BoxMesh_1k2vc"]
@@ -136,12 +138,11 @@ shader_parameter/uv1_scale = Vector3(1, 1, 1)
 shader_parameter/uv1_offset = Vector3(0, 0, 0)
 shader_parameter/uv2_scale = Vector3(1, 1, 1)
 shader_parameter/uv2_offset = Vector3(0, 0, 0)
-shader_parameter/texture_albedo = ExtResource("10_5s45i")
+shader_parameter/texture_albedo = SubResource("CompressedTexture2D_6it0l")
 shader_parameter/texture_normal = ExtResource("11_5r5hq")
 
 [node name="Main" type="Node3D" node_paths=PackedStringArray("e_cam", "second_cam", "e_workspace", "e_transform_handle_root", "e_hover_selection_box", "ui_node")]
 script = ExtResource("1_4xdr8")
-debug_active = false
 e_cam = NodePath("Camera3D")
 second_cam = NodePath("SubViewportContainer/SubViewport/Camera3D")
 e_workspace = NodePath("Workspace")
@@ -257,7 +258,7 @@ part_scale = Vector3(0.2, 0.2, 0.8)
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("8_4p0vi")
-mesh = SubResource("ImmediateMesh_stkso")
+mesh = SubResource("ImmediateMesh_qy2l3")
 skeleton = NodePath("../..")
 script = ExtResource("9_n7hy1")
 box_scale = Vector3(1, 1, 1)

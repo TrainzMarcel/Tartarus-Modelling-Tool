@@ -72,3 +72,6 @@
 19.5. prefixed SnapUtils.snap_rotation() and SnapUtils.snap_position() with drag_ to make their purpose clearer, completely rearchitected TransformHandleUtils.transform() as it was handling input and snapping
 21.5. finished rearchitecting TransformHandleUtils.transform(), implemented all ctrl + key functions except undo and redo
 22.5. implemented multi-part scaling in WorkspaceManager.selection_scale()
+26.5. disabled subresource duplicating in part.copy() for major performance gain, fixed bug where one was able to paint, material and delete even when hovering over ui todo probably did something more
+28.5. implemented rudimentary saving and loading
+30.5. worked on file dialog for saving and loading

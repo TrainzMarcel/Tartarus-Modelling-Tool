@@ -1,7 +1,7 @@
 [gd_resource type="ShaderMaterial" load_steps=4 format=3 uid="uid://dscydtkjdxpus"]
 
 [ext_resource type="Shader" path="res://editor/data_editor/materials/shader/mat_1.gdshader" id="1_uiqp2"]
-[ext_resource type="Texture2D" uid="uid://du7navikebxm7" path="res://editor/data_editor/materials/image_files/wood_01_albedo.jpg" id="2_r0u51"]
+[ext_resource type="Texture2D" uid="uid://b1ifiekkt6syr" path="res://editor/data_editor/materials/image_files/wood_01_albedo.jpg" id="2_lhses"]
 [ext_resource type="Texture2D" uid="uid://cynafa7nsgncw" path="res://editor/data_editor/materials/image_files/wood_01_normal.jpg" id="3_ljhbj"]
 
 [resource]
@@ -13,6 +13,6 @@ shader_parameter/roughness = 0.0
 shader_parameter/metallic_texture_channel = null
 shader_parameter/specular = 0.0
 shader_parameter/metallic = 0.0
-shader_parameter/normal_scale = 7.6e-07
-shader_parameter/texture_albedo = ExtResource("2_r0u51")
+shader_parameter/normal_scale = 0.170001
+shader_parameter/texture_albedo = ExtResource("2_lhses")
 shader_parameter/texture_normal = ExtResource("3_ljhbj")

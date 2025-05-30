@@ -12,7 +12,7 @@ static var pm_edit : PopupMenu
 static var pm_assets : PopupMenu
 static var pm_help : PopupMenu
 
-#mapping from pm to array index
+	#mapping from pm to array index
 static var pm_top_mapping : Dictionary
 
 
@@ -67,13 +67,15 @@ static var ui_no_drag : Array[Control]
 
 #array of control nodes which are iterated over to check if any menus are open
 #and blocking the editor view
-static var ui_menu : Array[Control]
+#had to remove the type because filedialog is of type window
+static var ui_menu : Array#[Control]
 
 #document displays
 static var dd_manual : DocumentDisplay
 static var dd_license : DocumentDisplay
 
-
+#file manager
+static var fd_file : FileDialog
 
 
 func initialize(
@@ -146,10 +148,14 @@ func initialize(
 	dd_manual = %DocumentDisplayManual
 	dd_license = %DocumentDisplayLicense
 	
+	#file dialog
+	fd_file = %FileDialog
+	
 	ui_menu = [
 		%DocumentDisplayManual,
 		%DocumentDisplayLicense,
-		$AssetManager
+		$AssetManager,
+		fd_file
 	]
 	
 	ui_no_drag = [
@@ -179,6 +185,8 @@ func initialize(
 	EditorUI.create_part_type_buttons(on_part_type_selected)
 	
 	
+	#set tooltip script in filedialog
+	EditorUI.customize_file_dialog(fd_file)
 	
 	#DataLoader.read_parts_and_create_parts()
 	#UI.create_part_buttons(gc_part_panel, on_part_selected, r_dict_3.part_array)
@@ -290,6 +298,69 @@ static func create_material_buttons(on_material_selected):
 	
 	
 	WorkspaceManager.button_material_mapping = WorkspaceManager.create_mapping(new_buttons)
+
+
+#style file dialog like the editor
+#todo clean up but not very important
+static func customize_file_dialog(fd : FileDialog):
+	fd_file.get_vbox().get_child(2).get_child(0).set_script(load(FilePathRegistry.script_tooltip_assign))
+	var hbox = fd_file.get_vbox().get_child(0)
+	var new_2 = Panel.new()
+	new_2.size_flags_horizontal = SIZE_EXPAND_FILL
+	new_2.custom_minimum_size = Vector2i(0, 2)
+	new_2.add_theme_stylebox_override("panel", preload("res://editor/data_ui/styles/panel_styles/gradient_panel.tres"))
+	var new_3 = new_2.duplicate()
+	fd_file.get_vbox().add_child(new_2)
+	fd_file.get_vbox().move_child(new_2, 1)
+	fd_file.get_vbox().add_child(new_3)
+	fd_file.get_vbox().move_child(new_3, 4)
+	
+	#duplicate buttons because styling and theming did not work for some damn reason
+	for button in hbox.get_children():
+		if not button is Button:
+			continue
+		
+		var n = button.name
+		var pos = button.get_index()
+		var signals = button.get_signal_list()
+		var new : Button = Button.new()
+		
+		new.set_script(load(FilePathRegistry.script_tooltip_assign))
+		new.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
+		new.custom_minimum_size = Vector2i(20, 20)
+		new.toggle_mode = button.toggle_mode
+		new.icon = button.icon
+		new.text = button.text
+		new.tooltip_text = button.tooltip_text.rstrip(".")
+		
+		new.add_theme_stylebox_override("normal", preload("res://editor/data_ui/styles/button_and_line_edit_styles/file_dialog/hover_normal.tres"))
+		new.add_theme_stylebox_override("pressed", preload("res://editor/data_ui/styles/button_and_line_edit_styles/file_dialog/pressed.tres"))
+		new.add_theme_stylebox_override("hover", preload("res://editor/data_ui/styles/button_and_line_edit_styles/file_dialog/hover_normal.tres"))
+		new.add_theme_stylebox_override("disabled", preload("res://editor/data_ui/styles/button_and_line_edit_styles/file_dialog/hover_normal.tres"))
+		var x = 1
+		#brighten back and forth buttons
+		#because theyre dark
+		if pos == 0 or pos == 1 or pos == 2:
+			x = 10
+		new.add_theme_color_override("icon_normal_color", Color(x, x, x))
+		new.add_theme_color_override("icon_focus_color", Color(x, x, x))
+		new.add_theme_color_override("icon_hover_color", Color(x, x, x))
+		new.add_theme_color_override("icon_pressed_color", Color(x, x, x))
+		new.add_theme_color_override("icon_hover_pressed_color", Color(x, x, x))
+		new.add_theme_stylebox_override("focus", preload("res://editor/data_ui/styles/button_and_line_edit_styles/focus_invisible.tres"))
+		hbox.add_child(new)
+		hbox.move_child(new, pos)
+		
+		for s in signals:
+			var signals_c = button.get_signal_connection_list(s.name)
+			for c in signals_c:
+				if button.is_connected(s.name, c.callable) and not new.is_connected(s.name, c.callable):
+					new.connect(s.name, c.callable)
+		
+		
+		button.free()
+		new.name = n
+		
 
 
 #tooltip styling

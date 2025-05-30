@@ -13,7 +13,7 @@
 [ext_resource type="Script" path="res://editor/classes/ui_editor/tooltip_assign.gd" id="11_cnews"]
 [ext_resource type="StyleBox" uid="uid://0h1muoc1ycaj" path="res://editor/data_ui/styles/button_and_line_edit_styles/material_and_part_type_list/hover_normal.tres" id="11_opfut"]
 [ext_resource type="StyleBox" uid="uid://cf35g1rgpap53" path="res://editor/data_ui/styles/button_and_line_edit_styles/material_and_part_type_list/pressed.tres" id="12_cevxn"]
-[ext_resource type="Texture2D" uid="uid://du7navikebxm7" path="res://editor/data_editor/materials/image_files/wood_01_albedo.jpg" id="13_ka4yu"]
+[ext_resource type="Texture2D" uid="uid://b1ifiekkt6syr" path="res://editor/data_editor/materials/image_files/wood_01_albedo.jpg" id="13_ka4yu"]
 [ext_resource type="PackedScene" uid="uid://bqtvf26majfbc" path="res://editor/data_ui/component_scenes/button_palette_entry.tscn" id="14_6q4ch"]
 
 [sub_resource type="ButtonGroup" id="ButtonGroup_3mpa5"]
