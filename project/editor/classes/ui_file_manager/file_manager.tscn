@@ -1,0 +1,320 @@
+[gd_scene load_steps=19 format=3 uid="uid://bjtrfenn2qo0u"]
+
+[ext_resource type="Script" path="res://editor/classes/ui_file_manager/file_manager.gd" id="1_omhfy"]
+[ext_resource type="Texture2D" uid="uid://bul8005ajw68t" path="res://editor/data_ui/assets/File.svg" id="2_1m6pn"]
+[ext_resource type="StyleBox" uid="uid://fvm4br3npkws" path="res://editor/data_ui/styles/panel_styles/window_panel.tres" id="2_olk3o"]
+[ext_resource type="Texture2D" uid="uid://cid7rqf0bcc1e" path="res://editor/data_ui/assets/Folder.svg" id="3_in7kl"]
+[ext_resource type="Theme" uid="uid://nxn5uapgdhhx" path="res://editor/data_ui/styles/font_styles/t_sci_fi_regular.tres" id="3_y5lmk"]
+[ext_resource type="StyleBox" uid="uid://c3yy373mpphkj" path="res://editor/data_ui/styles/button_and_line_edit_styles/tool_bar/button_regular/hover_normal.tres" id="4_v8wiq"]
+[ext_resource type="StyleBox" uid="uid://srkvy1wv8a2t" path="res://editor/data_ui/styles/button_and_line_edit_styles/tool_bar/button_regular/pressed.tres" id="5_cel0h"]
+[ext_resource type="StyleBox" uid="uid://cjs2pnpup0ys7" path="res://editor/data_ui/styles/button_and_line_edit_styles/focus_invisible.tres" id="6_itj42"]
+[ext_resource type="Theme" uid="uid://dvh0x5qyaaolk" path="res://editor/data_ui/styles/font_styles/t_number_display.tres" id="7_flhe7"]
+[ext_resource type="StyleBox" uid="uid://csv28j80tqe33" path="res://editor/data_ui/styles/button_and_line_edit_styles/line_edit_rectangular.tres" id="7_wrlwl"]
+[ext_resource type="StyleBox" uid="uid://b1bkepq7spu42" path="res://editor/data_ui/styles/panel_styles/number_display_panel.tres" id="8_irtvw"]
+[ext_resource type="StyleBox" uid="uid://bdapxi8kfkyap" path="res://editor/data_ui/styles/button_and_line_edit_styles/bottom_bar/mini_button/hover_normal.tres" id="9_h3x70"]
+[ext_resource type="StyleBox" uid="uid://l8wdqqom1c4k" path="res://editor/data_ui/styles/button_and_line_edit_styles/bottom_bar/mini_button/pressed.tres" id="10_hguuo"]
+[ext_resource type="StyleBox" uid="uid://cweor237iacfe" path="res://editor/data_ui/styles/panel_styles/gradient_panel.tres" id="11_7dsi7"]
+[ext_resource type="StyleBox" uid="uid://bkftmueyia8ln" path="res://editor/data_ui/styles/button_and_line_edit_styles/file_dialog/hover_normal.tres" id="13_m66pr"]
+[ext_resource type="StyleBox" uid="uid://bxumeweegtu36" path="res://editor/data_ui/styles/button_and_line_edit_styles/file_dialog/pressed.tres" id="14_f3j7t"]
+[ext_resource type="Script" path="res://editor/classes/ui_editor/label_numeric.gd" id="15_56d13"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_6oyx8"]
+content_margin_bottom = 6.0
+
+[node name="FileManager" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_omhfy")
+file_icon = ExtResource("2_1m6pn")
+folder_icon = ExtResource("3_in7kl")
+filters = Array[String](["*.tmv", "*"])
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -507.0
+offset_top = -253.0
+offset_right = 517.0
+offset_bottom = 259.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = ExtResource("2_olk3o")
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HBoxContainerControls" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ButtonPreviousFolder" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/focus = ExtResource("6_itj42")
+text = "<"
+
+[node name="ButtonNextFolder" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/focus = ExtResource("6_itj42")
+text = ">"
+
+[node name="ButtonParentFolder" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/focus = ExtResource("6_itj42")
+text = "^"
+
+[node name="ButtonRefresh" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+tooltip_text = "Refresh"
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 23
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/focus = ExtResource("6_itj42")
+text = "🔁"
+
+[node name="ButtonList" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+text = " list "
+
+[node name="ButtonRoot" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/focus = ExtResource("6_itj42")
+text = " Root "
+
+[node name="ControlSpacer" type="Control" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LabelTitle" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
+text = "Save a file"
+horizontal_alignment = 1
+
+[node name="ControlSpacer2" type="Control" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ButtonClosePage" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = ExtResource("9_h3x70")
+theme_override_styles/hover = ExtResource("9_h3x70")
+theme_override_styles/pressed = ExtResource("10_hguuo")
+theme_override_styles/focus = ExtResource("6_itj42")
+text = "❌"
+
+[node name="HBoxContainerControls2" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="LineEditFilepath" type="LineEdit" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls2" node_paths=PackedStringArray("shortcut_context")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+shortcut_context = NodePath("../../../..")
+theme_override_styles/normal = ExtResource("7_wrlwl")
+theme_override_styles/focus = ExtResource("6_itj42")
+placeholder_text = "Filepath..."
+context_menu_enabled = false
+caret_blink = true
+
+[node name="OptionButtonDrives" type="OptionButton" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls2"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/focus = ExtResource("6_itj42")
+theme_override_styles/normal = ExtResource("13_m66pr")
+theme_override_styles/hover = ExtResource("13_m66pr")
+theme_override_styles/pressed = ExtResource("14_f3j7t")
+clip_text = true
+fit_to_longest_item = false
+allow_reselect = true
+
+[node name="GradientPanel" type="Panel" parent="Panel/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("11_7dsi7")
+
+[node name="TreeMainFileDisplay" type="Tree" parent="Panel/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(248, 301)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/v_separation = 3
+theme_override_styles/focus = ExtResource("6_itj42")
+hide_folding = true
+hide_root = true
+
+[node name="ScrollContainerListFileDisplay" type="ScrollContainer" parent="Panel/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 2
+vertical_scroll_mode = 0
+
+[node name="HBoxContainerListFileDisplay" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/ScrollContainerListFileDisplay"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="GradientPanel2" type="Panel" parent="Panel/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("11_7dsi7")
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="LabelFileCount" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer2"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 36)
+layout_mode = 2
+theme = ExtResource("7_flhe7")
+theme_override_styles/normal = ExtResource("8_irtvw")
+text = "0000"
+horizontal_alignment = 1
+vertical_alignment = 2
+clip_text = true
+script = ExtResource("15_56d13")
+digits = 4
+
+[node name="LabelItems" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
+text = "Items"
+horizontal_alignment = 1
+
+[node name="LabelSubfolderCount" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer2"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+theme = ExtResource("7_flhe7")
+theme_override_styles/normal = ExtResource("8_irtvw")
+text = "00"
+horizontal_alignment = 1
+vertical_alignment = 2
+clip_text = true
+script = ExtResource("15_56d13")
+digits = 2
+
+[node name="LabelSubfolders" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
+text = "Subfolders"
+horizontal_alignment = 1
+
+[node name="ControlSpacer" type="Control" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxContainerControls3" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(0, 33)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ButtonAccept" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer2/HBoxContainerControls3"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 4
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/focus = ExtResource("6_itj42")
+text = " Accept "
+
+[node name="LineEditFileName" type="LineEdit" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer2/HBoxContainerControls3" node_paths=PackedStringArray("shortcut_context")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(350, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+shortcut_context = NodePath("../../../../..")
+theme_override_styles/normal = ExtResource("7_wrlwl")
+theme_override_styles/focus = ExtResource("6_itj42")
+placeholder_text = "Filename..."
+context_menu_enabled = false
+caret_blink = true
+
+[node name="OptionButtonFilters" type="OptionButton" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer2/HBoxContainerControls3"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/focus = ExtResource("6_itj42")
+theme_override_styles/normal = ExtResource("13_m66pr")
+theme_override_styles/hover = ExtResource("13_m66pr")
+theme_override_styles/pressed = ExtResource("14_f3j7t")
