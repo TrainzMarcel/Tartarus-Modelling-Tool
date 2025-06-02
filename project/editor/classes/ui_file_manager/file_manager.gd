@@ -195,18 +195,8 @@ func update_file_display(current_dir : String):
 				new.create_item()
 				hbc_list_file_display.add_child(new)
 				#this is utterly fucking stupid
-				var scroll_v = new.get_child(2, true)
-				var scroll_h = new.get_child(3, true)
-				scroll_v.add_theme_stylebox_override("scroll", empty)
-				scroll_v.add_theme_stylebox_override("scroll_focus", empty)
-				scroll_v.add_theme_stylebox_override("grabber", empty)
-				scroll_v.add_theme_stylebox_override("grabber_highlight", empty)
-				scroll_v.add_theme_stylebox_override("grabber_pressed", empty)
-				scroll_h.add_theme_stylebox_override("scroll", empty)
-				scroll_h.add_theme_stylebox_override("scroll_focus", empty)
-				scroll_h.add_theme_stylebox_override("grabber", empty)
-				scroll_h.add_theme_stylebox_override("grabber_highlight", empty)
-				scroll_h.add_theme_stylebox_override("grabber_pressed", empty)
+				new.set_column_clip_content(0, true)
+				new
 				#BROKEN
 				new.scroll_horizontal_enabled = false
 				new.scroll_vertical_enabled = false
@@ -268,14 +258,14 @@ func regen_tree_ui(tree : Tree, folders : PackedStringArray, files : PackedStrin
 		new.set_text(0, folder)
 		new.set_icon(0, folder_icon)
 		new.set_tooltip_text(0, " ")
-		new.set_text_overrun_behavior(0, TextServer.OVERRUN_TRIM_CHAR)
+		new.set_text_overrun_behavior(0, TextServer.OVERRUN_TRIM_WORD)
 	
 	for file in files:
 		var new : TreeItem = root.create_child()
 		new.set_text(0, file)
 		new.set_icon(0, file_icon)
 		new.set_tooltip_text(0, " ")
-		new.set_text_overrun_behavior(0, TextServer.OVERRUN_TRIM_CHAR)
+		new.set_text_overrun_behavior(0, TextServer.OVERRUN_TRIM_WORD)
 		if selected_filter != "*":
 			if not file.ends_with(selected_filter.lstrip("*")):
 				new.set_selectable(0, false)

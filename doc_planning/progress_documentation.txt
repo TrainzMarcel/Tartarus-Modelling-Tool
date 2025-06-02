@@ -75,3 +75,4 @@
 26.5. disabled subresource duplicating in part.copy() for major performance gain, fixed bug where one was able to paint, material and delete even when hovering over ui todo probably did something more
 28.5. implemented rudimentary saving and loading
 30.5. worked on file dialog for saving and loading
+2.6. made my own file dialog instead
