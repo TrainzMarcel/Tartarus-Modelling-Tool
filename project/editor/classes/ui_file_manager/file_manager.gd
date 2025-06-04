@@ -120,7 +120,8 @@ func _ready():
 
 #helper functions
 func popup():
-	change_dir(dir_start, true)
+	#i dont actually think users want to re-navigate back each time this opens
+	#change_dir(dir_start, true)
 	
 	if file_mode == FileMode.save_file:
 		l_title.text = "Save a file"
@@ -194,9 +195,7 @@ func update_file_display(current_dir : String):
 				#create root
 				new.create_item()
 				hbc_list_file_display.add_child(new)
-				#this is utterly fucking stupid
 				new.set_column_clip_content(0, true)
-				new
 				#BROKEN
 				new.scroll_horizontal_enabled = false
 				new.scroll_vertical_enabled = false
@@ -204,9 +203,15 @@ func update_file_display(current_dir : String):
 				i = i + 1
 		
 		elif required_trees <= existing_trees.size():
+			#unhide needed tree nodes
+			var i : int = 0
+			while i < required_trees:
+				existing_trees[i].visible = true
+				i = i + 1
+			
 			#hide unneeded tree nodes
-			var i : int = required_trees
-			while i < existing_trees.size() - 1:
+			i = required_trees
+			while i < existing_trees.size():
 				existing_trees[i].visible = false
 				i = i + 1
 		
@@ -249,7 +254,7 @@ func update_file_display(current_dir : String):
 
 func regen_tree_ui(tree : Tree, folders : PackedStringArray, files : PackedStringArray):
 	var root : TreeItem = tree.get_root()
-	print(root)
+	#clear existing tree items
 	for i in root.get_children():
 		i.free()
 	
@@ -258,14 +263,14 @@ func regen_tree_ui(tree : Tree, folders : PackedStringArray, files : PackedStrin
 		new.set_text(0, folder)
 		new.set_icon(0, folder_icon)
 		new.set_tooltip_text(0, " ")
-		new.set_text_overrun_behavior(0, TextServer.OVERRUN_TRIM_WORD)
+		new.set_text_overrun_behavior(0, TextServer.OVERRUN_TRIM_CHAR)
 	
 	for file in files:
 		var new : TreeItem = root.create_child()
 		new.set_text(0, file)
 		new.set_icon(0, file_icon)
 		new.set_tooltip_text(0, " ")
-		new.set_text_overrun_behavior(0, TextServer.OVERRUN_TRIM_WORD)
+		new.set_text_overrun_behavior(0, TextServer.OVERRUN_TRIM_CHAR)
 		if selected_filter != "*":
 			if not file.ends_with(selected_filter.lstrip("*")):
 				new.set_selectable(0, false)

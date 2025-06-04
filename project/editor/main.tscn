@@ -36,7 +36,7 @@ tonemap_mode = 2
 [sub_resource type="World3D" id="World3D_15twx"]
 environment = SubResource("Environment_ye61o")
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_30t8m"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_w0hao"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_6it0l"]
 load_path = "res://.godot/imported/wood_01_albedo.jpg-c83c0e2d873c9a75f7dbdbaef1d991a2.s3tc.ctex"
@@ -258,7 +258,7 @@ part_scale = Vector3(0.2, 0.2, 0.8)
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("8_4p0vi")
-mesh = SubResource("ImmediateMesh_30t8m")
+mesh = SubResource("ImmediateMesh_w0hao")
 skeleton = NodePath("../..")
 script = ExtResource("9_n7hy1")
 box_scale = Vector3(1, 1, 1)
