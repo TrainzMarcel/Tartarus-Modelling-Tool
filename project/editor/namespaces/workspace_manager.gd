@@ -41,6 +41,28 @@ static var parts_clipboard : Array[Part] = []
 #vector pointing from ray_result.position to selected_parts_abb
 static var drag_offset : Vector3
 
+#saving and loading related variables
+enum FileOperation {
+	save,
+	save_as,
+	load
+}
+static var file_operation : FileOperation
+static var last_save_location : String = ""
+static var last_save_name : String = ""
+
+const data_header_value : PackedStringArray = [
+	"::COLOR::",
+	"::MATERIAL::",
+	"::MESH::",
+	"::MODEL::",
+]
+enum DataHeaderKey {
+	color,
+	material,
+	mesh,
+	model
+}
 
 static func initialize(workspace : Node, hover_selection_box : SelectionBox):
 	WorkspaceManager.workspace = workspace
@@ -75,12 +97,6 @@ static func initialize(workspace : Node, hover_selection_box : SelectionBox):
 	WorkspaceManager.available_part_types = parts_list
 	if available_part_types.size() > 0:
 		selected_part_type = available_part_types[0]
-	
-	#var r_dict : Dictionary = WorkspaceManager.load_data_from_tmv("res://editor/data_editor/default.tmvp")
-	#WorkspaceManager.available_color_palette_array.append_array(r_dict.color_palette_array)
-	#WorkspaceManager.available_material_palette_array.append_array(r_dict.material_palette_array)
-	#WorkspaceManager.available_part_type_palette_array.append_array(r_dict.part_type_palette_array)
-	#WorkspaceManager.selec
 
 
 #part functions-----------------------------------------------------------------
@@ -103,6 +119,8 @@ static func part_delete(hovered_part : Part):
 static func part_copy(part : Part):
 	var new_part : Part = selected_part_type.duplicate()
 	new_part.part_mesh_node = selected_part_type.part_mesh_node.duplicate()
+	#optimization
+	new_part.part_mesh_node.mesh = selected_part_type.part_mesh_node.mesh
 	new_part.part_collider_node = selected_part_type.part_collider_node.duplicate()
 
 
@@ -168,23 +186,18 @@ static func selection_clear():
 	offset_abb_to_selected_array.clear()
 
 
-"TODO"#work on ctrl+key functions
-#shouldnt be hard
 static func selection_delete():
 	for i in selected_parts_array:
 		i.queue_free()
 	selection_clear()
 
 
-#untested
 static func selection_copy():
 	parts_clipboard.clear()
 	for i in selected_parts_array:
 		parts_clipboard.append(i.copy())
 
-
 static func selection_paste():
-	"TODO"#add status message bottom bar
 	if not parts_clipboard.is_empty():
 		selection_clear()
 		for i in parts_clipboard:
@@ -196,7 +209,6 @@ static func selection_paste():
 
 
 static func selection_duplicate():
-	parts_clipboard.clear()
 	for i in selected_parts_array:
 		var copy : Part = i.copy()
 		workspace.add_child(copy)
@@ -400,7 +412,53 @@ static func redo():
 
 
 #save load system---------------------------------------------------------------
-static func save_model():
+#event methods
+static func validate_filepath(filepath : String):
+	var valid : bool = filepath.is_absolute_path()
+	return valid and filepath != null and filepath != ""
+
+
+static func validate_filename(filename : String):
+	var valid : bool = filename.is_valid_filename()
+	return valid and filename != null and filename != ""
+
+
+static func request_save():
+	file_operation = FileOperation.save
+	if validate_filepath(last_save_location) and validate_filename(last_save_name):
+		confirm_save_load(last_save_location, last_save_name)
+	else:
+		EditorUI.fm_file.popup(FileManager.FileMode.save_file)
+
+
+static func request_save_as():
+	file_operation = FileOperation.save_as
+	EditorUI.fm_file.popup(FileManager.FileMode.save_file)
+
+
+static func request_load():
+	file_operation = FileOperation.load
+	EditorUI.fm_file.popup(FileManager.FileMode.open_file)
+
+
+static func confirm_save_load(filepath : String, name : String):
+	if file_operation == FileOperation.save or file_operation == FileOperation.save_as:
+		save_model(filepath + "/", name)
+		EditorUI.l_message.text = "successfully saved " + name + " at " + filepath + "!"
+	elif file_operation == FileOperation.load:
+		load_model(filepath + "/", name)
+		EditorUI.l_message.text = "successfully loaded " + name + " at " + filepath + "!"
+
+
+#actual save and load functions
+"TODO"#add error handling here and at load()
+static func save_model(filepath : String, name : String):
+	"TODO"#probably add some setting for how much of the model to save
+	#plus add exclude functionality
+	#plus add part lock functionality
+	#i think saving a group of parts would also be simple with something like a ::GROUP:: header which has the part ids under it
+	#storing the ids horizontally per part would probably be cheaper than vertically
+	#also maybe add comment feature
 	selection_set_to_workspace()
 	var used_colors : Array[Color] = []
 	var used_materials : Array[ShaderMaterial] = []
@@ -463,14 +521,16 @@ static func save_model():
 	
 	
 	
-	#turn colors to vec3s and add to save object
+	#add colors to save
 	i = 0
+	"TODO"#make this a safer operation (string variable or const instead of hardcoded)
+	#and/or use a function dispatch for each header type
 	file.append("::COLOR::")
 	while i < used_colors.size():
 		file.append(",".join([str(used_colors[i].r8), str(used_colors[i].g8), str(used_colors[i].b8)]))
 		i = i + 1
 	
-	#add materials to save object
+	#add materials to save
 	i = 0
 	file.append("::MATERIAL::")
 	while i < used_materials.size():
@@ -478,7 +538,7 @@ static func save_model():
 		line.append(used_materials[i].shader.resource_path.get_file())
 		var properties : Array = used_materials[i].shader.get_shader_uniform_list()
 		var j : int = 0
-		prints(i, "-------------------------------")
+		
 		while j < properties.size():
 			var param = used_materials[i].get_shader_parameter(properties[j].name)
 			line_debug.append(properties[j].name)
@@ -518,7 +578,8 @@ static func save_model():
 		line.clear()
 		i = i + 1
 	
-	#add meshes to save object
+	#add meshes to save
+	"TODO"#stop using resource files here
 	i = 0
 	file.append("::MESH::")
 	while i < used_meshes.size():
@@ -552,11 +613,11 @@ static func save_model():
 		line.clear()
 		i = i + 1
 	
-	if not DirAccess.get_directories_at("user://").has("saved_models"):
-		DirAccess.make_dir_absolute("user://saved_models")
-	var file_access = FileAccess.open("user://saved_models/model_1.csv", FileAccess.WRITE)
+	"TODO"#not sure about this
+	#should definitely centralize these variables as much as possible
+	var file_access = FileAccess.open(filepath + name + "_data.csv", FileAccess.WRITE)
 	file_access.flush()
-	var dir_access = DirAccess.open("user://saved_models/")
+	var dir_access = DirAccess.open(filepath)
 	var zip_packer = ZIPPacker.new()
 	i = 0
 	while i < file.size():
@@ -564,10 +625,9 @@ static func save_model():
 		i = i + 1
 	file_access.close()
 	
-	files_used.append("user://saved_models/model_1.csv")
-	var error = zip_packer.open("user://saved_models/model_1.tmv")
-	"DEBUG"
-	print(error)
+	files_used.append(filepath + name + "_data.csv")
+	zip_packer.open(filepath + name + ".tmv")
+	
 	
 	i = 0
 	while i < files_used.size():
@@ -576,11 +636,11 @@ static func save_model():
 		zip_packer.close_file()
 		i = i + 1
 	
-	dir_access.remove("user://saved_models/model_1.csv")
+	dir_access.remove(filepath + name + "_data.csv")
 	zip_packer.close()
 
 
-static func load_model():
+static func load_model(filepath : String, name : String):
 	#no mappings required as the indices are already stored
 	var used_colors : Array[Color] = []
 	var used_materials : Array[Material] = []
@@ -589,8 +649,8 @@ static func load_model():
 	var file_bytes : PackedByteArray = []
 	var zip_reader : ZIPReader = ZIPReader.new()
 	var i : int = 0
-	zip_reader.open("user://saved_models/model_1.tmv")
-	file_bytes = zip_reader.read_file("model_1.csv")
+	zip_reader.open(filepath + name + ".tmv")
+	file_bytes = zip_reader.read_file(name + "_data.csv")
 	file = file_bytes.get_string_from_utf8().split("\n")
 	
 	#mode from headers
@@ -666,11 +726,11 @@ static func load_model():
 		elif mode == "::MESH::":
 			if line[0] != null or line[0] != "":
 				var mesh_bytes = zip_reader.read_file(line[0])
-				var f = FileAccess.open("user://saved_models/" + line[0], FileAccess.WRITE)
+				var f = FileAccess.open(filepath + line[0], FileAccess.WRITE)
 				f.store_buffer(mesh_bytes)
 				f.close()
-				used_meshes.append(ResourceLoader.load("user://saved_models/" + line[0]))
-				DirAccess.remove_absolute("user://saved_models/" + line[0])
+				used_meshes.append(ResourceLoader.load(filepath + line[0]))
+				DirAccess.remove_absolute(filepath + line[0])
 				
 		elif mode == "::MODEL::":
 			var new : Part = Part.new()
@@ -706,6 +766,7 @@ static func selection_box_instance_on_part(assigned_part : Part):
 	new.assigned_node = assigned_part
 	new.box_scale = assigned_part.part_scale
 	new.transform = assigned_part.transform
+	"TODO"#probably add this to filepathregistry
 	var mat : StandardMaterial3D = preload("res://editor/classes/selection_box/selection_box_mat.res")
 	new.material_override = mat
 

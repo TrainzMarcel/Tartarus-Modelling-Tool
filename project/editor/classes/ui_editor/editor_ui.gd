@@ -75,7 +75,7 @@ static var dd_manual : DocumentDisplay
 static var dd_license : DocumentDisplay
 
 #file manager
-static var fd_file : FileDialog
+static var fm_file : FileManager
 
 
 func initialize(
@@ -88,7 +88,8 @@ func initialize(
 	on_color_selected : Callable,
 	on_material_selected : Callable,
 	on_part_type_selected : Callable,
-	on_top_bar_id_pressed : Callable
+	on_top_bar_id_pressed : Callable,
+	on_file_manager_accept_pressed : Callable
 	):
 	
 #assign all ui nodes
@@ -149,24 +150,25 @@ func initialize(
 	dd_license = %DocumentDisplayLicense
 	
 	#file dialog
-	"TODO"#fd_file = %FileDialog
+	fm_file = %FileManager
 	
 	ui_menu = [
-		%DocumentDisplayManual,
-		%DocumentDisplayLicense,
+		dd_manual,
+		dd_license,
 		$AssetManager,
-		#fd_file
+		fm_file
 	]
 	
 	ui_no_drag = [
 		$PanelContainerTopLeftBlock,
 		$PanelContainerBottomLeftBlock,
-		$BottomPanel,
-		%DocumentDisplayManual,
-		%DocumentDisplayLicense,
+		$PanelContainerBottom,
+		dd_license,
+		dd_manual,
 		$PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool/DropDownButton/PanelContainerColor,
 		$PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerMaterialTool/DropDownButton/PanelContainerMaterial,
-		$PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType
+		$PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType,
+		fm_file
 	]
 	
 #initialize picker/selector menus
@@ -225,6 +227,8 @@ func initialize(
 	pm_edit.id_pressed.connect(on_top_bar_id_pressed.bind(pm_edit))
 	pm_assets.id_pressed.connect(on_top_bar_id_pressed.bind(pm_assets))
 	pm_help.id_pressed.connect(on_top_bar_id_pressed.bind(pm_help))
+	
+	fm_file.accept_button_pressed.connect(on_file_manager_accept_pressed)
 
 
 #theoretically should work for all ui in the program

@@ -158,7 +158,8 @@ func _ready():
 	MainUIEvents.on_color_selected,
 	MainUIEvents.on_material_selected,
 	MainUIEvents.on_part_type_selected,
-	MainUIEvents.on_top_bar_id_pressed
+	MainUIEvents.on_top_bar_id_pressed,
+	MainUIEvents.on_file_manager_accept_pressed
 	)
 	
 	cam.initialize(EditorUI.l_camera_speed)
@@ -360,17 +361,19 @@ func _input(event):
 				))
 		elif event.keycode == KEY_DELETE:
 			if is_selecting_allowed:
+				EditorUI.l_message.text = "deleted " + str(WorkspaceManager.selected_parts_array.size()) + " parts"
 				WorkspaceManager.selection_delete()
 		#save as
 		elif event.keycode == KEY_S and event.ctrl_pressed and event.shift_pressed:
-			"TODO"
+			WorkspaceManager.request_save_as()
 		#save
 		elif event.keycode == KEY_S and event.ctrl_pressed:
-			"TODO"
+			WorkspaceManager.request_save()
 		#deselect all
 		elif event.keycode == KEY_A and event.ctrl_pressed and event.shift_pressed:
 			if is_selecting_allowed:
 				WorkspaceManager.selection_clear()
+				EditorUI.l_message.text = "cleared selection"
 		#select all
 		elif event.keycode == KEY_A and event.ctrl_pressed:
 			if is_selecting_allowed:
@@ -379,15 +382,19 @@ func _input(event):
 		elif event.keycode == KEY_X and event.ctrl_pressed:
 			WorkspaceManager.selection_copy()
 			WorkspaceManager.selection_delete()
+			EditorUI.l_message.text = "cut " + str(WorkspaceManager.parts_clipboard.size()) + " parts"
 		#copy
 		elif event.keycode == KEY_C and event.ctrl_pressed:
 			WorkspaceManager.selection_copy()
+			EditorUI.l_message.text = "copied " + str(WorkspaceManager.parts_clipboard.size()) + " parts"
 		#paste
 		elif event.keycode == KEY_V and event.ctrl_pressed:
 			WorkspaceManager.selection_paste()
+			EditorUI.l_message.text = "pasted " + str(WorkspaceManager.parts_clipboard.size()) + " parts"
 		#duplicate
 		elif event.keycode == KEY_D and event.ctrl_pressed:
 			WorkspaceManager.selection_duplicate()
+			EditorUI.l_message.text = "duplicated " + str(WorkspaceManager.selected_parts_array.size()) + " parts"
 		#undo
 		elif event.keycode == KEY_Z and event.ctrl_pressed:
 			"TODO"

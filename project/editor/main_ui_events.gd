@@ -125,8 +125,13 @@ static func on_local_transform_active_set(active):
 	Main.local_transform_active = active
 	Main.set_transform_handle_root_position(Main.transform_handle_root, WorkspaceManager.selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
 
+
 static func on_snapping_active_set(active):
 	Main.snapping_active = active
+
+
+static func on_file_manager_accept_pressed(filepath : String, name : String):
+	WorkspaceManager.confirm_save_load(filepath, name)
 
 #i already tried doing a dynamic dispatch with function arrays, it sucked
 #if else is much more readable in this case
@@ -135,14 +140,13 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 	if pm == EditorUI.pm_file:
 		if id == 0:
 			#save (model) as
-			pass
+			WorkspaceManager.request_save_as()
 		elif id == 1:
 			#save (model)
-			
-			WorkspaceManager.save_model()
+			WorkspaceManager.request_save()
 		elif id == 2:
 			#load model
-			WorkspaceManager.load_model()
+			WorkspaceManager.request_load()
 		elif id == 3:
 			#import model (planned: .gltf, .obj)
 			pass

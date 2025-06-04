@@ -1,4 +1,4 @@
-[gd_scene load_steps=67 format=3 uid="uid://cwt02lxvderye"]
+[gd_scene load_steps=68 format=3 uid="uid://cwt02lxvderye"]
 
 [ext_resource type="Script" path="res://editor/classes/ui_editor/editor_ui.gd" id="1_mcko4"]
 [ext_resource type="StyleBox" uid="uid://bkbmbfniourik" path="res://editor/data_ui/styles/panel_styles/panel_rounded_bottom.tres" id="1_pntfv"]
@@ -36,6 +36,7 @@
 [ext_resource type="StyleBox" uid="uid://l8wdqqom1c4k" path="res://editor/data_ui/styles/button_and_line_edit_styles/bottom_bar/mini_button/pressed.tres" id="31_a6skq"]
 [ext_resource type="Script" path="res://editor/classes/ui_editor/line_edit_numeric.gd" id="32_5rtk1"]
 [ext_resource type="PackedScene" uid="uid://bln1og3mu36mh" path="res://editor/classes/ui_document_display/document_display.tscn" id="32_epjev"]
+[ext_resource type="PackedScene" uid="uid://bjtrfenn2qo0u" path="res://editor/classes/ui_file_manager/file_manager.tscn" id="38_fpasr"]
 [ext_resource type="PackedScene" uid="uid://l0ophoiqj4dk" path="res://editor/classes/ui_asset_manager/asset_manager.tscn" id="40_bo26w"]
 
 [sub_resource type="ButtonGroup" id="ButtonGroup_71ghl"]
@@ -965,7 +966,7 @@ custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 theme_override_styles/panel = ExtResource("7_lp6ld")
 
-[node name="BottomPanel" type="PanelContainer" parent="."]
+[node name="PanelContainerBottom" type="PanelContainer" parent="."]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -976,39 +977,39 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = ExtResource("27_qasec")
 
-[node name="MarginContainer" type="MarginContainer" parent="BottomPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainerBottom"]
 layout_mode = 2
 theme_override_constants/margin_left = 4
 theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 4
 
-[node name="HBoxContainer" type="HBoxContainer" parent="BottomPanel/MarginContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainerBottom/MarginContainer"]
 layout_mode = 2
 alignment = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="BottomPanel/MarginContainer/HBoxContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainerBottom/MarginContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/margin_left = 30
 theme_override_constants/margin_right = 30
 
-[node name="LabelMessage" type="Label" parent="BottomPanel/MarginContainer/HBoxContainer/MarginContainer"]
+[node name="LabelMessage" type="Label" parent="PanelContainerBottom/MarginContainer/HBoxContainer/MarginContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="HBoxContainerCameraSpeed" type="HBoxContainer" parent="BottomPanel/MarginContainer/HBoxContainer"]
+[node name="HBoxContainerCameraSpeed" type="HBoxContainer" parent="PanelContainerBottom/MarginContainer/HBoxContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="BottomPanel/MarginContainer/HBoxContainer/HBoxContainerCameraSpeed"]
+[node name="Label" type="Label" parent="PanelContainerBottom/MarginContainer/HBoxContainer/HBoxContainerCameraSpeed"]
 layout_mode = 2
 theme = ExtResource("29_j817h")
 text = "Camera speed x"
 
-[node name="LabelCameraSpeed" type="Label" parent="BottomPanel/MarginContainer/HBoxContainer/HBoxContainerCameraSpeed"]
+[node name="LabelCameraSpeed" type="Label" parent="PanelContainerBottom/MarginContainer/HBoxContainer/HBoxContainerCameraSpeed"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(58, 40)
 layout_mode = 2
@@ -1656,5 +1657,10 @@ library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.[/code][/indent][/indent][/indent][/indent][/indent][/indent][/indent][/indent][/indent]"])
 
 [node name="AssetManager" parent="." instance=ExtResource("40_bo26w")]
+visible = false
+layout_mode = 1
+
+[node name="FileManager" parent="." instance=ExtResource("38_fpasr")]
+unique_name_in_owner = true
 visible = false
 layout_mode = 1

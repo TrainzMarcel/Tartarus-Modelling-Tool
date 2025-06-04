@@ -127,6 +127,8 @@ func scale_wedge_collider(scale_to : Vector3, wedge_collider_points : PackedVect
 func copy():
 	var new : Part = Part.new()
 	new.part_mesh_node = part_mesh_node.duplicate()
+	#optimization
+	new.part_mesh_node.mesh = part_mesh_node.mesh
 	new.part_collider_node = part_collider_node.duplicate()
 	#do not share the collider
 	if collider_type == 0:
@@ -142,7 +144,8 @@ func copy():
 	new.locked = locked
 	new.collider_type = collider_type
 	new.part_scale = part_scale
-	new.part_material = part_material.duplicate(false)
+	#shouldnt require duplicating
+	new.part_material = part_material
 	new.reapply_part_material(part_material)
 	#i assume (hope) this is passed by value and not by reference
 	new.part_color = part_color

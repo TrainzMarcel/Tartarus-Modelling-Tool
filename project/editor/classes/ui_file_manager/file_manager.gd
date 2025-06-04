@@ -1,7 +1,6 @@
 extends Control
 class_name FileManager
 
-var file_mode : FileMode = FileMode.open_file
 enum FileMode {
 	open_file,
 	save_file
@@ -52,7 +51,7 @@ var b_accept : Button
 var le_file_name : LineEdit
 var ob_filters : OptionButton
 
-signal accepted_file(path : String, filename : String)
+signal accept_button_pressed(path : String, filename : String)
 
 var i : int = 0
 #enum Icon
@@ -106,7 +105,6 @@ func _ready():
 	
 	t_main_file_display.item_activated.connect(on_t_file_display_item_activated.bind(t_main_file_display))
 	
-	
 	b_parent_folder.pressed.connect(on_b_parent_folder_pressed)
 	b_next_folder.pressed.connect(on_b_next_folder_pressed)
 	b_previous_folder.pressed.connect(on_b_previous_folder_pressed)
@@ -116,14 +114,15 @@ func _ready():
 	le_filepath.text_submitted.connect(on_le_filepath_text_submitted)
 	ob_drives.item_selected.connect(on_ob_drives_item_selected)
 	ob_filters.item_selected.connect(on_ob_filters_item_selected)
+	b_accept.pressed.connect(on_b_accept_pressed)
 
 
 #helper functions
-func popup():
+func popup(mode : FileMode):
 	#i dont actually think users want to re-navigate back each time this opens
 	#change_dir(dir_start, true)
 	
-	if file_mode == FileMode.save_file:
+	if mode == FileMode.save_file:
 		l_title.text = "Save a file"
 	else:
 		l_title.text = "Load a file"
@@ -330,7 +329,7 @@ func on_ob_filters_item_selected(index : int):
 func on_b_accept_pressed():
 	if not le_file_name.text.is_valid_filename():
 		return
-	accepted_file.emit(dir_access.get_current_dir(), le_file_name.text + selected_filter.lstrip("*"))
+	accept_button_pressed.emit(dir_access.get_current_dir(), le_file_name.text)
 	update_file_display(dir_access.get_current_dir())
 
 
