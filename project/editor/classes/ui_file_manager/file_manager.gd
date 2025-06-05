@@ -154,7 +154,6 @@ func change_dir(input : String, record : bool):
 		dir_history.append(dir_access.get_current_dir())
 		dir_history_index = dir_history.size() - 1
 	
-	print("-----------------------------------------------------------------")
 	if current_dir == "/":
 		subfolder_count = 0
 	elif current_dir != previous_dir:
@@ -326,6 +325,7 @@ func on_ob_filters_item_selected(index : int):
 	update_file_display(dir_access.get_current_dir())
 
 
+#important
 func on_b_accept_pressed():
 	if not le_file_name.text.is_valid_filename():
 		return
@@ -340,7 +340,6 @@ func on_t_file_display_item_activated(tree : Tree):
 		return
 	var selected_text : String = selected.get_text(0)
 	
-	print(dir_access.get_current_dir() + "/" + selected_text)
 	if dir_access.dir_exists(dir_access.get_current_dir() + "/" + selected_text):
 		change_dir(selected_text, true)
 	elif dir_access.file_exists(dir_access.get_current_dir() + "/" + selected_text):

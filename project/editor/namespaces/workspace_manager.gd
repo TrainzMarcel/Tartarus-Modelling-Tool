@@ -25,6 +25,9 @@ static var selected_part_type : Part
 static var button_part_type_mapping : Dictionary
 static var available_part_types : Array[Part]
 
+#for tracking all loaded assets
+static var loaded_assets : Array[Resource]
+static var name_loaded_asset_mapping : Dictionary
 
 #!!!selected_parts_array, offset_dragged_to_selected_array and selection_box_array are parallel arrays!!!
 static var offset_abb_to_selected_array : Array[Vector3] = []
@@ -32,6 +35,7 @@ static var offset_abb_to_selected_array : Array[Vector3] = []
 static var selection_box_array : Array[SelectionBox] = []
 static var selected_parts_array : Array[Part] = []:
 	set(val):
+		"TODO"#i dont think this works
 		selected_parts_array = val
 		refresh_bounding_box()
 
@@ -51,6 +55,7 @@ static var file_operation : FileOperation
 static var last_save_location : String = ""
 static var last_save_name : String = ""
 
+"TODO"
 const data_header_value : PackedStringArray = [
 	"::COLOR::",
 	"::MATERIAL::",
@@ -97,6 +102,11 @@ static func initialize(workspace : Node, hover_selection_box : SelectionBox):
 	WorkspaceManager.available_part_types = parts_list
 	if available_part_types.size() > 0:
 		selected_part_type = available_part_types[0]
+	
+	
+	loaded_assets.append_array(available_materials)
+	loaded_assets.append_array(available_part_types.map(func(input): return input.part_mesh_node.mesh))
+	name_loaded_asset_mapping = create_mapping(loaded_assets.map(func(input): return get_resource_name(input.resource_path)))
 
 
 #part functions-----------------------------------------------------------------
@@ -443,15 +453,20 @@ static func request_load():
 
 static func confirm_save_load(filepath : String, name : String):
 	if file_operation == FileOperation.save or file_operation == FileOperation.save_as:
+		EditorUI.l_message.text = "saving..."
 		save_model(filepath + "/", name)
+		last_save_location = filepath
+		last_save_name = name
 		EditorUI.l_message.text = "successfully saved " + name + " at " + filepath + "!"
 	elif file_operation == FileOperation.load:
+		EditorUI.l_message.text = "loading..."
 		load_model(filepath + "/", name)
 		EditorUI.l_message.text = "successfully loaded " + name + " at " + filepath + "!"
 
 
 #actual save and load functions
 "TODO"#add error handling here and at load()
+"TODO URGENT"#centralize logic for asset "database" system
 static func save_model(filepath : String, name : String):
 	"TODO"#probably add some setting for how much of the model to save
 	#plus add exclude functionality
@@ -466,7 +481,7 @@ static func save_model(filepath : String, name : String):
 	var color_to_int_mapping : Dictionary
 	var material_name_to_int_mapping : Dictionary
 	var mesh_to_int_mapping : Dictionary
-	var files_used : Array = []
+	var assets_used : Array[Resource] = []
 	var line : PackedStringArray = []
 	var line_debug : PackedStringArray = []
 	var file : PackedStringArray = []
@@ -534,8 +549,10 @@ static func save_model(filepath : String, name : String):
 	i = 0
 	file.append("::MATERIAL::")
 	while i < used_materials.size():
-		files_used.append(used_materials[i].shader.resource_path)
-		line.append(used_materials[i].shader.resource_path.get_file())
+		if not assets_used.has(used_materials[i].shader):
+			assets_used.append(used_materials[i].shader)
+		line.append(get_resource_name(used_materials[i].shader.resource_path))
+		line.append(get_resource_name(used_materials[i].resource_path))
 		var properties : Array = used_materials[i].shader.get_shader_uniform_list()
 		var j : int = 0
 		
@@ -543,7 +560,8 @@ static func save_model(filepath : String, name : String):
 			var param = used_materials[i].get_shader_parameter(properties[j].name)
 			line_debug.append(properties[j].name)
 			if param is Texture2D:
-				files_used.append(param.resource_path)
+				if not assets_used.has(param):
+					assets_used.append(param)
 				line.append(param.resource_path.get_file())
 			elif param is float:
 				line.append(str(param))
@@ -583,7 +601,8 @@ static func save_model(filepath : String, name : String):
 	i = 0
 	file.append("::MESH::")
 	while i < used_meshes.size():
-		files_used.append(used_meshes[i].resource_path)
+		if not assets_used.has(used_meshes[i]):
+			assets_used.append(used_meshes[i])
 		file.append(used_meshes[i].resource_path.get_file())
 		i = i + 1
 	
@@ -613,30 +632,57 @@ static func save_model(filepath : String, name : String):
 		line.clear()
 		i = i + 1
 	
+	
+	var r_names = assets_used.map(func(input): return get_resource_name(input.resource_path))
+	
+	
 	"TODO"#not sure about this
 	#should definitely centralize these variables as much as possible
 	var file_access = FileAccess.open(filepath + name + "_data.csv", FileAccess.WRITE)
-	file_access.flush()
 	var dir_access = DirAccess.open(filepath)
 	var zip_packer = ZIPPacker.new()
+	zip_packer.open(filepath + name + ".tmv")
+	
+	var data_file : String = filepath + name + "_data.csv"
+	
+	
+	file_access.flush()
 	i = 0
 	while i < file.size():
 		file_access.store_line(file[i])
 		i = i + 1
 	file_access.close()
 	
-	files_used.append(filepath + name + "_data.csv")
-	zip_packer.open(filepath + name + ".tmv")
-	
+	zip_packer.start_file(name + "_data.csv")
+	zip_packer.write_file(FileAccess.get_file_as_bytes(data_file))
+	zip_packer.close_file()
 	
 	i = 0
-	while i < files_used.size():
-		zip_packer.start_file(files_used[i].get_file())
-		zip_packer.write_file(FileAccess.get_file_as_bytes(files_used[i]))
-		zip_packer.close_file()
+	#embed used assets in the zip file
+	while i < assets_used.size():
+		var r_name = assets_used[i].resource_path.rsplit("/", true, 1)[1]
+		if assets_used[i] is Texture2D:
+			print("FUCK TEXTURE")
+			zip_packer.start_file(r_name)
+			var img : Image = assets_used[i].get_image()
+			
+			zip_packer.write_file(img.save_png_to_buffer())
+			zip_packer.close_file()
+		elif assets_used[i] is Shader:
+			zip_packer.start_file(r_name)
+			zip_packer.write_file(assets_used[i].code.to_utf8_buffer())
+			zip_packer.close_file()
+		elif assets_used[i] is Mesh:
+			ResourceSaver.save(assets_used[i], filepath + r_name)
+			zip_packer.start_file(r_name)
+			zip_packer.write_file(FileAccess.get_file_as_bytes(filepath + r_name))
+			zip_packer.close_file()
+			dir_access.remove(filepath + r_name)
+		else:
+			print("ELSEFUCK: " + str(assets_used[i]))
 		i = i + 1
 	
-	dir_access.remove(filepath + name + "_data.csv")
+	dir_access.remove(data_file)
 	zip_packer.close()
 
 
@@ -673,28 +719,57 @@ static func load_model(filepath : String, name : String):
 			
 	#load material
 		elif mode == "::MATERIAL::":
-			var new : ShaderMaterial = ShaderMaterial.new()
-			var shader = Shader.new()
-			shader.code = zip_reader.read_file(line[0]).get_string_from_utf8()
+			#only load if required
+			var new : ShaderMaterial
+			var r_name : String = get_resource_name(line[1])
+			if name_loaded_asset_mapping.has(r_name):
+				new = loaded_assets[name_loaded_asset_mapping[r_name]]
+				used_materials.append(new)
+				i = i + 1
+				continue
+			else:
+				new = ShaderMaterial.new()
+				new.resource_path = r_name
+				loaded_assets.append(new)
+				name_loaded_asset_mapping[new] = name_loaded_asset_mapping.keys().size() - 1
+			
+			#only load if required
+			var shader : Shader
+			r_name = get_resource_name(line[0])
+			if name_loaded_asset_mapping.has(r_name):
+				shader = loaded_assets[name_loaded_asset_mapping[r_name]]
+			else:
+				shader = Shader.new()
+				shader.code = zip_reader.read_file(line[0]).get_string_from_utf8()
+				shader.resource_path = r_name
+				loaded_assets.append(shader)
+				name_loaded_asset_mapping[shader] = name_loaded_asset_mapping.keys().size() - 1
+			
 			new.shader = shader
 			
 			var properties : Array = shader.get_shader_uniform_list()
 			var j : int = 0
-			#start at 1 because line item 0 is the shader file name
-			var j_line : int = 1
+			#start at 2 because line item 0 and 1 are the shader and material names respectively
+			var j_line : int = 2
 			
-			print(i, "-------------------------------------------------------------")
+			#print(i, "-------------------------------------------------------------")
 			while j < properties.size():
 				var param = properties[j]#new.get_shader_parameter(properties[j].name)
 				if param.type == TYPE_OBJECT:
 					if param.hint_string == "Texture2D":
+						"TODO"#probably should also only load this if required
 						if zip_reader.get_files().has(line[j_line]):
 							var img = Image.new()
-							img.load_jpg_from_buffer(zip_reader.read_file(line[j_line]))
+							img.load_png_from_buffer(zip_reader.read_file(line[j_line]))
 							img.generate_mipmaps()
 							var texture : ImageTexture = ImageTexture.create_from_image(img)
 							new.set_shader_parameter(properties[j].name, texture)
-					
+							#important for resaving a material
+							texture.resource_path = filepath + get_resource_name(line[j_line])
+							loaded_assets.append(texture)
+					else:
+						prints("UNIMPLEMENTED TYPE: ", param.hint_string, param)
+				
 				elif param.type == TYPE_FLOAT:
 					new.set_shader_parameter(properties[j].name, float(line[j_line]))
 				#surprisingly does not need to be incremented by 2, the x y z are stored as separate floats
@@ -729,7 +804,9 @@ static func load_model(filepath : String, name : String):
 				var f = FileAccess.open(filepath + line[0], FileAccess.WRITE)
 				f.store_buffer(mesh_bytes)
 				f.close()
-				used_meshes.append(ResourceLoader.load(filepath + line[0]))
+				var new = ResourceLoader.load(filepath + line[0])
+				new.resource_path = filepath + line[0]
+				used_meshes.append(new)
 				DirAccess.remove_absolute(filepath + line[0])
 				
 		elif mode == "::MODEL::":
@@ -849,13 +926,10 @@ static func create_mapping(input_data : Array):
 	
 	return map
 
+static func get_resource_name(name : String):
+	"TODO"#clarify this
+	return name.rsplit("/", true, 1)[-1].rsplit(".", true, 1)[0]
 
-static func color_to_vec3(color : Color):
-	return Vector3(color.r, color.g, color.b)
-
-
-static func vec3_to_color(vec : Vector3):
-	return Color(vec.x, vec.y, vec.z)
 
 #old function
 #read colors from file

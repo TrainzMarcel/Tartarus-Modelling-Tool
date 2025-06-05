@@ -94,6 +94,7 @@ static func on_snap_text_changed(new_text):
 	Main.rotational_snap_increment = float(EditorUI.le_unit_step.text)
 
 
+"TODO"#this is broken again
 static func on_snap_button_pressed(button):
 	match button:
 		EditorUI.b_rotation_increment:
