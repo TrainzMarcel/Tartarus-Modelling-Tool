@@ -1,5 +1,4 @@
 ::COLOR::
-67cd09e1-0ac6-4432-9abe-47307e33c8dc
 242,243,243,White
 161,165,162,Grey
 249,233,153,Light yellow

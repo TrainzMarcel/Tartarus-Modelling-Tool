@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://hul5x10ptumj"]
+[gd_scene load_steps=27 format=3 uid="uid://hul5x10ptumj"]
 
 [ext_resource type="Script" path="res://editor/main.gd" id="1_4xdr8"]
 [ext_resource type="PackedScene" uid="uid://c01nu37bjhxsi" path="res://editor/classes/camera/free_look_camera.tscn" id="2_n3tr4"]
@@ -36,7 +36,15 @@ tonemap_mode = 2
 [sub_resource type="World3D" id="World3D_15twx"]
 environment = SubResource("Environment_ye61o")
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_5ga37"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3ofqj"]
+bg_color = Color(0, 0.6, 1, 0.129412)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0, 0.6, 1, 1)
+
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_ffm4q"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_6it0l"]
 load_path = "res://.godot/imported/wood_01_albedo.jpg-c83c0e2d873c9a75f7dbdbaef1d991a2.s3tc.ctex"
@@ -141,7 +149,11 @@ shader_parameter/uv2_offset = Vector3(0, 0, 0)
 shader_parameter/texture_albedo = SubResource("CompressedTexture2D_6it0l")
 shader_parameter/texture_normal = ExtResource("11_5r5hq")
 
-[node name="Main" type="Node3D" node_paths=PackedStringArray("e_cam", "second_cam", "e_workspace", "e_transform_handle_root", "e_hover_selection_box", "ui_node")]
+[sub_resource type="BoxMesh" id="BoxMesh_mlq3q"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_2sbw4"]
+
+[node name="Main" type="Node3D" node_paths=PackedStringArray("e_cam", "second_cam", "e_workspace", "e_transform_handle_root", "e_hover_selection_box", "ui_node", "e_panel_selection_rect")]
 script = ExtResource("1_4xdr8")
 e_cam = NodePath("Camera3D")
 second_cam = NodePath("SubViewportContainer/SubViewport/Camera3D")
@@ -149,6 +161,7 @@ e_workspace = NodePath("Workspace")
 e_transform_handle_root = NodePath("SubViewportContainer/SubViewport/TransformHandleRoot")
 e_hover_selection_box = NodePath("Workspace/HoverSelectionBox")
 ui_node = NodePath("EditorUI")
+e_panel_selection_rect = NodePath("PanelSelectionRect")
 transform_handle_scale = 10.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -183,6 +196,9 @@ render_target_update_mode = 4
 [node name="Camera3D" type="Camera3D" parent="SubViewportContainer/SubViewport"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3)
 fov = 90.0
+
+[node name="PanelSelectionRect" type="Panel" parent="."]
+theme_override_styles/panel = SubResource("StyleBoxFlat_3ofqj")
 
 [node name="EditorUI" parent="." instance=ExtResource("6_whu6r")]
 
@@ -258,7 +274,7 @@ part_scale = Vector3(0.2, 0.2, 0.8)
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("8_4p0vi")
-mesh = SubResource("ImmediateMesh_5ga37")
+mesh = SubResource("ImmediateMesh_ffm4q")
 skeleton = NodePath("../..")
 script = ExtResource("9_n7hy1")
 box_scale = Vector3(1, 1, 1)
@@ -288,10 +304,20 @@ material_override = SubResource("ShaderMaterial_b2n2e")
 mesh = ExtResource("12_awj2i")
 
 [node name="MeshInstance3D2shadertest" type="MeshInstance3D" parent="Workspace"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 2.66872, -4, 0, 5.23597)
-visible = false
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 5.23597)
 material_override = SubResource("ShaderMaterial_alhtu")
 mesh = ExtResource("12_awj2i")
+
+[node name="CSGCombiner3D" type="CSGCombiner3D" parent="Workspace/MeshInstance3D2shadertest"]
+
+[node name="CSGMesh3D" type="CSGMesh3D" parent="Workspace/MeshInstance3D2shadertest/CSGCombiner3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.26248, -0.0783373, 1.61112)
+mesh = SubResource("BoxMesh_mlq3q")
+
+[node name="CSGMesh3D2" type="CSGMesh3D" parent="Workspace/MeshInstance3D2shadertest/CSGCombiner3D"]
+transform = Transform3D(0.866505, 0, -0.499168, 0, 1, 0, 0.499168, 0, 0.866505, -0.572724, 0, 1.61112)
+operation = 2
+mesh = SubResource("BoxMesh_2sbw4")
 
 [node name="MeshInstance3D2shadertest2" type="MeshInstance3D" parent="Workspace"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 7.69384)

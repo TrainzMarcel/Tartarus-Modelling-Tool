@@ -151,6 +151,7 @@ static func drag_snap_position_to_hovered(
 	ray_result : Dictionary,
 	dragged_part : Part,
 	selected_parts_abb : ABB,
+	drag_offset : Vector3,
 	positional_snap_increment : float,
 	snapping_active : bool
 	):
@@ -172,7 +173,7 @@ static func drag_snap_position_to_hovered(
 	"TODO"#this is terrible
 	#drag_offset needs to be abstracted much better
 	#utility functions should always get everything passed in by parameters
-	var drag_offset_local : Vector3 = inverse.basis * WorkspaceManager.drag_offset
+	var drag_offset_local : Vector3 = inverse.basis * drag_offset
 	
 	#normal "bump" (to prevent dragged part from intersecting hovered part when dragging)
 	"TODO"#make this into a function (like get_surface_height_by_unit_vector())

@@ -62,7 +62,7 @@ v0.1
 
 
 	MISC
-	  MI1 saving of models using csv files
+	x MI1 saving and loading of models using csv files
 	  MI2 loading of obj or gltf models
 	  MI3 automated build/export chain
 

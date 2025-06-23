@@ -1,11 +1,6 @@
 extends StaticBody3D
 class_name Part
 
-#for tracking how many and what palettes were used in a model
-#var used_color_palette : WorkspaceManager.ColorPalette
-#var used_material_palette : WorkspaceManager.MaterialPalette
-#var used_part_type_palette : WorkspaceManager.PartTypePalette
-
 "TODO"#for scaling custom meshes correctly, add a function that gets the meshes aabb while it is un-rotated
 #set the parts scale to the meshes aabb and save that scale
 #use that mesh scale value to keep the mesh in the parts bounds

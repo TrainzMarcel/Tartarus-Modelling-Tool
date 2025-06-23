@@ -97,6 +97,8 @@ func _ready():
 	ob_filters.selected = 0
 	selected_filter = filters[0]
 	
+	if dir_start != "/":
+		subfolder_count = dir_start.split("/").size() - 1
 	update_file_display(dir_start)
 	
 	

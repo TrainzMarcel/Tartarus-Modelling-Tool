@@ -3,7 +3,7 @@ class_name HyperDebug
 
 #all registered debug actions---------------------------------------------------
 static var actions : Dictionary
-static var debug_active : bool
+static var debug_active : bool = false
 
 class Action:
 	var f : Callable

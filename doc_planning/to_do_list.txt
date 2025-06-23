@@ -1,49 +1,18 @@
-x reimplement color buttons
-
-x add a readme to specify .tmv and .tmvp files
-
-create ui for palette/asset management
-
-implement part type picking
-	(use modeldatamanager to dynamically load them from /editor_data)
-
 take care of materials
-	(use the shader my friend gave)
+	(use better shader)
 	(add at least 5 for testing)
-
-implement material picking
-	(use modeldatamanager to dynamically load them from /editor_data)
-
 
 
 unify the naming scheme in ui for rotation vs degrees
 create icon for .tmv (tesseract)
 create icon for .tmvp (wooden art palette)
-
-
-write topbar signals and business logic
-show selected color/part/material in message bar when corresponding tool is selected
-
-disable all controls when any menu is open
-	(export array of menu control nodes and if any of them are visible, return in _input())
-
-implement coloring tool
-implement material tool
-
-use dataloader to save and load parts
-	(think of a better data structure or way to store material files)
-
 x make an icon for rotation pivot tool
+
+implement undo/redo
+implement import/export
+implement configurable modes for filemanager
+implement multiple filters at once for filemanager
 implement rotation pivot tool
-
-fix issues with scaling tool
-	(scale gets snapped in all axes when using the tool on just one axis)
-	(when dragging a handle too far negative the whole part moves that direction)
-	(when holding shift the amount of mouse movement needed is wrong)
-	(bad architecture with half the code spread between main and transformhandleutils)
-
-fix issues with drag tool
-	(should snap by closest corner)
 implement snapping for wedge face
 
 
@@ -53,18 +22,12 @@ what data or variables can be segregated out of main and how far
 
 reduce code duplication in snapping code
 
-write code for: ctrl+z, +y, +c, +x, +v, +d, delete
-possibly add ui buttons for undo and redo
+write code for: ctrl+z, +y
 settings menu? dataloader settings csv?
 
-figure out the exact steps of what the save load import export dialogs should do
 
-
-save as
-save
-load
-import obj
-export obj
+import obj, gltf
+export obj, gltf
 export to godot project -> make sure all required materials are there -> find all instances of the previously exported meshes and replace them, recolor them the way they were colored before replacing
 
 asset manager menus for color palette, material palette, part type palette (include default parts? checkbox)

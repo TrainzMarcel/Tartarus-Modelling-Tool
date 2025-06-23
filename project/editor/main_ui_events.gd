@@ -90,11 +90,10 @@ static func on_material_selected(button : Button):
 
 
 static func on_snap_text_changed(new_text):
-	Main.positional_snap_increment = float(EditorUI.le_rotation_step.text)
-	Main.rotational_snap_increment = float(EditorUI.le_unit_step.text)
+	Main.positional_snap_increment = float(EditorUI.le_unit_step.text)
+	Main.rotational_snap_increment = float(EditorUI.le_rotation_step.text)
 
 
-"TODO"#this is broken again
 static func on_snap_button_pressed(button):
 	match button:
 		EditorUI.b_rotation_increment:
@@ -105,6 +104,7 @@ static func on_snap_button_pressed(button):
 			Main.rotational_snap_increment = Main.rotational_snap_increment * 2
 		EditorUI.b_rotation_half:
 			Main.rotational_snap_increment = Main.rotational_snap_increment * 0.5
+		
 		EditorUI.b_unit_increment:
 			Main.positional_snap_increment = Main.positional_snap_increment + EditorUI.le_unit_step_increment_step.true_value
 		EditorUI.b_unit_decrement:
@@ -168,18 +168,23 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 		elif id == 4:
 			#ctrl c copy selection
 			WorkspaceManager.selection_copy()
+			EditorUI.l_message.text = "copied " + str(WorkspaceManager.parts_clipboard.size()) + " parts"
 		elif id == 5:
 			#ctrl v paste selection
 			WorkspaceManager.selection_paste()
+			EditorUI.l_message.text = "pasted " + str(WorkspaceManager.parts_clipboard.size()) + " parts"
 		elif id == 6:
 			#ctrl x cut selection
 			WorkspaceManager.selection_copy()
 			WorkspaceManager.selection_delete()
+			EditorUI.l_message.text = "cut " + str(WorkspaceManager.parts_clipboard.size()) + " parts"
 		elif id == 7:
 			#ctrl d duplicate selection
 			WorkspaceManager.selection_duplicate()
+			EditorUI.l_message.text = "duplicated " + str(WorkspaceManager.selected_parts_array.size()) + " parts"
 		elif id == 8:
 			#delete clear selection
+			EditorUI.l_message.text = "deleted " + str(WorkspaceManager.selected_parts_array.size()) + " parts"
 			WorkspaceManager.selection_delete()
 		elif id == 8:
 			#settings window

@@ -10,16 +10,25 @@ static var workspace : Node
 
 #bounding box of selected parts for positional snapping
 static var selected_parts_abb : ABB = ABB.new()
+static var initial_abb_state : ABB = ABB.new()
+
+
+#initial transform to make snapping work with transformhandles
+static var initial_transform_handle_root_transform : Transform3D
+static var initial_handle_event : InputEvent
+
 
 #asset data
 #gets set in on_color_selected
 static var selected_color : Color
 #static var button_color_mapping : Dictionary
 #static var available_colors : Array[Color]
+
 #gets set in on_material_selected
 static var selected_material : Material
 static var button_material_mapping : Dictionary
 static var available_materials : Array[Material]
+
 #gets set in on_part_type_selected
 static var selected_part_type : Part
 static var button_part_type_mapping : Dictionary
@@ -29,21 +38,32 @@ static var available_part_types : Array[Part]
 static var loaded_assets : Array[Resource]
 static var name_loaded_asset_mapping : Dictionary
 
+
 #!!!selected_parts_array, offset_dragged_to_selected_array and selection_box_array are parallel arrays!!!
 static var offset_abb_to_selected_array : Array[Vector3] = []
 #offset from the dragged parts position to the raycast hit position
 static var selection_box_array : Array[SelectionBox] = []
-static var selected_parts_array : Array[Part] = []:
-	set(val):
-		"TODO"#i dont think this works
-		selected_parts_array = val
-		refresh_bounding_box()
+static var selected_parts_array : Array[Part] = []
 
 #for copy pasting
 static var parts_clipboard : Array[Part] = []
 
 #vector pointing from ray_result.position to selected_parts_abb
 static var drag_offset : Vector3
+
+#initial drag event to check if user exceeded 10 pixel drag tolerance
+#this makes sure when the user is selecting with shift
+#that parts dont get moved when the user accidentally moves their mouse a tiny bit
+static var initial_drag_event : InputEvent
+#once the drag tolerance is exceeded this is set to true and dragging starts
+static var drag_confirmed : bool
+
+#initial selection rect event where the user starts dragging while not hovered over anything draggable
+static var initial_selection_rect_event : InputEvent
+#keep track of first selected part to guarantee bounding box orientation
+static var first_part_selection_rect : Part
+#for shift-selecting, i need to keep track of the initial selection
+static var initial_selected_parts : Array[Part]
 
 #saving and loading related variables
 enum FileOperation {
@@ -74,6 +94,8 @@ static func initialize(workspace : Node, hover_selection_box : SelectionBox):
 	WorkspaceManager.hover_selection_box = hover_selection_box
 	
 	#colors are stored in color buttons (self_modulate) but im not sure if thats a good thing
+	#color buttons are loaded in the ui.initialize() function
+	
 	#get part types and materials from .tres files
 	var file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_material)
 	var materials_list : Array[Material] = []
@@ -112,9 +134,10 @@ static func initialize(workspace : Node, hover_selection_box : SelectionBox):
 #part functions-----------------------------------------------------------------
 #only meant for spawning a part from the part spawn button
 static func part_spawn(selected_part_type : Part):
+	var ray_result = Main.raycast(Main.cam, Main.cam.global_position, -Main.cam.basis.z * Main.raycast_length, [], [1])
 	var new_part : Part = selected_part_type.copy()
 	workspace.add_child(new_part)
-	var ray_result = Main.raycast(Main.cam, Main.cam.global_position, -Main.cam.basis.z * Main.raycast_length, [], [1])
+	
 	if ray_result.is_empty():
 		new_part.transform.origin = Main.cam.global_position + Main.part_spawn_distance * -Main.cam.basis.z
 	else:
@@ -132,6 +155,134 @@ static func part_copy(part : Part):
 	#optimization
 	new_part.part_mesh_node.mesh = selected_part_type.part_mesh_node.mesh
 	new_part.part_collider_node = selected_part_type.part_collider_node.duplicate()
+
+
+#called when user clicks on a part and drags
+#at this point ray_result shouldnt be empty
+static func drag_prepare(event : InputEvent):
+	Main.initial_rotation = WorkspaceManager.selected_parts_abb.transform.basis
+	Main.dragged_part = Main.hovered_part
+	initial_drag_event = event
+
+
+static func drag_handle(event : InputEvent):
+	#first make sure the user actually wants to start a drag
+	if initial_drag_event != null:
+		if (event.position - initial_drag_event.position).length() > Main.drag_tolerance: 
+			drag_confirmed = true
+	
+	if Main.is_mouse_button_held and not Main.ray_result.is_empty() and Main.is_selecting_allowed and drag_confirmed:
+		if Main.safety_check(Main.dragged_part):
+			if Main.safety_check(Main.hovered_part):
+				if not SnapUtils.part_rectilinear_alignment_check(Main.dragged_part.basis, Main.hovered_part.basis):
+					#use initial_rotation so that dragged_part doesnt continually rotate further 
+					#from its initial rotation after being dragged over multiple off-grid parts
+					var rotated_basis : Basis = SnapUtils.drag_snap_rotation_to_hovered(Main.initial_rotation, Main.ray_result)
+					
+					WorkspaceManager.selection_rotate(rotated_basis)
+				
+				#set positions according to offset_dragged_to_selected_array and where the selection is being dragged (ray_result.position)
+				WorkspaceManager.selection_move(SnapUtils.drag_snap_position_to_hovered(
+					Main.ray_result,
+					Main.dragged_part,
+					selected_parts_abb,
+					WorkspaceManager.drag_offset,
+					Main.positional_snap_increment,
+					Main.snapping_active
+				))
+
+
+static func drag_end():
+	drag_confirmed = false
+	initial_drag_event = null
+
+
+"TODO"#add logic for appending to selection when shift is held
+static func selection_rect_prepare(event : InputEvent, selection_rect : Panel):
+	initial_selection_rect_event = event
+	#duplicate to avoid mutation
+	initial_selected_parts = selected_parts_array.duplicate()
+	selection_rect.position = initial_selection_rect_event.position
+	selection_rect.size = Vector2.ZERO
+	selection_rect.visible = true
+
+
+#this function has not yet been tested for orthographic view
+static func selection_rect_handle(event : InputEvent, selection_rect : Panel, cam : Camera3D):
+	if Main.is_mouse_button_held and Main.is_selecting_allowed and initial_selection_rect_event != null and event is InputEventMouse:
+		var physics : PhysicsDirectSpaceState3D = cam.get_world_3d().direct_space_state
+		
+		
+		#render the selection rect
+		var scaling : Vector2 = event.position - initial_selection_rect_event.position
+		selection_rect.size = scaling.abs()
+		if scaling.x < 0:
+			selection_rect.position.x = initial_selection_rect_event.position.x + scaling.x
+		
+		if scaling.y < 0:
+			selection_rect.position.y = initial_selection_rect_event.position.y + scaling.y
+		
+		
+		var rect : Rect2 = selection_rect.get_rect()
+		var a : Vector2 = rect.position
+		var b : Vector2 = Vector2(rect.position.x + rect.size.x, rect.position.y)
+		var c : Vector2 = rect.position + rect.size
+		var d : Vector2 = Vector2(rect.position.x, rect.position.y + rect.size.y)
+		var rect_points : PackedVector2Array = [a,b,c,d]
+		
+		#collision checks
+		var collider_points : PackedVector3Array = []
+		var a1 = cam.project_position(a, Main.raycast_length)
+		var b1 = cam.project_position(b, Main.raycast_length)
+		var c1 = cam.project_position(c, Main.raycast_length)
+		var d1 = cam.project_position(d, Main.raycast_length)
+		
+		var e1 = cam.position
+		
+		var frustum_collider : ConvexPolygonShape3D = ConvexPolygonShape3D.new()
+		frustum_collider.points = [a1, b1, c1, d1, e1]
+		
+		var params : PhysicsShapeQueryParameters3D = PhysicsShapeQueryParameters3D.new()
+		params.shape = frustum_collider
+		var result = physics.intersect_shape(params, 2048)
+		
+		var result_colliders = result.map(func(input): return input.collider)
+		var result_parts : Array[Part] = []
+		
+		for i in result_colliders:
+			if i is Part:
+				result_parts.append(i)
+		
+		"TODO"#there has to be a better way to do this
+		#guarantee the first selected part is always at the start of the array
+		#so that the bounding box orientation doesnt change
+		if result_parts.size() > 0 and first_part_selection_rect == null:
+			first_part_selection_rect = result_parts[0]
+			Main.initial_rotation = result_parts[0].basis
+		
+		if first_part_selection_rect != null and result_parts.size() > 1:
+			result_parts.erase(first_part_selection_rect)
+			result_parts.push_front(first_part_selection_rect)
+		
+		
+		if result_parts.size() > 0:
+			if first_part_selection_rect != null:
+				if Input.is_key_pressed(KEY_SHIFT):
+					result_parts.append_array(initial_selected_parts)
+				WorkspaceManager.selection_set_to_part_array(result_parts, first_part_selection_rect)
+		else:
+			if Input.is_key_pressed(KEY_SHIFT) and initial_selected_parts.size() > 0:
+				WorkspaceManager.selection_set_to_part_array(initial_selected_parts, initial_selected_parts[0])
+			else:
+				WorkspaceManager.selection_clear()
+			first_part_selection_rect = null
+
+
+static func selection_rect_end(selection_rect : Panel):
+	selection_rect.visible = false
+	initial_selection_rect_event = null
+	first_part_selection_rect = null
+	initial_selected_parts = []
 
 
 static func refresh_bounding_box():
@@ -187,7 +338,8 @@ static func selection_set_to_part_array(input : Array[Part], abb_orientation : P
 	selection_clear()
 	
 	for part in input:
-		selection_add_part(part, abb_orientation)
+		if not selected_parts_array.has(part):
+			selection_add_part(part, abb_orientation)
 
 
 static func selection_clear():
@@ -244,7 +396,8 @@ static func selection_move(input_absolute : Vector3):
 
 #rotation only
 "TODO"#parameterize everything for clarity and to prevent bugs
-static func selection_rotate(rotated_basis : Basis, original_basis : Basis):#TODO , point_local : Vector3 = Vector3.ZERO):
+static func selection_rotate(rotated_basis : Basis):#TODO , point_local : Vector3 = Vector3.ZERO):
+	var original_basis : Basis = Basis(selected_parts_abb.transform.basis)
 	
 	#calculate difference between original basis and new basis
 	var difference : Basis = rotated_basis * original_basis.inverse()
@@ -284,7 +437,6 @@ static func selection_rotate(rotated_basis : Basis, original_basis : Basis):#TOD
 "TODO"#OPTIMIZE OPTIMIZE OPTIMIZE
 #https://www.reddit.com/r/godot/comments/187npcd/how_to_increase_performance/
 #https://docs.godotengine.org/en/4.1/classes/class_renderingserver.html
-#
 static func selection_scale(scale_absolute : Vector3):
 	#dont do anything if scale is the same
 	if scale_absolute == selected_parts_abb.extents:
@@ -660,9 +812,8 @@ static func save_model(filepath : String, name : String):
 	i = 0
 	#embed used assets in the zip file
 	while i < assets_used.size():
-		var r_name = assets_used[i].resource_path.rsplit("/", true, 1)[1]
+		var r_name = get_resource_name(assets_used[i].resource_path)
 		if assets_used[i] is Texture2D:
-			print("FUCK TEXTURE")
 			zip_packer.start_file(r_name)
 			var img : Image = assets_used[i].get_image()
 			
@@ -679,7 +830,7 @@ static func save_model(filepath : String, name : String):
 			zip_packer.close_file()
 			dir_access.remove(filepath + r_name)
 		else:
-			print("ELSEFUCK: " + str(assets_used[i]))
+			print("UNIMPLEMENTED TYPE: " + str(assets_used[i]))
 		i = i + 1
 	
 	dir_access.remove(data_file)
@@ -963,442 +1114,3 @@ static func read_colors_and_create_colors(file_as_string : String):
 	r_dict.color_array = color_array
 	r_dict.color_name_array = color_name_array
 	return r_dict
-
-
-
-
-
-
-"""
-#defaults for load/save error cases
-#static var default_color : Color = Color.WHITE
-#static var default_material : StandardMaterial3D = StandardMaterial3D.new()
-#static var default_mesh : Mesh = BoxMesh.new()
-
-#on startup, load these palettes
-#const folder_startup_palettes : String = "user://palettes"
-#const folder_saved_models : String = "user://models/"
-
-
-#currently selected palettes in the editor
-#make the setters into ui events to reload x panel uis
-#or manually call a function after setting these
-static var equipped_color_palette : ColorPalette
-static var equipped_material_palette : MaterialPalette
-static var equipped_part_type_palette : PartTypePalette
-
-#arrays of all palettes available to select
-static var available_color_palette_array : Array[ColorPalette]
-static var available_material_palette_array : Array[MaterialPalette]
-static var available_part_type_palette_array : Array[PartTypePalette]
-
-#used to tell functions what datatype to convert a string to (see data_to_csv_line())
-#there is a datatype enum in globalscope but it doesnt include material mesh or part types
-enum DataType {t_int, t_float, t_string, t_color, t_material, t_mesh, t_part}
-
-#section headers in an attempt to make functions more flexible
-const section_header_dict : Dictionary = {
-	color_palette = "::COLORPALETTE::",
-	material_palette = "::MATERIALPALETTE::",
-	part_type_palette = "::PARTTYPEPALETTE::",
-	model = "::MODEL::"
-}
-
-#instructions to load and save each data object
-static var persist_instruction_array : Array[PersistInstruction] = [
-	initialize_instruction(
-		ColorPalette.new(),
-		section_header_dict.color_palette,
-		[WorkspaceManager.is_equal, WorkspaceManager.is_greater],
-		[1, 1],
-		[["uuid", "name", "description"], ["color_array", "color_name_array"]],
-		[[DataType.t_string, DataType.t_string, DataType.t_string], [DataType.t_color, DataType.t_string]]
-	),
-	initialize_instruction(
-		MaterialPalette.new(),
-		section_header_dict.material_palette,
-		[WorkspaceManager.is_equal, WorkspaceManager.is_greater],
-		[1, 1],
-		[["uuid", "name", "description"], ["material_array", "material_name_array"]],
-		[[DataType.t_string, DataType.t_string, DataType.t_string], [DataType.t_material, DataType.t_string]]
-	),
-	initialize_instruction(
-		PartTypePalette.new(),
-		section_header_dict.part_type_palette,
-		[WorkspaceManager.is_equal, WorkspaceManager.is_greater],
-		[1, 1],
-		[["uuid", "name", "description"], ["mesh_array", "mesh_name_array", "collider_type_array"]],
-		[[DataType.t_string, DataType.t_string, DataType.t_string], [DataType.t_mesh, DataType.t_string, DataType.t_int]]
-	),
-	initialize_instruction(
-		Model.new(),
-		section_header_dict.model,
-		[WorkspaceManager.is_equal, WorkspaceManager.is_greater],
-		[1, 1],
-		[["uuid", "name", "description", "part_count"], ["part_array"]],
-		[[DataType.t_string, DataType.t_string, DataType.t_string, DataType.t_int], [DataType.t_part]]
-	)
-]
-
-#tell functions how to load and save each section header
-class PersistInstruction:
-	var section_header : String
-	
-	#object type to move file data into (loading) or out of (saving)
-	var data_object : Object
-	
-	#these are the condition for which lines to trigger which loading routines
-	#an example would be [line == 1, line > 1]
-	#to return index 0 for when the line == 1 and index 1 for when the line is greater than 1
-	#MUST only return true or false
-	var line_condition : Array[Callable]
-	#second argument for each line instruction
-	#also serves as number to subtract from line_relative when an array is being read from and saved
-	#because the actual data starts at line 1 and so value[0] would be missed
-	var line_condition_second_arg : Array[int]
-	
-	#stringname of properties to set and get
-	#if a property is of type array, use .append instead of set()
-	var line_data_name : Array[Array]
-	# = [["uuid", "name", "description"], ["color","color_name"]]
-	
-	#color should automatically know that it uses 3 columns instead of 1
-	#DataType.Mesh or .Material should automatically know to load a resource instead
-	#(resource loading should be done in its own function)
-	#[[DataType.t_string, DataType.t_string, DataType.String], [DataType.Color, DataType.String]]
-	var line_data_type : Array[Array]
-
-static func initialize_instruction(
-	data_object : Object,
-	section_header : String,
-	line_condition : Array[Callable],
-	line_condition_second_arg : Array[int],
-	line_data_name : Array[Array],
-	line_data_type : Array[Array]
-	):
-	
-	var new : PersistInstruction = PersistInstruction.new()
-	new.data_object = data_object
-	new.section_header = section_header
-	new.line_condition = line_condition
-	new.line_condition_second_arg = line_condition_second_arg
-	new.line_data_name = line_data_name
-	new.line_data_type = line_data_type
-	return new
-
-
-#i have to make these operations into callables for class above
-static func is_greater(a : int, b : int):
-	return a > b
-
-static func is_equal(a : int, b : int):
-	return a == b
-
-#classes responsible for storing data
-class Model:
-	var uuid : String
-	var name : String
-	var description : String
-	var part_count : int
-	#on saving, AUTOMATICALLY detect which palettes were used in the model
-	#(by the parts references to which palettes were used in it)
-	var color_palette_array : Array[ColorPalette]
-	var material_palette_array : Array[MaterialPalette]
-	var part_type_palette_array : Array[PartTypePalette]
-	var part_array : Array[Part]
-
-
-class ColorPalette:
-	var uuid : String
-	var name : String
-	var description : String
-	#parallel arrays
-	var color_array : Array[Color]
-	var color_name_array : Array[String]
-
-
-class MaterialPalette:
-	var uuid : String
-	var name : String
-	var description : String
-	#parallel arrays
-	var material_array : Array[BaseMaterial3D]
-	var material_name_array : Array[String]
-
-
-class PartTypePalette:
-	var uuid : String
-	var name : String
-	var description : String
-	#parallel arrays
-	var mesh_array : Array[Mesh]
-	var mesh_name_array : Array[String]
-	var collider_type_array : Array[int]
-
-static func load_data_file(file_path : String):
-	#unbundle_tmv()
-	#for i in returned file names
-	#i.get_file_as_lines.split("\n")
-		#for j in lines:
-			
-			
-			
-			
-	#graow
-	#GRAOW
-	
-	return#return above classes as dict
-
-#take objects in workspace and turn them into a file
-static func save_data_file(file_path : String, file_as_string_array : PackedStringArray):
-	pass
-
-
-#feed correct instruction object according to section header
-static func data_to_tmv_line(data_object : Object, line_relative : int, instruction : PersistInstruction, delimiter : String, extra_data : Dictionary):
-	#select which instructions to use depending on the condition in line_instruction and line_
-	var selected : int = get_index_of_line_instruction(instruction, line_relative)
-	var line_output : PackedStringArray = []
-	var i : int = 0
-	var j : int = 0
-	
-	while i < instruction.line_data_name[selected].size():
-		
-		#get property from its name
-		var property = data_object.get(instruction.line_data_name[line_relative][i])
-		var property_get
-		
-		#get the property
-		if property is Array:
-			#find array index by subtracting line_relative by the second arg of the line condition
-			#that way, greater_than(line_relative, 5) for example will also be subtracted by 5 if theres 5 lines of other data
-			"CAUTION"#probably should make this its own array instead of using line_condition_second_arg
-			property_get = property[line_relative - instruction.line_condition_second_arg[selected]]
-		else:
-			property_get = property
-		
-		#convert the property
-		#do nothing
-		if instruction.line_data_type[selected][i] == DataType.t_string:
-			line_output.append(property_get)
-		#leverage str()
-		elif instruction.line_data_type[selected][i] == DataType.t_int or instruction.data_type == DataType.t_float:
-			line_output.append(str(property_get))
-		#leverage str() but over 3 columns/indices
-		elif instruction.line_data_type[selected][i] == DataType.t_color:
-			#skip 2 more indices because a color takes up 3 columns
-			i = i + 2
-			line_output.append(str(property_get.r))
-			line_output.append(str(property_get.g))
-			line_output.append(str(property_get.b))
-		elif instruction.line_data_type[selected][i] == DataType.t_material:
-			pass
-			"TODO"#save material resource function
-			#add the materials filenames to save folder and add the resource filename in here
-		elif instruction.line_data_type[selected][i] == DataType.t_mesh:
-			pass
-			"TODO"#save mesh resource function
-		elif instruction.line_data_type[selected][i] == DataType.t_part:
-			#skip 15 more indices because a part takes up 16 columns
-			i = i + 15
-			line_output.append(str(property_get.part_scale.x))
-			line_output.append(str(property_get.part_scale.y))
-			line_output.append(str(property_get.part_scale.z))
-			
-			line_output.append(str(property_get.global_position.x))
-			line_output.append(str(property_get.global_position.y))
-			line_output.append(str(property_get.global_position.z))
-			
-			line_output.append(str(property_get.quaternion.w))
-			line_output.append(str(property_get.quaternion.x))
-			line_output.append(str(property_get.quaternion.y))
-			line_output.append(str(property_get.quaternion.z))
-			
-			
-			#create mappings to avoid using .find() 6 times when parsing a part
-			extra_data = create_palette_mappings(extra_data)
-			
-			#write ids for used palettes and used assets in said palettes
-			var prev_index : int = 0
-			var index : int = 0
-			
-			#get index of used color palette
-			index = extra_data.color_palette_array[extra_data.color_palette_mapping[property_get.used_color_palette]]
-			line_output.append(str(index))
-			prev_index = index
-			index = extra_data.color_palette_array[prev_index].color_array[extra_data.color_palette_entry_mapping_array[property_get.part_color]]
-			line_output.append(str(index))
-			
-			
-			#get index of used material palette
-			index = extra_data.material_palette_array[extra_data.material_palette_mapping[property_get.used_material_palette]]
-			line_output.append(str(index))
-			prev_index = index
-			index = extra_data.material_palette_array[prev_index].material_array[extra_data.material_palette_entry_mapping_array[property_get.part_material]]
-			line_output.append(str(index))
-			
-			
-			#get index of used part palette
-			index = extra_data.part_type_palette_array[extra_data.part_type_palette_mapping_array[property_get.used_part_type_palette]]
-			line_output.append(str(index))
-			prev_index = index
-			index = extra_data.part_type_palette_array[prev_index].mesh_array[extra_data.part_type_palette_entry_mapping_array[property_get.part_mesh_node.mesh]]
-		
-		i = i + 1
-	
-	return delimiter.join(line_output)
-
-
-#this tells the program how to read every line after section header
-static func tmv_line_to_data(data_object : Object, line_relative : int, instruction : PersistInstruction, delimiter : String, line : String):
-	#start at the line after the section_header as mode needs to be set from outside
-	var data : PackedStringArray = line.split(delimiter)
-	var i : int = 0
-	
-	
-	
-	#{t_int, t_float, t_string, t_color, t_material, t_mesh}
-	if instruction.data_type == DataType.t_int or instruction.data_type == DataType.t_float:
-		pass
-	
-	if instruction.data_type == DataType.t_string:
-		pass
-	
-	while i < data.size():
-		
-		
-		pass
-		
-		
-	
-	
-	
-	
-	#duplicate object from instruction
-	if data_object == null:
-		data_object = ClassDB.instantiate(instruction.data_object.get_class())
-	
-	
-	
-	
-	
-	
-	
-	return data_object
-	#or possibly an array of data which can be assigned to a class based on the last section header?
-
-
-"TODO"
-static func bundle_tmv(save_name : String, save_filepath : String, file_names : Array[String]):
-	var writer : ZIPPacker = ZIPPacker.new()
-	var err := writer.open(save_filepath + save_name)
-	if err != OK:
-		return err
-	writer.start_file(save_name)
-	for file in file_names:
-		writer.write_file(FileAccess.get_file_as_bytes(save_filepath + save_name))
-	writer.close_file()
-	writer.close()
-	#return file names (not paths)
-
-
-static func unbundle_tmv():
-	pass
-
-
-#helper functions
-static func validate_section_header(line : String):
-	return section_header_dict.values().has(line)
-
-static func get_index_of_line_instruction(instruction : PersistInstruction, line_relative : int):
-	var i : int = 0
-	while i < instruction.line_instruction.size():
-		if instruction.line_instruction[line_relative].call(line_relative, instruction.line_instruction_second_arg[i]):
-			return i
-		i = i + 1
-
-
-static func create_palette_mappings(input_dict : Dictionary):
-	#assigning palette ids and asset ids
-	#if input_dict doesnt have mappings, make them
-	#mappings are used to convert references to ids faster
-	if not input_dict.keys().has("color_palette_array"):
-		#parallel arrays
-		input_dict.color_palette_mapping = create_mapping(input_dict.color_palette_array)
-		input_dict.color_entry_mapping_array = []
-		for i in input_dict.color_palette_array:
-			input_dict.color_entry_mapping_array.append(create_mapping(i.color_array))
-	
-	
-	if not input_dict.keys().has("material_palette_array"):
-		#parallel arrays
-		input_dict.material_palette_mapping = create_mapping(input_dict.material_palette_array)
-		input_dict.material_entry_mapping_array = []
-		for j in input_dict.material_palette_array:
-			input_dict.material_entry_mapping_array.append(create_mapping(j.material_array))
-	
-	
-	if not input_dict.keys().has("part_type_palette_array"):
-		#parallel arrays
-		input_dict.part_type_palette_mapping = create_mapping(input_dict.part_type_palette_array)
-		input_dict.part_type_entry_mapping_array = []
-		for k in input_dict.part_type_palette_array:
-			input_dict.part_type_entry_mapping_array.append(create_mapping(k.mesh_array))
-	
-	return input_dict
-
-
-static func get_used_palettes_from_workspace(workspace : Node):
-	var workspace_node_array : Array[Node] = workspace.get_children()
-	var used_color_palette_array : Array[ColorPalette] = []
-	var used_material_palette_array : Array[MaterialPalette] = []
-	var used_part_type_palette_array : Array[PartTypePalette] = []
-#iterate all parts and check which palettes were used
-	var i : int = 0
-	while i < workspace_node_array.size():
-		if workspace_node_array[i] is Part:
-			#if any "used palette" variables are null, just set default value
-			var part : Part = workspace_node_array[i]
-			
-			if not used_color_palette_array.has(part.used_color_palette):
-				used_color_palette_array.append(part.used_color_palette)
-			
-			if not used_material_palette_array.has(part.used_material_palette):
-				used_material_palette_array.append(part.used_material_palette)
-			
-			if not used_part_type_palette_array.has(part.used_part_type_palette):
-				used_part_type_palette_array.append(part.used_part_type_palette)
-		i = i + 1
-	
-	var r_dict : Dictionary = {}
-	r_dict.used_color_palette_array = used_color_palette_array
-	r_dict.used_material_palette_array = used_material_palette_array
-	r_dict.used_part_type_palette_array = used_part_type_palette_array
-	return r_dict
-
-
-#returns null if no match
-static func get_index_according_to_uuid(input_uuid : String, input_array : Array):
-	var i : int = 0
-	while i < input_array.size():
-		if input_array[i].uuid == input_uuid:
-			return i
-		i = i + 1
-	return null
-
-
-#returns null if invalid index
-static func get_uuid_according_to_index(input_index : int, input_array : Array):
-	if input_array.size() > input_index:
-		return input_array[input_index].uuid
-	return null
-
-
-static func dispatch_instruction(section_header : String):
-	for i in persist_instruction_array:
-		if i.section_header == section_header:
-			return i
-
-"TODO"#add config read function, add material read function, add part model read function
-"TODO"#also add all the filepaths in here
-"""
