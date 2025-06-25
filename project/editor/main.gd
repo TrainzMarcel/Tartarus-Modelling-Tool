@@ -6,7 +6,6 @@ class_name Main
 "TODO"#implement undo redo
 "TODO"#implement asset import export
 "TODO"#implement csg
-#badly implemented but will clean up associated logic later (workspacemanager.selection_rect_handle()) "TODO"#implement click and drag rect selecting
 "TODO"#implement selection grouping
 "TODO"#implement pivot move tool
 
@@ -27,12 +26,8 @@ class_name Main
 
 
 #architecture
-"TECH DEBT"#selecting logic has become too unclear and decentralized with regards to
-#how the bounding box functions and when it should be reset
-#clean up all the bounding box code
-#find a better way to determine what orientation the bounding box should have
 #simplify API for the transform handles in preparation for pivot edit tool
-#maybe? refine selection system to work with normal godot assets because it would be fun to use this as a level editor
+#(maybe?) refine selection system to work with normal godot assets because it would be fun to use this as a level editor
 
 "TODO"#decide whether the word "is" should be a standard part of naming bools
 "TODO"#find a good way to group variables
@@ -177,7 +172,7 @@ func _ready():
 	HyperDebug.initialize(false, get_tree().root)
 	
 	#for convenience sakes so my console isnt covered up every time i start the software
-	get_window().position = Vector2(1920*0.5 - 1152 * 0.3, 0)
+	get_window().position = Vector2(1920*0.5 - 1152 * 0.3, 40)
 
 
 # Called every input event.
@@ -197,6 +192,11 @@ func _input(event : InputEvent):
 	is_hovering_allowed = is_hover_tool and not is_ui_hovered
 	is_hovering_allowed = is_hovering_allowed and Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED
 	
+	#reset each frame
+	WorkspaceManager.selection_changed = false
+	WorkspaceManager.selection_moved = false
+	#set previous hovered handle for this input frame
+	prev_hovered_handle = hovered_handle
 	
 #do raycasting, set hovered_handle
 #if handle wasnt found, raycast and set hovered_part, render selectionbox around hovered_part
@@ -220,7 +220,7 @@ func _input(event : InputEvent):
 				if not is_mouse_button_held:
 					TransformHandleUtils.set_transform_handle_highlight(hovered_handle, false, true)
 				
-				#fix: when moving mouse from one handle to another, sometimes the non hovered one stayed highlighted
+				#fix: when moving mouse from one handle to another, sometimes the previous one stayed highlighted
 				if hovered_handle != prev_hovered_handle and Main.safety_check(prev_hovered_handle):
 					TransformHandleUtils.set_transform_handle_highlight(prev_hovered_handle, false, false)
 				
@@ -231,7 +231,7 @@ func _input(event : InputEvent):
 			WorkspaceManager.selection_box_hover_on_part(null, is_hovering_allowed)
 	
 	
-#set dragged_part and dragged_handle
+#set dragged_part and dragged_handle--------------------------------------------
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
@@ -252,8 +252,8 @@ func _input(event : InputEvent):
 				#if handle is detected, set dragged_handle
 				elif Main.safety_check(hovered_handle):
 					dragged_handle = hovered_handle
-					#get initial data on click, for calculating transforms performed by transformhandle
 					
+					#get initial data on click, for calculating transforms performed by transformhandle
 					WorkspaceManager.initial_transform_handle_root_transform = transform_handle_root.transform
 					WorkspaceManager.initial_abb_state.transform = WorkspaceManager.selected_parts_abb.transform
 					WorkspaceManager.initial_abb_state.extents = WorkspaceManager.selected_parts_abb.extents
@@ -281,12 +281,11 @@ func _input(event : InputEvent):
 				WorkspaceManager.selection_rect_end(panel_selection_rect)
 	
 	
-#selection handling
+#selection handling and non-drag-tool logic-------------------------------------
 #if click on unselected part, set it as the selection (array with only that part, discard any prior selection)
 #if click on unselected part while shift is held, append to selection
 #if click on part in selection while shift is held, remove from selection
 #if click on nothing, clear selection array
-#selection and non-drag-tool logic (to be put in another function maybe)
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 		#lmb down
@@ -319,7 +318,7 @@ func _input(event : InputEvent):
 					
 		#parts hovered but selecting not allowed
 		#handle hover-only tools
-				elif is_part_hovered and not is_selecting_allowed and is_hovering_allowed:
+				elif is_part_hovered and not is_selecting_allowed and is_hovering_allowed:# is_part_hovered and not is_drag_tool:
 					
 					if selected_tool == SelectedToolEnum.t_material:
 						hovered_part.part_material = WorkspaceManager.selected_material
@@ -338,7 +337,12 @@ func _input(event : InputEvent):
 			else:
 				pass
 	
-#handle editing related keyboard inputs
+	#selection rect/marquee select handling
+	if event is InputEventMouseMotion:
+		WorkspaceManager.selection_rect_handle(event, panel_selection_rect, cam)
+	
+	
+#handle editing related keyboard inputs-----------------------------------------
 	if event is InputEventKey and event.is_pressed() and not event.is_echo():
 #change initial_transform on r or t press
 			#rotate clockwise around normal vector
@@ -421,11 +425,10 @@ func _input(event : InputEvent):
 			"TODO"
 			WorkspaceManager.redo()
 	
-#dragging parts + transform handles + selection rect handling happens here
+#dragging parts + transform handle calculations---------------------------------
 	if event is InputEventMouseMotion:
 		#parts dragging
 		WorkspaceManager.drag_handle(event)
-		WorkspaceManager.selection_rect_handle(event, panel_selection_rect, cam)
 		
 		#transform handle dragging
 		#handles do not need a "canvas" collider to be dragged over
@@ -501,36 +504,31 @@ func _input(event : InputEvent):
 					EditorUI.l_message.text = "Scale: " + str(result)
 	
 	
-	#post input updates
+#post input updates-------------------------------------------------------------
 	if WorkspaceManager.selected_parts_array.size() > 0 and is_selecting_allowed:
-		#refresh bounding box on possible selection change
+		#refresh bounding box on definitive selection change
 		#automatically refreshes abb offset array
-		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed or event is InputEventMouseMotion and is_mouse_button_held:
-			"ARCHITECTURE NOTE"#this needs to be called anytime the selection changes
+		if WorkspaceManager.selection_changed:
 			WorkspaceManager.refresh_bounding_box()
+			#this only actually needs to be called when the selection changes from size 0 to size > 0
+			#but i didnt feel like tracking that
+			TransformHandleUtils.set_tool_handle_array_active(selected_tool_handle_array, true)
 		
-		
-		#important: only execute this on LEFT CLICK and NOT every input frame
-		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			if not ray_result.is_empty():
-				WorkspaceManager.drag_offset = WorkspaceManager.selected_parts_abb.transform.origin - Main.ray_result.position	
-			
-			#move transform handles with selection
-			"ARCHITECTURE NOTE"#this needs to be called anytime the selection moves or changes (after refresh bounding box)
+		if WorkspaceManager.selection_changed or WorkspaceManager.selection_moved:
 			Main.set_transform_handle_root_position(
 				transform_handle_root,
 				WorkspaceManager.selected_parts_abb.transform,
 				local_transform_active,
 				selected_tool_handle_array
 			)
-			TransformHandleUtils.set_tool_handle_array_active(selected_tool_handle_array, true)
-			
-	if WorkspaceManager.selected_parts_array.size() == 0 and is_selecting_allowed:
+		
+		#this definitively tells us a drag motion has started
+		if Main.safety_check(dragged_part) and dragged_part == hovered_part:
+				WorkspaceManager.drag_offset = WorkspaceManager.selected_parts_abb.transform.origin - Main.ray_result.position
+		
+	elif WorkspaceManager.selected_parts_array.size() == 0 and WorkspaceManager.selection_changed:
 		TransformHandleUtils.set_tool_handle_array_active(selected_tool_handle_array, false)
 	
-	
-	#set previous hovered handle for next input frame
-	prev_hovered_handle = hovered_handle
 	
 	#camera controls
 	cam.cam_input(event, second_cam, WorkspaceManager.selected_parts_array, WorkspaceManager.selected_parts_abb, EditorUI.l_message, EditorUI.l_camera_speed)
@@ -542,6 +540,7 @@ func _process(delta : float):
 	cam.cam_process(delta, second_cam, transform_handle_root, transform_handle_scale, selected_tool_handle_array, WorkspaceManager.selected_parts_abb)
 
 
+#utility functions
 #returns true if hovering over visible ui
 func ui_hover_check(ui_list : Array[Control]):
 	for i in ui_list:

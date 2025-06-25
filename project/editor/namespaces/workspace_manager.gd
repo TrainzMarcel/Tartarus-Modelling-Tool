@@ -45,6 +45,13 @@ static var offset_abb_to_selected_array : Array[Vector3] = []
 static var selection_box_array : Array[SelectionBox] = []
 static var selected_parts_array : Array[Part] = []
 
+#set this on selection change, this tells the bounding box to recalculate itself
+#between selection handling and selection transform operations
+static var selection_changed : bool = false
+
+#call set_transform_handle_root at end of input frame
+static var selection_moved : bool = false
+
 #for copy pasting
 static var parts_clipboard : Array[Part] = []
 
@@ -163,6 +170,7 @@ static func drag_prepare(event : InputEvent):
 	Main.initial_rotation = WorkspaceManager.selected_parts_abb.transform.basis
 	Main.dragged_part = Main.hovered_part
 	initial_drag_event = event
+	
 
 
 static func drag_handle(event : InputEvent):
@@ -268,7 +276,12 @@ static func selection_rect_handle(event : InputEvent, selection_rect : Panel, ca
 		if result_parts.size() > 0:
 			if first_part_selection_rect != null:
 				if Input.is_key_pressed(KEY_SHIFT):
-					result_parts.append_array(initial_selected_parts)
+					for part in initial_selected_parts:
+						if result_parts.has(part):
+							result_parts.erase(part)
+						else:
+							result_parts.append(part)
+				
 				WorkspaceManager.selection_set_to_part_array(result_parts, first_part_selection_rect)
 		else:
 			if Input.is_key_pressed(KEY_SHIFT) and initial_selected_parts.size() > 0:
@@ -283,10 +296,11 @@ static func selection_rect_end(selection_rect : Panel):
 	initial_selection_rect_event = null
 	first_part_selection_rect = null
 	initial_selected_parts = []
+	selection_changed = true
 
 
 static func refresh_bounding_box():
-	if not Main.safety_check(selected_parts_array[0]):
+	if not Main.safety_check(selected_parts_array[0]) and not selection_changed:
 		return
 	selected_parts_abb = SnapUtils.calculate_extents(selected_parts_abb, selected_parts_array[0], selected_parts_array)
 	#debug
@@ -307,12 +321,14 @@ static func selection_remove_part(hovered_part):
 	#erase the same index as hovered_part
 	offset_abb_to_selected_array.remove_at(selected_parts_array.find(hovered_part))
 	selected_parts_array.erase(hovered_part)
+	selection_changed = true
 
 
 static func selection_add_part(hovered_part : Part, abb_orientation : Part):
 	selected_parts_array.append(hovered_part)
 	selection_box_instance_on_part(hovered_part)
 	offset_abb_to_selected_array.append(hovered_part.transform.origin - abb_orientation.transform.origin)
+	selection_changed = true
 
 
 static func selection_set_to_workspace():
@@ -323,6 +339,7 @@ static func selection_set_to_workspace():
 	
 	for i in workspace_parts:
 		selection_add_part(i, workspace_parts[0])
+	selection_changed = true
 
 
 static func selection_set_to_part(hovered_part : Part, abb_orientation : Part):
@@ -330,22 +347,24 @@ static func selection_set_to_part(hovered_part : Part, abb_orientation : Part):
 	offset_abb_to_selected_array = [hovered_part.global_position]
 	selection_boxes_clear_all()
 	selection_box_instance_on_part(hovered_part)
+	selection_changed = true
 
 
 #for undo operations
-#warning untested
 static func selection_set_to_part_array(input : Array[Part], abb_orientation : Part):
 	selection_clear()
 	
 	for part in input:
 		if not selected_parts_array.has(part):
 			selection_add_part(part, abb_orientation)
+	selection_changed = true
 
 
 static func selection_clear():
 	selected_parts_array.clear()
 	selection_boxes_clear_all()
 	offset_abb_to_selected_array.clear()
+	#does not need to call selection_changed as the bounding box doesnt matter when nothing is selected
 
 
 static func selection_delete():
@@ -367,7 +386,7 @@ static func selection_paste():
 			workspace.add_child(copy)
 			selection_add_part(copy, copy)
 		refresh_bounding_box()
-		Main.set_transform_handle_root_position(Main.transform_handle_root, selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
+		selection_moved = true
 
 
 static func selection_duplicate():
@@ -391,7 +410,7 @@ static func selection_move(input_absolute : Vector3):
 		selection_box_array[i].transform.origin = selected_parts_array[i].transform.origin
 		i = i + 1
 	#move transform handles with selection
-	Main.set_transform_handle_root_position(Main.transform_handle_root, selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
+	selection_moved = true
 
 
 #rotation only
@@ -429,7 +448,7 @@ static func selection_rotate(rotated_basis : Basis):#TODO , point_local : Vector
 	selected_parts_abb.transform.basis = difference * selected_parts_abb.transform.basis
 	
 	#move transform handles with selection
-	Main.set_transform_handle_root_position(Main.transform_handle_root, selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
+	selection_moved = true
 
 
 #scale_absolute meaning it will set the scale of the selection bounding box to this value
@@ -437,6 +456,7 @@ static func selection_rotate(rotated_basis : Basis):#TODO , point_local : Vector
 "TODO"#OPTIMIZE OPTIMIZE OPTIMIZE
 #https://www.reddit.com/r/godot/comments/187npcd/how_to_increase_performance/
 #https://docs.godotengine.org/en/4.1/classes/class_renderingserver.html
+"TODO"#this function is not very stable mathematically
 static func selection_scale(scale_absolute : Vector3):
 	#dont do anything if scale is the same
 	if scale_absolute == selected_parts_abb.extents:
@@ -447,7 +467,7 @@ static func selection_scale(scale_absolute : Vector3):
 		selected_parts_array[0].part_scale = scale_absolute
 		selected_parts_abb.extents = scale_absolute
 		selection_boxes_redraw_all()
-		Main.set_transform_handle_root_position(Main.transform_handle_root, selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
+		selection_moved = true
 		return
 	
 	
@@ -561,7 +581,7 @@ static func selection_scale(scale_absolute : Vector3):
 	
 	selection_boxes_redraw_all()
 	#move transform handles with selection
-	Main.set_transform_handle_root_position(Main.transform_handle_root, selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
+	selection_moved = true
 
 
 #undo redo system---------------------------------------------------------------

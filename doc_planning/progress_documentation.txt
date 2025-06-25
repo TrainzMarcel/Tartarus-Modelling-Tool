@@ -83,3 +83,4 @@
 20.6. mostly finished adding rectangle/marquee selection and thinking about how to clean up selection and bounding box related logic
 21.6. fixed part spawning too close to camera bug and drag_offset being updated while dragging bug
 23.6. fixed transform handles sometimes staying highlighted
+25.6. improved marquee select shift behavior (adds unselected parts and removes selected parts from selection) and improved architecture somewhat

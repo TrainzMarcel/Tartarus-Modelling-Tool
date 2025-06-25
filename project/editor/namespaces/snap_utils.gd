@@ -170,9 +170,6 @@ static func drag_snap_position_to_hovered(
 	#transformed local variables
 	var ray_result_local_position : Vector3 = inverse * ray_result.position
 	var normal_local : Vector3 = inverse.basis * normal
-	"TODO"#this is terrible
-	#drag_offset needs to be abstracted much better
-	#utility functions should always get everything passed in by parameters
 	var drag_offset_local : Vector3 = inverse.basis * drag_offset
 	
 	#normal "bump" (to prevent dragged part from intersecting hovered part when dragging)
