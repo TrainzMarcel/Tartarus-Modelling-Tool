@@ -66,26 +66,6 @@ unicode = 51
 [sub_resource type="Shortcut" id="Shortcut_68ksu"]
 events = [SubResource("InputEventKey_y783w")]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0x74o"]
-bg_color = Color(0.08, 0.08, 0.08, 0.960784)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.8, 0, 0, 1)
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_detail = 4
-
-[sub_resource type="InputEventKey" id="InputEventKey_7j2p7"]
-device = -1
-ctrl_pressed = true
-keycode = 55
-unicode = 55
-
-[sub_resource type="Shortcut" id="Shortcut_s6i4f"]
-events = [SubResource("InputEventKey_7j2p7")]
-
 [sub_resource type="InputEventKey" id="InputEventKey_k11tv"]
 device = -1
 keycode = 52
@@ -130,6 +110,15 @@ unicode = 55
 [sub_resource type="Shortcut" id="Shortcut_r7hg2"]
 events = [SubResource("InputEventKey_shmqc")]
 
+[sub_resource type="InputEventKey" id="InputEventKey_7j2p7"]
+device = -1
+ctrl_pressed = true
+keycode = 55
+unicode = 55
+
+[sub_resource type="Shortcut" id="Shortcut_s6i4f"]
+events = [SubResource("InputEventKey_7j2p7")]
+
 [sub_resource type="InputEventKey" id="InputEventKey_3xrrq"]
 device = -1
 keycode = 56
@@ -154,6 +143,17 @@ unicode = 57
 
 [sub_resource type="Shortcut" id="Shortcut_u53uu"]
 events = [SubResource("InputEventKey_sk5qr")]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0x74o"]
+bg_color = Color(0.08, 0.08, 0.08, 0.960784)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.8, 0, 0, 1)
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_detail = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_57say"]
 content_margin_bottom = 5.0
@@ -432,72 +432,6 @@ theme = ExtResource("13_v6fq4")
 text = "3"
 horizontal_alignment = 1
 vertical_alignment = 2
-
-[node name="HBoxContainerChangePivotTool" type="HBoxContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
-visible = false
-layout_mode = 2
-theme_override_constants/separation = 2
-
-[node name="ButtonChangePivotTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool"]
-unique_name_in_owner = true
-self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
-custom_minimum_size = Vector2(60, 60)
-layout_mode = 2
-tooltip_text = "Change rotation pivot"
-theme_override_font_sizes/font_size = 9
-theme_override_styles/normal = ExtResource("17_gahws")
-theme_override_styles/hover = ExtResource("17_gahws")
-theme_override_styles/pressed = ExtResource("18_riof3")
-theme_override_styles/focus = ExtResource("5_rq1a8")
-toggle_mode = true
-action_mode = 0
-button_group = SubResource("ButtonGroup_71ghl")
-icon = ExtResource("17_ccyt1")
-expand_icon = true
-script = ExtResource("11_6a6rl")
-
-[node name="Panel" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool/ButtonChangePivotTool"]
-visible = false
-clip_contents = true
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -30.0
-offset_top = 8.0
-offset_bottom = 40.0
-grow_horizontal = 0
-grow_vertical = 0
-theme_override_styles/panel = ExtResource("12_rh0pf")
-
-[node name="Label" type="Label" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool/ButtonChangePivotTool/Panel"]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -1.5
-offset_bottom = 1.5
-grow_horizontal = 2
-grow_vertical = 2
-theme = ExtResource("13_v6fq4")
-text = "3"
-horizontal_alignment = 1
-vertical_alignment = 2
-
-[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool"]
-layout_mode = 2
-tooltip_text = "Reset pivot"
-theme_override_styles/normal = ExtResource("20_ibnk4")
-theme_override_styles/hover = ExtResource("20_ibnk4")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_0x74o")
-theme_override_styles/focus = ExtResource("5_rq1a8")
-action_mode = 0
-shortcut = SubResource("Shortcut_s6i4f")
-text = "Reset"
-script = ExtResource("11_6a6rl")
 
 [node name="ButtonScaleTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
 unique_name_in_owner = true
@@ -955,6 +889,138 @@ text = "9"
 horizontal_alignment = 1
 vertical_alignment = 2
 
+[node name="HBoxContainerChangePivotTool" type="HBoxContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="ButtonChangePivotTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool"]
+unique_name_in_owner = true
+self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+tooltip_text = "Change rotation pivot"
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = ExtResource("17_gahws")
+theme_override_styles/hover = ExtResource("17_gahws")
+theme_override_styles/pressed = ExtResource("18_riof3")
+theme_override_styles/focus = ExtResource("5_rq1a8")
+toggle_mode = true
+action_mode = 0
+button_group = SubResource("ButtonGroup_71ghl")
+icon = ExtResource("17_ccyt1")
+expand_icon = true
+script = ExtResource("11_6a6rl")
+
+[node name="Panel" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool/ButtonChangePivotTool"]
+visible = false
+clip_contents = true
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = 8.0
+offset_bottom = 40.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_styles/panel = ExtResource("12_rh0pf")
+
+[node name="Label" type="Label" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool/ButtonChangePivotTool/Panel"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -1.5
+offset_bottom = 1.5
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("13_v6fq4")
+text = "3"
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool"]
+layout_mode = 2
+tooltip_text = "Reset pivot"
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = ExtResource("20_ibnk4")
+theme_override_styles/hover = ExtResource("20_ibnk4")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_0x74o")
+theme_override_styles/focus = ExtResource("5_rq1a8")
+action_mode = 0
+shortcut = SubResource("Shortcut_s6i4f")
+text = "Reset"
+script = ExtResource("11_6a6rl")
+
+[node name="GridContainerCSGTools" type="GridContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/h_separation = 2
+theme_override_constants/v_separation = 2
+columns = 2
+
+[node name="Label" type="Label" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/GridContainerCSGTools"]
+unique_name_in_owner = true
+self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
+custom_minimum_size = Vector2(29, 29)
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "CSG"
+vertical_alignment = 1
+
+[node name="ButtonCSGUnion" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/GridContainerCSGTools"]
+unique_name_in_owner = true
+self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
+custom_minimum_size = Vector2(29, 29)
+layout_mode = 2
+tooltip_text = "CSG union of the first and second selected part"
+theme_override_styles/normal = ExtResource("8_ef80w")
+theme_override_styles/hover = ExtResource("8_ef80w")
+theme_override_styles/pressed = ExtResource("9_qpats")
+theme_override_styles/focus = ExtResource("5_rq1a8")
+action_mode = 0
+shortcut = SubResource("Shortcut_u53uu")
+text = "∪"
+expand_icon = true
+script = ExtResource("11_6a6rl")
+
+[node name="ButtonCSGDifference" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/GridContainerCSGTools"]
+unique_name_in_owner = true
+self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
+custom_minimum_size = Vector2(29, 29)
+layout_mode = 2
+tooltip_text = "CSG cut out of the first and second selected part"
+theme_override_styles/normal = ExtResource("8_ef80w")
+theme_override_styles/hover = ExtResource("8_ef80w")
+theme_override_styles/pressed = ExtResource("9_qpats")
+theme_override_styles/focus = ExtResource("5_rq1a8")
+action_mode = 0
+shortcut = SubResource("Shortcut_u53uu")
+text = "—"
+expand_icon = true
+script = ExtResource("11_6a6rl")
+
+[node name="ButtonCSGIntersection" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/GridContainerCSGTools"]
+unique_name_in_owner = true
+self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
+custom_minimum_size = Vector2(29, 29)
+layout_mode = 2
+tooltip_text = "CSG intersection of the first and second selected part"
+theme_override_styles/normal = ExtResource("8_ef80w")
+theme_override_styles/hover = ExtResource("8_ef80w")
+theme_override_styles/pressed = ExtResource("9_qpats")
+theme_override_styles/focus = ExtResource("5_rq1a8")
+action_mode = 0
+shortcut = SubResource("Shortcut_u53uu")
+text = "∩"
+expand_icon = true
+script = ExtResource("11_6a6rl")
+
 [node name="PanelGradient2" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
@@ -1301,6 +1367,7 @@ offset_left = -512.0
 offset_top = -256.0
 offset_right = 512.0
 offset_bottom = 256.0
+contents = Array[String](["To be written."])
 
 [node name="DocumentDisplayLicense" parent="." instance=ExtResource("32_epjev")]
 unique_name_in_owner = true

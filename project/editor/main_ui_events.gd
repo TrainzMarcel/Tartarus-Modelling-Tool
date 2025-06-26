@@ -153,7 +153,7 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 			pass
 		elif id == 4:
 			#export model
-			pass
+			MeshUtils.combine_meshes(WorkspaceManager.workspace.get_children().filter(func(input): return input is Part))
 		
 	#edit dropdown----------------------
 	elif pm == EditorUI.pm_edit:

@@ -364,6 +364,7 @@ static func selection_clear():
 	selected_parts_array.clear()
 	selection_boxes_clear_all()
 	offset_abb_to_selected_array.clear()
+	selection_changed = true
 	#does not need to call selection_changed as the bounding box doesnt matter when nothing is selected
 
 
@@ -799,6 +800,7 @@ static func save_model(filepath : String, name : String):
 		line.append(str(color_to_int_mapping[selected_parts_array[i].part_color]))
 		#material
 		line.append(str(material_name_to_int_mapping[selected_parts_array[i].part_material.resource_path.get_file()]))
+		#mesh
 		line.append(str(mesh_to_int_mapping[selected_parts_array[i].part_mesh_node.mesh.resource_path.get_file()]))
 		file.append(",".join(line))
 		line.clear()
@@ -1096,6 +1098,20 @@ static func create_mapping(input_data : Array):
 		i = i + 1
 	
 	return map
+
+
+#same as above but an offset can be added for 2d array situations
+static func create_mapping_offset(input_data : Array, offset : int):
+	var i : int = 0
+	var map : Dictionary = {}
+	
+	while i < input_data.size():
+		#reverse the keys with the values in input_data
+		map[input_data[i]] = i + offset
+		i = i + 1
+	
+	return map
+
 
 static func get_resource_name(name : String):
 	"TODO"#clarify this

@@ -30,6 +30,14 @@ static var b_material_tool : Button
 #static var b_dropdown_material : Button
 static var b_lock_tool : Button
 
+#csg buttons
+#∪
+#static var b_csg_union : Button
+#∩
+#static var b_csg_intersection : Button
+#—
+#static var b_csg_difference : Button
+
 	#selector panels (specifically the containers of the buttons)
 static var gc_paint_panel : GridContainer
 static var vbc_material_panel : VBoxContainer
@@ -114,6 +122,13 @@ func initialize(
 	b_paint_tool = %ButtonPaintTool
 	b_material_tool = %ButtonMaterialTool
 	b_lock_tool = %ButtonLockTool
+	
+	#∪
+	#b_csg_union = %ButtonCSGUnion
+	#∩
+	#b_csg_intersection = %ButtonCSGIntersection
+	#—
+	#b_csg_difference = %ButtonCSGDifference
 	
 	
 		#selector panels (specifically the containers of the buttons)

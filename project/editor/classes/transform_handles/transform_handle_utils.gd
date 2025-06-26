@@ -139,7 +139,7 @@ static func initialize_transform_handle_root(input : TransformHandleRoot):
 		#for each identifier, loop over all child nodes
 		for i in child_nodes:
 			#if child nodes identifier matches the current one
-			if i.tool_type == j:
+			if i is TransformHandle and i.tool_type == j:
 				#add it to the array
 				transform_handle_array.append(i)
 		

@@ -2,7 +2,7 @@ extends Node3D
 class_name Main
 
 #features (from most important to least)
-"TODO"#implement import export
+"TODO"#implement model import export
 "TODO"#implement undo redo
 "TODO"#implement asset import export
 "TODO"#implement csg
