@@ -8,6 +8,7 @@
 [resource]
 render_priority = 0
 shader = ExtResource("1_lckle")
+shader_parameter/color = Color(1, 1, 1, 1)
 shader_parameter/mixed_color_ratio = 0.77
 shader_parameter/contrast = 0.18
 shader_parameter/roughness = 0.72

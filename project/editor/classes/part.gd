@@ -8,7 +8,7 @@ class_name Part
 
 #exclude from export
 @export var exclude : bool = false
-#make immovable
+#make unselectable
 @export var locked : bool = false
 
 var collider_type : int = 0
@@ -20,7 +20,7 @@ var collider_type : int = 0
 		reapply_part_material(value)
 
 #color setter
-@export var part_color : Color:
+@export var part_color : Color = Color.WHITE:
 	set(value):
 		part_color = value
 		reapply_part_color(value)
@@ -64,20 +64,18 @@ func reapply_part_scale(p_scale : Vector3):
 
 
 func reapply_part_material(material : Material):
-	if part_mesh_node != null:
-		part_mesh_node.material_override = material
+	if part_mesh_node != null and material != null:
+		part_mesh_node.material_override = MaterialManager.get_material(material, part_color)
 
 
 func reapply_part_color(color : Color):
 	if part_mesh_node != null:
-		part_mesh_node.set_instance_shader_parameter("color", color)
+		part_mesh_node.material_override = MaterialManager.get_material(part_material, color)
 
 
 func _init():
 	part_collider_node = CollisionShape3D.new()
 	part_mesh_node = MeshInstance3D.new()
-	part_material = preload(FilePathRegistry.data_default_material)
-	part_color = Color.WHITE
 	
 	#set collision mask to not collide with other parts
 	set_collision_mask_value(1, false)
@@ -85,13 +83,20 @@ func _init():
 
 
 
-# Called when the node enters the scene tree for the first time.
-func _ready():
+func initialize():
 	if part_collider_node.shape == null:
 		part_collider_node.shape = BoxShape3D.new()
 	
 	if part_mesh_node.mesh == null:
 		part_mesh_node.mesh = preload(FilePathRegistry.data_default_part)
+	
+	if part_material == null:
+		part_material = preload(FilePathRegistry.data_default_material)
+	
+	
+	if part_color != Color.WHITE:
+		reapply_part_color(part_color)
+	
 	
 	add_child(part_collider_node)
 	part_collider_node.owner = get_tree().edited_scene_root

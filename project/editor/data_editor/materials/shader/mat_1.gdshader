@@ -1,6 +1,6 @@
 shader_type spatial;
 
-instance uniform vec3 color : source_color;
+uniform vec3 color : source_color;
 uniform float mixed_color_ratio : hint_range(0.0, 1.0, 0.01);
 uniform float contrast : hint_range(0.0, 1.0, 0.01);
 //uniform float tint_strength: hint_range(0.0f, 10.0f) = 1.0f;

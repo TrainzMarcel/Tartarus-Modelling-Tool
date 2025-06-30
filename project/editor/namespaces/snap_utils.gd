@@ -1,5 +1,6 @@
 extends RefCounted
 class_name SnapUtils
+"TODO"#review all functions and maximize their numerical stability
 
 
 #take input from transform handle and return a global-space vector3 to apply

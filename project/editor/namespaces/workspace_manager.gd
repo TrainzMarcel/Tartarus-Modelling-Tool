@@ -107,9 +107,14 @@ static func initialize(workspace : Node, hover_selection_box : SelectionBox):
 	var file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_material)
 	var materials_list : Array[Material] = []
 	
+	"DEBUG"
+	MaterialManager.l_debug = workspace.get_parent().get_node("DebugLabel")
+	
 	for path in file_list:
 		materials_list.append(ResourceLoader.load(FilePathRegistry.data_folder_material + path, "Material"))
 	WorkspaceManager.available_materials = materials_list
+	for mat in materials_list:
+		MaterialManager.register_material(mat)
 	
 	
 	
@@ -136,6 +141,9 @@ static func initialize(workspace : Node, hover_selection_box : SelectionBox):
 	loaded_assets.append_array(available_materials)
 	loaded_assets.append_array(available_part_types.map(func(input): return input.part_mesh_node.mesh))
 	name_loaded_asset_mapping = create_mapping(loaded_assets.map(func(input): return get_resource_name(input.resource_path)))
+	
+	#_ready was getting called in the parts before main and before textures loaded so this is done manually now
+	workspace.get_children().map(func(input): if input is Part: input.initialize())
 
 
 #part functions-----------------------------------------------------------------
@@ -144,6 +152,7 @@ static func part_spawn(selected_part_type : Part):
 	var ray_result = Main.raycast(Main.cam, Main.cam.global_position, -Main.cam.basis.z * Main.raycast_length, [], [1])
 	var new_part : Part = selected_part_type.copy()
 	workspace.add_child(new_part)
+	new_part.initialize()
 	
 	if ray_result.is_empty():
 		new_part.transform.origin = Main.cam.global_position + Main.part_spawn_distance * -Main.cam.basis.z
@@ -1004,6 +1013,7 @@ static func load_model(filepath : String, name : String):
 			new.part_color = used_colors[int(line[9])]
 			
 			workspace.add_child(new)
+			new.initialize()
 		
 		i = i + 1
 
