@@ -87,3 +87,4 @@
 26.6. added ability to export models (theyre hardcoded to export to user://exported_models/export0.res, this will change), (!) discovered that instance shader variables can only be set for each meshinstance, not each surface in a meshinstance, that means i have to rework my whole workflow
 27.6. after further investigation, ive decided to develop a system which keeps track of all material + color combinations and instances a new colored material if a combination hasnt been made before
 30.6. hastily finished materialmanager, still need to code it more robustly + made a better grouping function in meshutils
+1.7. start thinking about how to properly integrate export options into the ui flow, probably some sort of add-on to the file manager

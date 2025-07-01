@@ -170,7 +170,6 @@ func initialize(
 	ui_menu = [
 		dd_manual,
 		dd_license,
-		$AssetManager,
 		fm_file
 	]
 	

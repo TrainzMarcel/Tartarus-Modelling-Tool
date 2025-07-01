@@ -394,6 +394,7 @@ static func selection_paste():
 		for i in parts_clipboard:
 			var copy : Part = i.copy()
 			workspace.add_child(copy)
+			copy.initialize()
 			selection_add_part(copy, copy)
 		refresh_bounding_box()
 		selection_moved = true
@@ -403,6 +404,7 @@ static func selection_duplicate():
 	for i in selected_parts_array:
 		var copy : Part = i.copy()
 		workspace.add_child(copy)
+		copy.initialize()
 
 
 #position only

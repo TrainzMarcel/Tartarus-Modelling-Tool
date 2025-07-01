@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://bjtrfenn2qo0u"]
+[gd_scene load_steps=20 format=3 uid="uid://bjtrfenn2qo0u"]
 
 [ext_resource type="Script" path="res://editor/classes/ui_file_manager/file_manager.gd" id="1_omhfy"]
 [ext_resource type="Texture2D" uid="uid://bul8005ajw68t" path="res://editor/data_ui/assets/File.svg" id="2_1m6pn"]
@@ -16,6 +16,7 @@
 [ext_resource type="StyleBox" uid="uid://cweor237iacfe" path="res://editor/data_ui/styles/panel_styles/gradient_panel.tres" id="11_7dsi7"]
 [ext_resource type="StyleBox" uid="uid://bkftmueyia8ln" path="res://editor/data_ui/styles/button_and_line_edit_styles/file_dialog/hover_normal.tres" id="13_m66pr"]
 [ext_resource type="StyleBox" uid="uid://bxumeweegtu36" path="res://editor/data_ui/styles/button_and_line_edit_styles/file_dialog/pressed.tres" id="14_f3j7t"]
+[ext_resource type="StyleBox" uid="uid://ux7uqdijiwdh" path="res://editor/data_ui/styles/panel_styles/submenu_panel.tres" id="15_3kflr"]
 [ext_resource type="Script" path="res://editor/classes/ui_editor/label_numeric.gd" id="15_56d13"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_6oyx8"]
@@ -202,29 +203,44 @@ custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 theme_override_styles/panel = ExtResource("11_7dsi7")
 
-[node name="TreeMainFileDisplay" type="Tree" parent="Panel/MarginContainer/VBoxContainer"]
+[node name="HBoxContainerMainSection" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TreeMainFileDisplay" type="Tree" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection"]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(248, 301)
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/v_separation = 3
 theme_override_styles/focus = ExtResource("6_itj42")
 hide_folding = true
 hide_root = true
 
-[node name="ScrollContainerListFileDisplay" type="ScrollContainer" parent="Panel/MarginContainer/VBoxContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-horizontal_scroll_mode = 2
-vertical_scroll_mode = 0
-
-[node name="HBoxContainerListFileDisplay" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/ScrollContainerListFileDisplay"]
+[node name="ScrollContainerListFileDisplay" type="ScrollContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+horizontal_scroll_mode = 2
+vertical_scroll_mode = 0
+
+[node name="HBoxContainerListFileDisplay" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/ScrollContainerListFileDisplay"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="PanelContainerExtraOptions" type="PanelContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(248, 0)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("15_3kflr")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerExtraOptions"]
+layout_mode = 2
 
 [node name="GradientPanel2" type="Panel" parent="Panel/MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 2)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=68 format=3 uid="uid://cwt02lxvderye"]
+[gd_scene load_steps=67 format=3 uid="uid://cwt02lxvderye"]
 
 [ext_resource type="Script" path="res://editor/classes/ui_editor/editor_ui.gd" id="1_mcko4"]
 [ext_resource type="StyleBox" uid="uid://bkbmbfniourik" path="res://editor/data_ui/styles/panel_styles/panel_rounded_bottom.tres" id="1_pntfv"]
@@ -37,7 +37,6 @@
 [ext_resource type="Script" path="res://editor/classes/ui_editor/line_edit_numeric.gd" id="32_5rtk1"]
 [ext_resource type="PackedScene" uid="uid://bln1og3mu36mh" path="res://editor/classes/ui_document_display/document_display.tscn" id="32_epjev"]
 [ext_resource type="PackedScene" uid="uid://bjtrfenn2qo0u" path="res://editor/classes/ui_file_manager/file_manager.tscn" id="38_fpasr"]
-[ext_resource type="PackedScene" uid="uid://l0ophoiqj4dk" path="res://editor/classes/ui_asset_manager/asset_manager.tscn" id="40_bo26w"]
 
 [sub_resource type="ButtonGroup" id="ButtonGroup_71ghl"]
 allow_unpress = true
@@ -1061,6 +1060,11 @@ size_flags_horizontal = 3
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="LabelVersion" type="Label" parent="PanelContainerBottom/MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme = ExtResource("29_j817h")
+text = "      V0.1      "
+
 [node name="HBoxContainerCameraSpeed" type="HBoxContainer" parent="PanelContainerBottom/MarginContainer/HBoxContainer"]
 layout_mode = 2
 
@@ -1717,11 +1721,10 @@ consider it more useful to permit linking proprietary applications with the
 library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.[/code][/indent][/indent][/indent][/indent][/indent][/indent][/indent][/indent][/indent]"])
 
-[node name="AssetManager" parent="." instance=ExtResource("40_bo26w")]
-visible = false
-layout_mode = 1
-
 [node name="FileManager" parent="." instance=ExtResource("38_fpasr")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
+file_list_max_entries = null
+dir_start = null
+dir_history = null

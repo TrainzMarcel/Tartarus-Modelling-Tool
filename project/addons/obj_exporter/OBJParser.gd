@@ -1,5 +1,5 @@
-extends Object
-class_name ObjParse
+extends RefCounted
+class_name OBJParser
 
 const debug: bool = false
 

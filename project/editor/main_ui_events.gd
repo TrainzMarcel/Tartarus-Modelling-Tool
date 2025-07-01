@@ -153,7 +153,10 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 			pass
 		elif id == 4:
 			#export model
-			MeshUtils.combine_meshes(WorkspaceManager.workspace.get_children().filter(func(input): return input is Part))
+			var groups : Array[Array] = MeshUtils.group_parts_by_material_and_color(WorkspaceManager.workspace.get_children().filter(func(input): return input is Part))
+			var mesh = MeshUtils.create_mesh_from_part_groupings(groups)
+			MeshUtils.add_metadata_to_mesh(groups, mesh)
+			ResourceSaver.save(mesh, "/home/marci/Desktop/save testing/MAOW.res", ResourceSaver.FLAG_BUNDLE_RESOURCES)
 		
 	#edit dropdown----------------------
 	elif pm == EditorUI.pm_edit:

@@ -1,16 +1,22 @@
-extends Node
+extends RefCounted
+class_name OBJExporter
 
-signal export_started
-signal export_progress_updated(surf_idx, progress_value)
-signal export_completed(object_file, material_file)
+#static var tree_access : Node
+
+#static func initialize(tree : Node):
+#	tree_access = tree
+
+#signal export_started
+#signal export_progress_updated(surf_idx, progress_value)
+#signal export_completed(object_file, material_file)
 
 # Dump given mesh to obj file
-func save_mesh_to_files(mesh: Mesh, file_path: String, object_name: String):
+static func save_mesh_to_files(mesh: Mesh, file_path: String, object_name: String):
 	# Based on:
 	# https://github.com/fractilegames/godot-obj-export/blob/main/objexport.gd
 	# https://github.com/mohammedzero43/CSGExport-Godot/blob/master/addons/CSGExport/csgexport.gd
 	
-	emit_signal("export_started")
+	#emit_signal("export_started")
 	
 	# Blank material, used when no material is assigned to mesh
 	var blank_material = StandardMaterial3D.new()
@@ -29,7 +35,7 @@ func save_mesh_to_files(mesh: Mesh, file_path: String, object_name: String):
 			continue
 		
 		var mat: StandardMaterial3D = mesh.surface_get_material(s)
-
+		
 		
 		output += "g surface" + str(s) + "\n"
 		
@@ -87,12 +93,12 @@ func save_mesh_to_files(mesh: Mesh, file_path: String, object_name: String):
 			
 			output += "\n"
 			
-			if (i % 60) == 0: # Modulo must be multiple of 3 as it's the step
-				emit_signal("export_progress_updated", s, i / float(indices_count))
-				await get_tree().process_frame
+			#if (i % 60) == 0: # Modulo must be multiple of 3 as it's the step
+				#emit_signal("export_progress_updated", s, i / float(indices_count))
+				#await tree_access.get_tree().process_frame
 			i += 3
 		
-		emit_signal("export_progress_updated", s, 1.0)
+		#emit_signal("export_progress_updated", s, 1.0)
 		
 		index_base += surface[ArrayMesh.ARRAY_VERTEX].size()
 		
@@ -114,10 +120,9 @@ func save_mesh_to_files(mesh: Mesh, file_path: String, object_name: String):
 	var file_mtl = FileAccess.open(mat_file, FileAccess.WRITE)
 	file_mtl.store_string(mat_output)
 	
-	emit_signal("export_completed", obj_file, mat_file)
+	#emit_signal("export_completed", obj_file, mat_file)
 
 
-func load_mesh_from_file(filename: String, material_filename: String = "") -> Mesh:
+static func load_mesh_from_file(filename: String, material_filename: String = "") -> Mesh:
 	# Transparent call to Ezcha's gd-obj
-	
-	return ObjParse.load_obj(filename, material_filename)
+	return OBJParser.load_obj(filename, material_filename)
