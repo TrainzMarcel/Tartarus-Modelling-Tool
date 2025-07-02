@@ -1726,5 +1726,4 @@ unique_name_in_owner = true
 visible = false
 layout_mode = 1
 file_list_max_entries = null
-dir_start = null
-dir_history = null
+dir_start = "/home/marci/Desktop/save testing"

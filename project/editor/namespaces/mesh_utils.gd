@@ -10,6 +10,10 @@ class_name MeshUtils
 "TODO"#add obj import
 "TODO"#add gltf import
 
+#https://docs.godotengine.org/en/stable/classes/class_gltfdocument.html
+#https://docs.godotengine.org/en/stable/classes/class_gltfstate.html#class-gltfstate
+
+
 static func group_parts_by_material_and_color(part_array : Array):
 	#parallel arrays
 	#the same material will occupy one item for every color used with it
@@ -140,11 +144,6 @@ static func import_obj():
 
 #i really want to add metadata for the previous color and material name of each surface for .res/.tres exports
 #then when i pull the resources into godot, i can have a plugin automatically assign the intended colors and materials
-
-
-#draft only will probably be removed soon
-#static func export_mesh(mesh : Mesh):
-#	ResourceSaver.save(mesh, "/home/marci/Desktop/save testing/MAOW.res", ResourceSaver.FLAG_BUNDLE_RESOURCES)
 
 
 #for obj and gltf export and also for anyone who doesnt wanna use triplanar materials

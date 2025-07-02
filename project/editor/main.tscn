@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://hul5x10ptumj"]
+[gd_scene load_steps=18 format=3 uid="uid://hul5x10ptumj"]
 
 [ext_resource type="Script" path="res://editor/main.gd" id="1_4xdr8"]
 [ext_resource type="PackedScene" uid="uid://c01nu37bjhxsi" path="res://editor/classes/camera/free_look_camera.tscn" id="2_n3tr4"]
@@ -9,7 +9,6 @@
 [ext_resource type="PackedScene" uid="uid://clfcgcedn47iy" path="res://editor/classes/transform_handles/transform_handle_root.tscn" id="7_wy0x5"]
 [ext_resource type="Material" uid="uid://dg0pq3t4uvees" path="res://editor/classes/selection_box/highlight_mat.res" id="8_4p0vi"]
 [ext_resource type="Script" path="res://editor/classes/selection_box/selection_box.gd" id="9_n7hy1"]
-[ext_resource type="ArrayMesh" uid="uid://mhykljadnty" path="res://editor/MAOW.res" id="12_yr5lh"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_jgeb0"]
 sky_top_color = Color(0.168627, 0.470588, 0.690196, 1)
@@ -49,7 +48,7 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_1srpd"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_nampr"]
 
 [node name="Main" type="Node3D" node_paths=PackedStringArray("e_cam", "second_cam", "e_workspace", "e_transform_handle_root", "e_hover_selection_box", "ui_node", "e_panel_selection_rect")]
 script = ExtResource("1_4xdr8")
@@ -186,7 +185,7 @@ part_scale = Vector3(0.2, 0.2, 0.8)
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("8_4p0vi")
-mesh = SubResource("ImmediateMesh_1srpd")
+mesh = SubResource("ImmediateMesh_nampr")
 skeleton = NodePath("../..")
 script = ExtResource("9_n7hy1")
 box_scale = Vector3(1, 1, 1)
@@ -195,6 +194,3 @@ box_scale = Vector3(1, 1, 1)
 transform = Transform3D(1.00215, 0, 0, 0, 1.00215, 0, 0, 0, 1.00215, -4, 1.30885, 7.34075)
 visible = false
 mesh = ExtResource("5_r4uva")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Workspace"]
-mesh = ExtResource("12_yr5lh")

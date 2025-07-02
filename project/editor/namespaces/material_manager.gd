@@ -87,13 +87,13 @@ static func register_material(mat : Material, color : Color = Color.WHITE):
 		if index == null:
 			name_to_combo_material_map[name] = recolor_material(mat, color)
 	
-	print("|registered " + name + "\n|" + mat.resource_path)
-	if mat.resource_path == "":
-		print("what the fuck")
-		print(mat)
-		print(color)
-	print(mat.resource_name.rsplit("/", true, 1)[-1].rsplit(".", true, 1)[0])
-	l_debug.text = str(name_to_combo_material_map) + "\n-------------------MAOW\n" + str(name_to_base_material_map)
+	#print("|registered " + name + "\n|" + mat.resource_path)
+	#if mat.resource_path == "":
+	#	print("what the fuck")
+	#	print(mat)
+	#	print(color)
+	#print(mat.resource_name.rsplit("/", true, 1)[-1].rsplit(".", true, 1)[0])
+	#l_debug.text = str(name_to_combo_material_map) + "\n-------------------MAOW\n" + str(name_to_base_material_map)
 
 
 static func unregister_material(mat : Material, color : Color = Color.WHITE):

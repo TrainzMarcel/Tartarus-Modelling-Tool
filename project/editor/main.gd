@@ -150,6 +150,7 @@ func _ready():
 	panel_selection_rect = e_panel_selection_rect
 	WorkspaceManager.initialize(e_workspace, hover_selection_box)
 	
+	
 	#parameterized signals to make them more explicit and visible
 	ui_node.initialize(
 	MainUIEvents.on_spawn_pressed,

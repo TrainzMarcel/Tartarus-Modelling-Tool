@@ -578,7 +578,7 @@ static func selection_scale(scale_absolute : Vector3):
 		#world space to part space
 		var diff_reverse = p.inverse()
 		var local_scale = diff_reverse * world_scale_again
-		
+
 		local_scale.x = abs(local_scale.x)
 		local_scale.y = abs(local_scale.y)
 		local_scale.z = abs(local_scale.z)
@@ -660,7 +660,7 @@ static func save_model(filepath : String, name : String):
 	#also maybe add comment feature
 	selection_set_to_workspace()
 	var used_colors : Array[Color] = []
-	var used_materials : Array[ShaderMaterial] = []
+	var used_materials : Array[Material] = []
 	var used_meshes : Array[Mesh] = []
 	var color_to_int_mapping : Dictionary
 	var material_name_to_int_mapping : Dictionary
@@ -733,49 +733,109 @@ static func save_model(filepath : String, name : String):
 	i = 0
 	file.append("::MATERIAL::")
 	while i < used_materials.size():
-		if not assets_used.has(used_materials[i].shader):
-			assets_used.append(used_materials[i].shader)
-		line.append(get_resource_name(used_materials[i].shader.resource_path))
-		line.append(get_resource_name(used_materials[i].resource_path))
-		var properties : Array = used_materials[i].shader.get_shader_uniform_list()
-		var j : int = 0
-		
-		while j < properties.size():
-			var param = used_materials[i].get_shader_parameter(properties[j].name)
-			line_debug.append(properties[j].name)
-			if param is Texture2D:
-				if not assets_used.has(param):
-					assets_used.append(param)
-				line.append(param.resource_path.get_file())
-			elif param is float:
-				line.append(str(param))
-			elif param is Vector3:
-				line.append(str(param.x))
-				line.append(str(param.y))
-				line.append(str(param.z))
-			elif param is Vector4:
-				line.append(str(param.w))
-				line.append(str(param.x))
-				line.append(str(param.y))
-				line.append(str(param.z))
-			elif param == null:
-				if properties[j].type == TYPE_VECTOR3:
-					line.append("")
-					line.append("")
-					line.append("")
-				elif properties[j].type == TYPE_VECTOR4:
-					line.append("")
-					line.append("")
-					line.append("")
-					line.append("")
+		if used_materials[i] is ShaderMaterial:
+			line.append("ShaderMaterial")
+			if not assets_used.has(used_materials[i].shader):
+				assets_used.append(used_materials[i].shader)
+			line.append(get_resource_name(used_materials[i].shader.resource_path))
+			line.append(get_resource_name(used_materials[i].resource_path))
+			var properties : Array = used_materials[i].shader.get_shader_uniform_list()
+			var j : int = 0
+			
+			while j < properties.size():
+				var param = used_materials[i].get_shader_parameter(properties[j].name)
+				line_debug.append(properties[j].name)
+				if param is Texture2D:
+					if not assets_used.has(param):
+						assets_used.append(param)
+					line.append(param.resource_path.get_file())
+				elif param is float:
+					line.append(str(param))
+				elif param is Vector3:
+					line.append(str(param.x))
+					line.append(str(param.y))
+					line.append(str(param.z))
+				elif param is Vector4:
+					line.append(str(param.w))
+					line.append(str(param.x))
+					line.append(str(param.y))
+					line.append(str(param.z))
+				elif param is Color:
+					line.append(str(param.r8))
+					line.append(str(param.g8))
+					line.append(str(param.b8))
+					line.append(str(param.a8))
+				elif param == null:
+					if properties[j].type == TYPE_VECTOR3:
+						line.append("")
+						line.append("")
+						line.append("")
+					elif properties[j].type == TYPE_VECTOR4 or TYPE_COLOR:
+						line.append("")
+						line.append("")
+						line.append("")
+						line.append("")
+					else:
+						#push_warning("null saved in workspace_manager.save_model()")
+						#print(j, "NULL SAVED")
+						line.append("")
 				else:
-					#push_warning("null saved in workspace_manager.save_model()")
-					#print(j, "NULL SAVED")
-					line.append("")
-			else:
-				print("UNIMPLEMENTED TYPE: ", param)
-				return
-			j = j + 1
+					print("UNIMPLEMENTED SHADER VARIABLE TYPE: ", param)
+					return
+				j = j + 1
+		elif used_materials[i] is StandardMaterial3D:
+			line.append("StandardMaterial3D")
+			line.append(used_materials[i].resource_path.get_file())
+			
+			for property in used_materials[i].get_property_list():
+				#skip non-persistent/internal properties
+				if property.usage & PROPERTY_USAGE_STORAGE == 0:
+					continue
+				var param = used_materials[i].get(property.name)
+				
+				"TODO"#copied from above, need to abstract all this way way better + update load function to match
+				#possibly even keep save/load processes in the same function separated by a bool
+				if param is Texture2D:
+					if not assets_used.has(param):
+						assets_used.append(param)
+					line.append(param.resource_path.get_file())
+				elif param is float:
+					line.append(str(param))
+				elif param is Vector3:
+					line.append(str(param.x))
+					line.append(str(param.y))
+					line.append(str(param.z))
+				elif param is Vector4:
+					line.append(str(param.w))
+					line.append(str(param.x))
+					line.append(str(param.y))
+					line.append(str(param.z))
+				elif param is Color:
+					line.append(str(param.r8))
+					line.append(str(param.g8))
+					line.append(str(param.b8))
+					line.append(str(param.a8))
+				elif param == null:
+					if property.type == TYPE_VECTOR3:
+						line.append("")
+						line.append("")
+						line.append("")
+					elif property.type == TYPE_VECTOR4 or TYPE_COLOR:
+						line.append("")
+						line.append("")
+						line.append("")
+						line.append("")
+					else:
+						#push_warning("null saved in workspace_manager.save_model()")
+						#print(j, "NULL SAVED")
+						line.append("")
+				else:
+					print("UNIMPLEMENTED STANDARDMATERIAL3D TYPE")
+			
+			assets_used.append(used_materials[i])
+		else:
+			print("UNIMPLEMENTED MATERIAL TYPE: ", used_materials[i])
+		
 		file.append(",".join(line))
 		line.clear()
 		i = i + 1
@@ -818,8 +878,6 @@ static func save_model(filepath : String, name : String):
 		i = i + 1
 	
 	
-	var r_names = assets_used.map(func(input): return get_resource_name(input.resource_path))
-	
 	
 	"TODO"#not sure about this
 	#should definitely centralize these variables as much as possible
@@ -845,11 +903,10 @@ static func save_model(filepath : String, name : String):
 	i = 0
 	#embed used assets in the zip file
 	while i < assets_used.size():
-		var r_name = get_resource_name(assets_used[i].resource_path)
+		var r_name = assets_used[i].resource_path.get_file()
 		if assets_used[i] is Texture2D:
 			zip_packer.start_file(r_name)
 			var img : Image = assets_used[i].get_image()
-			
 			zip_packer.write_file(img.save_png_to_buffer())
 			zip_packer.close_file()
 		elif assets_used[i] is Shader:
@@ -863,7 +920,7 @@ static func save_model(filepath : String, name : String):
 			zip_packer.close_file()
 			dir_access.remove(filepath + r_name)
 		else:
-			print("UNIMPLEMENTED TYPE: " + str(assets_used[i]))
+			print("UNIMPLEMENTED ASSET TYPE: " + str(assets_used[i]))
 		i = i + 1
 	
 	dir_access.remove(data_file)
@@ -933,12 +990,12 @@ static func load_model(filepath : String, name : String):
 			
 			var properties : Array = shader.get_shader_uniform_list()
 			var j : int = 0
-			#start at 2 because line item 0 and 1 are the shader and material names respectively
-			var j_line : int = 2
+			#start at 3 because line item 0, 1 and 2 are the material type, shader name and material name respectively
+			var j_line : int = 3
 			
 			#print(i, "-------------------------------------------------------------")
 			while j < properties.size():
-				var param = properties[j]#new.get_shader_parameter(properties[j].name)
+				var param = properties[j]
 				if param.type == TYPE_OBJECT:
 					if param.hint_string == "Texture2D":
 						"TODO"#probably should also only load this if required
@@ -1110,6 +1167,14 @@ static func create_mapping(input_data : Array):
 		i = i + 1
 	
 	return map
+
+
+static func property_to_csv():
+	
+	
+	
+	
+	return
 
 
 #same as above but an offset can be added for 2d array situations
