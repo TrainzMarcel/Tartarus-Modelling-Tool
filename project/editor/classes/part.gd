@@ -65,12 +65,15 @@ func reapply_part_scale(p_scale : Vector3):
 
 func reapply_part_material(material : Material):
 	if part_mesh_node != null and material != null:
-		part_mesh_node.material_override = MaterialManager.get_material(material, part_color)
+		part_mesh_node.material_override = AssetManager.recolor_material(material, part_color, true)
 
 
 func reapply_part_color(color : Color):
 	if part_mesh_node != null:
-		part_mesh_node.material_override = MaterialManager.get_material(part_material, color)
+		if part_mesh_node.material_override == null:
+			part_mesh_node.material_override = AssetManager.recolor_material(preload(FilePathRegistry.data_default_material), part_color, true)
+		else:
+			part_mesh_node.material_override = AssetManager.recolor_material(part_mesh_node.material_override, part_color, true)
 
 
 func _init():
@@ -87,6 +90,7 @@ func initialize():
 	if part_collider_node.shape == null:
 		part_collider_node.shape = BoxShape3D.new()
 	
+	
 	if part_mesh_node.mesh == null:
 		part_mesh_node.mesh = preload(FilePathRegistry.data_default_part)
 	
@@ -96,7 +100,6 @@ func initialize():
 	
 	if part_color != Color.WHITE:
 		reapply_part_color(part_color)
-	
 	
 	add_child(part_collider_node)
 	part_collider_node.owner = get_tree().edited_scene_root
@@ -145,10 +148,10 @@ func copy():
 	new.collider_type = collider_type
 	new.part_scale = part_scale
 	#shouldnt require duplicating
+	#setter automatically calls reapply function
 	new.part_material = part_material
-	new.reapply_part_material(part_material)
 	#i assume (hope) this is passed by value and not by reference
+	#setter automatically calls reapply function
 	new.part_color = part_color
-	new.reapply_part_color(part_color)
 	return new
 

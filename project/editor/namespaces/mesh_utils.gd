@@ -118,10 +118,7 @@ static func get_material_name_array_from_part_groupings(part_array : Array[Array
 	for i in part_array:
 		#part array is guaranteed to have at least 1 item
 		var material : Material = i[0].part_material
-		if material.resource_name == "":
-			material_name_array.append(MaterialManager.get_material_name(material))
-		else:
-			material_name_array.append(MaterialManager.get_material_name_from_res_name(material))
+		material_name_array.append(AssetManager.get_asset_name(material))
 	
 	return material_name_array
 

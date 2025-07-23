@@ -287,6 +287,7 @@ func _input(event : InputEvent):
 #if click on unselected part while shift is held, append to selection
 #if click on part in selection while shift is held, remove from selection
 #if click on nothing, clear selection array
+#if click on nothing while shift is held, do nothing
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 		#lmb down
@@ -325,6 +326,7 @@ func _input(event : InputEvent):
 						hovered_part.part_material = WorkspaceManager.selected_material
 					
 					if selected_tool == SelectedToolEnum.t_color:
+						"TODO"#call recolor_material on selecting color/material if possible, not on part
 						hovered_part.part_color = WorkspaceManager.selected_color
 					
 					if selected_tool == SelectedToolEnum.t_delete:

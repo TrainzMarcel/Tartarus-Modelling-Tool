@@ -83,18 +83,13 @@ static var last_save_location : String = ""
 static var last_save_name : String = ""
 
 "TODO"
-const data_header_value : PackedStringArray = [
+const data_headers : Array = [
 	"::COLOR::",
 	"::MATERIAL::",
 	"::MESH::",
-	"::MODEL::",
+	"::MODEL::"
 ]
-enum DataHeaderKey {
-	color,
-	material,
-	mesh,
-	model
-}
+
 
 static func initialize(workspace : Node, hover_selection_box : SelectionBox):
 	WorkspaceManager.workspace = workspace
@@ -104,45 +99,42 @@ static func initialize(workspace : Node, hover_selection_box : SelectionBox):
 	#color buttons are loaded in the ui.initialize() function
 	
 	#get part types and materials from .tres files
-	var file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_material)
 	var materials_list : Array[Material] = []
-	
-	"DEBUG"
-	MaterialManager.l_debug = workspace.get_parent().get_node("DebugLabel")
-	
-	for path in file_list:
-		materials_list.append(ResourceLoader.load(FilePathRegistry.data_folder_material + path, "Material"))
-	WorkspaceManager.available_materials = materials_list
-	for mat in materials_list:
-		MaterialManager.register_material(mat)
-	
-	
-	
-	file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_part)
 	var parts_list : Array[Part] = []
 	
+	
+	var file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_material)
 	for path in file_list:
+		var mat : Material = ResourceLoader.load(FilePathRegistry.data_folder_material + path, "Material")
+		materials_list.append(mat)
+		AssetManager.register_asset_with_subresources(mat)
+	
+	file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_part)
+	for path in file_list:
+		var mesh : Mesh = ResourceLoader.load(FilePathRegistry.data_folder_part + path, "Mesh")
 		var new : Part = Part.new()
-		new.part_mesh_node.mesh = ResourceLoader.load(FilePathRegistry.data_folder_part + path, "Mesh")
+		new.part_mesh_node.mesh = mesh
 		
 		parts_list.append(new)
+		AssetManager.register_asset(mesh)
 	
-	#set default scale
+	WorkspaceManager.available_materials = materials_list
+	WorkspaceManager.available_part_types = parts_list
+	
+	
+	if available_part_types.size() > 0:
+		selected_part_type = available_part_types[0]
+	
+	
+	#set default scale (this must be refactored and not hardcoded!!)
 	#cylinder
 	parts_list[1].part_scale = Vector3(0.4, 0.8, 0.4)
 	#sphere
 	parts_list[2].part_scale = Vector3(0.8, 0.8, 0.8)
 	
-	WorkspaceManager.available_part_types = parts_list
-	if available_part_types.size() > 0:
-		selected_part_type = available_part_types[0]
-	
-	
-	loaded_assets.append_array(available_materials)
-	loaded_assets.append_array(available_part_types.map(func(input): return input.part_mesh_node.mesh))
-	name_loaded_asset_mapping = create_mapping(loaded_assets.map(func(input): return get_resource_name(input.resource_path)))
 	
 	#_ready was getting called in the parts before main and before textures loaded so this is done manually now
+	#this line is only required for the manually placed parts in the main scene
 	workspace.get_children().map(func(input): if input is Part: input.initialize())
 
 
@@ -644,20 +636,20 @@ static func confirm_save_load(filepath : String, name : String):
 		EditorUI.l_message.text = "successfully saved " + name + " at " + filepath + "!"
 	elif file_operation == FileOperation.load:
 		EditorUI.l_message.text = "loading..."
+		"TODO"#add return 
 		load_model(filepath + "/", name)
 		EditorUI.l_message.text = "successfully loaded " + name + " at " + filepath + "!"
 
 
 #actual save and load functions
 "TODO"#add error handling here and at load()
-"TODO URGENT"#centralize logic for asset "database" system
 static func save_model(filepath : String, name : String):
 	"TODO"#probably add some setting for how much of the model to save
 	#plus add exclude functionality
 	#plus add part lock functionality
 	#i think saving a group of parts would also be simple with something like a ::GROUP:: header which has the part ids under it
 	#storing the ids horizontally per part would probably be cheaper than vertically
-	#also maybe add comment feature
+	#also maybe add comment feature that adds a line describing each column of every header
 	selection_set_to_workspace()
 	var used_colors : Array[Color] = []
 	var used_materials : Array[Material] = []
@@ -669,6 +661,7 @@ static func save_model(filepath : String, name : String):
 	var line : PackedStringArray = []
 	var line_debug : PackedStringArray = []
 	var file : PackedStringArray = []
+	const separator : String = ","
 	
 	#get used colors
 	var i : int = 0
@@ -679,15 +672,14 @@ static func save_model(filepath : String, name : String):
 	
 	#get used materials
 	i = 0
-	
 	used_materials.append(selected_parts_array[0].part_material)
 	while i < selected_parts_array.size():
 		var j : int = 0
 		var has_material : bool = false
 		
 		while j < used_materials.size():
-			var base_1 = used_materials[j].resource_path.get_file()
-			var base_2 = selected_parts_array[i].part_material.resource_path.get_file()
+			var base_1 = AssetManager.get_asset_name(used_materials[j], false)
+			var base_2 = AssetManager.get_asset_name(selected_parts_array[i].part_material, false)
 			if base_2 == base_1:
 				has_material = true
 				break
@@ -704,7 +696,7 @@ static func save_model(filepath : String, name : String):
 		var j : int = 0
 		var has_mesh : bool = false
 		while j < used_meshes.size():
-			if selected_parts_array[i].part_mesh_node.mesh.resource_path.get_file() == used_meshes[j].resource_path.get_file():
+			if AssetManager.get_asset_name(selected_parts_array[i].part_mesh_node.mesh) == AssetManager.get_asset_name(used_meshes[j]):
 				has_mesh = true
 				break
 			j = j + 1
@@ -715,8 +707,8 @@ static func save_model(filepath : String, name : String):
 	
 	#create mappings to quickly assign the used color and material ids
 	color_to_int_mapping = create_mapping(used_colors)
-	material_name_to_int_mapping = create_mapping(used_materials.map(func(input): return input.resource_path.get_file()))
-	mesh_to_int_mapping = create_mapping(used_meshes.map(func(input): return input.resource_path.get_file()))
+	material_name_to_int_mapping = create_mapping(used_materials.map(func(input): return AssetManager.get_asset_name(input, false)))
+	mesh_to_int_mapping = create_mapping(used_meshes.map(func(input): return AssetManager.get_asset_name(input)))
 	
 	
 	
@@ -726,118 +718,14 @@ static func save_model(filepath : String, name : String):
 	#and/or use a function dispatch for each header type
 	file.append("::COLOR::")
 	while i < used_colors.size():
-		file.append(",".join([str(used_colors[i].r8), str(used_colors[i].g8), str(used_colors[i].b8)]))
+		file.append(separator.join(SaveUtils.serialize_color(used_colors[i])))
 		i = i + 1
 	
 	#add materials to save
 	i = 0
 	file.append("::MATERIAL::")
 	while i < used_materials.size():
-		if used_materials[i] is ShaderMaterial:
-			line.append("ShaderMaterial")
-			if not assets_used.has(used_materials[i].shader):
-				assets_used.append(used_materials[i].shader)
-			line.append(get_resource_name(used_materials[i].shader.resource_path))
-			line.append(get_resource_name(used_materials[i].resource_path))
-			var properties : Array = used_materials[i].shader.get_shader_uniform_list()
-			var j : int = 0
-			
-			while j < properties.size():
-				var param = used_materials[i].get_shader_parameter(properties[j].name)
-				line_debug.append(properties[j].name)
-				if param is Texture2D:
-					if not assets_used.has(param):
-						assets_used.append(param)
-					line.append(param.resource_path.get_file())
-				elif param is float:
-					line.append(str(param))
-				elif param is Vector3:
-					line.append(str(param.x))
-					line.append(str(param.y))
-					line.append(str(param.z))
-				elif param is Vector4:
-					line.append(str(param.w))
-					line.append(str(param.x))
-					line.append(str(param.y))
-					line.append(str(param.z))
-				elif param is Color:
-					line.append(str(param.r8))
-					line.append(str(param.g8))
-					line.append(str(param.b8))
-					line.append(str(param.a8))
-				elif param == null:
-					if properties[j].type == TYPE_VECTOR3:
-						line.append("")
-						line.append("")
-						line.append("")
-					elif properties[j].type == TYPE_VECTOR4 or TYPE_COLOR:
-						line.append("")
-						line.append("")
-						line.append("")
-						line.append("")
-					else:
-						#push_warning("null saved in workspace_manager.save_model()")
-						#print(j, "NULL SAVED")
-						line.append("")
-				else:
-					print("UNIMPLEMENTED SHADER VARIABLE TYPE: ", param)
-					return
-				j = j + 1
-		elif used_materials[i] is StandardMaterial3D:
-			line.append("StandardMaterial3D")
-			line.append(used_materials[i].resource_path.get_file())
-			
-			for property in used_materials[i].get_property_list():
-				#skip non-persistent/internal properties
-				if property.usage & PROPERTY_USAGE_STORAGE == 0:
-					continue
-				var param = used_materials[i].get(property.name)
-				
-				"TODO"#copied from above, need to abstract all this way way better + update load function to match
-				#possibly even keep save/load processes in the same function separated by a bool
-				if param is Texture2D:
-					if not assets_used.has(param):
-						assets_used.append(param)
-					line.append(param.resource_path.get_file())
-				elif param is float:
-					line.append(str(param))
-				elif param is Vector3:
-					line.append(str(param.x))
-					line.append(str(param.y))
-					line.append(str(param.z))
-				elif param is Vector4:
-					line.append(str(param.w))
-					line.append(str(param.x))
-					line.append(str(param.y))
-					line.append(str(param.z))
-				elif param is Color:
-					line.append(str(param.r8))
-					line.append(str(param.g8))
-					line.append(str(param.b8))
-					line.append(str(param.a8))
-				elif param == null:
-					if property.type == TYPE_VECTOR3:
-						line.append("")
-						line.append("")
-						line.append("")
-					elif property.type == TYPE_VECTOR4 or TYPE_COLOR:
-						line.append("")
-						line.append("")
-						line.append("")
-						line.append("")
-					else:
-						#push_warning("null saved in workspace_manager.save_model()")
-						#print(j, "NULL SAVED")
-						line.append("")
-				else:
-					print("UNIMPLEMENTED STANDARDMATERIAL3D TYPE")
-			
-			assets_used.append(used_materials[i])
-		else:
-			print("UNIMPLEMENTED MATERIAL TYPE: ", used_materials[i])
-		
-		file.append(",".join(line))
-		line.clear()
+		file.append(separator.join(SaveUtils.serialize_material(used_materials[i])))
 		i = i + 1
 	
 	#add meshes to save
@@ -847,7 +735,7 @@ static func save_model(filepath : String, name : String):
 	while i < used_meshes.size():
 		if not assets_used.has(used_meshes[i]):
 			assets_used.append(used_meshes[i])
-		file.append(used_meshes[i].resource_path.get_file())
+		file.append(separator.join(SaveUtils.serialize_mesh(used_meshes[i])))
 		i = i + 1
 	
 	
@@ -855,76 +743,12 @@ static func save_model(filepath : String, name : String):
 	i = 0
 	file.append("::MODEL::")
 	while i < selected_parts_array.size():
-		#position
-		line.append(str(selected_parts_array[i].transform.origin.x))
-		line.append(str(selected_parts_array[i].transform.origin.y))
-		line.append(str(selected_parts_array[i].transform.origin.z))
-		#scale
-		line.append(str(selected_parts_array[i].part_scale.x))
-		line.append(str(selected_parts_array[i].part_scale.y))
-		line.append(str(selected_parts_array[i].part_scale.z))
-		#rotation (quaternion kept failing at certain angles)
-		line.append(str(selected_parts_array[i].rotation_degrees.x))
-		line.append(str(selected_parts_array[i].rotation_degrees.y))
-		line.append(str(selected_parts_array[i].rotation_degrees.z))
-		#color
-		line.append(str(color_to_int_mapping[selected_parts_array[i].part_color]))
-		#material
-		line.append(str(material_name_to_int_mapping[selected_parts_array[i].part_material.resource_path.get_file()]))
-		#mesh
-		line.append(str(mesh_to_int_mapping[selected_parts_array[i].part_mesh_node.mesh.resource_path.get_file()]))
-		file.append(",".join(line))
-		line.clear()
+		file.append(separator.join(SaveUtils.serialize_part(selected_parts_array[i], color_to_int_mapping, material_name_to_int_mapping, mesh_to_int_mapping)))
 		i = i + 1
 	
 	
 	
-	"TODO"#not sure about this
-	#should definitely centralize these variables as much as possible
-	var file_access = FileAccess.open(filepath + name + "_data.csv", FileAccess.WRITE)
-	var dir_access = DirAccess.open(filepath)
-	var zip_packer = ZIPPacker.new()
-	zip_packer.open(filepath + name + ".tmv")
 	
-	var data_file : String = filepath + name + "_data.csv"
-	
-	
-	file_access.flush()
-	i = 0
-	while i < file.size():
-		file_access.store_line(file[i])
-		i = i + 1
-	file_access.close()
-	
-	zip_packer.start_file(name + "_data.csv")
-	zip_packer.write_file(FileAccess.get_file_as_bytes(data_file))
-	zip_packer.close_file()
-	
-	i = 0
-	#embed used assets in the zip file
-	while i < assets_used.size():
-		var r_name = assets_used[i].resource_path.get_file()
-		if assets_used[i] is Texture2D:
-			zip_packer.start_file(r_name)
-			var img : Image = assets_used[i].get_image()
-			zip_packer.write_file(img.save_png_to_buffer())
-			zip_packer.close_file()
-		elif assets_used[i] is Shader:
-			zip_packer.start_file(r_name)
-			zip_packer.write_file(assets_used[i].code.to_utf8_buffer())
-			zip_packer.close_file()
-		elif assets_used[i] is Mesh:
-			ResourceSaver.save(assets_used[i], filepath + r_name)
-			zip_packer.start_file(r_name)
-			zip_packer.write_file(FileAccess.get_file_as_bytes(filepath + r_name))
-			zip_packer.close_file()
-			dir_access.remove(filepath + r_name)
-		else:
-			print("UNIMPLEMENTED ASSET TYPE: " + str(assets_used[i]))
-		i = i + 1
-	
-	dir_access.remove(data_file)
-	zip_packer.close()
 
 
 static func load_model(filepath : String, name : String):
@@ -943,103 +767,26 @@ static func load_model(filepath : String, name : String):
 	#mode from headers
 	var mode : String
 	while i < file.size():
-		if file[i] == "::COLOR::" or file[i] == "::MATERIAL::" or file[i] == "::MESH::" or file[i] == "::MODEL::":
+		if data_headers.has(file[i]):
 			mode = file[i]
 			i = i + 1
 			continue
 		
-		if file[i] == "" or file[i] == null:
+		if file[i] == "" or file[i] == null or file[i].begins_with("#"):
 			i = i + 1
 			continue
 		
 		#processing
 		var line = file[i].split(",")
 	#load color
-		if mode == "::COLOR::":
-			used_colors.append(Color8(int(line[0]), int(line[1]), int(line[2])))
+		if mode == data_headers[0]:
+			used_colors.append(SaveUtils.deserialize_color(line))
 			
 	#load material
-		elif mode == "::MATERIAL::":
-			#only load if required
-			var new : ShaderMaterial
-			var r_name : String = get_resource_name(line[1])
-			if name_loaded_asset_mapping.has(r_name):
-				new = loaded_assets[name_loaded_asset_mapping[r_name]]
-				used_materials.append(new)
-				i = i + 1
-				continue
-			else:
-				new = ShaderMaterial.new()
-				new.resource_path = r_name
-				loaded_assets.append(new)
-				name_loaded_asset_mapping[new] = name_loaded_asset_mapping.keys().size() - 1
-			
-			#only load if required
-			var shader : Shader
-			r_name = get_resource_name(line[0])
-			if name_loaded_asset_mapping.has(r_name):
-				shader = loaded_assets[name_loaded_asset_mapping[r_name]]
-			else:
-				shader = Shader.new()
-				shader.code = zip_reader.read_file(line[0]).get_string_from_utf8()
-				shader.resource_path = r_name
-				loaded_assets.append(shader)
-				name_loaded_asset_mapping[shader] = name_loaded_asset_mapping.keys().size() - 1
-			
-			new.shader = shader
-			
-			var properties : Array = shader.get_shader_uniform_list()
-			var j : int = 0
-			#start at 3 because line item 0, 1 and 2 are the material type, shader name and material name respectively
-			var j_line : int = 3
-			
-			#print(i, "-------------------------------------------------------------")
-			while j < properties.size():
-				var param = properties[j]
-				if param.type == TYPE_OBJECT:
-					if param.hint_string == "Texture2D":
-						"TODO"#probably should also only load this if required
-						if zip_reader.get_files().has(line[j_line]):
-							var img = Image.new()
-							img.load_png_from_buffer(zip_reader.read_file(line[j_line]))
-							img.generate_mipmaps()
-							var texture : ImageTexture = ImageTexture.create_from_image(img)
-							new.set_shader_parameter(properties[j].name, texture)
-							#important for resaving a material
-							texture.resource_path = filepath + get_resource_name(line[j_line])
-							loaded_assets.append(texture)
-					else:
-						prints("UNIMPLEMENTED TYPE: ", param.hint_string, param)
-				
-				elif param.type == TYPE_FLOAT:
-					new.set_shader_parameter(properties[j].name, float(line[j_line]))
-				#surprisingly does not need to be incremented by 2, the x y z are stored as separate floats
-				elif param.type == TYPE_VECTOR3:
-					#new.set_shader_parameter(properties[j].name, float(line[j_line]))
-					var vec : Vector3 = Vector3()
-					vec.x = float(line[j_line])
-					vec.y = float(line[j_line + 1])
-					vec.z = float(line[j_line + 2])
-					new.set_shader_parameter(properties[j].name, vec)
-					j_line = j_line + 2
-				elif param.type == TYPE_VECTOR4:
-					#new.set_shader_parameter(properties[j].name, float(line[j_line]))
-					var vec : Vector4 = Vector4()
-					vec.w = float(line[j_line])
-					vec.x = float(line[j_line + 1])
-					vec.y = float(line[j_line + 2])
-					vec.z = float(line[j_line + 3])
-					new.set_shader_parameter(properties[j].name, vec)
-					j_line = j_line + 3
-				else:
-					print("UNIMPLEMENTED TYPE: ", param)
-					return
-				j_line = j_line + 1
-				j = j + 1
-			used_materials.append(new)
-			
+		elif mode == data_headers[1]:
+			used_materials.append(SaveUtils.deserialize_material(line))
 	#load mesh
-		elif mode == "::MESH::":
+		elif mode == data_headers[2]:
 			if line[0] != null or line[0] != "":
 				var mesh_bytes = zip_reader.read_file(line[0])
 				var f = FileAccess.open(filepath + line[0], FileAccess.WRITE)
@@ -1050,26 +797,9 @@ static func load_model(filepath : String, name : String):
 				used_meshes.append(new)
 				DirAccess.remove_absolute(filepath + line[0])
 				
-		elif mode == "::MODEL::":
-			var new : Part = Part.new()
-			#position
-			new.transform.origin.x = float(line[0])
-			new.transform.origin.y = float(line[1])
-			new.transform.origin.z = float(line[2])
-			#scale
-			new.part_scale.x = float(line[3])
-			new.part_scale.y = float(line[4])
-			new.part_scale.z = float(line[5])
-			#rotation
-			new.rotation_degrees.x = float(line[6])
-			new.rotation_degrees.y = float(line[7])
-			new.rotation_degrees.z = float(line[8])
-			#mesh
-			new.part_mesh_node.mesh = used_meshes[int(line[11])]
-			#material
-			new.part_material = used_materials[int(line[10])]
-			#color
-			new.part_color = used_colors[int(line[9])]
+	#load parts
+		elif mode == data_headers[3]:
+			var new : Part = SaveUtils.deserialize_part(line, used_colors, used_materials, used_meshes)
 			
 			workspace.add_child(new)
 			new.initialize()
@@ -1169,29 +899,10 @@ static func create_mapping(input_data : Array):
 	return map
 
 
-static func property_to_csv():
-	
-	
-	
-	
-	return
-
-
-#same as above but an offset can be added for 2d array situations
-static func create_mapping_offset(input_data : Array, offset : int):
-	var i : int = 0
-	var map : Dictionary = {}
-	
-	while i < input_data.size():
-		#reverse the keys with the values in input_data
-		map[input_data[i]] = i + offset
-		i = i + 1
-	
-	return map
-
 
 static func get_resource_name(name : String):
 	"TODO"#clarify this
+	push_warning("WorkspaceManager.get_resource_name(): DEPRECATED! use AssetManager.get_asset_name() instead!")
 	return name.rsplit("/", true, 1)[-1].rsplit(".", true, 1)[0]
 
 

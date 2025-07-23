@@ -89,3 +89,9 @@
 30.6. hastily finished materialmanager, still need to code it more robustly + made a better grouping function in meshutils
 1.7. started thinking about how to properly integrate export options into the ui flow, probably some sort of add-on to the file manager, improved meshutils functions, started to work on accomodating standardmaterial3d in save process
 2.7. working on integrating standardmaterial3d into save process and re-planning the software architecture encompassing material management and file operations (save, load, export, import)
+7.7. on break
+14.7. back from break, renamed materialmanager to assetmanager and worked on generalizing the code to all resource types
+15.7. now integrating assetmanager into rest of program and thinking about how to further improve/architect saving and loading processes
+21.7. properly implemented assetmanager.recolor_material(), added recursive subresource registering function
+22.7. fixed assetmanager unnamed key bug
+23.7. working on splitting loading into structured pipeline: 1. unzip save file, 2. load assets (meshes, textures), 3. deserialize data from csv file (and saving works in reverse)
