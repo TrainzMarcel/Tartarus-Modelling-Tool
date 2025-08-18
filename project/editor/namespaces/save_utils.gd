@@ -2,20 +2,23 @@ extends RefCounted
 class_name SaveUtils
 
 
-static func serialize_color(input : Color):
+static func color_serialize(input : Color):
 	return PackedStringArray([str(input.r8), str(input.g8), str(input.b8)])
 
-static func deserialize_color(input : PackedStringArray):
+
+static func color_deserialize(input : PackedStringArray):
 	return Color8(int(input[0]), int(input[1]), int(input[2]))
 
 
-static func serialize_material(input):
+static func material_serialize(input):
 	#saving shadermaterial to file
 	if input is ShaderMaterial:
 		var result_line : PackedStringArray = []
 		result_line.append("ShaderMaterial")
-		result_line.append(AssetManager.get_asset_name(input.shader))
-		result_line.append(AssetManager.get_asset_name(input))
+		result_line.append(AssetManager.get_name_of_asset(input.shader))
+		#DONT include colors during serialization, causes huge problems
+		#and there is already a color header anyway
+		result_line.append(AssetManager.get_name_of_asset(input, false))
 		
 		var properties : Array = input.shader.get_shader_uniform_list()
 		
@@ -24,8 +27,8 @@ static func serialize_material(input):
 			var parameter = input.get_shader_parameter(properties[i].name)
 			print("parameter", parameter)
 			if parameter is Texture2D:
-				result_line.append(AssetManager.get_asset_name(parameter))
-			elif parameter is float:
+				result_line.append(AssetManager.get_name_of_asset(parameter, false, true))
+			elif parameter is float or parameter is int or parameter is String:
 				result_line.append(str(parameter))
 			elif parameter is Vector3:
 				result_line.append_array([str(parameter.x), str(parameter.y), str(parameter.z)])
@@ -53,7 +56,10 @@ static func serialize_material(input):
 		else:
 			result_line.append("ORMMaterial3D")
 		
-		result_line.append(AssetManager.get_asset_name(input))
+		#DONT include colors during serialization, causes huge problems
+		#and there is already a color header anyway
+		#so just call AssetManager.recolor_material() instead when loading
+		result_line.append(AssetManager.get_name_of_asset(input, false))
 		
 		
 		var properties = input.get_property_list()
@@ -67,7 +73,7 @@ static func serialize_material(input):
 			
 			var parameter = input.get(properties[i].name)
 			if parameter is Texture2D:
-				result_line.append(AssetManager.get_asset_name(parameter))
+				result_line.append(AssetManager.get_name_of_asset(parameter, false, true))
 			elif parameter is float:
 				result_line.append(str(parameter))
 			elif parameter is Vector3:
@@ -89,13 +95,14 @@ static func serialize_material(input):
 		return result_line
 
 
-static func deserialize_material(input : PackedStringArray):
+static func material_deserialize(input : PackedStringArray):
 #loading shadermaterial from file
 	if input[0] == "ShaderMaterial":
 		#load material
 		var result_asset : ShaderMaterial
-		var asset_name : String = AssetManager.normalize_asset_name(input[2])
-		result_asset = AssetManager.get_asset_by_name(asset_name)
+		var asset_name : String = AssetManager.normalize_asset_name(input[2], false)
+		#recolor during part deserialization instead
+		result_asset = AssetManager.get_material_by_name_any_color(asset_name)
 		if result_asset != null:
 			return result_asset
 		else:
@@ -108,7 +115,7 @@ static func deserialize_material(input : PackedStringArray):
 		asset_name = AssetManager.standardize_name(input[1])
 		shader = AssetManager.get_asset_by_name(asset_name)
 		if shader == null:
-			push_error("shader loading failure")
+			push_error("shader loading failure, name in save file: " + input[1])
 			return
 		
 		result_asset.shader = shader
@@ -123,13 +130,11 @@ static func deserialize_material(input : PackedStringArray):
 			var parameter_output
 		#load image texture
 			if parameter.type == TYPE_OBJECT and parameter.hint_string == "Texture2D":
-				#check if this subresource is reused by any other material
-				#AssetManager.get_asset_by_name(input[i_line])
-				var image_texture : ImageTexture = AssetManager.get_asset_by_name(AssetManager.normalize_asset_name(input[i_line]))
+				var image_texture : ImageTexture = AssetManager.get_asset_by_name(AssetManager.normalize_asset_name(input[i_line], false))
 				
 				#if image texture still hasnt loaded, abort
 				if image_texture == null:
-					push_error("image texture loading failure")
+					push_error("image texture loading failure at line")
 					return
 				
 				parameter_output = image_texture
@@ -160,8 +165,9 @@ static func deserialize_material(input : PackedStringArray):
 	elif input[0] == "StandardMaterial3D" or input[0] == "ORMMaterial3D":
 		#load material
 		var result_asset : BaseMaterial3D
-		var asset_name : String = AssetManager.normalize_asset_name(input[1])
-		result_asset = AssetManager.get_asset_by_name(asset_name)
+		var asset_name : String = AssetManager.normalize_asset_name(input[1], false)
+		#recolor during part deserialization instead
+		result_asset = AssetManager.get_material_by_name_any_color(asset_name)
 		if result_asset != null:
 			return result_asset
 		else:
@@ -186,7 +192,7 @@ static func deserialize_material(input : PackedStringArray):
 			if parameter.type == TYPE_OBJECT and parameter.hint_string == "Texture2D":
 				#check if this subresource is reused by any other material
 				#AssetManager.get_asset_by_name(input[i_line])
-				var image_texture : ImageTexture = AssetManager.get_asset_by_name(AssetManager.normalize_asset_name(input[i_line]))
+				var image_texture : ImageTexture = AssetManager.get_asset_by_name(AssetManager.normalize_asset_name(input[i_line], false))
 				
 				#if image texture still hasnt loaded, abort
 				if image_texture == null:
@@ -218,14 +224,15 @@ static func deserialize_material(input : PackedStringArray):
 		return result_asset
 
 
-static func serialize_mesh(input : Mesh):
-	return PackedStringArray([AssetManager.normalize_asset_name(input.resource_path)])
-
-static func deserialize_mesh(input : PackedStringArray):
-	return 
+static func mesh_serialize(input : Mesh):
+	return PackedStringArray([AssetManager.normalize_asset_name(input.resource_path, true)])
 
 
-static func serialize_part(input, color_to_int_mapping : Dictionary, material_name_to_int_mapping : Dictionary, mesh_name_to_int_mapping : Dictionary):
+static func mesh_deserialize(input : PackedStringArray):
+	return AssetManager.get_asset_by_name(AssetManager.normalize_asset_name(input[0], false))
+
+
+static func part_serialize(input, color_to_int_mapping : Dictionary, material_name_to_int_mapping : Dictionary, mesh_name_to_int_mapping : Dictionary):
 	var result_line : PackedStringArray = []
 	#position
 	result_line.append(str(input.transform.origin.x))
@@ -242,14 +249,14 @@ static func serialize_part(input, color_to_int_mapping : Dictionary, material_na
 	#color
 	result_line.append(str(color_to_int_mapping[input.part_color]))
 	#material
-	result_line.append(str(material_name_to_int_mapping[AssetManager.get_asset_name(input.part_material, false)]))
+	result_line.append(str(material_name_to_int_mapping[AssetManager.get_name_of_asset(input.part_material, false)]))
 	#mesh
-	result_line.append(str(mesh_name_to_int_mapping[AssetManager.get_asset_name(input.part_mesh_node.mesh)]))
+	result_line.append(str(mesh_name_to_int_mapping[AssetManager.get_name_of_asset(input.part_mesh_node.mesh)]))
 	
 	return result_line
 
 
-static func deserialize_part(input, used_colors : Array, used_materials : Array, used_meshes : Array):
+static func part_deserialize(input, used_colors : Array, used_materials : Array, used_meshes : Array):
 	var new : Part = Part.new()
 	#position
 	new.transform.origin.x = float(input[0])
@@ -271,88 +278,240 @@ static func deserialize_part(input, used_colors : Array, used_materials : Array,
 	new.part_color = used_colors[int(input[9])]
 	return new
 
-#loads resources from disk
-static func load_assets(input : PackedStringArray):
-	
-	return
 
-#saves various resources to disk
-static func save_assets(input : Array):
+#saves everything to disk
+static func data_zip(input_assets : Array[Resource], input_save_file : PackedStringArray, filepath : String, filename : String):
+	#get all of the subresources which arent saved in the csv
+	#includes: shader code, image textures, mesh dat
+	var zip_packer : ZIPPacker = ZIPPacker.new()
+	var dir_access : DirAccess = DirAccess.open(filepath)
+	var subresources : Array = []
+	var total : Array[Resource] = []
+	var filenames : PackedStringArray = []
+	var i : int = 0
 	
-	return
-
-#if image_texture == null:
-#	var image : Image = Image.new()
-#	image.load_png_from_buffer(zip_reader.read_file(input[j_line]))
-#	image.generate_mipmaps()
-#	image_texture = ImageTexture.create_from_image(image)
-#	result_asset.set_shader_parameter(properties[j].name, image_texture)
-#	AssetManager.register_asset(image_texture)
-
-#enter names of files that have to be zipped
-static func zip_files(input : PackedStringArray):
-	#zip up files at specific location
-	#open zip packer
-	#for i in input:
-	#zip_packer.zip(i)
-	#close zip packer
-	"TODO"#not sure about this
-	#should definitely centralize these variables as much as possible
-	var file_access = FileAccess.open(filepath + name + "_data.csv", FileAccess.WRITE)
-	var dir_access = DirAccess.open(filepath)
-	var zip_packer = ZIPPacker.new()
-	zip_packer.open(filepath + name + ".tmv")
-	
-	var data_file : String = filepath + name + "_data.csv"
-	
-	
-	file_access.flush()
-	i = 0
-	while i < file.size():
-		file_access.store_line(file[i])
+	#get all subresources
+	while i < input_assets.size():
+		if input_assets[i] is Resource:
+			subresources.append_array(AssetManager.get_subresources(input_assets[i]))
 		i = i + 1
-	file_access.close()
 	
-	zip_packer.start_file(name + "_data.csv")
-	zip_packer.write_file(FileAccess.get_file_as_bytes(data_file))
+	#deduplicate and exclude material types as they are already serialized in data.csv
+	input_assets.append_array(subresources)
+	i = 0
+	while i < input_assets.size():
+		var resource_already_listed : bool = false
+		
+		for j in total:
+			if AssetManager.get_name_of_asset(j) == AssetManager.get_name_of_asset(input_assets[i]):
+				resource_already_listed = true
+				break
+		
+		if not resource_already_listed and not input_assets[i] is BaseMaterial3D and not input_assets[i] is ShaderMaterial:
+			total.append(input_assets[i])
+		
+		i = i + 1
+	
+	
+	
+	
+	zip_packer.open(filepath + filename + ".tmv")
+	
+	#start with serialized data file
+	zip_packer.start_file(filename + "_data.csv")
+	
+	#quick conversion
+	var byte_array : PackedByteArray = []
+	for line in input_save_file:
+		byte_array.append_array((line + "\n").to_utf8_buffer())
+		
+	
+	zip_packer.write_file(byte_array)
 	zip_packer.close_file()
 	
+	#save each subresource to disk
+	print("asset save start")
 	i = 0
-	#embed used assets in the zip file
-	while i < assets_used.size():
-		var r_name = assets_used[i].resource_path.get_file()
-		if assets_used[i] is Texture2D:
-			zip_packer.start_file(r_name)
-			var img : Image = assets_used[i].get_image()
-			zip_packer.write_file(img.save_png_to_buffer())
+	while i < total.size():
+		print("iteration ", i, "-----------------------------------------------")
+		var asset : Resource = total[i]
+		var asset_name = AssetManager.get_name_of_asset(asset, false, true)
+		var debug_asset_saved : bool = false
+		
+		if asset is Texture2D:
+			zip_packer.start_file(asset_name)
+			var image : Image = asset.get_image()
+			zip_packer.write_file(image.save_png_to_buffer())
 			zip_packer.close_file()
-		elif assets_used[i] is Shader:
-			zip_packer.start_file(r_name)
-			zip_packer.write_file(assets_used[i].code.to_utf8_buffer())
+			debug_asset_saved = true
+		elif asset is Shader:
+			zip_packer.start_file(asset_name)
+			zip_packer.write_file(asset.code.to_utf8_buffer())
 			zip_packer.close_file()
-		elif assets_used[i] is Mesh:
-			ResourceSaver.save(assets_used[i], filepath + r_name)
-			zip_packer.start_file(r_name)
-			zip_packer.write_file(FileAccess.get_file_as_bytes(filepath + r_name))
+			debug_asset_saved = true
+		elif asset is Mesh:
+			"TODO"#use obj instead of resource file
+			ResourceSaver.save(asset, filepath + asset_name)
+			zip_packer.start_file(asset_name)
+			zip_packer.write_file(FileAccess.get_file_as_bytes(filepath + asset_name))
 			zip_packer.close_file()
-			dir_access.remove(filepath + r_name)
+			dir_access.remove(filepath + asset_name)
+			debug_asset_saved = true
 		else:
-			print("UNIMPLEMENTED ASSET TYPE: " + str(assets_used[i]))
+			push_error("unimplemented asset type: " + str(asset))
+		
+		if debug_asset_saved:
+			print("asset saved:     ", asset)
+		else:
+			print("asset not saved: ", asset)
+		
 		i = i + 1
 	
-	dir_access.remove(data_file)
 	zip_packer.close()
-	return
 
 
-#enter names of files that have to be unzipped
-static func unzip_files(input : PackedStringArray):
-	#unzip files at specific location
-	return
+#loads resources from disk
+"TODO"#consider adding automated renaming function to assetmanager to further prevent name collisions
+#using uuid.gd but shortened uuid to like 5 numbers
+static func data_unzip(filepath : String, filename : String):
+	var zip_reader : ZIPReader = ZIPReader.new()
+	var dir_access : DirAccess = DirAccess.open(filepath)
+	
+	
+	#serialized data file will be stored here
+	var file : PackedStringArray = []
+	#names of files contained in save
+	var file_names : PackedStringArray = []
+	zip_reader.open(filepath + filename + ".tmv")
+	file_names = zip_reader.get_files()
+	
+	
+	#load each subresource from disk depending on the name
+	print("asset load start")
+	var i : int = 0
+	while i < file_names.size():
+		print("iteration ", i, "-----------------------------------------------")
+		var asset : Resource
+		var file_name = file_names[i]
+		var extension = file_name.get_extension().to_lower()
+		var load_subresource : bool = false
+		
+		#in case it is not available, load subresource (like an image texture or a mesh)
+		load_subresource = not AssetManager.is_asset_key_taken(AssetManager.normalize_asset_name(file_name, false))
+		
+		print("RESOURCE KEY CHECK: ", file_name, " | ", AssetManager.normalize_asset_name(file_name, false))
+		if not load_subresource:
+			i = i + 1
+			print("subresource already available")
+			continue
+		else:
+			print("loading subresource")
+		
+	#resource file
+		if extension == "tres" or extension == "res":
+			var resource_bytes : PackedByteArray = zip_reader.read_file(file_name)
+			var file_access = FileAccess.open(filepath + file_name, FileAccess.WRITE)
+			file_access.store_buffer(resource_bytes)
+			file_access.close()
+			var resource_result = ResourceLoader.load(filepath + file_name)
+			DirAccess.remove_absolute(filepath + file_name)
+			resource_result.resource_path = filepath + file_name
+			AssetManager.register_asset(resource_result)
+	#data file
+		elif extension == "csv":
+			var data_bytes : PackedByteArray = zip_reader.read_file(file_name)
+			file = data_bytes.get_string_from_utf8().split("\n")
+			print(file)
+			
+	#image file
+		elif extension == "png" or extension == "jpg" or extension == "jpeg":
+			var image : Image = Image.new()
+			image.load_png_from_buffer(zip_reader.read_file(file_name))
+			image.generate_mipmaps()
+			var image_texture : ImageTexture = ImageTexture.create_from_image(image)
+			image_texture.resource_path = filepath + file_name
+			AssetManager.register_asset(image_texture)
+	#shader code
+		elif extension == "gdshader":
+			var data_bytes : PackedByteArray = zip_reader.read_file(file_name)
+			var shader_result : Shader = Shader.new()
+			shader_result.code = data_bytes.get_string_from_utf8()
+			shader_result.resource_path = filepath + file_name
+			
+			AssetManager.register_asset(shader_result)
+		else:
+			push_error("unimplemented filetype, aborting")
+			return
+		
+		i = i + 1
+	
+	zip_reader.close()
+	
+	
+	return file
 
 
+static func get_colors_from_parts(input_parts : Array):
+	var used_colors : Array[Color] = []
+	var i : int = 0
+	while i < input_parts.size():
+		if not used_colors.has(input_parts[i].part_color):
+			used_colors.append(input_parts[i].part_color)
+		i = i + 1
+	
+	return used_colors
+
+static func get_materials_from_parts(input_parts : Array):
+	var used_materials : Array[Material] = []
+	var i : int = 0
+	
+	used_materials.append(input_parts[0].part_material)
+	while i < input_parts.size():
+		var j : int = 0
+		var has_material : bool = false
+		
+		while j < used_materials.size():
+			var base_1 = AssetManager.get_name_of_asset(used_materials[j], false)
+			var base_2 = AssetManager.get_name_of_asset(input_parts[i].part_material, false)
+			if base_2 == base_1:
+				has_material = true
+				break
+			j = j + 1
+		
+		if not has_material:
+			used_materials.append(input_parts[i].part_material)
+		i = i + 1
+	return used_materials
 
 
+static func get_meshes_from_parts(input_parts : Array):
+	var i : int = 0
+	var used_meshes : Array[Mesh] = []
+	
+	used_meshes.append(input_parts[0].part_mesh_node.mesh)
+	while i < input_parts.size():
+		var j : int = 0
+		var has_mesh : bool = false
+		while j < used_meshes.size():
+			if AssetManager.get_name_of_asset(input_parts[i].part_mesh_node.mesh) == AssetManager.get_name_of_asset(used_meshes[j]):
+				has_mesh = true
+				break
+			j = j + 1
+			
+		if not has_mesh:
+			used_meshes.append(input_parts[i].part_mesh_node.mesh)
+		i = i + 1
+	
+	return used_meshes
 
 
-#not sure if i will extract the logic into here, we will see
+#surprisingly godot did not have recursive functions for getting files or reading files recursively
+static func get_files_recursive(filepath : String, file_names : PackedStringArray = []):
+	file_names.append_array(DirAccess.get_files_at(filepath))
+	for i in DirAccess.get_directories_at(filepath):
+		var inner_file_names : PackedStringArray = get_files_recursive(filepath.path_join(i))
+		for j in inner_file_names:
+			#add path to lower level
+			file_names.append(i.path_join(j))
+	
+	return file_names

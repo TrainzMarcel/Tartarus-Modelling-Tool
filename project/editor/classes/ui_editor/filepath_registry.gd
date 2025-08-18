@@ -5,12 +5,13 @@ const scene_color_button : String = "res://editor/data_ui/component_scenes/butto
 const scene_material_part_type_button : String = "res://editor/data_ui/component_scenes/button_material_and_part_type.tscn"
 const scene_palette_button : String = "res://editor/data_ui/component_scenes/palette_button/button_palette_entry.tscn"
 
-const data_file_color : String = "res://editor/data_editor/default_color_codes.txt"
-const data_folder_material : String = "res://editor/data_editor/materials/"
-const data_folder_part : String = "res://editor/data_editor/parts/"
+const data_folder_default_assets : String = "res://editor/data_editor/"
+const data_folder_user_assets : String = "user://user/assets/"
+const data_user_settings : String = "user://user/settings.json"
 
-const data_default_material : String = "res://editor/data_editor/materials/plastic_01.tres"
-const data_default_part : String = "res://editor/data_editor/parts/cuboid.tres"
+#used as fallbacks for null values
+const data_default_material : String = "res://editor/data_editor/plastic_01.tres"
+const data_default_part : String = "res://editor/data_editor/cuboid.tres"
 
 
 const script_tooltip_assign : String = "res://editor/classes/ui_editor/tooltip_assign.gd"

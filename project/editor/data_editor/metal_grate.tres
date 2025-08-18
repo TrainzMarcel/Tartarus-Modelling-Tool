@@ -1,0 +1,24 @@
+[gd_resource type="ShaderMaterial" load_steps=6 format=3 uid="uid://km1nqxxmcpfp"]
+
+[ext_resource type="Shader" path="res://editor/data_editor/shader/triplanar_special.gdshader" id="1_qhftm"]
+[ext_resource type="Texture2D" uid="uid://corchd8ji6u6e" path="res://editor/data_editor/image_files/metal_grate_01_albedo.jpg" id="2_81imq"]
+[ext_resource type="Texture2D" uid="uid://dy514qjys2jbf" path="res://editor/data_editor/image_files/metal_grate_01_metalness.jpg" id="3_jo3td"]
+[ext_resource type="Texture2D" uid="uid://baponm7eq57yg" path="res://editor/data_editor/image_files/metal_grate_01_normalgl.jpg" id="4_7tatk"]
+[ext_resource type="Texture2D" uid="uid://dcgw3ycmjp5bf" path="res://editor/data_editor/image_files/metal_grate_01_roughness.jpg" id="5_dy8aq"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_qhftm")
+shader_parameter/color = Color(1, 1, 1, 1)
+shader_parameter/mixed_color_ratio = 0.07
+shader_parameter/contrast = 0.27
+shader_parameter/roughness = 0.523
+shader_parameter/metallic_texture_channel = Vector4(1, 0, 0, 0)
+shader_parameter/specular = 0.246
+shader_parameter/metallic = 0.65
+shader_parameter/normal_scale = 0.694001
+shader_parameter/uv1_scale = Vector3(1, 1, 1)
+shader_parameter/texture_albedo = ExtResource("2_81imq")
+shader_parameter/texture_metallic = ExtResource("3_jo3td")
+shader_parameter/texture_roughness = ExtResource("5_dy8aq")
+shader_parameter/texture_normal = ExtResource("4_7tatk")

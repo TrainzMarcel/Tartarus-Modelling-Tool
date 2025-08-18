@@ -1,0 +1,22 @@
+[gd_resource type="ShaderMaterial" load_steps=5 format=3 uid="uid://owx6ib1ggt2u"]
+
+[ext_resource type="Shader" path="res://editor/data_editor/shader/triplanar_special.gdshader" id="1_r323c"]
+[ext_resource type="Texture2D" uid="uid://71xgscc26aux" path="res://editor/data_editor/image_files/slate_02_albedo.jpg" id="2_77ogv"]
+[ext_resource type="Texture2D" uid="uid://c28afm6ndveeu" path="res://editor/data_editor/image_files/slate_02_normal.jpg" id="3_rauey"]
+[ext_resource type="Texture2D" uid="uid://cfqbyqsjykswb" path="res://editor/data_editor/image_files/slate_02_roughness.jpg" id="4_bs6q8"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_r323c")
+shader_parameter/color = Color(1, 1, 1, 1)
+shader_parameter/mixed_color_ratio = 0.6
+shader_parameter/contrast = 0.11
+shader_parameter/roughness = 0.833
+shader_parameter/metallic_texture_channel = null
+shader_parameter/specular = null
+shader_parameter/metallic = null
+shader_parameter/normal_scale = 0.628001
+shader_parameter/uv1_scale = Vector3(1, 1, 1)
+shader_parameter/texture_albedo = ExtResource("2_77ogv")
+shader_parameter/texture_roughness = ExtResource("4_bs6q8")
+shader_parameter/texture_normal = ExtResource("3_rauey")

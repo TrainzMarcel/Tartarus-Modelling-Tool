@@ -1,0 +1,22 @@
+[gd_resource type="ShaderMaterial" load_steps=5 format=3 uid="uid://ddvrppq5lekvm"]
+
+[ext_resource type="Shader" path="res://editor/data_editor/shader/triplanar_special.gdshader" id="1_hmint"]
+[ext_resource type="Texture2D" uid="uid://c0pqnu47daoer" path="res://editor/data_editor/image_files/office_ceiling_01_albedo.jpg" id="2_05frw"]
+[ext_resource type="Texture2D" uid="uid://cunfqbe40et1x" path="res://editor/data_editor/image_files/office_ceiling_01_normal.jpg" id="3_o5ip8"]
+[ext_resource type="Texture2D" uid="uid://d3i2i8qelitkd" path="res://editor/data_editor/image_files/office_ceiling_01_roughness.jpg" id="4_ft01k"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_hmint")
+shader_parameter/color = Color(1, 1, 1, 1)
+shader_parameter/mixed_color_ratio = 0.22
+shader_parameter/contrast = 0.07
+shader_parameter/roughness = 0.413
+shader_parameter/metallic_texture_channel = null
+shader_parameter/specular = null
+shader_parameter/metallic = 0.0
+shader_parameter/normal_scale = 1.0
+shader_parameter/uv1_scale = Vector3(1, 1, 1)
+shader_parameter/texture_albedo = ExtResource("2_05frw")
+shader_parameter/texture_roughness = ExtResource("4_ft01k")
+shader_parameter/texture_normal = ExtResource("3_o5ip8")

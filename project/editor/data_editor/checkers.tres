@@ -1,0 +1,18 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=3 uid="uid://b3owh57ev1vv0"]
+
+[ext_resource type="Texture2D" uid="uid://cripxbg6jl7ag" path="res://editor/data_editor/image_files/checkers_albedo.png" id="1_pp30r"]
+[ext_resource type="Shader" path="res://editor/data_editor/shader/triplanar_special.gdshader" id="1_tx166"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_tx166")
+shader_parameter/color = Color(1, 1, 1, 1)
+shader_parameter/mixed_color_ratio = 0.4
+shader_parameter/contrast = 0.38
+shader_parameter/roughness = null
+shader_parameter/metallic_texture_channel = null
+shader_parameter/specular = null
+shader_parameter/metallic = null
+shader_parameter/normal_scale = 7.6e-07
+shader_parameter/uv1_scale = Vector3(1, 1, 1)
+shader_parameter/texture_albedo = ExtResource("1_pp30r")

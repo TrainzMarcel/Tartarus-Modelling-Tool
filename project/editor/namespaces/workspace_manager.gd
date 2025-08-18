@@ -34,9 +34,9 @@ static var selected_part_type : Part
 static var button_part_type_mapping : Dictionary
 static var available_part_types : Array[Part]
 
-#for tracking all loaded assets
-static var loaded_assets : Array[Resource]
-static var name_loaded_asset_mapping : Dictionary
+
+static var available_colors : Array[Color] = []
+static var available_color_names : PackedStringArray = []
 
 
 #!!!selected_parts_array, offset_dragged_to_selected_array and selection_box_array are parallel arrays!!!
@@ -58,6 +58,7 @@ static var parts_clipboard : Array[Part] = []
 #vector pointing from ray_result.position to selected_parts_abb
 static var drag_offset : Vector3
 
+
 #initial drag event to check if user exceeded 10 pixel drag tolerance
 #this makes sure when the user is selecting with shift
 #that parts dont get moved when the user accidentally moves their mouse a tiny bit
@@ -73,6 +74,7 @@ static var first_part_selection_rect : Part
 static var initial_selected_parts : Array[Part]
 
 #saving and loading related variables
+"TODO"#move into file explorer ui class and make it modular
 enum FileOperation {
 	save,
 	save_as,
@@ -82,7 +84,7 @@ static var file_operation : FileOperation
 static var last_save_location : String = ""
 static var last_save_name : String = ""
 
-"TODO"
+"TODO"#do something about this
 const data_headers : Array = [
 	"::COLOR::",
 	"::MATERIAL::",
@@ -90,52 +92,130 @@ const data_headers : Array = [
 	"::MODEL::"
 ]
 
+#so far only used for checking if default assets have been moved to the user folder before
+static var settings_dict_default : Dictionary = {
+	"default_assets_copied_to_user_folder" = true
+}
 
-static func initialize(workspace : Node, hover_selection_box : SelectionBox):
+
+static func initialize(
+		workspace : Node,
+		hover_selection_box : SelectionBox,
+		on_color_selected : Callable,
+		on_material_selected : Callable,
+		on_part_type_selected : Callable
+	):
+	
 	WorkspaceManager.workspace = workspace
 	WorkspaceManager.hover_selection_box = hover_selection_box
 	
-	#colors are stored in color buttons (self_modulate) but im not sure if thats a good thing
-	#color buttons are loaded in the ui.initialize() function
 	
-	#get part types and materials from .tres files
+	#if settings.json is not there or is not set to true "default_assets_copied_to_user_folder" = true
+	var file_access : FileAccess = FileAccess.open(FilePathRegistry.data_user_settings, FileAccess.READ)
+	if file_access != null:
+		#get settings and compare with default
+		var settings = JSON.parse_string(file_access.get_as_text())
+		file_access.close()
+		
+		if settings is Dictionary and not settings.default_assets_copied_to_user_folder:
+			initialize_user_folder()
+	else:
+		initialize_user_folder()
+	
+	
+	#get part types and materials from .tres files, get colors and names from .csv file
 	var materials_list : Array[Material] = []
 	var parts_list : Array[Part] = []
+	var color_list : Array[Color] = []
+	var color_names_list : Array[String] = []
+	#var load_directory : String = FilePathRegistry.data_folder_user_assets
+	var load_directory : String = FilePathRegistry.data_folder_default_assets
+	var file_list = SaveUtils.get_files_recursive(load_directory)
 	
 	
-	var file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_material)
-	for path in file_list:
-		var mat : Material = ResourceLoader.load(FilePathRegistry.data_folder_material + path, "Material")
-		materials_list.append(mat)
-		AssetManager.register_asset_with_subresources(mat)
+	const color_autosort_enabled : String = "autosort = true"
 	
-	file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_part)
-	for path in file_list:
-		var mesh : Mesh = ResourceLoader.load(FilePathRegistry.data_folder_part + path, "Mesh")
-		var new : Part = Part.new()
-		new.part_mesh_node.mesh = mesh
+	
+	for file_name in file_list:
+		var extension : String = file_name.get_extension().to_lower()
 		
-		parts_list.append(new)
-		AssetManager.register_asset(mesh)
+		#load an asset
+		if extension == "res" or extension == "tres":
+			var asset : Resource = ResourceLoader.load(load_directory + file_name)
+			
+			if asset is BaseMaterial3D or asset is ShaderMaterial:
+				materials_list.append(asset)
+				AssetManager.register_asset_with_subresources(asset)
+			elif asset is Mesh:
+				var new : Part = Part.new()
+				new.part_mesh_node.mesh = asset
+				parts_list.append(new)
+				
+				#set default scale (this must be refactored and not hardcoded!!)
+				#cylinder
+				if file_name == "cylinder.tres":
+					new.part_scale = Vector3(0.4, 0.8, 0.4)
+				#sphere
+				elif file_name == "sphere.tres":
+					new.part_scale = Vector3(0.8, 0.8, 0.8)
+				
+				#mesh types usually dont have any subresources
+				AssetManager.register_asset(asset)
+		
+				"TODO"#i need to centralize csv parsing better
+		#load colors with names and set autosort
+		elif extension == "txt":
+			var color_data : PackedStringArray = FileAccess.get_file_as_string(load_directory + file_name).split("\n")
+			var color_autosort : bool = true
+			#valid format
+			if color_data.size() > 2 and color_data[0] == "::COLOR::":
+				color_autosort = color_data[1] == color_autosort_enabled
+			
+			var r_dict : Dictionary = WorkspaceManager.read_colors_and_create_colors(color_data)
+			if color_autosort:
+				r_dict = AutomatedColorPalette.full_color_sort(EditorUI.gc_paint_panel, r_dict.color_array, r_dict.color_name_array)
+			
+			#in case someone wants to specify multiple color files im using append_array
+			WorkspaceManager.available_colors.append_array(r_dict.color_array)
+			WorkspaceManager.available_color_names.append_array(r_dict.color_name_array)
+			EditorUI.create_color_buttons(EditorUI.gc_paint_panel, on_color_selected, r_dict.color_array, r_dict.color_name_array)
+			
+	
 	
 	WorkspaceManager.available_materials = materials_list
 	WorkspaceManager.available_part_types = parts_list
-	
 	
 	if available_part_types.size() > 0:
 		selected_part_type = available_part_types[0]
 	
 	
-	#set default scale (this must be refactored and not hardcoded!!)
-	#cylinder
-	parts_list[1].part_scale = Vector3(0.4, 0.8, 0.4)
-	#sphere
-	parts_list[2].part_scale = Vector3(0.8, 0.8, 0.8)
+	EditorUI.create_material_buttons(on_material_selected, materials_list)
+	EditorUI.create_part_type_buttons(on_part_type_selected, parts_list)
+	
+	
 	
 	
 	#_ready was getting called in the parts before main and before textures loaded so this is done manually now
 	#this line is only required for the manually placed parts in the main scene
 	workspace.get_children().map(func(input): if input is Part: input.initialize())
+
+
+static func initialize_user_folder():
+	#copy default assets to user folder
+	DirAccess.make_dir_recursive_absolute(FilePathRegistry.data_folder_user_assets)
+	for file in SaveUtils.get_files_recursive(FilePathRegistry.data_folder_default_assets):
+		
+		if file.get_extension().to_lower() != "import":
+			if not DirAccess.dir_exists_absolute(FilePathRegistry.data_folder_user_assets.path_join(file.get_base_dir())):
+				DirAccess.make_dir_absolute(FilePathRegistry.data_folder_user_assets.path_join(file.get_base_dir()))
+			
+			DirAccess.copy_absolute(FilePathRegistry.data_folder_default_assets + file, FilePathRegistry.data_folder_user_assets + file)
+			print("copied ", FilePathRegistry.data_folder_default_assets + file, " to ", FilePathRegistry.data_folder_user_assets + file) 
+	
+	#write settings.json
+	var file_access : FileAccess = FileAccess.open(FilePathRegistry.data_user_settings, FileAccess.WRITE)
+	file_access.store_string(JSON.stringify(settings_dict_default, "\t"))
+	file_access.close()
 
 
 #part functions-----------------------------------------------------------------
@@ -156,7 +236,7 @@ static func part_spawn(selected_part_type : Part):
 static func part_delete(hovered_part : Part):
 	hovered_part.queue_free()
 
-
+"TODO"#theres a second copy function in part.gd, decide on which function to keep!!
 static func part_copy(part : Part):
 	var new_part : Part = selected_part_type.duplicate()
 	new_part.part_mesh_node = selected_part_type.part_mesh_node.duplicate()
@@ -171,14 +251,16 @@ static func drag_prepare(event : InputEvent):
 	Main.initial_rotation = WorkspaceManager.selected_parts_abb.transform.basis
 	Main.dragged_part = Main.hovered_part
 	initial_drag_event = event
-	
 
 
-static func drag_handle(event : InputEvent):
+static func drag_handle(event : InputEvent, cam_fly_override : bool):
 	#first make sure the user actually wants to start a drag
 	if initial_drag_event != null:
 		if (event.position - initial_drag_event.position).length() > Main.drag_tolerance: 
 			drag_confirmed = true
+	#or the camera is moving while dragging
+	if cam_fly_override:
+		drag_confirmed = true
 	
 	if Main.is_mouse_button_held and not Main.ray_result.is_empty() and Main.is_selecting_allowed and drag_confirmed:
 		if Main.safety_check(Main.dragged_part):
@@ -201,7 +283,7 @@ static func drag_handle(event : InputEvent):
 				))
 
 
-static func drag_end():
+static func drag_terminate():
 	drag_confirmed = false
 	initial_drag_event = null
 
@@ -292,7 +374,7 @@ static func selection_rect_handle(event : InputEvent, selection_rect : Panel, ca
 			first_part_selection_rect = null
 
 
-static func selection_rect_end(selection_rect : Panel):
+static func selection_rect_terminate(selection_rect : Panel):
 	selection_rect.visible = false
 	initial_selection_rect_event = null
 	first_part_selection_rect = null
@@ -400,6 +482,7 @@ static func selection_duplicate():
 
 
 #position only
+"TODO"#check and ensure numerical stability
 static func selection_move(input_absolute : Vector3):
 	selected_parts_abb.transform.origin = input_absolute
 	Main.transform_handle_root.transform.origin = input_absolute
@@ -419,6 +502,7 @@ static func selection_move(input_absolute : Vector3):
 
 #rotation only
 "TODO"#parameterize everything for clarity and to prevent bugs
+"TODO"#check and ensure numerical stability
 static func selection_rotate(rotated_basis : Basis):#TODO , point_local : Vector3 = Vector3.ZERO):
 	var original_basis : Basis = Basis(selected_parts_abb.transform.basis)
 	
@@ -461,6 +545,7 @@ static func selection_rotate(rotated_basis : Basis):#TODO , point_local : Vector
 #https://www.reddit.com/r/godot/comments/187npcd/how_to_increase_performance/
 #https://docs.godotengine.org/en/4.1/classes/class_renderingserver.html
 "TODO"#this function is not very stable mathematically
+"TODO"#add variables that remember the original scale and part positions from when the scaling handle drag started
 static func selection_scale(scale_absolute : Vector3):
 	#dont do anything if scale is the same
 	if scale_absolute == selected_parts_abb.extents:
@@ -663,69 +748,32 @@ static func save_model(filepath : String, name : String):
 	var file : PackedStringArray = []
 	const separator : String = ","
 	
-	#get used colors
-	var i : int = 0
-	while i < selected_parts_array.size():
-		if not used_colors.has(selected_parts_array[i].part_color):
-			used_colors.append(selected_parts_array[i].part_color)
-		i = i + 1
-	
-	#get used materials
-	i = 0
-	used_materials.append(selected_parts_array[0].part_material)
-	while i < selected_parts_array.size():
-		var j : int = 0
-		var has_material : bool = false
-		
-		while j < used_materials.size():
-			var base_1 = AssetManager.get_asset_name(used_materials[j], false)
-			var base_2 = AssetManager.get_asset_name(selected_parts_array[i].part_material, false)
-			if base_2 == base_1:
-				has_material = true
-				break
-			j = j + 1
-		
-		if not has_material:
-			used_materials.append(selected_parts_array[i].part_material)
-		i = i + 1
-	
-	#get used meshes
-	i = 0
-	used_meshes.append(selected_parts_array[0].part_mesh_node.mesh)
-	while i < selected_parts_array.size():
-		var j : int = 0
-		var has_mesh : bool = false
-		while j < used_meshes.size():
-			if AssetManager.get_asset_name(selected_parts_array[i].part_mesh_node.mesh) == AssetManager.get_asset_name(used_meshes[j]):
-				has_mesh = true
-				break
-			j = j + 1
-			
-		if not has_mesh:
-			used_meshes.append(selected_parts_array[i].part_mesh_node.mesh)
-		i = i + 1
+	#get used colors, materials and meshes
+	used_colors = SaveUtils.get_colors_from_parts(selected_parts_array)
+	used_materials = SaveUtils.get_materials_from_parts(selected_parts_array)
+	used_meshes = SaveUtils.get_meshes_from_parts(selected_parts_array)
 	
 	#create mappings to quickly assign the used color and material ids
 	color_to_int_mapping = create_mapping(used_colors)
-	material_name_to_int_mapping = create_mapping(used_materials.map(func(input): return AssetManager.get_asset_name(input, false)))
-	mesh_to_int_mapping = create_mapping(used_meshes.map(func(input): return AssetManager.get_asset_name(input)))
-	
-	
+	material_name_to_int_mapping = create_mapping(used_materials.map(func(input): return AssetManager.get_name_of_asset(input, false)))
+	mesh_to_int_mapping = create_mapping(used_meshes.map(func(input): return AssetManager.get_name_of_asset(input)))
 	
 	#add colors to save
-	i = 0
+	var i : int = 0
 	"TODO"#make this a safer operation (string variable or const instead of hardcoded)
 	#and/or use a function dispatch for each header type
 	file.append("::COLOR::")
 	while i < used_colors.size():
-		file.append(separator.join(SaveUtils.serialize_color(used_colors[i])))
+		file.append(separator.join(SaveUtils.color_serialize(used_colors[i])))
 		i = i + 1
 	
 	#add materials to save
 	i = 0
 	file.append("::MATERIAL::")
 	while i < used_materials.size():
-		file.append(separator.join(SaveUtils.serialize_material(used_materials[i])))
+		if not assets_used.has(used_materials[i]):
+			assets_used.append(used_materials[i])
+		file.append(separator.join(SaveUtils.material_serialize(used_materials[i])))
 		i = i + 1
 	
 	#add meshes to save
@@ -735,7 +783,7 @@ static func save_model(filepath : String, name : String):
 	while i < used_meshes.size():
 		if not assets_used.has(used_meshes[i]):
 			assets_used.append(used_meshes[i])
-		file.append(separator.join(SaveUtils.serialize_mesh(used_meshes[i])))
+		file.append(separator.join(SaveUtils.mesh_serialize(used_meshes[i])))
 		i = i + 1
 	
 	
@@ -743,12 +791,12 @@ static func save_model(filepath : String, name : String):
 	i = 0
 	file.append("::MODEL::")
 	while i < selected_parts_array.size():
-		file.append(separator.join(SaveUtils.serialize_part(selected_parts_array[i], color_to_int_mapping, material_name_to_int_mapping, mesh_to_int_mapping)))
+		file.append(separator.join(SaveUtils.part_serialize(selected_parts_array[i], color_to_int_mapping, material_name_to_int_mapping, mesh_to_int_mapping)))
 		i = i + 1
 	
 	
-	
-	
+	#package everything up
+	SaveUtils.data_zip(assets_used, file, filepath, name)
 
 
 static func load_model(filepath : String, name : String):
@@ -757,12 +805,9 @@ static func load_model(filepath : String, name : String):
 	var used_materials : Array[Material] = []
 	var used_meshes : Array[Mesh] = []
 	var file : PackedStringArray = []
-	var file_bytes : PackedByteArray = []
-	var zip_reader : ZIPReader = ZIPReader.new()
 	var i : int = 0
-	zip_reader.open(filepath + name + ".tmv")
-	file_bytes = zip_reader.read_file(name + "_data.csv")
-	file = file_bytes.get_string_from_utf8().split("\n")
+	
+	file = SaveUtils.data_unzip(filepath, name)
 	
 	#mode from headers
 	var mode : String
@@ -780,31 +825,28 @@ static func load_model(filepath : String, name : String):
 		var line = file[i].split(",")
 	#load color
 		if mode == data_headers[0]:
-			used_colors.append(SaveUtils.deserialize_color(line))
+			used_colors.append(SaveUtils.color_deserialize(line))
 			
 	#load material
 		elif mode == data_headers[1]:
-			used_materials.append(SaveUtils.deserialize_material(line))
+			used_materials.append(SaveUtils.material_deserialize(line))
 	#load mesh
 		elif mode == data_headers[2]:
-			if line[0] != null or line[0] != "":
-				var mesh_bytes = zip_reader.read_file(line[0])
-				var f = FileAccess.open(filepath + line[0], FileAccess.WRITE)
-				f.store_buffer(mesh_bytes)
-				f.close()
-				var new = ResourceLoader.load(filepath + line[0])
-				new.resource_path = filepath + line[0]
-				used_meshes.append(new)
-				DirAccess.remove_absolute(filepath + line[0])
-				
+			used_meshes.append(SaveUtils.mesh_deserialize(line))
 	#load parts
 		elif mode == data_headers[3]:
-			var new : Part = SaveUtils.deserialize_part(line, used_colors, used_materials, used_meshes)
+			var new : Part = SaveUtils.part_deserialize(line, used_colors, used_materials, used_meshes)
 			
 			workspace.add_child(new)
 			new.initialize()
 		
 		i = i + 1
+
+
+static func export_model():
+	
+	return
+
 
 #selection box functions--------------------------------------------------------
 #instance and fit selection box to a part as child of workspace node and add it to the array
@@ -899,17 +941,9 @@ static func create_mapping(input_data : Array):
 	return map
 
 
-
-static func get_resource_name(name : String):
-	"TODO"#clarify this
-	push_warning("WorkspaceManager.get_resource_name(): DEPRECATED! use AssetManager.get_asset_name() instead!")
-	return name.rsplit("/", true, 1)[-1].rsplit(".", true, 1)[0]
-
-
 #old function
 #read colors from file
-static func read_colors_and_create_colors(file_as_string : String):
-	var lines : PackedStringArray = file_as_string.split("\n")
+static func read_colors_and_create_colors(lines : PackedStringArray):
 	var color_array : Array[Color] = []
 	var color_name_array : Array[String] = []
 	var i : int = 0
@@ -932,6 +966,9 @@ static func read_colors_and_create_colors(file_as_string : String):
 		if data.size() == 4:
 			color_name_array.append(data[3])
 			color_array.append(Color8(int(data[0]), int(data[1]), int(data[2])))
+		elif data.size() == 3:
+			color_array.append(Color8(int(data[0]), int(data[1]), int(data[2])))
+		
 		i = i + 1
 	
 	var r_dict : Dictionary = {}

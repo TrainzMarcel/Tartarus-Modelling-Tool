@@ -1,7 +1,8 @@
-[gd_scene load_steps=27 format=3 uid="uid://clfcgcedn47iy"]
+[gd_scene load_steps=29 format=3 uid="uid://clfcgcedn47iy"]
 
 [ext_resource type="Script" path="res://editor/classes/transform_handles/transform_handle.gd" id="1_i4hrh"]
 [ext_resource type="Script" path="res://editor/classes/transform_handles/transform_handle_root.gd" id="1_rew5o"]
+[ext_resource type="Material" uid="uid://c8p4ayc185mun" path="res://editor/classes/transform_handles/transform_handle_material.tres" id="3_8dgg4"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pwmkv"]
 shading_mode = 0
@@ -128,6 +129,11 @@ specular_mode = 2
 albedo_color = Color(0, 0, 0.8, 1)
 texture_repeat = false
 
+[sub_resource type="SphereMesh" id="SphereMesh_vtftx"]
+material = ExtResource("3_8dgg4")
+radius = 0.25
+height = 0.5
+
 [node name="TransformHandleRoot" type="Node3D"]
 script = ExtResource("1_rew5o")
 
@@ -135,6 +141,7 @@ script = ExtResource("1_rew5o")
 visible = false
 script = ExtResource("1_i4hrh")
 direction_vector = Vector3(1, 0, 0)
+associated_tools = Array[int]([2, 8])
 material = SubResource("StandardMaterial3D_pwmkv")
 color_default = Color(0.8, 0, 0, 1)
 color_drag = Color(0.58, 0, 0, 1)
@@ -166,6 +173,7 @@ disabled = true
 visible = false
 script = ExtResource("1_i4hrh")
 direction_vector = Vector3(0, 1, 0)
+associated_tools = Array[int]([2, 8])
 material = SubResource("StandardMaterial3D_r516u")
 color_default = Color(0, 0.8, 0, 1)
 color_drag = Color(0, 0.58, 0, 1)
@@ -197,6 +205,7 @@ disabled = true
 visible = false
 script = ExtResource("1_i4hrh")
 direction_vector = Vector3(0, 0, 1)
+associated_tools = Array[int]([2, 8])
 material = SubResource("StandardMaterial3D_duhfq")
 color_default = Color(0, 0, 0.8, 1)
 color_drag = Color(0, 0, 0.58, 1)
@@ -228,6 +237,7 @@ disabled = true
 visible = false
 script = ExtResource("1_i4hrh")
 direction_vector = Vector3(-1, 0, 0)
+associated_tools = Array[int]([2, 8])
 material = SubResource("StandardMaterial3D_r8oru")
 color_default = Color(0.8, 0, 0, 1)
 color_drag = Color(0.58, 0, 0, 1)
@@ -274,6 +284,7 @@ disabled = true
 visible = false
 script = ExtResource("1_i4hrh")
 direction_vector = Vector3(0, -1, 0)
+associated_tools = Array[int]([2, 8])
 material = SubResource("StandardMaterial3D_g6qia")
 color_default = Color(0, 0.8, 0, 1)
 color_drag = Color(0, 0.58, 0, 1)
@@ -320,6 +331,7 @@ disabled = true
 visible = false
 script = ExtResource("1_i4hrh")
 direction_vector = Vector3(0, 0, -1)
+associated_tools = Array[int]([2, 8])
 material = SubResource("StandardMaterial3D_5f02d")
 color_default = Color(0, 0, 0.8, 1)
 color_drag = Color(0, 0, 0.58, 1)
@@ -365,9 +377,9 @@ mesh = SubResource("CylinderMesh_3khkg")
 [node name="RotationHandleX" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-tool_type = 3
 direction_vector = Vector3(1, 0, 0)
 direction_type = 2
+associated_tools = Array[int]([3])
 material = SubResource("StandardMaterial3D_6bems")
 color_default = Color(0.8, 0, 0, 1)
 color_drag = Color(0.58, 0, 0, 1)
@@ -443,9 +455,9 @@ disabled = true
 [node name="RotationHandleY" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-tool_type = 3
 direction_vector = Vector3(0, 1, 0)
 direction_type = 2
+associated_tools = Array[int]([3])
 material = SubResource("StandardMaterial3D_k0bnw")
 color_default = Color(0, 0.8, 0, 1)
 color_drag = Color(0, 0.58, 0, 1)
@@ -520,9 +532,9 @@ disabled = true
 [node name="RotationHandleZ" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-tool_type = 3
 direction_vector = Vector3(0, 0, 1)
 direction_type = 2
+associated_tools = Array[int]([3])
 material = SubResource("StandardMaterial3D_rjfsp")
 color_default = Color(0, 0, 0.8, 1)
 color_drag = Color(0, 0, 0.58, 1)
@@ -598,9 +610,9 @@ disabled = true
 [node name="ScaleHandleX" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-tool_type = 4
 direction_vector = Vector3(1, 0, 0)
 direction_type = 3
+associated_tools = Array[int]([4])
 handle_force_follow_abb_surface = true
 material = SubResource("StandardMaterial3D_qwgas")
 color_default = Color(0.8, 0, 0, 1)
@@ -622,9 +634,9 @@ mesh = SubResource("SphereMesh_yly6o")
 [node name="ScaleHandleY" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-tool_type = 4
 direction_vector = Vector3(0, 1, 0)
 direction_type = 3
+associated_tools = Array[int]([4])
 handle_force_follow_abb_surface = true
 material = SubResource("StandardMaterial3D_dq7hf")
 color_default = Color(0, 0.8, 0, 1)
@@ -646,9 +658,9 @@ mesh = SubResource("SphereMesh_yly6o")
 [node name="ScaleHandleZ" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-tool_type = 4
 direction_vector = Vector3(0, 0, 1)
 direction_type = 3
+associated_tools = Array[int]([4])
 handle_force_follow_abb_surface = true
 material = SubResource("StandardMaterial3D_y40t4")
 color_default = Color(0, 0, 0.8, 1)
@@ -670,9 +682,9 @@ mesh = SubResource("SphereMesh_yly6o")
 [node name="ScaleHandleX2" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-tool_type = 4
 direction_vector = Vector3(-1, 0, 0)
 direction_type = 3
+associated_tools = Array[int]([4])
 handle_force_follow_abb_surface = true
 material = SubResource("StandardMaterial3D_8luxa")
 color_default = Color(0.8, 0, 0, 1)
@@ -694,9 +706,9 @@ mesh = SubResource("SphereMesh_yly6o")
 [node name="ScaleHandleY2" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-tool_type = 4
 direction_vector = Vector3(0, -1, 0)
 direction_type = 3
+associated_tools = Array[int]([4])
 handle_force_follow_abb_surface = true
 material = SubResource("StandardMaterial3D_jc88e")
 color_default = Color(0, 0.8, 0, 1)
@@ -718,9 +730,9 @@ mesh = SubResource("SphereMesh_yly6o")
 [node name="ScaleHandleZ2" type="StaticBody3D" parent="." node_paths=PackedStringArray("mesh_array", "collider_array")]
 visible = false
 script = ExtResource("1_i4hrh")
-tool_type = 4
 direction_vector = Vector3(0, 0, -1)
 direction_type = 3
+associated_tools = Array[int]([4])
 handle_force_follow_abb_surface = true
 material = SubResource("StandardMaterial3D_4fndx")
 color_default = Color(0, 0, 0.8, 1)
@@ -738,3 +750,7 @@ disabled = true
 transform = Transform3D(-1, 0, -8.74228e-08, 8.74228e-08, -4.37114e-08, -1, -3.82137e-15, -1, 4.37114e-08, -8.74228e-08, 0, -1)
 material_override = SubResource("StandardMaterial3D_4fndx")
 mesh = SubResource("SphereMesh_yly6o")
+
+[node name="MeshInstance3DPivot" type="MeshInstance3D" parent="."]
+visible = false
+mesh = SubResource("SphereMesh_vtftx")

@@ -71,29 +71,28 @@ func cam_input(
 	
 	#right click and scroll for speed adjustment
 	if event is InputEventMouseButton:
-		match event.button_index:
-			MOUSE_BUTTON_RIGHT:
-				if event.pressed:
-					Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-				else:
-					Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-					
-			MOUSE_BUTTON_WHEEL_UP:
-				if is_locked_on:
-					#update zoom
-					lock_zoom = max(lock_zoom / speed_scale, min_zoom)
-					global_position = lock_position + basis.z * lock_zoom
-				else:
-					#increase fly velocity
-					velocity = clamp(velocity * speed_scale, min_speed, max_speed)
-			MOUSE_BUTTON_WHEEL_DOWN:
-				if is_locked_on:
-					#update zoom
-					lock_zoom = max(lock_zoom * speed_scale, min_zoom)
-					global_position = lock_position + basis.z * lock_zoom
-				else:
-					#decrease fly velocity
-					velocity = clamp(velocity / speed_scale, min_speed, max_speed)
+		if event.button_index == MOUSE_BUTTON_RIGHT:
+			if event.pressed:
+				Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+			else:
+				Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+				
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP and not Main.is_ui_hovered:
+			if is_locked_on:
+				#update zoom
+				lock_zoom = max(lock_zoom / speed_scale, min_zoom)
+				global_position = lock_position + basis.z * lock_zoom
+			else:
+				#increase fly velocity
+				velocity = clamp(velocity * speed_scale, min_speed, max_speed)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and not Main.is_ui_hovered:
+			if is_locked_on:
+				#update zoom
+				lock_zoom = max(lock_zoom * speed_scale, min_zoom)
+				global_position = lock_position + basis.z * lock_zoom
+			else:
+				#decrease fly velocity
+				velocity = clamp(velocity / speed_scale, min_speed, max_speed)
 		
 		camera_speed_label.text = str(round(velocity * 10) * 0.1)
 
@@ -104,7 +103,8 @@ func cam_process(
 		transform_handle_root : TransformHandleRoot,
 		transform_handle_scale : float,
 		selected_tool_handle_array : Array[TransformHandle],
-		selected_parts_abb : ABB
+		selected_parts_abb : ABB,
+		last_mouse_event : InputEventMouse
 		):
 	
 	if not current:
@@ -119,6 +119,10 @@ func cam_process(
 			float(Input.is_physical_key_pressed(KEY_E)) - float(Input.is_physical_key_pressed(KEY_Q)), 
 			float(Input.is_physical_key_pressed(KEY_S)) - float(Input.is_physical_key_pressed(KEY_W))
 		).normalized()
+	
+	if direction != Vector3.ZERO:
+		Main.hovered_part = Main.part_hover_check()
+		WorkspaceManager.drag_handle(last_mouse_event, true)
 	
 	if Input.is_physical_key_pressed(KEY_SHIFT): # boost
 		translate(direction * velocity * delta * boost_speed_multiplier)
@@ -135,10 +139,10 @@ func cam_process(
 		second_camera.global_position = term.normalized() * transform_handle_scale + transform_handle_root.global_position
 		
 		
-		#i put a check in at main.set_transform_handle_root_position()
+		#i put a check in at toolmanager.handle_set_root_position()
 		#which automatically keeps the transform_handle_root aligned with the part
 		#if handle_force_follow_abb_surface on the first transform handle is set to true
-		#so this should work
+		"TODO"#move this code out of here and into ToolManager
 		if selected_tool_handle_array != null:
 			var extension : Vector3 = selected_parts_abb.extents
 			extension = extension * transform_handle_scale * 0.5

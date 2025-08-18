@@ -16,9 +16,9 @@ enum DirectionTypeEnum
 	set(value):
 		automated_setup()
 
-@export var tool_type : Main.SelectedToolEnum = Main.SelectedToolEnum.t_move
 @export var direction_vector : Vector3
 @export var direction_type : DirectionTypeEnum = DirectionTypeEnum.axis_move
+@export var associated_tools : Array[ToolManager.SelectedToolEnum] = []
 
 #this setting makes it so that the transform handle gets moved out to the face it represents
 #note that im not implementing this for local transform mode where the handles may not align with any face

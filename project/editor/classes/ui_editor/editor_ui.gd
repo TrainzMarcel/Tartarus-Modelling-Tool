@@ -30,6 +30,9 @@ static var b_material_tool : Button
 #static var b_dropdown_material : Button
 static var b_lock_tool : Button
 
+static var b_pivot_tool : Button
+static var b_pivot_reset : Button
+
 #csg buttons
 #∪
 #static var b_csg_union : Button
@@ -89,13 +92,11 @@ static var fm_file : FileManager
 func initialize(
 	on_spawn_pressed : Callable,
 	select_tool : Callable,
+	on_pivot_reset_pressed : Callable,
 	main_on_snap_button_pressed : Callable,
 	main_on_snap_text_changed : Callable,
 	on_local_transform_active_set : Callable,
 	on_snapping_active_set : Callable,
-	on_color_selected : Callable,
-	on_material_selected : Callable,
-	on_part_type_selected : Callable,
 	on_top_bar_id_pressed : Callable,
 	on_file_manager_accept_pressed : Callable
 	):
@@ -122,6 +123,8 @@ func initialize(
 	b_paint_tool = %ButtonPaintTool
 	b_material_tool = %ButtonMaterialTool
 	b_lock_tool = %ButtonLockTool
+	b_pivot_tool = %ButtonChangePivotTool
+	b_pivot_reset = %ButtonPivotReset
 	
 	#∪
 	#b_csg_union = %ButtonCSGUnion
@@ -185,29 +188,8 @@ func initialize(
 		fm_file
 	]
 	
-#initialize picker/selector menus
-	#future
-	#var default_palette : WorkspaceManager.ColorPalette = WorkspaceManager.ColorPalette.new()
-	#default_palette.color_array = r_dict_2.color_array
-	#default_palette.color_name_array = r_dict_2.color_name_array
-	#WorkspaceManager.available_color_palette_array.append(default_palette)
-	#WorkspaceManager.equipped_color_palette = default_palette
+#picker/selector menus are now initialized in WorkspaceManager.initialize()
 	
-	
-	var r_dict : Dictionary = WorkspaceManager.read_colors_and_create_colors(FileAccess.get_file_as_string(FilePathRegistry.data_file_color))
-	var r_dict_2 : Dictionary = AutomatedColorPalette.full_color_sort(gc_paint_panel, r_dict.color_array, r_dict.color_name_array)
-	EditorUI.create_color_buttons(gc_paint_panel, on_color_selected, r_dict_2.color_array, r_dict_2.color_name_array)
-	EditorUI.create_material_buttons(on_material_selected)
-	EditorUI.create_part_type_buttons(on_part_type_selected)
-	
-	
-	#set tooltip script in filedialog
-	"TODO"#EditorUI.customize_file_dialog(fd_file)
-	
-	#DataLoader.read_parts_and_create_parts()
-	#UI.create_part_buttons(gc_part_panel, on_part_selected, r_dict_3.part_array)
-	#DataLoader.read_materials_and_create_materials()
-	#UI.create_material_buttons()
 	
 #connect signals
 	b_snapping_enabled.toggled.connect(on_snapping_active_set)
@@ -236,6 +218,8 @@ func initialize(
 	b_material_tool.pressed.connect(select_tool.bind(b_material_tool))
 	b_lock_tool.pressed.connect(select_tool.bind(b_lock_tool))
 	b_spawn_part.pressed.connect(on_spawn_pressed)
+	b_pivot_tool.pressed.connect(select_tool.bind(b_pivot_tool))
+	b_pivot_reset.pressed.connect(on_pivot_reset_pressed)
 	
 	pm_file.id_pressed.connect(on_top_bar_id_pressed.bind(pm_file))
 	pm_edit.id_pressed.connect(on_top_bar_id_pressed.bind(pm_edit))
@@ -281,18 +265,16 @@ static func create_color_buttons(parent : Control, on_color_selected : Callable,
 	sample_button.queue_free()
 
 
-static func create_part_type_buttons(on_part_type_selected : Callable):
-	var file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_part)
-	
+static func create_part_type_buttons(on_part_type_selected : Callable, parts_list : Array[Part]):
 	var new_buttons : Array = UIUtils.update_list_ui(
 	EditorUI.gc_part_panel,
 	func(data_item, button):
 		#strip .tres
-		button.text = data_item.left(-5)
+		button.text = data_item.get_slice(".", 0)
 		button.pressed.connect(on_part_type_selected.bind(button))
 		return button,
 	preload(FilePathRegistry.scene_material_part_type_button).instantiate(),
-	file_list
+	parts_list.map(func(input : Part): return AssetManager.get_name_of_asset(input.part_mesh_node.mesh))
 	)
 	
 	
@@ -300,18 +282,17 @@ static func create_part_type_buttons(on_part_type_selected : Callable):
 
 
 
-static func create_material_buttons(on_material_selected):
-	var file_list = DirAccess.get_files_at(FilePathRegistry.data_folder_material)
-	
+static func create_material_buttons(on_material_selected : Callable, materials_list : Array[Material]):
+	var material_names : Array = materials_list.map(func(input : Material): return AssetManager.normalize_asset_name(AssetManager.get_name_of_asset(input), false))
 	var new_buttons : Array = UIUtils.update_list_ui(
 	EditorUI.vbc_material_panel,
 	func(data_item, button):
 		#strip .tres
-		button.text = data_item.left(-5).capitalize()
+		button.text = data_item.get_slice(".", 0)
 		button.pressed.connect(on_material_selected.bind(button))
 		return button,
-	preload(FilePathRegistry.scene_material_part_type_button).instantiate(),
-	file_list
+		preload(FilePathRegistry.scene_material_part_type_button).instantiate(),
+		material_names
 	)
 	
 	

@@ -1,4 +1,5 @@
 ::COLOR::
+autosort = true
 242,243,243,White
 161,165,162,Grey
 249,233,153,Light yellow

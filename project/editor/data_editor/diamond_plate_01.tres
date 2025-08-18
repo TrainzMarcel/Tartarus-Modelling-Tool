@@ -1,0 +1,24 @@
+[gd_resource type="ShaderMaterial" load_steps=6 format=3 uid="uid://w1lyc2snmeo0"]
+
+[ext_resource type="Shader" path="res://editor/data_editor/shader/triplanar_special.gdshader" id="1_h1ij3"]
+[ext_resource type="Texture2D" uid="uid://2oao65j5nn5x" path="res://editor/data_editor/image_files/diamond_plate_01_albedo.jpg" id="1_qwtna"]
+[ext_resource type="Texture2D" uid="uid://n2xm7brhaxe5" path="res://editor/data_editor/image_files/diamond_plate_01_metalness.jpg" id="2_jwau2"]
+[ext_resource type="Texture2D" uid="uid://bfucmx3340gh4" path="res://editor/data_editor/image_files/diamond_plate_01_normal.jpg" id="3_8aneo"]
+[ext_resource type="Texture2D" uid="uid://dkitfjpb700ts" path="res://editor/data_editor/image_files/diamond_plate_01_roughness.jpg" id="4_ln4x5"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_h1ij3")
+shader_parameter/color = Color(1, 1, 1, 1)
+shader_parameter/mixed_color_ratio = 0.3
+shader_parameter/contrast = 0.15
+shader_parameter/roughness = 0.395
+shader_parameter/metallic_texture_channel = Vector4(1, 0, 0, 0)
+shader_parameter/specular = 0.793
+shader_parameter/metallic = null
+shader_parameter/normal_scale = 0.694001
+shader_parameter/uv1_scale = Vector3(0.5, 0.5, 0.5)
+shader_parameter/texture_albedo = ExtResource("1_qwtna")
+shader_parameter/texture_metallic = ExtResource("2_jwau2")
+shader_parameter/texture_roughness = ExtResource("4_ln4x5")
+shader_parameter/texture_normal = ExtResource("3_8aneo")

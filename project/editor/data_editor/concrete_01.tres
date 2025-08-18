@@ -1,0 +1,22 @@
+[gd_resource type="ShaderMaterial" load_steps=5 format=3 uid="uid://0x5khjvvw3fs"]
+
+[ext_resource type="Shader" path="res://editor/data_editor/shader/triplanar_special.gdshader" id="1_4yr4k"]
+[ext_resource type="Texture2D" uid="uid://ck8nrtfk85ti3" path="res://editor/data_editor/image_files/concrete_01_albedo.jpg" id="2_7dfdb"]
+[ext_resource type="Texture2D" uid="uid://bcmipoklan6mw" path="res://editor/data_editor/image_files/concrete_01_normal.jpg" id="3_v7u8p"]
+[ext_resource type="Texture2D" uid="uid://ct0gghjo2wwnq" path="res://editor/data_editor/image_files/concrete_01_roughness.jpg" id="4_gg5ko"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_4yr4k")
+shader_parameter/color = Color(1, 1, 1, 1)
+shader_parameter/mixed_color_ratio = 0.47
+shader_parameter/contrast = 0.03
+shader_parameter/roughness = 0.413
+shader_parameter/metallic_texture_channel = null
+shader_parameter/specular = null
+shader_parameter/metallic = 0.0
+shader_parameter/normal_scale = 1.559
+shader_parameter/uv1_scale = Vector3(1, 1, 1)
+shader_parameter/texture_albedo = ExtResource("2_7dfdb")
+shader_parameter/texture_roughness = ExtResource("4_gg5ko")
+shader_parameter/texture_normal = ExtResource("3_v7u8p")

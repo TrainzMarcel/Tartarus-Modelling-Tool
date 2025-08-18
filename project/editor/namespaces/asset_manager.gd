@@ -2,27 +2,26 @@ extends RefCounted
 class_name AssetManager
 #formerly materialmanager, manages all 3d modelling related assets (not any ui assets)
 
-
 #the central asset storage/tracker
 static var name_to_asset_map : Dictionary = {}
 static var debug_called : int = 0
 
 #utility function: ensures keys stay consistent
-static func get_asset_name(asset : Resource, include_color : bool = true):
+static func get_name_of_asset(asset : Resource, include_color : bool = true, add_file_ending : bool = false):
 	if asset == null:
 		return
 	
 	var base_name : String
 	if asset.resource_path == "":
-		base_name = normalize_asset_name(asset.resource_name)
+		base_name = normalize_asset_name(asset.resource_name, add_file_ending)
 	else:
-		base_name = normalize_asset_name(asset.resource_path)
+		base_name = normalize_asset_name(asset.resource_path, add_file_ending)
 	
 	#add hex color to key to differentiate by color and to easily fetch a colored material if it exists already
 	#i think i will not add the color to resource_name, only the key
 	#so i can more easily find all instances of a material by looping through all asset dict values
 	if base_name == "":
-		push_error("get_asset_name(): asset added to database without resource_name set")
+		push_error("asset " + str(asset) + " has no resource_name and no resource_path set")
 	
 	if asset is BaseMaterial3D or asset is ShaderMaterial and include_color:
 		base_name = base_name + "," + str(get_material_color(asset).to_html(false))
@@ -30,19 +29,38 @@ static func get_asset_name(asset : Resource, include_color : bool = true):
 	
 	return StringName(base_name)
 
-"TODO"#make this less hacky and ugly
-#this function is meant to have the resource_path or resource_name passed in
-static func normalize_asset_name(name):
-	return name.rsplit("/", true, 1)[-1].rsplit(",", true, 1)[0]
 
-static func get_material_name_with_color(mat, color : Color):
-	return get_asset_name(mat, false) + "," + str(color.to_html(false))
+#this function is meant to have the resource_path or resource_name passed in
+#if custom color suffix is set, any original color suffix will be stripped away
+#set keep_file_ending to false for key related things, set to true for saving to file
+static func normalize_asset_name(name : String, keep_file_ending : bool, custom_color_suffix : Color = Color.WHITE):
+	#strip filepath
+	var result : PackedStringArray = name.rsplit("/", true, 1)
+	name = result[result.size() - 1]
+	
+	if not keep_file_ending:
+		name = name.get_slice(".", 0)
+	
+	if custom_color_suffix != Color.WHITE:
+		#strip color suffix if there is one
+		name = name.get_slice(",", 0)
+		#add the custom color
+		name = name + "," + str(custom_color_suffix.to_html(false))
+	else:
+		#simply strip color suffix anyway if this is set to no color
+		name = name.get_slice(",", 0)
+	
+	
+	if name == "":
+		push_error("invalid (empty) asset name")
+	
+	return name
 
 
 static func get_asset(asset : Resource):
 	if asset == null:
 		return
-	return name_to_asset_map.get(get_asset_name(asset))
+	return name_to_asset_map.get(get_name_of_asset(asset))
 
 
 #this function takes both string and stringname
@@ -52,17 +70,45 @@ static func get_asset_by_name(asset_name):
 		return result
 	
 	#special case: materials include their color in their key but not their resource name
-	asset_name = normalize_asset_name(asset_name)
+	asset_name = normalize_asset_name(asset_name, false)
 	for i in name_to_asset_map.values():
 		if i.resource_name == asset_name:
 			return i
 
 
+#custom function for the loading process
+static func get_material_by_name_any_color(asset_name : String):
+	for i in name_to_asset_map.keys():
+		if i.get_slice(",", 0) == asset_name:
+			return name_to_asset_map.get(i)
+
+
+#required by saveutils to save all the imagetextures used by materials among other subresources
+static func get_subresources(asset : Resource, subresources : Array = []):
+	#loop through all properties
+	for property in asset.get_property_list():
+		#skip non-persistent/internal properties
+		if property.usage & PROPERTY_USAGE_STORAGE == 0:
+			continue
+		
+		var parameter = asset.get(property.name)
+		#check each parameter
+		if parameter is Resource:
+			if subresources.has(parameter):
+				push_error("cyclic resource dependency!")
+				return subresources
+			#add every resource type parameter
+			subresources.append(parameter)
+			#get subresources for the parameter and add them back
+			subresources.append_array(get_subresources(parameter, subresources))
+	#finally return after the loop
+	return subresources
+
+
 #management methods
 static func register_asset(asset : Resource):
-	#add if material exists, otherwise do nothing
-	var base_name : StringName = get_asset_name(asset)
-	
+	#add if asset exists, otherwise do nothing
+	var base_name : StringName = get_name_of_asset(asset)
 	
 	#only register if asset already exists
 	if name_to_asset_map.get(base_name) != null:
@@ -70,10 +116,18 @@ static func register_asset(asset : Resource):
 		#debug_pretty_print()
 		#push_warning("asset already exists: ", base_name)
 		return
+	
+	#safety check
+	if base_name == null or base_name == "":
+		push_error("attempted to register asset with unnamed key, aborting")
+		return
+	
 	#assets must be named in a standard way
 	asset.resource_name = base_name
 	
 	#register the asset
+	if not asset is CompressedTexture2D:
+		debug_pretty_print()
 	name_to_asset_map[base_name] = asset
 
 
@@ -87,12 +141,12 @@ static func register_asset_with_subresources(asset : Resource, asset_history : A
 		if property.usage & PROPERTY_USAGE_STORAGE == 0:
 			continue
 		
-		var param = asset.get(property.name)
-		if param is Resource:
-			if asset_history.has(param):
+		var parameter = asset.get(property.name)
+		if parameter is Resource:
+			if asset_history.has(parameter):
 				push_error("cyclic resource dependency!")
 				return
-			register_asset_with_subresources(param, asset_history)
+			register_asset_with_subresources(parameter, asset_history)
 	return
 
 
@@ -100,9 +154,16 @@ static func register_asset_with_subresources(asset : Resource, asset_history : A
 static func unregister_asset(asset : Resource):
 	#remove if material exists, otherwise do nothing
 	#if base material is removed, remove all the combo materials too
-	var base_name : StringName = get_asset_name(asset)
+	var base_name : StringName = get_name_of_asset(asset)
 	if base_name != null:
 		name_to_asset_map.erase(base_name)
+
+
+#run asset name through normalization first
+static func is_asset_key_taken(asset_name : String):
+	if name_to_asset_map.get(asset_name) != null:
+		return true
+	return false
 
 
 static func refresh_all_storage(all_existing_assets : Array):
@@ -116,13 +177,14 @@ static func refresh_all_storage(all_existing_assets : Array):
 
 static func recolor_material(mat : Material, color : Color, automatic_register : bool):
 	#first search if this material already exists
-	var separate : Material = get_asset_by_name(get_material_name_with_color(mat, color))
+	var separate : Material = get_asset_by_name(normalize_asset_name(get_name_of_asset(mat), false, color))
 	if separate != null:
 		return separate
 	
+	#otherwise recolor this material
 	separate = mat.duplicate()
 	#set name to original material without any color
-	separate.resource_name = get_asset_name(mat, false)
+	separate.resource_name = get_name_of_asset(mat, false)
 	
 	if mat is ShaderMaterial:
 		separate.set_shader_parameter("color", color)
@@ -138,7 +200,10 @@ static func recolor_material(mat : Material, color : Color, automatic_register :
 
 static func get_material_color(mat : Material):
 	if mat is ShaderMaterial:
-		return mat.get_shader_parameter("color")
+		var attempt = mat.get_shader_parameter("color")
+		if attempt == null:
+			return Color.WHITE
+		return attempt
 	elif mat is BaseMaterial3D:
 		return mat.albedo_color
 

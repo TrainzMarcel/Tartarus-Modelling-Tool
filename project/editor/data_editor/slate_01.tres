@@ -1,0 +1,17 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3 uid="uid://1cphnjyn0yw4"]
+
+[ext_resource type="Texture2D" uid="uid://br16156q56bux" path="res://editor/data_editor/image_files/slate_01_albedo.jpg" id="1_qimfx"]
+[ext_resource type="Texture2D" uid="uid://dtx0g4i8ygptx" path="res://editor/data_editor/image_files/slate_01_ambient_occlusion.jpg" id="2_i1ptf"]
+[ext_resource type="Texture2D" uid="uid://cycj2x1ykpeko" path="res://editor/data_editor/image_files/slate_01_normal.png" id="3_puqg0"]
+
+[resource]
+albedo_texture = ExtResource("1_qimfx")
+normal_enabled = true
+normal_scale = 0.4
+normal_texture = ExtResource("3_puqg0")
+ao_enabled = true
+ao_light_affect = 0.5
+ao_texture = ExtResource("2_i1ptf")
+uv1_scale = Vector3(0.5, 0.5, 0.5)
+uv1_triplanar = true
+uv1_world_triplanar = true

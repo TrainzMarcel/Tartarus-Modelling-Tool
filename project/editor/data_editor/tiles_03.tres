@@ -1,0 +1,22 @@
+[gd_resource type="ShaderMaterial" load_steps=5 format=3 uid="uid://y1ud2qsv5ac"]
+
+[ext_resource type="Shader" path="res://editor/data_editor/shader/triplanar_special.gdshader" id="1_xpv6b"]
+[ext_resource type="Texture2D" uid="uid://cmm08jytsr6t1" path="res://editor/data_editor/image_files/tiles_03_albedo.jpg" id="2_b8vws"]
+[ext_resource type="Texture2D" uid="uid://4hq5ohvp2a74" path="res://editor/data_editor/image_files/tiles_03_normal.jpg" id="3_ym4in"]
+[ext_resource type="Texture2D" uid="uid://dj8bj82rhsdyp" path="res://editor/data_editor/image_files/tiles_03_roughness.jpg" id="4_sw40a"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_xpv6b")
+shader_parameter/color = Color(0.490196, 0.490196, 0.490196, 1)
+shader_parameter/mixed_color_ratio = 0.56
+shader_parameter/contrast = 0.02
+shader_parameter/roughness = 0.793
+shader_parameter/metallic_texture_channel = null
+shader_parameter/specular = 0.0
+shader_parameter/metallic = null
+shader_parameter/normal_scale = 1.468
+shader_parameter/uv1_scale = Vector3(0.333, 0.333, 0.333)
+shader_parameter/texture_albedo = ExtResource("2_b8vws")
+shader_parameter/texture_roughness = ExtResource("4_sw40a")
+shader_parameter/texture_normal = ExtResource("3_ym4in")

@@ -270,7 +270,6 @@ theme_override_fonts/font = ExtResource("6_07mtu")
 item_count = 1
 item_0/text = "Open Asset Folder"
 item_0/id = 1
-item_0/disabled = true
 
 [node name="Help" type="PopupMenu" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/MenuBarTop"]
 unique_name_in_owner = true
@@ -942,7 +941,8 @@ text = "3"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool"]
+[node name="ButtonPivotReset" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool"]
+unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Reset pivot"
 theme_override_font_sizes/font_size = 15

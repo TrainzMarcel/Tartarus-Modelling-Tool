@@ -1,4 +1,5 @@
 extends Node3D
 class_name TransformHandleRoot
 
-var tool_handle_array : Dictionary
+#a class of a bygone era
+#now just serves as a definitive identifier for what node holds transform handles

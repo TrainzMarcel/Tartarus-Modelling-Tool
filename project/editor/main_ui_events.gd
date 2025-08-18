@@ -7,66 +7,11 @@ class_name MainUIEvents
 
 #set selected state and is_drag_tool
 static func select_tool(button : Button):
-	if not Main.selected_tool_handle_array.is_empty():
-		TransformHandleUtils.set_tool_handle_array_active(Main.selected_tool_handle_array, false)
-	"TODO"#use dynamic dispatch here with a dict mapping instead of this ugly match thing
-	var has_associated_transform_handles : bool = false
-	if button.button_pressed:
-		#all tools require hovering over parts and detecting them
-		Main.is_hover_tool = true
-		WorkspaceManager.hover_selection_box.material_highlighter()
-		match button:
-			EditorUI.b_drag_tool:
-				Main.selected_tool = Main.SelectedToolEnum.t_drag
-				has_associated_transform_handles = false
-				Main.is_drag_tool = true
-			EditorUI.b_move_tool:
-				Main.selected_tool = Main.SelectedToolEnum.t_move
-				has_associated_transform_handles = true
-				Main.is_drag_tool = true
-			EditorUI.b_rotate_tool:
-				Main.selected_tool = Main.SelectedToolEnum.t_rotate
-				has_associated_transform_handles = true
-				Main.is_drag_tool = true
-			EditorUI.b_scale_tool:
-				Main.selected_tool = Main.SelectedToolEnum.t_scale
-				has_associated_transform_handles = true
-				Main.is_drag_tool = true
-			EditorUI.b_material_tool:
-				Main.selected_tool = Main.SelectedToolEnum.t_material
-				has_associated_transform_handles = false
-				Main.is_drag_tool = false
-				WorkspaceManager.hover_selection_box.material_regular_color(Color.ORANGE)
-			EditorUI.b_paint_tool:
-				Main.selected_tool = Main.SelectedToolEnum.t_color
-				has_associated_transform_handles = false
-				Main.is_drag_tool = false
-				WorkspaceManager.hover_selection_box.material_regular_color(WorkspaceManager.selected_color)
-			EditorUI.b_delete_tool:
-				Main.selected_tool = Main.SelectedToolEnum.t_delete
-				has_associated_transform_handles = false
-				Main.is_drag_tool = false
-				WorkspaceManager.hover_selection_box.material_regular_color(Color.RED)
-			EditorUI.b_lock_tool:
-				Main.selected_tool = Main.SelectedToolEnum.t_lock
-				has_associated_transform_handles = false
-				Main.is_drag_tool = false
-	else:
-		Main.selected_tool = Main.SelectedToolEnum.none
-		has_associated_transform_handles = false
-		Main.is_drag_tool = false
-		Main.is_hover_tool = false
-	
-	if has_associated_transform_handles:
-		Main.selected_tool_handle_array = Main.transform_handle_root.tool_handle_array[Main.selected_tool]
-	else:
-		Main.selected_tool_handle_array = []
-	
-	if Main.is_drag_tool:
-		if has_associated_transform_handles:
-			Main.set_transform_handle_root_position(Main.transform_handle_root, WorkspaceManager.selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
-			if WorkspaceManager.selected_parts_array.size() > 0:
-				TransformHandleUtils.set_tool_handle_array_active(Main.selected_tool_handle_array, true)
+	ToolManager.select_tool(button)
+
+
+static func on_pivot_reset_pressed():
+	ToolManager.pivot_offset = Vector3.ZERO
 
 
 static func on_spawn_pressed():
@@ -124,7 +69,7 @@ static func on_snap_button_pressed(button):
 
 static func on_local_transform_active_set(active):
 	Main.local_transform_active = active
-	Main.set_transform_handle_root_position(Main.transform_handle_root, WorkspaceManager.selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
+	ToolManager.handle_set_root_position(Main.transform_handle_root, WorkspaceManager.selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
 
 
 static func on_snapping_active_set(active):
@@ -149,14 +94,15 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 			#load model
 			WorkspaceManager.request_load()
 		elif id == 3:
-			#import model (planned: .gltf, .obj)
+			#import model (planned: .res/tres, .gltf, .obj)
 			pass
 		elif id == 4:
 			#export model
-			var groups : Array[Array] = MeshUtils.group_parts_by_material_and_color(WorkspaceManager.workspace.get_children().filter(func(input): return input is Part))
-			var mesh = MeshUtils.create_mesh_from_part_groupings(groups)
-			MeshUtils.add_metadata_to_mesh(groups, mesh)
-			ResourceSaver.save(mesh, "/home/marci/Desktop/save testing/MAOW.res", ResourceSaver.FLAG_BUNDLE_RESOURCES)
+			pass
+			#var groups : Array[Array] = MeshUtils.group_parts_by_material_and_color(WorkspaceManager.workspace.get_children().filter(func(input): return input is Part))
+			#var mesh = MeshUtils.create_mesh_from_part_groupings(groups)
+			#MeshUtils.add_metadata_to_mesh(groups, mesh)
+			#ResourceSaver.save(mesh, "/home/marci/Desktop/save testing/MAOW.res", ResourceSaver.FLAG_BUNDLE_RESOURCES)
 		
 	#edit dropdown----------------------
 	elif pm == EditorUI.pm_edit:
@@ -197,8 +143,8 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 		#asset manager stuff, not implemented yet, dropped for v0.1
 	#asset dropdown---------------------
 	elif pm == EditorUI.pm_assets:
-		pass
-		
+		#theres only one button anyway
+		OS.shell_show_in_file_manager(ProjectSettings.globalize_path("user://assets"))
 		
 	#help dropdown----------------------
 	elif pm == EditorUI.pm_help:
