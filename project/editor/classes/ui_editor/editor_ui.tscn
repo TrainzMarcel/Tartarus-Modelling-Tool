@@ -889,7 +889,6 @@ horizontal_alignment = 1
 vertical_alignment = 2
 
 [node name="HBoxContainerChangePivotTool" type="HBoxContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
-visible = false
 layout_mode = 2
 theme_override_constants/separation = 2
 
@@ -952,7 +951,6 @@ theme_override_styles/hover = ExtResource("20_ibnk4")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_0x74o")
 theme_override_styles/focus = ExtResource("5_rq1a8")
 action_mode = 0
-shortcut = SubResource("Shortcut_s6i4f")
 text = "Reset"
 script = ExtResource("11_6a6rl")
 

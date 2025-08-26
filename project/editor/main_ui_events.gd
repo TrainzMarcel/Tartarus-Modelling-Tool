@@ -11,7 +11,8 @@ static func select_tool(button : Button):
 
 
 static func on_pivot_reset_pressed():
-	ToolManager.pivot_offset = Vector3.ZERO
+	Main.custom_pivot_mode_active = false
+	#Main.pivot
 
 
 static func on_spawn_pressed():

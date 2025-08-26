@@ -105,3 +105,4 @@
 21.8. fixed major bugs in standardmaterial3d serializing and deserializing code, added quarter cylinder and inverse quarter cylinder, added central version number setter
 22.8. added loading screen, found bug with snapping while dragging multi selections with bounding box sizes that arent divisible by the snapping increment
 23.8. working on a solution to the snapping issues
+26.8. FINALLY fixed the snapping problems, now selections truly snap by the dragged part when being dragged

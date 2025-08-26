@@ -52,14 +52,8 @@ static var tool_data_to_transform_handle_mapping : Dictionary = {}
 
 "TODO"#comment
 static var pivot_mesh : MeshInstance3D
-static var pivot_not_reset : bool = false
-"TODO"#decide if the pivot offset should be a transform so that it also includes rotation
-#that way the user could transform the selection along any possible plane
-#independent of the boundingbox's rotation
-#im just not sure who would use this or what the use case would be for it
 static var pivot_offset : Vector3
 static var initial_pivot_offset : Vector3
-
 
 
 static func initialize(transform_handle_root : TransformHandleRoot):
@@ -209,8 +203,6 @@ static func select_tool(button : Button):
 				TransformHandleUtils.set_tool_handle_array_active(Main.selected_tool_handle_array, true)
 				Main.set_transform_handle_root_position(Main.transform_handle_root, transform, true, Main.selected_tool_handle_array)
 			"""
-			
-			
 		else:
 			Main.selected_tool_handle_array = []
 		

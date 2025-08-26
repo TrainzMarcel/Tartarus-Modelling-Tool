@@ -292,23 +292,7 @@ static func drag_handle(event : InputEvent):
 			
 			
 			#set positions according to offset_dragged_to_selected_array and where the selection is being dragged (ray_result.position)
-			#WorkspaceManager.selection_move(snap_output, true)
-			
-			
-			var offset_dragged_to_selected_array : Array = selected_parts_array.map(func(input): return input.transform.origin - Main.dragged_part.transform.origin)
-			
-			selected_parts_abb.transform.origin = snap_output 
-			
-			var i : int = 0
-			while i < selected_parts_array.size():
-				selected_parts_array[i].transform.origin = selected_parts_abb.transform.origin + offset_dragged_to_selected_array[i]
-				selection_box_array[i].transform.origin = selected_parts_array[i].transform.origin
-				i = i + 1
-			
-			"TODO"#below line must be abstracted out
-			Main.transform_handle_root.transform.origin = snap_output
-			#move transform handles with selection
-			selection_moved = true
+			WorkspaceManager.selection_move(snap_output)
 
 
 static func drag_terminate():
@@ -511,7 +495,7 @@ static func selection_duplicate():
 
 #position only
 "TODO"#check and ensure numerical stability
-static func selection_move(input_absolute : Vector3, dragging : bool = false):
+static func selection_move(input_absolute : Vector3):
 	selected_parts_abb.transform.origin = input_absolute 
 	
 	var i : int = 0

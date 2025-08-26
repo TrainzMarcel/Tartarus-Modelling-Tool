@@ -63,9 +63,6 @@ static var rotational_snap_increment : float = 15
 static var snapping_active : bool = true
 
 
-#local vector pointing from bounding box to rotation pivot
-var selected_parts_abb_pivot : Vector3 = Vector3.ZERO
-
 #last input event for cam.cam_process() to call drag_handle()
 static var last_mouse_event : InputEventMouse
 
@@ -102,12 +99,19 @@ var prev_hovered_handle : TransformHandle
 
 #determines if transform axes will be local to the selection or global
 static var local_transform_active : bool = false
+
+#EXTRA: pivot edit tool data
+#global vector pointing of the rotation pivot when pivot mode is active
+#this vector stays where it is no matter what is selected, but it does move with the selection
+static var pivot_transform : Transform3D
+static var custom_pivot_mode_active : bool = false
+
 #fixed distance of camera to transformhandleroot
 @export_category("Tweakables")
 @export var transform_handle_scale : float = 12
+
 #contains the transformhandles of any currently selected tool
 static var selected_tool_handle_array : Array[TransformHandle]
-
 
 #conditionals-------------------------------------------------------------------
 #main override for when ui like a document view or an asset menu or a file explorer is open

@@ -172,17 +172,25 @@ static func drag_snap_position_to_hovered(
 	#transformed local variables
 	var ray_result_local_position : Vector3 = inverse * ray_result.position
 	var normal_local : Vector3 = inverse.basis * normal
-	var drag_offset_local : Vector3 = inverse.basis * drag_offset
 	var dragged_part_local : Basis = inverse.basis * dragged_part.basis
 	var dragged_part_scale_local : Vector3 = SnapUtils.get_scale_local(dragged_part.part_scale, dragged_part_local)
 	
+	var abb_to_dragged_offset_planar : Vector3 = dragged_part.transform.origin - selected_parts_abb.transform.origin
+	#make this value planar
+	abb_to_dragged_offset_planar = abb_to_dragged_offset_planar - (abb_to_dragged_offset_planar.dot(normal) * normal)
+	
+	
+	#add the offset between the bounding box and the dragged part to PROPERLY snap by the dragged part
+	#this then gets subtracted away from the result after snapping
+	drag_offset = drag_offset + abb_to_dragged_offset_planar
+	
+	var drag_offset_local : Vector3 = inverse.basis * drag_offset
 	
 	#normal "bump" (to prevent dragged part from intersecting hovered part when dragging)
 	"TODO"#make this into a function (like get_surface_height_by_unit_vector())
 	"TODO"#make normal_local * (side_length * 0.5) into a function (like get_surface_height_by_unit_vector())
 	var drag_offset_local_normal = normal_local * (abb_normal_length * 0.5)
 	var drag_offset_local_planar = drag_offset_local - (drag_offset_local.dot(normal_local) * normal_local)
-	
 	
 	#reassign this value with the new normal height (again to prevent intersecting)
 	drag_offset_local = drag_offset_local_normal + drag_offset_local_planar
@@ -231,15 +239,21 @@ static func drag_snap_position_to_hovered(
 			i = i + 1
 	
 	
+	#dragged part position to bounding box position
+	#bounding box position - dragged part position
+	
 	#transform to global space and apply this to dragged_part
 	var result : Vector3 = hovered_part.global_transform * result_local_snap
+	#take away the dragged 
+	result = result - abb_to_dragged_offset_planar
 	print("---------------------------------_")
-	print("dragged_part pos  ", dragged_part.position)
-	print("result            ", result)
-	print("result_local_snap ", result_local_snap)
-	print("result_local      ", result_local)
-	print("drag_offset_local ", drag_offset_local)
+	#print("dragged_part pos  ", dragged_part.position)
+	#print("result            ", result)
+	#print("result_local_snap ", result_local_snap)
+	#print("result_local      ", result_local)
+	#print("drag_offset_local ", drag_offset_local)
 	print("bounding box size ", selected_parts_abb.extents)
+	#print() # - (abb_to_dragged_offset.dot(normal) * normal)))
 	return result
 
 
