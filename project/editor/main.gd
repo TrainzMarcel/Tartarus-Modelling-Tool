@@ -54,6 +54,8 @@ static var hover_selection_box : SelectionBox
 static var panel_selection_rect : Panel
 @export var e_panel_selection_rect : Panel
 
+@export_category("Current Version")
+@export var version_number : String = "v0.1"
 
 #overlapping data (used by both dragging and handles)--------------------------------
 static var positional_snap_increment : float = 0.1
@@ -101,6 +103,7 @@ var prev_hovered_handle : TransformHandle
 #determines if transform axes will be local to the selection or global
 static var local_transform_active : bool = false
 #fixed distance of camera to transformhandleroot
+@export_category("Tweakables")
 @export var transform_handle_scale : float = 12
 #contains the transformhandles of any currently selected tool
 static var selected_tool_handle_array : Array[TransformHandle]
@@ -129,7 +132,7 @@ static var is_selecting_allowed : bool = false
 func _ready():
 	OS.low_processor_usage_mode = true
 	DisplayServer.set_icon(preload("res://editor/data_ui/assets/program_icon_v1E2_CHOSEN.png").get_image())
-	DisplayServer.window_set_title("Tartarus Modelling Tool v0.1")
+	DisplayServer.window_set_title("Tartarus Modelling Tool " + version_number)
 	#get exports from instance variables and assign to static variable
 	transform_handle_root = e_transform_handle_root
 	cam = e_cam
@@ -146,7 +149,8 @@ func _ready():
 	MainUIEvents.on_local_transform_active_set,
 	MainUIEvents.on_snapping_active_set,
 	MainUIEvents.on_top_bar_id_pressed,
-	MainUIEvents.on_file_manager_accept_pressed
+	MainUIEvents.on_file_manager_accept_pressed,
+	version_number
 	)
 	
 	WorkspaceManager.initialize(
@@ -429,7 +433,7 @@ func _input(event : InputEvent):
 #dragging parts + transform handle calculations---------------------------------
 	if event is InputEventMouseMotion:
 		#parts dragging
-		WorkspaceManager.drag_handle(event, false)
+		WorkspaceManager.drag_handle(event)
 		
 		
 		
@@ -540,7 +544,7 @@ func _input(event : InputEvent):
 		
 		#this definitively tells us a drag motion has started
 		if Main.safety_check(dragged_part) and dragged_part == hovered_part:
-				WorkspaceManager.drag_offset = WorkspaceManager.selected_parts_abb.transform.origin - Main.ray_result.position
+			WorkspaceManager.drag_offset = WorkspaceManager.selected_parts_abb.transform.origin - Main.ray_result.position
 		
 	elif WorkspaceManager.selected_parts_array.size() == 0 and WorkspaceManager.selection_changed:
 		ToolManager.handle_set_active(selected_tool_handle_array, false)

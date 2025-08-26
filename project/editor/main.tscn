@@ -1,13 +1,12 @@
-[gd_scene load_steps=19 format=3 uid="uid://hul5x10ptumj"]
+[gd_scene load_steps=17 format=3 uid="uid://hul5x10ptumj"]
 
 [ext_resource type="Script" path="res://editor/main.gd" id="1_4xdr8"]
 [ext_resource type="PackedScene" uid="uid://c01nu37bjhxsi" path="res://editor/classes/camera/free_look_camera.tscn" id="2_n3tr4"]
-[ext_resource type="Material" uid="uid://b1daqxkb7eywi" path="res://editor/data_editor/wood_01.tres" id="6_fcnpf"]
 [ext_resource type="PackedScene" uid="uid://cwt02lxvderye" path="res://editor/classes/ui_editor/editor_ui.tscn" id="6_whu6r"]
 [ext_resource type="Script" path="res://editor/classes/part.gd" id="7_nrd43"]
 [ext_resource type="PackedScene" uid="uid://clfcgcedn47iy" path="res://editor/classes/transform_handles/transform_handle_root.tscn" id="7_wy0x5"]
 [ext_resource type="Material" uid="uid://dg0pq3t4uvees" path="res://editor/classes/selection_box/highlight_mat.res" id="8_4p0vi"]
-[ext_resource type="Material" uid="uid://d226d6pu4njse" path="res://editor/data_editor/tiles_02.tres" id="9_eq7ew"]
+[ext_resource type="Material" uid="uid://dn53222vo1d5l" path="res://editor/data_editor/grass_01.tres" id="9_2xd7y"]
 [ext_resource type="Script" path="res://editor/classes/selection_box/selection_box.gd" id="9_n7hy1"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_jgeb0"]
@@ -48,9 +47,7 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_y0x3t"]
-
-[sub_resource type="BoxMesh" id="BoxMesh_xlc0q"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_bohjp"]
 
 [node name="Main" type="Node3D" node_paths=PackedStringArray("e_cam", "second_cam", "e_workspace", "e_transform_handle_root", "e_hover_selection_box", "ui_node", "e_panel_selection_rect")]
 script = ExtResource("1_4xdr8")
@@ -61,6 +58,7 @@ e_transform_handle_root = NodePath("SubViewportContainer/SubViewport/TransformHa
 e_hover_selection_box = NodePath("Workspace/HoverSelectionBox")
 ui_node = NodePath("EditorUI")
 e_panel_selection_rect = NodePath("PanelSelectionRect")
+version_number = "v0.1-indev-1"
 transform_handle_scale = 10.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -119,79 +117,14 @@ autowrap_mode = 2
 [node name="Part" type="StaticBody3D" parent="Workspace"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3, 0)
 script = ExtResource("7_nrd43")
-part_material = ExtResource("6_fcnpf")
-part_color = Color(0.145098, 0.411765, 0.156863, 1)
+part_material = ExtResource("9_2xd7y")
+part_color = Color(0.294118, 0.592157, 0.294118, 1)
 part_scale = Vector3(64, 1, 64)
-
-[node name="Part2" type="StaticBody3D" parent="Workspace"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -0.680444)
-script = ExtResource("7_nrd43")
-part_color = Color(0.890196, 0.0705882, 0.0705882, 1)
-part_scale = Vector3(0.5, 2, 4)
-
-[node name="Part6" type="StaticBody3D" parent="Workspace"]
-transform = Transform3D(0.289632, -0.105418, 0.951315, 0.956495, 0.0683042, -0.28364, -0.035078, 0.992079, 0.120615, 2, 0, -5.17892)
-script = ExtResource("7_nrd43")
-part_scale = Vector3(0.2, 2, 4)
-
-[node name="Part11" type="StaticBody3D" parent="Workspace"]
-transform = Transform3D(0.289632, -0.105418, 0.951315, 0.956495, 0.0683042, -0.28364, -0.035078, 0.992079, 0.120615, 2.42167, -0.273217, -9.14724)
-script = ExtResource("7_nrd43")
-part_scale = Vector3(0.2, 2, 4)
-
-[node name="Part10" type="StaticBody3D" parent="Workspace"]
-transform = Transform3D(0.289632, -0.105418, 0.951315, 0.956495, 0.0683042, -0.28364, -0.035078, 0.992079, 0.120615, 2, 0, -5.17892)
-script = ExtResource("7_nrd43")
-part_scale = Vector3(0.2, 2, 4)
-
-[node name="Part7" type="StaticBody3D" parent="Workspace"]
-transform = Transform3D(0.0678765, -0.959059, -0.274954, 0.994294, 0.0422935, 0.097934, -0.0822962, -0.280033, 0.956456, 7.03947, 0, -5.33047)
-script = ExtResource("7_nrd43")
-part_scale = Vector3(0.2, 2, 4)
-
-[node name="Part8" type="StaticBody3D" parent="Workspace"]
-transform = Transform3D(-0.14046, -0.186612, -0.972341, 0.990087, -0.0267847, -0.137883, -0.000313073, -0.982068, 0.188524, 2, 0, -11.4667)
-script = ExtResource("7_nrd43")
-part_scale = Vector3(0.2, 2, 4)
-
-[node name="Part9" type="StaticBody3D" parent="Workspace"]
-transform = Transform3D(-0.558939, 0.675168, 0.481389, 0.821381, 0.371229, 0.433039, 0.113669, 0.637446, -0.762064, 7.14437, -3.8147e-06, -10.2857)
-script = ExtResource("7_nrd43")
-part_scale = Vector3(0.2, 2, 4)
-
-[node name="Part3" type="StaticBody3D" parent="Workspace"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.45, 3.25, -0.73)
-script = ExtResource("7_nrd43")
-part_scale = Vector3(1.6, 0.2, 3.7)
-
-[node name="Part4" type="StaticBody3D" parent="Workspace"]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0.75, 2.75, 1.02)
-script = ExtResource("7_nrd43")
-part_scale = Vector3(0.2, 0.2, 0.8)
-
-[node name="Part5" type="StaticBody3D" parent="Workspace"]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0.75, 2.75, -2.48)
-script = ExtResource("7_nrd43")
-part_scale = Vector3(0.2, 0.2, 0.8)
-
-[node name="Part12" type="StaticBody3D" parent="Workspace"]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 2.15, 2.75, -2.48)
-script = ExtResource("7_nrd43")
-part_scale = Vector3(0.2, 0.2, 0.8)
-
-[node name="Part13" type="StaticBody3D" parent="Workspace"]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 2.15, 2.75, 1.02)
-script = ExtResource("7_nrd43")
-part_scale = Vector3(0.2, 0.2, 0.8)
 
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("8_4p0vi")
-mesh = SubResource("ImmediateMesh_y0x3t")
+mesh = SubResource("ImmediateMesh_bohjp")
 skeleton = NodePath("../..")
 script = ExtResource("9_n7hy1")
 box_scale = Vector3(1, 1, 1)
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Workspace"]
-material_override = ExtResource("9_eq7ew")
-mesh = SubResource("BoxMesh_xlc0q")

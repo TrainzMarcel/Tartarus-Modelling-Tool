@@ -96,8 +96,12 @@
 22.7. fixed assetmanager unnamed key bug
 23.7. working on splitting loading into structured pipeline: 1. unzip save file, 2. load assets (meshes, textures), 3. deserialize data from csv file (and saving works in reverse)
 24.7. nearly finished saving logic restructuring
-1o.8. slowly recovering from burnout, did some work on the save system 
+10.8. slowly recovering from burnout, did some work on the save system 
 11.8. finished zipping function
 12.8. worked a bit on unzipping function (load process)
 14.8. finally finished and cleaned up saving and loading of models, moved save format specification, made reading editor data independent from folder structures (recursive), moved editorui button initialization into workspacemanager, added settings.json file, changed asset loading to read from user://assets, added more customization by reading in any mesh, material and color (.csv) the user may put in the asset folder
-18.8. renamed transformhandleutils to toolmanager and refactored all of the tool selecting logic to be in toolmanager and use a tooldata struct instead of a big switch statement, abstracted set_transform_handle_root_position into toolmanager, made camera movement also call drag handling function in case user is dragging a selection while moving the camera, added textures: checkers, concrete_01, diamond_plate_01, planks_01, sand_01, slate_01, slate_02, tiles_01, tiles_02, tiles_03
+18.8. renamed transformhandleutils to toolmanager and refactored all of the tool selecting logic to be in toolmanager and to use a tooldata struct instead of a big switch statement, abstracted set_transform_handle_root_position into toolmanager, made camera movement also call drag handling function in case user is dragging a selection while moving the camera, added textures: checkers, concrete_01, diamond_plate_01, metal_grate, office_ceiling_01, planks_01, sand_01, slate_01, slate_02, tiles_01, tiles_02, tiles_03
+19.8. found bugs in material serialization code, added grass_01 texture
+21.8. fixed major bugs in standardmaterial3d serializing and deserializing code, added quarter cylinder and inverse quarter cylinder, added central version number setter
+22.8. added loading screen, found bug with snapping while dragging multi selections with bounding box sizes that arent divisible by the snapping increment
+23.8. working on a solution to the snapping issues

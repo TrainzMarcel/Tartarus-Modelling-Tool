@@ -25,11 +25,18 @@ static func material_serialize(input):
 		var i : int = 0
 		while i < properties.size():
 			var parameter = input.get_shader_parameter(properties[i].name)
-			print("parameter", parameter)
+			#print("parameter", parameter)
 			if parameter is Texture2D:
 				result_line.append(AssetManager.get_name_of_asset(parameter, false, true))
-			elif parameter is float or parameter is int or parameter is String:
+			elif parameter is String:
+				result_line.append(parameter)
+			elif parameter is float or parameter is int:
 				result_line.append(str(parameter))
+			elif parameter is bool:
+				if parameter:
+					result_line.append("t")
+				else:
+					result_line.append("f")
 			elif parameter is Vector3:
 				result_line.append_array([str(parameter.x), str(parameter.y), str(parameter.z)])
 			elif parameter is Vector4:
@@ -59,23 +66,35 @@ static func material_serialize(input):
 		#DONT include colors during serialization, causes huge problems
 		#and there is already a color header anyway
 		#so just call AssetManager.recolor_material() instead when loading
-		result_line.append(AssetManager.get_name_of_asset(input, false))
+		result_line.append(AssetManager.normalize_asset_name(AssetManager.get_name_of_asset(input, false), false))
 		
 		
 		var properties = input.get_property_list()
 		var i : int = 0
+		#print("START SERIALIZE-----------------------------------------------------------")
 		while i < properties.size():
 			var property = properties[i]
 			#skip non-persistent/internal properties
 			if property.usage & PROPERTY_USAGE_STORAGE == 0:
 				i = i + 1
 				continue
+			"DEBUG"
+			#print(property.name)
 			
 			var parameter = input.get(properties[i].name)
 			if parameter is Texture2D:
-				result_line.append(AssetManager.get_name_of_asset(parameter, false, true))
-			elif parameter is float:
+				result_line.append(AssetManager.normalize_asset_name(AssetManager.get_name_of_asset(parameter, false, true), true))
+			elif parameter is Material:
+				result_line.append("")#recursive use of materials not supported
+			elif parameter is String:
+				result_line.append(parameter)
+			elif parameter is float or parameter is int:
 				result_line.append(str(parameter))
+			elif parameter is bool:
+				if parameter:
+					result_line.append("t")
+				else:
+					result_line.append("f")
 			elif parameter is Vector3:
 				result_line.append_array([str(parameter.x), str(parameter.y), str(parameter.z)])
 			elif parameter is Vector4:
@@ -84,12 +103,12 @@ static func material_serialize(input):
 				result_line.append_array([str(parameter.r8), str(parameter.g8), str(parameter.b8), str(parameter.a8)])
 			elif parameter == null and property.type == TYPE_VECTOR3:
 				result_line.append_array(["","",""])
-			elif parameter == null and property.type == TYPE_VECTOR4 or properties[i].type == TYPE_COLOR:
+			elif parameter == null and property.type == TYPE_VECTOR4 or property.type == TYPE_COLOR:
 				result_line.append_array(["","","",""])
-			elif parameter == null and property.type == TYPE_FLOAT or properties[i].type == TYPE_INT or properties[i].type == TYPE_STRING:
+			elif parameter == null:
 				result_line.append("")
 			else:
-				push_error("unimplemented basematerial3d type: ", parameter.hint_string, " ", parameter)
+				push_error("unimplemented basematerial3d type: ", property.hint_string, " ", parameter)
 				return
 			i = i + 1
 		return result_line
@@ -112,7 +131,7 @@ static func material_deserialize(input : PackedStringArray):
 		
 		#load shader code
 		var shader : Shader
-		asset_name = AssetManager.standardize_name(input[1])
+		asset_name = AssetManager.normalize_asset_name(input[1], false)
 		shader = AssetManager.get_asset_by_name(asset_name)
 		if shader == null:
 			push_error("shader loading failure, name in save file: " + input[1])
@@ -134,13 +153,27 @@ static func material_deserialize(input : PackedStringArray):
 				
 				#if image texture still hasnt loaded, abort
 				if image_texture == null:
-					push_error("image texture loading failure at line")
+					push_error("image texture loading failure: ", input[i_line], " at line index: ", i_line, " at property index: ", i)
 					return
 				
 				parameter_output = image_texture
+		#load bool
+			elif parameter.type == TYPE_BOOL:
+				if input[i_line] == "t":
+					parameter_output = true
+				if input[i_line] == "f":
+					parameter_output = false
+				else:
+					push_error("unexpected value: ", input[i_line], " | only true or false allowed")
+		#load int
+			elif parameter.type == TYPE_INT:
+				parameter_output = int(input[i_line])
 		#load float
 			elif parameter.type == TYPE_FLOAT:
 				parameter_output = float(input[i_line])
+		#load string
+			elif parameter.type == TYPE_STRING:
+				parameter_output = input[i_line]
 		#load vector3
 			elif parameter.type == TYPE_VECTOR3:
 				parameter_output = Vector3(float(input[i_line]), float(input[i_line + 1]), float(input[i_line + 2]))
@@ -150,6 +183,11 @@ static func material_deserialize(input : PackedStringArray):
 			elif parameter.type == TYPE_VECTOR4:
 				parameter_output = Vector4(float(input[i_line]), float(input[i_line + 1]), float(input[i_line + 2]), float(input[i_line + 3]))
 				#needs to be incremented by 3, the x y z w are stored as separate floats
+				i_line = i_line + 3
+		#load color
+			elif parameter.type == TYPE_COLOR:
+				parameter_output = Color8(int(input[i_line]), int(input[i_line + 1]), int(input[i_line + 2]), int(input[i_line + 3]))
+				#needs to be incremented by 3, the r g b a are stored as separate ints
 				i_line = i_line + 3
 			else:
 				push_error("unimplemented type ", parameter.hint_string, " ", parameter)
@@ -182,10 +220,20 @@ static func material_deserialize(input : PackedStringArray):
 		
 		while i < properties.size():
 			var parameter = properties[i]
+			
+			if i_line > input.size() - 1:
+				return result_asset
+			
 			#skip non-persistent/internal properties
-			if parameter.usage & PROPERTY_USAGE_STORAGE == 0:
+			if parameter.usage & PROPERTY_USAGE_STORAGE == 0 or input[i_line] == "":
+				#omitting this line caused a nasty desynchronization bug between the two counters
+				if input[i_line] == "":
+					i_line = i_line + 1
 				i = i + 1
 				continue
+			
+			"DEBUG DESERIALIZE"
+			#print(parameter.name)
 			
 			var parameter_output
 		#load image texture
@@ -196,13 +244,32 @@ static func material_deserialize(input : PackedStringArray):
 				
 				#if image texture still hasnt loaded, abort
 				if image_texture == null:
-					push_error("image texture loading failure")
+					push_error("image texture loading failure: ", input[i_line], " at line index: ", i_line, " at property index: ", i)
 					return
 				
 				parameter_output = image_texture
+			elif parameter.type == TYPE_OBJECT and parameter.hint_string == "Material":
+				#recursive usage of materials not supported
+				
+				parameter_output = null
+		#load bool
+			elif parameter.type == TYPE_BOOL:
+				if input[i_line] == "t":
+					parameter_output = true
+				elif input[i_line] == "f":
+					parameter_output = false
+				else:
+					push_error("unexpected value: ", input[i_line], " at line index: ", i_line, " at property index: ", i, " | only t (true) or f (false) allowed")
+		#load int
+			elif parameter.type == TYPE_INT:
+				parameter_output = int(input[i_line])
 		#load float
 			elif parameter.type == TYPE_FLOAT:
 				parameter_output = float(input[i_line])
+		#load string
+			elif parameter.type == TYPE_STRING:
+				#strip " on both sides
+				parameter_output = input[i_line]
 		#load vector3
 			elif parameter.type == TYPE_VECTOR3:
 				parameter_output = Vector3(float(input[i_line]), float(input[i_line + 1]), float(input[i_line + 2]))
@@ -213,8 +280,15 @@ static func material_deserialize(input : PackedStringArray):
 				parameter_output = Vector4(float(input[i_line]), float(input[i_line + 1]), float(input[i_line + 2]), float(input[i_line + 3]))
 				#needs to be incremented by 3, the x y z w are stored as separate floats
 				i_line = i_line + 3
+		#load colors
+			elif parameter.type == TYPE_COLOR:
+				parameter_output = Color8(int(input[i_line]), int(input[i_line + 1]), int(input[i_line + 2]), int(input[i_line + 3]))
+				#needs to be incremented by 3, the r g b a are stored as separate ints
+				i_line = i_line + 3
+			elif parameter.type == TYPE_OBJECT and parameter.hint_string == "Material":
+				parameter_output = null
 			else:
-				push_error("unimplemented type ", parameter.hint_string, " ", parameter)
+				push_error("unimplemented type ", parameter)
 				return
 			
 			result_asset.set(properties[i].name, parameter_output)
@@ -279,6 +353,36 @@ static func part_deserialize(input, used_colors : Array, used_materials : Array,
 	return new
 
 
+#i may delete this again
+#same as string.split() except it will not split strings marked by ""
+#double " does not get taken into account for escaping
+#separator must be single character and not "
+#static func csv_line_split(line : String, separator : String):
+#	var result : PackedStringArray = line.split(separator)
+#	var traversing_string : bool = false
+#	var section : String = ""
+#	var i : int = 0
+#	#quote
+#	var q : String = "\""
+#	"UNFINISHED"
+#	#for each line split result
+#	while i < result.size():
+#		#if there is a double quote at the start and not the end
+#		if result[i].begins_with(q) and not result[i].ends_with(q):
+#			traversing_string = true
+#			section = section + result[i]
+#			result.remove_at(i)
+#		elif traversing_string and not result[i].ends_with(q) and not result[i].begins_with(q):
+#			section = section + separator + result[i]
+#			result.remove_at(i)
+#		elif traversing_string and result[i].ends_with(q) and not result[i].begins_with(q):
+#			section = section + result[i]
+#			section = ""
+#			i = i + 1
+#		else:
+#			i = i + 1
+
+
 #saves everything to disk
 static func data_zip(input_assets : Array[Resource], input_save_file : PackedStringArray, filepath : String, filename : String):
 	#get all of the subresources which arent saved in the csv
@@ -304,6 +408,11 @@ static func data_zip(input_assets : Array[Resource], input_save_file : PackedStr
 		
 		for j in total:
 			if AssetManager.get_name_of_asset(j) == AssetManager.get_name_of_asset(input_assets[i]):
+				"DEBUG"
+				#print(j.resource_path)
+				#print(j.resource_name)
+				#print(input_assets[i].resource_path)
+				#print(input_assets[i].resource_name)
 				resource_already_listed = true
 				break
 		
@@ -330,10 +439,10 @@ static func data_zip(input_assets : Array[Resource], input_save_file : PackedStr
 	zip_packer.close_file()
 	
 	#save each subresource to disk
-	print("asset save start")
+	#print("asset save start")
 	i = 0
 	while i < total.size():
-		print("iteration ", i, "-----------------------------------------------")
+		#print("iteration ", i, "-----------------------------------------------")
 		var asset : Resource = total[i]
 		var asset_name = AssetManager.get_name_of_asset(asset, false, true)
 		var debug_asset_saved : bool = false
@@ -360,10 +469,10 @@ static func data_zip(input_assets : Array[Resource], input_save_file : PackedStr
 		else:
 			push_error("unimplemented asset type: " + str(asset))
 		
-		if debug_asset_saved:
-			print("asset saved:     ", asset)
-		else:
-			print("asset not saved: ", asset)
+		#if debug_asset_saved:
+		#	print("asset saved:     ", asset)
+		#else:
+		#	print("asset not saved: ", asset)
 		
 		i = i + 1
 	
@@ -387,10 +496,10 @@ static func data_unzip(filepath : String, filename : String):
 	
 	
 	#load each subresource from disk depending on the name
-	print("asset load start")
+	#print("asset load start")
 	var i : int = 0
 	while i < file_names.size():
-		print("iteration ", i, "-----------------------------------------------")
+		#print("iteration ", i, "-----------------------------------------------")
 		var asset : Resource
 		var file_name = file_names[i]
 		var extension = file_name.get_extension().to_lower()
@@ -399,13 +508,13 @@ static func data_unzip(filepath : String, filename : String):
 		#in case it is not available, load subresource (like an image texture or a mesh)
 		load_subresource = not AssetManager.is_asset_key_taken(AssetManager.normalize_asset_name(file_name, false))
 		
-		print("RESOURCE KEY CHECK: ", file_name, " | ", AssetManager.normalize_asset_name(file_name, false))
+		#print("RESOURCE KEY CHECK: ", file_name, " | ", AssetManager.normalize_asset_name(file_name, false))
 		if not load_subresource:
 			i = i + 1
-			print("subresource already available")
+			#print("subresource already available")
 			continue
-		else:
-			print("loading subresource")
+		#else:
+			#print("loading subresource")
 		
 	#resource file
 		if extension == "tres" or extension == "res":
@@ -421,7 +530,8 @@ static func data_unzip(filepath : String, filename : String):
 		elif extension == "csv":
 			var data_bytes : PackedByteArray = zip_reader.read_file(file_name)
 			file = data_bytes.get_string_from_utf8().split("\n")
-			print(file)
+			"DEBUG"
+			#print(file)
 			
 	#image file
 		elif extension == "png" or extension == "jpg" or extension == "jpeg":

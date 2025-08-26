@@ -74,6 +74,8 @@ static var first_part_selection_rect : Part
 static var initial_selected_parts : Array[Part]
 
 #saving and loading related variables
+#static var saving_thread : Thread
+
 "TODO"#move into file explorer ui class and make it modular
 enum FileOperation {
 	save,
@@ -128,8 +130,11 @@ static func initialize(
 	var parts_list : Array[Part] = []
 	var color_list : Array[Color] = []
 	var color_names_list : Array[String] = []
-	#var load_directory : String = FilePathRegistry.data_folder_user_assets
-	var load_directory : String = FilePathRegistry.data_folder_default_assets
+	
+	"DEBUG"#testing the loading of materials and meshes that are not there
+	var load_directory : String = FilePathRegistry.data_folder_user_assets
+	#var load_directory : String = FilePathRegistry.data_folder_default_assets
+	
 	var file_list = SaveUtils.get_files_recursive(load_directory)
 	
 	
@@ -155,9 +160,17 @@ static func initialize(
 				#cylinder
 				if file_name == "cylinder.tres":
 					new.part_scale = Vector3(0.4, 0.8, 0.4)
+				#quarter cylinde
+				elif file_name == "quarter.tres":
+					new.part_scale = Vector3(0.2, 0.8, 0.2)
+				#quarter inverse
+				elif file_name == "quarter_inv.tres":
+					new.part_scale = Vector3(0.2, 0.8, 0.2)
 				#sphere
 				elif file_name == "sphere.tres":
 					new.part_scale = Vector3(0.8, 0.8, 0.8)
+				
+				
 				
 				#mesh types usually dont have any subresources
 				AssetManager.register_asset(asset)
@@ -180,7 +193,7 @@ static func initialize(
 			WorkspaceManager.available_color_names.append_array(r_dict.color_name_array)
 			EditorUI.create_color_buttons(EditorUI.gc_paint_panel, on_color_selected, r_dict.color_array, r_dict.color_name_array)
 			
-	
+	AssetManager.debug_pretty_print()
 	
 	WorkspaceManager.available_materials = materials_list
 	WorkspaceManager.available_part_types = parts_list
@@ -210,7 +223,7 @@ static func initialize_user_folder():
 				DirAccess.make_dir_absolute(FilePathRegistry.data_folder_user_assets.path_join(file.get_base_dir()))
 			
 			DirAccess.copy_absolute(FilePathRegistry.data_folder_default_assets + file, FilePathRegistry.data_folder_user_assets + file)
-			print("copied ", FilePathRegistry.data_folder_default_assets + file, " to ", FilePathRegistry.data_folder_user_assets + file) 
+			#print("copied ", FilePathRegistry.data_folder_default_assets + file, " to ", FilePathRegistry.data_folder_user_assets + file) 
 	
 	#write settings.json
 	var file_access : FileAccess = FileAccess.open(FilePathRegistry.data_user_settings, FileAccess.WRITE)
@@ -253,34 +266,49 @@ static func drag_prepare(event : InputEvent):
 	initial_drag_event = event
 
 
-static func drag_handle(event : InputEvent, cam_fly_override : bool):
+static func drag_handle(event : InputEvent):
 	#first make sure the user actually wants to start a drag
 	if initial_drag_event != null:
 		if (event.position - initial_drag_event.position).length() > Main.drag_tolerance: 
 			drag_confirmed = true
-	#or the camera is moving while dragging
-	if cam_fly_override:
-		drag_confirmed = true
 	
 	if Main.is_mouse_button_held and not Main.ray_result.is_empty() and Main.is_selecting_allowed and drag_confirmed:
-		if Main.safety_check(Main.dragged_part):
-			if Main.safety_check(Main.hovered_part):
-				if not SnapUtils.part_rectilinear_alignment_check(Main.dragged_part.basis, Main.hovered_part.basis):
-					#use initial_rotation so that dragged_part doesnt continually rotate further 
-					#from its initial rotation after being dragged over multiple off-grid parts
-					var rotated_basis : Basis = SnapUtils.drag_snap_rotation_to_hovered(Main.initial_rotation, Main.ray_result)
-					
-					WorkspaceManager.selection_rotate(rotated_basis)
+		if Main.safety_check(Main.dragged_part) and Main.safety_check(Main.hovered_part):
+			if not SnapUtils.part_rectilinear_alignment_check(Main.dragged_part.basis, Main.hovered_part.basis):
+				#use initial_rotation so that dragged_part doesnt continually rotate further 
+				#from its initial rotation after being dragged over multiple off-grid parts
+				var rotated_basis : Basis = SnapUtils.drag_snap_rotation_to_hovered(Main.initial_rotation, Main.ray_result)
 				
-				#set positions according to offset_dragged_to_selected_array and where the selection is being dragged (ray_result.position)
-				WorkspaceManager.selection_move(SnapUtils.drag_snap_position_to_hovered(
-					Main.ray_result,
-					Main.dragged_part,
-					selected_parts_abb,
-					WorkspaceManager.drag_offset,
-					Main.positional_snap_increment,
-					Main.snapping_active
-				))
+				WorkspaceManager.selection_rotate(rotated_basis)
+			
+			var snap_output : Vector3 = SnapUtils.drag_snap_position_to_hovered(
+				Main.ray_result,
+				Main.dragged_part,
+				selected_parts_abb,
+				WorkspaceManager.drag_offset,
+				Main.positional_snap_increment,
+				Main.snapping_active
+			)
+			
+			
+			#set positions according to offset_dragged_to_selected_array and where the selection is being dragged (ray_result.position)
+			#WorkspaceManager.selection_move(snap_output, true)
+			
+			
+			var offset_dragged_to_selected_array : Array = selected_parts_array.map(func(input): return input.transform.origin - Main.dragged_part.transform.origin)
+			
+			selected_parts_abb.transform.origin = snap_output 
+			
+			var i : int = 0
+			while i < selected_parts_array.size():
+				selected_parts_array[i].transform.origin = selected_parts_abb.transform.origin + offset_dragged_to_selected_array[i]
+				selection_box_array[i].transform.origin = selected_parts_array[i].transform.origin
+				i = i + 1
+			
+			"TODO"#below line must be abstracted out
+			Main.transform_handle_root.transform.origin = snap_output
+			#move transform handles with selection
+			selection_moved = true
 
 
 static func drag_terminate():
@@ -385,7 +413,7 @@ static func selection_rect_terminate(selection_rect : Panel):
 static func refresh_bounding_box():
 	if not Main.safety_check(selected_parts_array[0]) and not selection_changed:
 		return
-	selected_parts_abb = SnapUtils.calculate_extents(selected_parts_abb, selected_parts_array[0], selected_parts_array)
+	selected_parts_abb = SnapUtils.calculate_extents(selected_parts_abb, selected_parts_array[-1], selected_parts_array)
 	#debug
 	var d_input = {}
 	d_input.transform = WorkspaceManager.selected_parts_abb.transform
@@ -483,19 +511,17 @@ static func selection_duplicate():
 
 #position only
 "TODO"#check and ensure numerical stability
-static func selection_move(input_absolute : Vector3):
-	selected_parts_abb.transform.origin = input_absolute
-	Main.transform_handle_root.transform.origin = input_absolute
-	var d_input = {}
-	d_input.transform = selected_parts_abb.transform
-	d_input.extents = selected_parts_abb.extents
-	HyperDebug.actions.abb_visualize.do(d_input)
+static func selection_move(input_absolute : Vector3, dragging : bool = false):
+	selected_parts_abb.transform.origin = input_absolute 
 	
 	var i : int = 0
 	while i < selected_parts_array.size():
 		selected_parts_array[i].transform.origin = selected_parts_abb.transform.origin + offset_abb_to_selected_array[i]
 		selection_box_array[i].transform.origin = selected_parts_array[i].transform.origin
 		i = i + 1
+	
+	"TODO"#below line must be abstracted out
+	Main.transform_handle_root.transform.origin = input_absolute
 	#move transform handles with selection
 	selection_moved = true
 
@@ -675,11 +701,13 @@ static func selection_scale(scale_absolute : Vector3):
 
 #undo redo system---------------------------------------------------------------
 static func undo():
-	print("UNDO")
+	return
+	#print("UNDO")
 
 
 static func redo():
-	print("REDO")
+	return
+	#print("REDO")
 
 
 #save load system---------------------------------------------------------------
@@ -713,6 +741,10 @@ static func request_load():
 
 
 static func confirm_save_load(filepath : String, name : String):
+	EditorUI.c_loading_message.visible = true
+	#one await wasnt enough for the loading message to show up
+	await EditorUI.c_loading_message.get_tree().process_frame
+	await EditorUI.c_loading_message.get_tree().process_frame
 	if file_operation == FileOperation.save or file_operation == FileOperation.save_as:
 		EditorUI.l_message.text = "saving..."
 		save_model(filepath + "/", name)
@@ -724,6 +756,7 @@ static func confirm_save_load(filepath : String, name : String):
 		"TODO"#add return 
 		load_model(filepath + "/", name)
 		EditorUI.l_message.text = "successfully loaded " + name + " at " + filepath + "!"
+	EditorUI.c_loading_message.visible = false
 
 
 #actual save and load functions
@@ -735,6 +768,7 @@ static func save_model(filepath : String, name : String):
 	#i think saving a group of parts would also be simple with something like a ::GROUP:: header which has the part ids under it
 	#storing the ids horizontally per part would probably be cheaper than vertically
 	#also maybe add comment feature that adds a line describing each column of every header
+	AssetManager.debug_pretty_print()
 	selection_set_to_workspace()
 	var used_colors : Array[Color] = []
 	var used_materials : Array[Material] = []
@@ -787,7 +821,7 @@ static func save_model(filepath : String, name : String):
 		i = i + 1
 	
 	
-	#part data (PARALLEL ARRAYS!!)
+	#part data
 	i = 0
 	file.append("::MODEL::")
 	while i < selected_parts_array.size():

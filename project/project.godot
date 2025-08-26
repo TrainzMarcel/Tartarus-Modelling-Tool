@@ -25,6 +25,10 @@ gdscript/warnings/shadowed_variable=0
 
 window/vsync/vsync_mode=0
 
+[editor_plugins]
+
+enabled=PackedStringArray()
+
 [layer_names]
 
 3d_physics/layer_1="workspace"

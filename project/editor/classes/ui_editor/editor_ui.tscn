@@ -1,4 +1,4 @@
-[gd_scene load_steps=67 format=3 uid="uid://cwt02lxvderye"]
+[gd_scene load_steps=68 format=3 uid="uid://cwt02lxvderye"]
 
 [ext_resource type="Script" path="res://editor/classes/ui_editor/editor_ui.gd" id="1_mcko4"]
 [ext_resource type="StyleBox" uid="uid://bkbmbfniourik" path="res://editor/data_ui/styles/panel_styles/panel_rounded_bottom.tres" id="1_pntfv"]
@@ -37,6 +37,7 @@
 [ext_resource type="Script" path="res://editor/classes/ui_editor/line_edit_numeric.gd" id="32_5rtk1"]
 [ext_resource type="PackedScene" uid="uid://bln1og3mu36mh" path="res://editor/classes/ui_document_display/document_display.tscn" id="32_epjev"]
 [ext_resource type="PackedScene" uid="uid://bjtrfenn2qo0u" path="res://editor/classes/ui_file_manager/file_manager.tscn" id="38_fpasr"]
+[ext_resource type="StyleBox" uid="uid://dh6vu252gy7u" path="res://editor/data_ui/styles/panel_styles/tooltip_panel.tres" id="38_wu7c1"]
 
 [sub_resource type="ButtonGroup" id="ButtonGroup_71ghl"]
 allow_unpress = true
@@ -1061,9 +1062,10 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="LabelVersion" type="Label" parent="PanelContainerBottom/MarginContainer/HBoxContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 theme = ExtResource("29_j817h")
-text = "      V0.1      "
+text = "      v0.1      "
 
 [node name="HBoxContainerCameraSpeed" type="HBoxContainer" parent="PanelContainerBottom/MarginContainer/HBoxContainer"]
 layout_mode = 2
@@ -1727,3 +1729,32 @@ visible = false
 layout_mode = 1
 file_list_max_entries = null
 dir_start = "/home/marci/Desktop/save testing"
+
+[node name="ControlLoadingMessage" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="ControlLoadingMessage"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -135.0
+offset_top = -69.0
+offset_right = 135.0
+offset_bottom = 69.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_3wo47")
+theme_override_styles/normal = ExtResource("38_wu7c1")
+text = "LOADING"
+horizontal_alignment = 1
+vertical_alignment = 1

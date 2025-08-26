@@ -1,10 +1,12 @@
 extends RefCounted
 class_name AssetManager
 #formerly materialmanager, manages all 3d modelling related assets (not any ui assets)
+"TODO"#this things api has become convoluted with duplicated code in some places
+#rework the api and plan out specific pipelines or ways for the functions to be combined
+
 
 #the central asset storage/tracker
 static var name_to_asset_map : Dictionary = {}
-static var debug_called : int = 0
 
 #utility function: ensures keys stay consistent
 static func get_name_of_asset(asset : Resource, include_color : bool = true, add_file_ending : bool = false):
@@ -23,9 +25,10 @@ static func get_name_of_asset(asset : Resource, include_color : bool = true, add
 	if base_name == "":
 		push_error("asset " + str(asset) + " has no resource_name and no resource_path set")
 	
-	if asset is BaseMaterial3D or asset is ShaderMaterial and include_color:
+	if (asset is BaseMaterial3D or asset is ShaderMaterial) and include_color:
 		base_name = base_name + "," + str(get_material_color(asset).to_html(false))
-	
+	elif not include_color:
+		base_name = base_name.get_slice(",", 0)
 	
 	return StringName(base_name)
 
@@ -64,9 +67,9 @@ static func get_asset(asset : Resource):
 
 
 #this function takes both string and stringname
-static func get_asset_by_name(asset_name):
+static func get_asset_by_name(asset_name, any_material_color : bool = true):
 	var result : Resource = name_to_asset_map.get(StringName(asset_name))
-	if result != null:
+	if result != null or not any_material_color:
 		return result
 	
 	#special case: materials include their color in their key but not their resource name
@@ -123,11 +126,9 @@ static func register_asset(asset : Resource):
 		return
 	
 	#assets must be named in a standard way
-	asset.resource_name = base_name
+	asset.resource_name = normalize_asset_name(base_name, false)
 	
 	#register the asset
-	if not asset is CompressedTexture2D:
-		debug_pretty_print()
 	name_to_asset_map[base_name] = asset
 
 
@@ -177,7 +178,7 @@ static func refresh_all_storage(all_existing_assets : Array):
 
 static func recolor_material(mat : Material, color : Color, automatic_register : bool):
 	#first search if this material already exists
-	var separate : Material = get_asset_by_name(normalize_asset_name(get_name_of_asset(mat), false, color))
+	var separate : Material = get_asset_by_name(normalize_asset_name(get_name_of_asset(mat), false, color), false)
 	if separate != null:
 		return separate
 	
@@ -220,9 +221,6 @@ static func debug_pretty_print():
 	for i in name_to_asset_map.keys():
 		len0 = max(str(name_to_asset_map[i]).length(), len0)
 	len0 = len0 + 1
-	
-	debug_called = debug_called + 1
-	print("debug_called ", debug_called)
 	
 	print("DATABASE DUMP")
 	if materials.size() > 0:

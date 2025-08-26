@@ -122,7 +122,7 @@ func cam_process(
 	
 	if direction != Vector3.ZERO:
 		Main.hovered_part = Main.part_hover_check()
-		WorkspaceManager.drag_handle(last_mouse_event, true)
+		WorkspaceManager.drag_handle(last_mouse_event)
 	
 	if Input.is_physical_key_pressed(KEY_SHIFT): # boost
 		translate(direction * velocity * delta * boost_speed_multiplier)

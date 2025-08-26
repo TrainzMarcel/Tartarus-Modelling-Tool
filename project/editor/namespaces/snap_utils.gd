@@ -163,7 +163,8 @@ static func drag_snap_position_to_hovered(
 	
 	#first find closest basis vectors to normal vector and use that to determine which side length of the abb to use
 	var r_dict_1 : Dictionary = SnapUtils.find_closest_vector_abs(selected_parts_abb.transform.basis, normal, true)
-	var side_length : float = selected_parts_abb.extents[r_dict_1.index]
+	#abb_normal_length is used to move the selection up until the bottom surface meets with the "canvas" surface that is being dragged onto
+	var abb_normal_length : float = selected_parts_abb.extents[r_dict_1.index]
 	
 	#inverse for transforming everything to local space of the hovered part
 	var inverse : Transform3D = hovered_part.global_transform.inverse()
@@ -172,25 +173,25 @@ static func drag_snap_position_to_hovered(
 	var ray_result_local_position : Vector3 = inverse * ray_result.position
 	var normal_local : Vector3 = inverse.basis * normal
 	var drag_offset_local : Vector3 = inverse.basis * drag_offset
+	var dragged_part_local : Basis = inverse.basis * dragged_part.basis
+	var dragged_part_scale_local : Vector3 = SnapUtils.get_scale_local(dragged_part.part_scale, dragged_part_local)
+	
 	
 	#normal "bump" (to prevent dragged part from intersecting hovered part when dragging)
 	"TODO"#make this into a function (like get_surface_height_by_unit_vector())
-	var drag_offset_local_planar = drag_offset_local - (drag_offset_local.dot(normal_local) * normal_local)
-	var drag_offset_local_normal = normal_local * (side_length * 0.5)
-	
 	"TODO"#make normal_local * (side_length * 0.5) into a function (like get_surface_height_by_unit_vector())
+	var drag_offset_local_normal = normal_local * (abb_normal_length * 0.5)
+	var drag_offset_local_planar = drag_offset_local - (drag_offset_local.dot(normal_local) * normal_local)
+	
+	
 	#reassign this value with the new normal height (again to prevent intersecting)
 	drag_offset_local = drag_offset_local_normal + drag_offset_local_planar
 	
 	#local coordinate of dragged part
 	var result_local : Vector3 = ray_result_local_position + drag_offset_local
-	#if one parts side length is even and one is odd
-	#add half of a snap increment to offset it away
-	var dragged_part_local : Basis = inverse.basis * dragged_part.basis
-	var dragged_part_scale_local : Vector3 = SnapUtils.get_scale_local(dragged_part.part_scale, dragged_part_local)
 	
 	
-	#make selection snap by the closest corner of ray_result.position
+	#make selection snap by the closest corner of dragged part to ray_result.position
 	var result_local_snap : Vector3 = result_local
 	if snapping_active:
 		
@@ -211,24 +212,34 @@ static func drag_snap_position_to_hovered(
 			var dragged_corner : float = dragged_corner_sign * dragged_part_scale_local[i] * 0.5
 			var dragged_corner_position : float = dragged_corner + result_local[i]
 			
-			#3. new var snap(d. part corner - canvas part corner)
+			#3. new var snap(dragged part corner - canvas part corner)
 			result_local_snap[i] = (result_local_snap[i] + hovered_corner) - dragged_corner
 			result_local_snap[i] = snapped(result_local_snap[i], positional_snap_increment)
 			result_local_snap[i] = (result_local_snap[i] - hovered_corner) + dragged_corner
 			
+			
+			
 			#if i == 2:
-				#print("Z ---------------------------------------------------------------------------")
-				#print("dragged scale            ", dragged_part_scale_local)
-				#print("hovered scale            ", hovered_part.part_scale)
-				#print("dragged_corner           ", dragged_corner)
-				#print("hovered_corner           ", hovered_corner)
-				#print("result local snap        ", result_local_snap)
-				#print("result local             ", result_local)
+			#	print("Z ---------------------------------------------------------------------------")
+			#	print("dragged scale            ", dragged_part_scale_local)
+			#	print("hovered scale            ", hovered_part.part_scale)
+			#	print("dragged_corner           ", dragged_corner)
+			#	print("hovered_corner           ", hovered_corner)
+			#	print("result local snap        ", result_local_snap)
+			#	print("result local             ", result_local)
 			#4. return this value
 			i = i + 1
 	
+	
 	#transform to global space and apply this to dragged_part
 	var result : Vector3 = hovered_part.global_transform * result_local_snap
+	print("---------------------------------_")
+	print("dragged_part pos  ", dragged_part.position)
+	print("result            ", result)
+	print("result_local_snap ", result_local_snap)
+	print("result_local      ", result_local)
+	print("drag_offset_local ", drag_offset_local)
+	print("bounding box size ", selected_parts_abb.extents)
 	return result
 
 

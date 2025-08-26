@@ -183,7 +183,9 @@ static func select_tool(button : Button):
 		ToolManager.handle_set_active(Main.selected_tool_handle_array, false)
 	
 	if button.button_pressed:
-		var data : ToolData = ToolManager.button_to_tool_data_mapping[button]
+		var data : ToolData = ToolManager.button_to_tool_data_mapping.get(button)
+		if data == null:
+			return
 		ToolManager.selected_tool = data.tool_type
 		Main.is_drag_tool = data.is_drag_tool
 		Main.is_hover_tool = data.is_hover_tool

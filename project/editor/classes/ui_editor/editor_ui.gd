@@ -88,6 +88,8 @@ static var dd_license : DocumentDisplay
 #file manager
 static var fm_file : FileManager
 
+#loading message
+static var c_loading_message : Control
 
 func initialize(
 	on_spawn_pressed : Callable,
@@ -98,7 +100,8 @@ func initialize(
 	on_local_transform_active_set : Callable,
 	on_snapping_active_set : Callable,
 	on_top_bar_id_pressed : Callable,
-	on_file_manager_accept_pressed : Callable
+	on_file_manager_accept_pressed : Callable,
+	version_number : String
 	):
 	
 #assign all ui nodes
@@ -170,6 +173,9 @@ func initialize(
 	#file dialog
 	fm_file = %FileManager
 	
+	#loading message
+	c_loading_message = %ControlLoadingMessage
+	
 	ui_menu = [
 		dd_manual,
 		dd_license,
@@ -227,6 +233,9 @@ func initialize(
 	pm_help.id_pressed.connect(on_top_bar_id_pressed.bind(pm_help))
 	
 	fm_file.accept_button_pressed.connect(on_file_manager_accept_pressed)
+	
+	#set version number bottom right
+	%LabelVersion.text = "      " + version_number + "      "
 
 
 #theoretically should work for all ui in the program
