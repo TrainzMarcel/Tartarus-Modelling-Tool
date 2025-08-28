@@ -232,8 +232,10 @@ item_2/text = "Load"
 item_2/id = 2
 item_3/text = "Import Model"
 item_3/id = 3
+item_3/disabled = true
 item_4/text = "Export Model"
 item_4/id = 4
+item_4/disabled = true
 
 [node name="Edit" type="PopupMenu" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/MenuBarTop"]
 unique_name_in_owner = true
@@ -241,8 +243,10 @@ theme_override_fonts/font = ExtResource("6_07mtu")
 item_count = 11
 item_0/text = "[Ctrl + Z] Undo"
 item_0/id = 0
+item_0/disabled = true
 item_1/text = "[Ctrl + Y] Redo"
 item_1/id = 1
+item_1/disabled = true
 item_2/text = ""
 item_2/id = 2
 item_2/separator = true
@@ -843,6 +847,7 @@ theme_override_constants/separation = 3
 
 [node name="ButtonLockTool" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]
 unique_name_in_owner = true
+visible = false
 self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
@@ -909,37 +914,6 @@ button_group = SubResource("ButtonGroup_71ghl")
 icon = ExtResource("17_ccyt1")
 expand_icon = true
 script = ExtResource("11_6a6rl")
-
-[node name="Panel" type="Panel" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool/ButtonChangePivotTool"]
-visible = false
-clip_contents = true
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -30.0
-offset_top = 8.0
-offset_bottom = 40.0
-grow_horizontal = 0
-grow_vertical = 0
-theme_override_styles/panel = ExtResource("12_rh0pf")
-
-[node name="Label" type="Label" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool/ButtonChangePivotTool/Panel"]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -1.5
-offset_bottom = 1.5
-grow_horizontal = 2
-grow_vertical = 2
-theme = ExtResource("13_v6fq4")
-text = "3"
-horizontal_alignment = 1
-vertical_alignment = 2
 
 [node name="ButtonPivotReset" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool"]
 unique_name_in_owner = true
@@ -1056,6 +1030,7 @@ theme_override_constants/margin_right = 30
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+text = "Welcome! hit f1 to open the manual."
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -1371,7 +1346,81 @@ offset_left = -512.0
 offset_top = -256.0
 offset_right = 512.0
 offset_bottom = 256.0
-contents = Array[String](["To be written."])
+contents = Array[String](["[font_size=24]Introduction[/font_size]
+Welcome to the help guide!
+On my own behalf, I'd like to thank you for choosing Tartarus Modelling Tool. I hope you'll enjoy using it as much as I enjoy working on it.
+Have a great time and dont hesitate to send me feedback.
+
+
+[font_size=24]Camera[/font_size]
+Use the WASDEQ Keys to move the camera. Hold and drag right click to turn the camera. Hit F to frame any selected parts.
+
+
+[font_size=24]Drag Tools[/font_size]
+[p]Click on parts to select them. Hold shift to select many. Click and drag through empty space to marquee select parts. Hold shift while marquee selecting to add or remove from an existing selection. Check the edit dropdown in the top left for more keybinds. IMPORTANT: The last selected part determines the local axes and the orientation of the bounding box. Knowing this is essential when building off-grid.[/p]
+
+[table={2}]
+[cell]Drag    [/cell][cell]Click and drag selections. Hit R to rotate clockwise around the surface being dragged onto. Hit T to rotate around the axis closest to the camera's left-right direction.[/cell]
+[cell]Move    [/cell][cell]Drag tool combined with transform handles to move selections. Godots forward axis is -Z and marked as the striped blue handle.[/cell]
+[cell]Rotate    [/cell][cell]Drag tool combined with transform handles to rotate selections.[/cell]
+[cell]Scale    [/cell][cell]Drag tool combined with transform handles to scale selections. (hold shift to scale in all directions, ctrl to scale both directions at once). IMPORTANT: Parts in multi-selections are only scaled if they are aligned with the axes of the bounding box.[/cell]
+[/table]
+
+
+[font_size=24]Snapping options[/font_size]
+[p]Use the x2, /2, + and - buttons to quickly step up and down in snapping increment.
+The right display in each display pair sets the step used when pressing + or -.
+
+Smallest recommended increment is 0.001 units/degrees.
+The local transform toggle lets you move a selection by the local directions of the last selected part (Such as right or left from the part's viewpoint).
+The snapping enabled toggle is self explanatory.[/p]", "[font_size=24]Other tools[/font_size]
+[table={2}]
+[cell]Spawn part    [/cell][cell]Self explanatory. Parts spawn in the center of the screen.[/cell]
+[cell]Delete part    [/cell][cell]Click parts to delete them individually. Alternatively hit the delete key to delete an existing selection.[/cell]
+[cell]Paint tool    [/cell][cell]Paint parts individually. Mass painting not yet available. See page 3 for custom colors.[/cell]
+[cell]Material tool    [/cell][cell]Apply materials to parts individually. Mass application not yet available. See page 3 for custom materials.[/cell]
+[/table]
+
+
+[font_size=24]Advanced tools[/font_size]
+[table={2}]
+[cell]Pivot edit tool    [/cell][cell]Caution: may have bugs. Use the transform handles to set your desired pivot point. The pivot point moves with transformations and dragging but does not move when discarding the selection or changing what parts are selected.[/cell]
+[cell]Pivot reset button    [/cell][cell]Hit the reset button to set the pivot back to normal.[/cell]
+[/table]", "[font_size=24]Saving, Loading[/font_size]
+[p]The editor has its own save/load format. All used assets are embedded which is what makes saving so slow. An embed toggle will be available when v0.1 is finished. Simply unzip a save file if you wish to look inside.[/p]
+
+[p]⚠️ Perfect loading of custom assets (especially materials) is not guaranteed. I have not yet tested these systems extensively enough.
+⚠️ Exporting is not yet available. Exporting models with godot shaders is not planned.
+⚠️ Proper UV mapping (like hammer editor) is planned for v0.2/v0.3. For now, the editor uses triplanar mapping.
+Take a look at my shader (broken normals calculation) for triplanar mapping that matches the parts local rotation.[/p]
+
+[font_size=24]Advanced: Custom assets[/font_size]
+[p]You can add your own colors, materials, and meshes by placing files in the assets folder (accessible via the Assets dropdown).
+If you accidentally deleted the assets in the user folder, open settings.json and set [code]\"default_assets_copied_to_user_folder\": false[/code] or delete settings.json entirely.[/p]
+
+
+Colors
+[p]Open the assets folder (found by using the assets dropdown) and edit the default_color_codes.txt file. If you disable autosort (set to false or omit the line entirely), colors will be placed in order from left to right, fixed to 15 columns.[/p]
+
+Materials
+[p]Supported: StandardMaterial3D or ShaderMaterial (from Godot 4.1.4).
+- ShaderMaterial: Must have a [code]color[/code] uniform for tinting and have triplanar mapping (the mesh's transform is used for scaling).
+- StandardMaterial3D: Enable [code]triplanar[/code] and [code]world_triplanar[/code] to avoid stretching when scaling parts.[/p]
+
+How to add:
+1. Save materials as .tres or .res and make sure all assets are named differently.
+2. Ensure texture paths in the resources are relative (not absolute).
+3. Place in assets folder with their textures.
+4. Restart the editor.
+
+Meshes
+[p]Supported: Any mesh saved as .tres or .res from Godot 4.1.4.
+Meshes are allowed to have multiple surfaces because godot's [code]Mesh.surface_override[/code] is used for material application.[/p]
+
+How to add:
+1. Export your mesh from Godot as .tres or .res and make sure all assets are named differently.
+2. Drop it into the assets folder.
+3. Restart the editor."])
 
 [node name="DocumentDisplayLicense" parent="." instance=ExtResource("32_epjev")]
 unique_name_in_owner = true

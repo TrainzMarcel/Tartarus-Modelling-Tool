@@ -26,7 +26,7 @@ v0.1
 	x RT3 tools 1-4 (dragging, linearly translating, rotating and scaling) have the same base dragging and selecting behavior, but, tools 2-4 render interactive handles for their primary purpose
 	x RT4 tool 2 will be used for linear translation of blocks either in global axes or axes relative to said block
 	x RT5 tool 3 will be used to rotate again in global or relative axes
-	  RT6 the rotation pivot for a part should be adjustable
+	x RT6 the rotation pivot for a part should be adjustable
 	x RT7 tool 4 will be for scaling singular parts
 	x RT8 spawning of parts (cuboids, wedges, cylinders, spheres)
 	x RT9 free flying camera
@@ -39,7 +39,7 @@ v0.1
 	x IC2 tool 2	linearly translating is done by dragging one of 6 arrows, x arrows in red, y arrows in green, z arrows in blue and global or relative input is toggled by a checkbox or a keybind
 	  IC3 tool 2	there will also be a small square for each axis, which allows users to move parts planarly
 	x IC4 tool 3	rotating is done by dragging one of 3 rings, x rotation in red, y rotation in green and z rotation in blue
-	  IC5 tool 3	will have an extra button next to it, labeled "change pivot" where the parts pivot will be shown and be moveable by tool 2
+	x IC5 tool 3	will have an extra button next to it, labeled "change pivot" where the parts pivot will be shown and be moveable by tool 2
 	x IC6 tool 4	scaling is done by dragging one of 6 spheres, x spheres in red, y spheres in green and z spheres in blue
 	x IC7 tool 4	holding ctrl will force the part to stay in the same position and scaling to work in both directions of the axis
 	x IC8 tool 4	shift will force scaling to work in all directions

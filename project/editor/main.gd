@@ -91,26 +91,21 @@ static var raycast_length : float = 1024
 
 #transform handle data----------------------------------------------------------
 #store handle which is being dragged, in case mouse moves off handle while dragging
-var dragged_handle : TransformHandle
+static var dragged_handle : TransformHandle
 #hovered handle to set dragged handle when the user clicks
-var hovered_handle : TransformHandle
+static var hovered_handle : TransformHandle
 #hovered handle from last input frame
-var prev_hovered_handle : TransformHandle
+static var prev_hovered_handle : TransformHandle
 
 #determines if transform axes will be local to the selection or global
 static var local_transform_active : bool = false
-
-#EXTRA: pivot edit tool data
-#global vector pointing of the rotation pivot when pivot mode is active
-#this vector stays where it is no matter what is selected, but it does move with the selection
-static var pivot_transform : Transform3D
-static var custom_pivot_mode_active : bool = false
 
 #fixed distance of camera to transformhandleroot
 @export_category("Tweakables")
 @export var transform_handle_scale : float = 12
 
 #contains the transformhandles of any currently selected tool
+"TODO"#abstract this variable out of main and into toolmanager
 static var selected_tool_handle_array : Array[TransformHandle]
 
 #conditionals-------------------------------------------------------------------
@@ -206,30 +201,27 @@ func _input(event : InputEvent):
 #if handle wasnt found, raycast and set hovered_part, render selectionbox around hovered_part
 #transform handles take priority over parts
 	if event is InputEventMouseMotion:
-		if is_hovering_allowed:
-			#print("is_hovering_allowed   ", is_hovering_allowed)
-			#print("is_selecting_allowed  ", is_selecting_allowed)
-			#print("is_drag_tool          ", is_drag_tool)
-			hovered_handle = handle_hover_check()
-			#handle wasnt detected
+		hovered_handle = handle_hover_check()
+		
+		if not is_mouse_button_held and Main.safety_check(hovered_handle):
+			ToolManager.handle_set_highlight(hovered_handle, hovered_handle.color_hover)
+			
+			#fix: when moving mouse from one handle to another, sometimes the previous one stayed highlighted
+			if hovered_handle != prev_hovered_handle and Main.safety_check(prev_hovered_handle):
+				ToolManager.handle_set_highlight(prev_hovered_handle, prev_hovered_handle.color_default)
+			
+			#set hovered_part to null as mouse is no longer hovering over a part
+			hovered_part = null
+		else:
 			if not Main.safety_check(hovered_handle) and not Main.safety_check(dragged_handle):
-				
 				if Main.safety_check(prev_hovered_handle):
 					ToolManager.handle_set_highlight(prev_hovered_handle, prev_hovered_handle.color_default)
-				
+		
+		
+		if is_hovering_allowed and not Main.safety_check(hovered_handle):
+			#handle wasnt detected
 				hovered_part = Main.part_hover_check()
 				WorkspaceManager.selection_box_hover_on_part(hovered_part, is_hovering_allowed)
-			#handle was detected
-			else:
-				if not is_mouse_button_held:
-					ToolManager.handle_set_highlight(hovered_handle, hovered_handle.color_hover)
-				
-				#fix: when moving mouse from one handle to another, sometimes the previous one stayed highlighted
-				if hovered_handle != prev_hovered_handle and Main.safety_check(prev_hovered_handle):
-					ToolManager.handle_set_highlight(prev_hovered_handle, prev_hovered_handle.color_default)
-				
-				#set hovered_part to null as mouse is no longer hovering over a part
-				hovered_part = null
 		else:
 			#hide selection box
 			WorkspaceManager.selection_box_hover_on_part(null, is_hovering_allowed)
@@ -247,7 +239,6 @@ func _input(event : InputEvent):
 					if Main.safety_check(ui_focus):
 						ui_focus.release_focus()
 				
-				
 				#part detected
 				if Main.safety_check(hovered_part):
 					#if mouse was pressed down over a hovered part, we know the user is most likely starting a drag
@@ -255,34 +246,17 @@ func _input(event : InputEvent):
 					WorkspaceManager.drag_prepare(event)
 				#if handle is detected, set dragged_handle
 				elif Main.safety_check(hovered_handle):
-					dragged_handle = hovered_handle
-					
-					#get initial data on click, for calculating transforms performed by transformhandle
-					WorkspaceManager.initial_transform_handle_root_transform = transform_handle_root.transform
-					WorkspaceManager.initial_abb_state.transform = WorkspaceManager.selected_parts_abb.transform
-					WorkspaceManager.initial_abb_state.extents = WorkspaceManager.selected_parts_abb.extents
-					WorkspaceManager.initial_handle_event = event
-					ToolManager.handle_set_highlight(dragged_handle, dragged_handle.color_drag)
-					#hide hover selection_box because it does not move with transforms
-					hover_selection_box.visible = false
+					WorkspaceManager.transform_handle_prepare(event)
 				else:
 					WorkspaceManager.selection_rect_prepare(event, panel_selection_rect)
 			
 		#lmb release
 			else:
-				dragged_part = null
-				
-				if Main.safety_check(dragged_handle):
-					ToolManager.handle_set_highlight(dragged_handle, dragged_handle.color_default)
-				
-				if Main.safety_check(hovered_handle):
-					ToolManager.handle_set_highlight(hovered_handle, hovered_handle.color_hover)
-				
-				dragged_handle = null
 				is_mouse_button_held = false
 				#drag has a tolerance of a few pixels before it starts
 				WorkspaceManager.drag_terminate()
 				WorkspaceManager.selection_rect_terminate(panel_selection_rect)
+				WorkspaceManager.transform_handle_terminate()
 	
 	
 #selection handling and non-drag-tool logic-------------------------------------
@@ -351,7 +325,7 @@ func _input(event : InputEvent):
 #handle editing related keyboard inputs-----------------------------------------
 	if event is InputEventKey and event.is_pressed() and not event.is_echo():
 #change initial_transform on r or t press
-			#rotate clockwise around normal vector
+	#rotate clockwise around normal vector
 		if event.keycode == KEY_R:
 			if Main.safety_check(hovered_part) and Main.safety_check(dragged_part) and is_selecting_allowed and not ray_result.is_empty():
 				initial_rotation = initial_rotation.rotated(ray_result.normal, PI * 0.5)
@@ -366,9 +340,7 @@ func _input(event : InputEvent):
 					positional_snap_increment,
 					snapping_active
 				))
-				#print(WorkspaceManager.selected_parts_abb.transform.basis)
-			
-			#rotate around part vector which is closest to cam.basis.x
+	#rotate around part vector which is closest to cam.basis.x
 		elif event.keycode == KEY_T:
 			if Main.safety_check(hovered_part) and Main.safety_check(dragged_part) and is_selecting_allowed and not ray_result.is_empty():
 				var r_dict = SnapUtils.find_closest_vector(initial_rotation, cam.basis.x, true)
@@ -433,103 +405,23 @@ func _input(event : InputEvent):
 		elif event.keycode == KEY_Y and event.ctrl_pressed:
 			"TODO"
 			WorkspaceManager.redo()
+		elif event.keycode == KEY_F1:
+			EditorUI.dd_manual.popup()
 	
 #dragging parts + transform handle calculations---------------------------------
 	if event is InputEventMouseMotion:
 		#parts dragging
 		WorkspaceManager.drag_handle(event)
 		
-		
-		
 		#transform handle dragging
 		#handles do not need a "canvas" collider to be dragged over
 		#so theres no check of hovered_part or hovered_handle
-		if is_mouse_button_held and is_selecting_allowed:
-			if Main.safety_check(dragged_handle):
-				var global_vector : Vector3 = (transform_handle_root.basis * dragged_handle.direction_vector).normalized()
-				var global_vector_initial : Vector3 = (WorkspaceManager.initial_transform_handle_root_transform.basis * dragged_handle.direction_vector).normalized()
-				var cam_normal : Vector3 = cam.project_ray_normal(event.position)
-				var cam_normal_initial : Vector3 = cam.project_ray_normal(WorkspaceManager.initial_handle_event.position)
-				
-			#movement single axis
-				if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_move and dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_move:
-					#process mouse drag on handle into a single value
-					var delta : float = ToolManager.handle_input_linear_move(cam, dragged_handle, global_vector, cam_normal, cam_normal_initial)
-					#take value and convert to vector3, then apply it to selection
-					WorkspaceManager.selection_move(SnapUtils.transform_handle_snap_position(
-						delta,
-						global_vector,
-						WorkspaceManager.initial_abb_state.transform.origin,
-						positional_snap_increment,
-						snapping_active
-					))
-					EditorUI.l_message.text = "Translation: " + str(snapped(delta, positional_snap_increment) * dragged_handle.direction_vector)
-					
-					
-			#rotation
-				elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_rotate and dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_rotate:
-					#process mouse drag on handle into a single value
-					var angle : float = ToolManager.handle_input_rotation(cam, dragged_handle, global_vector_initial, cam_normal, cam_normal_initial)
-					#turn value into a basis and feed it into workspacemanager to process selection
-					WorkspaceManager.selection_rotate(SnapUtils.transform_handle_snap_rotation(
-						angle,
-						WorkspaceManager.initial_abb_state.transform.basis,
-						global_vector_initial,
-						deg_to_rad(rotational_snap_increment),
-						snapping_active
-					))
-					EditorUI.l_message.text = "Angle: " + str(snapped(rad_to_deg(angle), rotational_snap_increment) * dragged_handle.direction_vector)
-			#scaling
-				elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale and dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_scale:
-					var delta_scale : float = ToolManager.handle_input_linear_move(cam, dragged_handle, global_vector, cam_normal, cam_normal_initial)
-					#process mouse drag on handle into a single value
-					var result : Vector3 = SnapUtils.transform_handle_snap_scale(
-						delta_scale,
-						dragged_handle.direction_vector,
-						WorkspaceManager.initial_abb_state.extents,
-						positional_snap_increment,
-						snapping_active,
-						Input.is_key_pressed(KEY_CTRL),
-						Input.is_key_pressed(KEY_SHIFT)
-					)
-					
-					WorkspaceManager.selection_scale(result)
-					
-					#do the same for the movement portion
-					#turn value into a vector and feed it into workspacemanager to process selection
-					var delta_move : float = ToolManager.handle_input_scale_linear_move(cam, dragged_handle, global_vector, cam_normal, cam_normal_initial, Input.is_key_pressed(KEY_CTRL))
-					
-					delta_move = SnapUtils.scaling_clamp(delta_move, dragged_handle.direction_vector, WorkspaceManager.initial_abb_state.extents, positional_snap_increment, snapping_active)
-					
-					#use half delta and half increment because pulling by one face means only half the movement at the part center
-					var result_move : Vector3 = SnapUtils.transform_handle_snap_position(
-						delta_move * 0.5,
-						global_vector,
-						WorkspaceManager.initial_abb_state.transform.origin,
-						positional_snap_increment * 0.5,
-						snapping_active
-					)
-					
-					WorkspaceManager.selection_move(result_move)
-					
-					EditorUI.l_message.text = "Scale: " + str(result)
-				elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot and dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_move:
-					#process mouse drag on handle into a single value
-					var delta : float = ToolManager.handle_input_linear_move(cam, dragged_handle, global_vector, cam_normal, cam_normal_initial)
-					#take value and convert to vector3, then apply it to selection
-					ToolManager.pivot_offset = SnapUtils.transform_handle_snap_position(
-						delta,
-						global_vector,
-						ToolManager.initial_pivot_offset,
-						positional_snap_increment,
-						snapping_active
-					)
-					EditorUI.l_message.text = "Pivot offset: " + str(ToolManager.pivot_offset)
-					
+		if is_mouse_button_held and (is_selecting_allowed or ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot):
+			WorkspaceManager.transform_handle_handle(event)
 	
 	
 #post input updates-------------------------------------------------------------
-	if WorkspaceManager.selected_parts_array.size() > 0 and is_selecting_allowed:
+	if WorkspaceManager.selected_parts_array.size() > 0 and (is_selecting_allowed or ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot):
 		#refresh bounding box on definitive selection change
 		#automatically refreshes abb offset array
 		if WorkspaceManager.selection_changed:
@@ -538,19 +430,26 @@ func _input(event : InputEvent):
 			#but i didnt feel like tracking that
 			ToolManager.handle_set_active(selected_tool_handle_array, true)
 		
+		
 		if WorkspaceManager.selection_changed or WorkspaceManager.selection_moved:
+			#recalculate local pivot transform on selection change
+			if WorkspaceManager.pivot_custom_mode_active:
+				WorkspaceManager.pivot_local_transform = WorkspaceManager.selected_parts_abb.transform.inverse() * WorkspaceManager.pivot_transform
+			
 			ToolManager.handle_set_root_position(
 				transform_handle_root,
-				WorkspaceManager.selected_parts_abb.transform,
+				WorkspaceManager.selected_parts_abb,
+				WorkspaceManager.pivot_transform,
+				WorkspaceManager.pivot_custom_mode_active,
 				local_transform_active,
 				selected_tool_handle_array
 			)
 		
 		#this definitively tells us a drag motion has started
-		if Main.safety_check(dragged_part) and dragged_part == hovered_part:
+		if not ray_result.is_empty() and Main.safety_check(dragged_part) and dragged_part == hovered_part:
 			WorkspaceManager.drag_offset = WorkspaceManager.selected_parts_abb.transform.origin - Main.ray_result.position
 		
-	elif WorkspaceManager.selected_parts_array.size() == 0 and WorkspaceManager.selection_changed:
+	elif WorkspaceManager.selected_parts_array.size() == 0 and WorkspaceManager.selection_changed and ToolManager.selected_tool != ToolManager.SelectedToolEnum.t_pivot:
 		ToolManager.handle_set_active(selected_tool_handle_array, false)
 	
 	

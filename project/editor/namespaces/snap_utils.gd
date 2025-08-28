@@ -246,13 +246,13 @@ static func drag_snap_position_to_hovered(
 	var result : Vector3 = hovered_part.global_transform * result_local_snap
 	#take away the dragged 
 	result = result - abb_to_dragged_offset_planar
-	print("---------------------------------_")
+	#print("---------------------------------_")
 	#print("dragged_part pos  ", dragged_part.position)
 	#print("result            ", result)
 	#print("result_local_snap ", result_local_snap)
 	#print("result_local      ", result_local)
 	#print("drag_offset_local ", drag_offset_local)
-	print("bounding box size ", selected_parts_abb.extents)
+	#print("bounding box size ", selected_parts_abb.extents)
 	#print() # - (abb_to_dragged_offset.dot(normal) * normal)))
 	return result
 

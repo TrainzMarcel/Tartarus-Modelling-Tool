@@ -11,8 +11,21 @@ static func select_tool(button : Button):
 
 
 static func on_pivot_reset_pressed():
-	Main.custom_pivot_mode_active = false
-	#Main.pivot
+	if ToolManager.selected_tool != ToolManager.SelectedToolEnum.t_pivot:
+		WorkspaceManager.pivot_mesh.visible = false
+		WorkspaceManager.pivot_custom_mode_active = false
+	WorkspaceManager.pivot_transform = WorkspaceManager.selected_parts_abb.transform
+	print("----------------")
+	print(WorkspaceManager.pivot_transform.origin)
+	print(WorkspaceManager.selected_parts_abb.transform.origin)
+	ToolManager.handle_set_root_position(
+		Main.transform_handle_root,
+		WorkspaceManager.selected_parts_abb,
+		WorkspaceManager.pivot_transform,
+		WorkspaceManager.pivot_custom_mode_active,
+		Main.local_transform_active,
+		Main.selected_tool_handle_array
+	)
 
 
 static func on_spawn_pressed():
@@ -70,7 +83,14 @@ static func on_snap_button_pressed(button):
 
 static func on_local_transform_active_set(active):
 	Main.local_transform_active = active
-	ToolManager.handle_set_root_position(Main.transform_handle_root, WorkspaceManager.selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
+	ToolManager.handle_set_root_position(
+		Main.transform_handle_root,
+		WorkspaceManager.selected_parts_abb,
+		WorkspaceManager.pivot_transform,
+		WorkspaceManager.pivot_custom_mode_active,
+		Main.local_transform_active,
+		Main.selected_tool_handle_array
+	)
 
 
 static func on_snapping_active_set(active):
@@ -145,7 +165,7 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 	#asset dropdown---------------------
 	elif pm == EditorUI.pm_assets:
 		#theres only one button anyway
-		OS.shell_show_in_file_manager(ProjectSettings.globalize_path("user://assets"))
+		OS.shell_show_in_file_manager(ProjectSettings.globalize_path("user://user/"))
 		
 	#help dropdown----------------------
 	elif pm == EditorUI.pm_help:

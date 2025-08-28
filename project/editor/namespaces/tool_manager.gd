@@ -2,6 +2,11 @@ extends RefCounted
 class_name ToolManager
 
 #centralized tool logic and transformhandle utilities
+#gets set in MainUIEvents.select_tool
+#these 3 variables are all that is required to select tools
+static var selected_tool : SelectedToolEnum = SelectedToolEnum.none
+static var button_to_tool_data_mapping : Dictionary = {}
+static var tool_data_to_transform_handle_mapping : Dictionary = {}
 
 #tool identifier
 enum SelectedToolEnum
@@ -37,23 +42,12 @@ class ToolData:
 	var tool_type : SelectedToolEnum = SelectedToolEnum.none
 	var associated_button : Button
 	var has_associated_transform_handles : bool = false
+	#only set this to true if also has associated transform handles
+	var show_transform_handles_disregarding_selection : bool = false
 	var is_drag_tool : bool = false
 	var is_hover_tool : bool = false
 	var selection_box_color_action : SelectionBoxColorAction = SelectionBoxColorAction.use_default
 	var custom_selection_box_color : Color
-
-
-#gets set in MainUIEvents.select_tool
-#these 3 variables are all that is required to select tools
-static var selected_tool : SelectedToolEnum = SelectedToolEnum.none
-static var button_to_tool_data_mapping : Dictionary = {}
-static var tool_data_to_transform_handle_mapping : Dictionary = {}
-
-
-"TODO"#comment
-static var pivot_mesh : MeshInstance3D
-static var pivot_offset : Vector3
-static var initial_pivot_offset : Vector3
 
 
 static func initialize(transform_handle_root : TransformHandleRoot):
@@ -143,10 +137,12 @@ static func initialize(transform_handle_root : TransformHandleRoot):
 	new.tool_type = SelectedToolEnum.t_pivot
 	new.associated_button = EditorUI.b_pivot_tool
 	new.has_associated_transform_handles = true
+	"TODO"#maybe remove this again not sure if i will use it
+	new.show_transform_handles_disregarding_selection = true
 	tool_data_array.append(new)
 	
 	#get the mesh sphere for the pivot marker
-	pivot_mesh = transform_handle_root.get_children().filter(func(input): return input is MeshInstance3D and input.name == "MeshInstance3DPivot")[0]
+	WorkspaceManager.pivot_mesh = transform_handle_root.get_children().filter(func(input): return input is MeshInstance3D and input.name == "MeshInstance3DPivot")[0]
 	
 	#create mapping 1
 	for i in tool_data_array:
@@ -167,8 +163,6 @@ static func initialize(transform_handle_root : TransformHandleRoot):
 			for k in transform_handles:
 				if k is TransformHandle and k.associated_tools.has(j.tool_type):
 					ToolManager.tool_data_to_transform_handle_mapping[j].append(k)
-	
-	
 
 
 static func select_tool(button : Button):
@@ -184,7 +178,7 @@ static func select_tool(button : Button):
 		Main.is_drag_tool = data.is_drag_tool
 		Main.is_hover_tool = data.is_hover_tool
 		
-		#activate selection handles
+		#activate transform handles
 		if data.has_associated_transform_handles:
 			var associated_transform_handles : Array = ToolManager.tool_data_to_transform_handle_mapping[data]
 			"TODO"#abstract this variable out of main and into toolmanager
@@ -192,17 +186,24 @@ static func select_tool(button : Button):
 			#ToolManager.handle_set_active(associated_transform_handles, true)
 			
 			if Main.is_drag_tool:
-				ToolManager.handle_set_root_position(Main.transform_handle_root, WorkspaceManager.selected_parts_abb.transform, Main.local_transform_active, Main.selected_tool_handle_array)
+				ToolManager.handle_set_root_position(Main.transform_handle_root, WorkspaceManager.selected_parts_abb, WorkspaceManager.pivot_transform, WorkspaceManager.pivot_custom_mode_active, Main.local_transform_active, Main.selected_tool_handle_array)
 				if WorkspaceManager.selected_parts_array.size() > 0:
 					ToolManager.handle_set_active(Main.selected_tool_handle_array, true)
-			"""TODO
+			#"TODO"
 			#special case
-			elif Main.selected_tool == Main.SelectedToolEnum.t_pivot:
-				var transform : Transform3D = WorkspaceManager.selected_parts_abb.transform
-				transform.origin = WorkspaceManager.pivot_offset
-				TransformHandleUtils.set_tool_handle_array_active(Main.selected_tool_handle_array, true)
-				Main.set_transform_handle_root_position(Main.transform_handle_root, transform, true, Main.selected_tool_handle_array)
-			"""
+			elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot:
+				
+				if not WorkspaceManager.pivot_custom_mode_active:
+					WorkspaceManager.pivot_custom_mode_active = true
+					WorkspaceManager.pivot_mesh.visible = true
+					"TODO"
+					#only move the pivot transform when uhhh uhh
+					if WorkspaceManager.selected_parts_array.size() != 0:
+						WorkspaceManager.pivot_transform = WorkspaceManager.selected_parts_abb.transform
+				
+				
+				ToolManager.handle_set_active(Main.selected_tool_handle_array, true)
+				ToolManager.handle_set_root_position(Main.transform_handle_root, WorkspaceManager.selected_parts_abb, WorkspaceManager.pivot_transform, WorkspaceManager.pivot_custom_mode_active, Main.local_transform_active, Main.selected_tool_handle_array)
 		else:
 			Main.selected_tool_handle_array = []
 		
@@ -336,13 +337,33 @@ static func handle_set_highlight(handle : TransformHandle, color : Color):
 			i.material_override.albedo_color = color
 
 
-static func handle_set_root_position(root : TransformHandleRoot, new_transform : Transform3D, local_transform_active : bool, selected_tool_handle_array):
+static func handle_set_root_position(
+	root : TransformHandleRoot,
+	selected_parts_abb : ABB,
+	pivot_transform : Transform3D,
+	pivot_custom_mode_active : bool,
+	local_transform_active : bool,
+	selected_tool_handle_array
+	):
+	
+	
 	var must_stay_aligned_to_part : bool = false
 	if not selected_tool_handle_array.is_empty():
 		must_stay_aligned_to_part = selected_tool_handle_array[0].handle_force_follow_abb_surface
 	
-	if local_transform_active or must_stay_aligned_to_part:
-		root.transform = new_transform
+	#bool override hierarchy
+	#must_stay_aligned_to_part
+	#pivot_custom_mode_active
+	#local_transform_active
+	
+	if must_stay_aligned_to_part:
+		root.transform = selected_parts_abb.transform
+	elif pivot_custom_mode_active:
+		"TODO"#make some kind of mechanism for moving with a selection
+		root.transform = selected_parts_abb.transform * WorkspaceManager.pivot_local_transform
+	elif local_transform_active:
+		root.transform = selected_parts_abb.transform
+	#global transform
 	else:
-		root.transform.origin = new_transform.origin
+		root.transform.origin = selected_parts_abb.transform.origin
 		root.transform.basis = Basis.IDENTITY

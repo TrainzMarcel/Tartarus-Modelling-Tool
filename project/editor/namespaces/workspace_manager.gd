@@ -73,6 +73,20 @@ static var first_part_selection_rect : Part
 #for shift-selecting, i need to keep track of the initial selection
 static var initial_selected_parts : Array[Part]
 
+
+#EXTRA: pivot edit tool data
+#global vector pointing of the rotation pivot when pivot mode is active
+#this vector stays where it is no matter what is selected, but it does move with the selection
+static var pivot_custom_mode_active : bool = false
+static var pivot_mesh : MeshInstance3D
+#transform local to bounding box which gets recalculated when the selection changes and pivot_custom_mode_active is true
+#calculated by using abb.transform.inverse() * pivot_transform
+static var pivot_local_transform : Transform3D
+#global transform as a global reference point for the pivot and only counts when pivot_custom_mode_active is true
+static var pivot_transform : Transform3D
+#initial transform which is set each time transform_handle_prepare is called
+static var pivot_initial_transform : Transform3D
+
 #saving and loading related variables
 #static var saving_thread : Thread
 
@@ -145,7 +159,7 @@ static func initialize(
 		var extension : String = file_name.get_extension().to_lower()
 		
 		#load an asset
-		if extension == "res" or extension == "tres":
+		if extension == "res" or extension == "tres" or extension == "gdshader":
 			var asset : Resource = ResourceLoader.load(load_directory + file_name)
 			
 			if asset is BaseMaterial3D or asset is ShaderMaterial:
@@ -296,6 +310,7 @@ static func drag_handle(event : InputEvent):
 
 
 static func drag_terminate():
+	Main.dragged_part = null
 	drag_confirmed = false
 	initial_drag_event = null
 
@@ -360,8 +375,8 @@ static func selection_rect_handle(event : InputEvent, selection_rect : Panel, ca
 		#guarantee the first selected part is always at the start of the array
 		#so that the bounding box orientation doesnt change
 		if result_parts.size() > 0 and first_part_selection_rect == null:
-			first_part_selection_rect = result_parts[0]
-			Main.initial_rotation = result_parts[0].basis
+			first_part_selection_rect = result_parts[-1]
+			Main.initial_rotation = result_parts[-1].basis
 		
 		if first_part_selection_rect != null and result_parts.size() > 1:
 			result_parts.erase(first_part_selection_rect)
@@ -392,6 +407,161 @@ static func selection_rect_terminate(selection_rect : Panel):
 	first_part_selection_rect = null
 	initial_selected_parts = []
 	selection_changed = true
+
+
+#transform handle abstractions
+static func transform_handle_prepare(event : InputEvent):
+	Main.dragged_handle = Main.hovered_handle
+	#get initial data on click, for calculating transforms performed by transformhandle
+	WorkspaceManager.initial_transform_handle_root_transform = Main.transform_handle_root.transform
+	WorkspaceManager.initial_abb_state.transform = WorkspaceManager.selected_parts_abb.transform
+	WorkspaceManager.initial_abb_state.extents = WorkspaceManager.selected_parts_abb.extents
+	WorkspaceManager.initial_handle_event = event
+	ToolManager.handle_set_highlight(Main.dragged_handle, Main.dragged_handle.color_drag)
+	#hide hover selection_box because it does not move with transforms
+	hover_selection_box.visible = false
+	
+	if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot:
+		pivot_initial_transform = Main.transform_handle_root.transform
+		
+
+
+static func transform_handle_handle(event : InputEvent):
+	if Main.safety_check(Main.dragged_handle):
+		var global_vector : Vector3 = (Main.transform_handle_root.basis * Main.dragged_handle.direction_vector).normalized()
+		var global_vector_initial : Vector3 = (WorkspaceManager.initial_transform_handle_root_transform.basis * Main.dragged_handle.direction_vector).normalized()
+		var cam_normal : Vector3 = Main.cam.project_ray_normal(event.position)
+		var cam_normal_initial : Vector3 = Main.cam.project_ray_normal(WorkspaceManager.initial_handle_event.position)
+		
+	#movement single axis
+		if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_move and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_move:
+			#process mouse drag on handle into a single value
+			var delta : float = ToolManager.handle_input_linear_move(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial)
+			#take value and convert to vector3, then apply it to selection
+			WorkspaceManager.selection_move(SnapUtils.transform_handle_snap_position(
+				delta,
+				global_vector,
+				WorkspaceManager.initial_abb_state.transform.origin,
+				Main.positional_snap_increment,
+				Main.snapping_active
+			))
+			EditorUI.l_message.text = "Translation: " + str(snapped(delta, Main.positional_snap_increment) * Main.dragged_handle.direction_vector)
+			
+			
+	#rotation
+		elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_rotate and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_rotate:
+			#process mouse drag on handle into a single value
+			var angle : float = ToolManager.handle_input_rotation(Main.cam, Main.dragged_handle, global_vector_initial, cam_normal, cam_normal_initial)
+			#turn value into a basis and feed it into workspacemanager to process selection
+			WorkspaceManager.selection_rotate(SnapUtils.transform_handle_snap_rotation(
+				angle,
+				WorkspaceManager.initial_abb_state.transform.basis,
+				global_vector_initial,
+				deg_to_rad(Main.rotational_snap_increment),
+				Main.snapping_active
+			), WorkspaceManager.pivot_local_transform.origin)
+			EditorUI.l_message.text = "Angle: " + str(snapped(rad_to_deg(angle), Main.rotational_snap_increment) * Main.dragged_handle.direction_vector)
+	#scaling
+		elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_scale:
+			var delta_scale : float = ToolManager.handle_input_linear_move(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial)
+			#process mouse drag on handle into a single value
+			var result : Vector3 = SnapUtils.transform_handle_snap_scale(
+				delta_scale,
+				Main.dragged_handle.direction_vector,
+				WorkspaceManager.initial_abb_state.extents,
+				Main.positional_snap_increment,
+				Main.snapping_active,
+				Input.is_key_pressed(KEY_CTRL),
+				Input.is_key_pressed(KEY_SHIFT)
+			)
+			
+			WorkspaceManager.selection_scale(result)
+			
+			#do the same for the movement portion
+			#turn value into a vector and feed it into workspacemanager to process selection
+			var delta_move : float = ToolManager.handle_input_scale_linear_move(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial, Input.is_key_pressed(KEY_CTRL))
+			
+			delta_move = SnapUtils.scaling_clamp(delta_move, Main.dragged_handle.direction_vector, WorkspaceManager.initial_abb_state.extents, Main.positional_snap_increment, Main.snapping_active)
+			
+			#use half delta and half increment because pulling by one face means only half the movement at the part center
+			var result_move : Vector3 = SnapUtils.transform_handle_snap_position(
+				delta_move * 0.5,
+				global_vector,
+				WorkspaceManager.initial_abb_state.transform.origin,
+				Main.positional_snap_increment * 0.5,
+				Main.snapping_active
+			)
+			
+			WorkspaceManager.selection_move(result_move)
+			
+			EditorUI.l_message.text = "Scale: " + str(result)
+	#pivot edit tool axis-move portion
+		elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_move:
+			#process mouse drag on handle into a single value
+			var delta : float = ToolManager.handle_input_linear_move(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial)
+			var new_transform : Transform3D = Main.transform_handle_root.transform
+			new_transform.origin = SnapUtils.transform_handle_snap_position(
+				delta,
+				global_vector,
+				WorkspaceManager.pivot_initial_transform.origin,
+				Main.positional_snap_increment,
+				Main.snapping_active
+			)
+			
+			WorkspaceManager.pivot_transform = new_transform
+			
+			#recalculate local pivot transform
+			WorkspaceManager.pivot_local_transform = WorkspaceManager.selected_parts_abb.transform.inverse() * WorkspaceManager.pivot_transform
+			
+			ToolManager.handle_set_root_position(
+				Main.transform_handle_root,
+				WorkspaceManager.selected_parts_abb,
+				WorkspaceManager.pivot_transform,
+				WorkspaceManager.pivot_custom_mode_active,
+				Main.local_transform_active,
+				Main.selected_tool_handle_array)
+			EditorUI.l_message.text = "Pivot offset: " + str(WorkspaceManager.pivot_local_transform.origin)
+	#pivot edit tool axis-rotate portion
+		elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_rotate:
+			#process mouse drag on handle into a single value
+			var angle : float = ToolManager.handle_input_rotation(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial)
+			var new_transform : Transform3D = Main.transform_handle_root.transform
+			new_transform.basis = SnapUtils.transform_handle_snap_rotation(
+				angle,
+				WorkspaceManager.pivot_initial_transform.basis,
+				global_vector,
+				Main.positional_snap_increment,
+				Main.snapping_active
+			)
+			
+			WorkspaceManager.pivot_transform = new_transform
+			
+			#recalculate local pivot transform
+			WorkspaceManager.pivot_local_transform = WorkspaceManager.selected_parts_abb.transform.inverse() * WorkspaceManager.pivot_transform
+			
+			ToolManager.handle_set_root_position(
+				Main.transform_handle_root,
+				WorkspaceManager.selected_parts_abb,
+				WorkspaceManager.pivot_transform,
+				WorkspaceManager.pivot_custom_mode_active,
+				Main.local_transform_active,
+				Main.selected_tool_handle_array)
+			
+			#var angle_display : Vector3 = WorkspaceManager.pivot_transform.basis.get_euler()
+			#angle_display.x = rad_to_deg(angle_display.x)
+			#angle_display.y = rad_to_deg(angle_display.y)
+			#angle_display.z = rad_to_deg(angle_display.z)
+			EditorUI.l_message.text = "Pivot angle: " + str(snapped(rad_to_deg(angle), Main.rotational_snap_increment) * Main.dragged_handle.direction_vector)
+
+
+static func transform_handle_terminate():
+	if Main.safety_check(Main.dragged_handle):
+		ToolManager.handle_set_highlight(Main.dragged_handle, Main.dragged_handle.color_default)
+	
+	if Main.safety_check(Main.hovered_handle):
+		ToolManager.handle_set_highlight(Main.hovered_handle, Main.hovered_handle.color_hover)
+	
+	Main.dragged_handle = null
 
 
 static func refresh_bounding_box():
@@ -496,29 +666,44 @@ static func selection_duplicate():
 #position only
 "TODO"#check and ensure numerical stability
 static func selection_move(input_absolute : Vector3):
-	selected_parts_abb.transform.origin = input_absolute 
+	#recalculate pivot offset on selection move
+	if WorkspaceManager.pivot_custom_mode_active:
+		WorkspaceManager.pivot_transform.origin = WorkspaceManager.pivot_transform.origin + input_absolute - selected_parts_abb.transform.origin
 	
+	selected_parts_abb.transform.origin = input_absolute 
 	var i : int = 0
 	while i < selected_parts_array.size():
 		selected_parts_array[i].transform.origin = selected_parts_abb.transform.origin + offset_abb_to_selected_array[i]
 		selection_box_array[i].transform.origin = selected_parts_array[i].transform.origin
 		i = i + 1
 	
-	"TODO"#below line must be abstracted out
-	Main.transform_handle_root.transform.origin = input_absolute
 	#move transform handles with selection
 	selection_moved = true
+	
 
 
 #rotation only
 "TODO"#parameterize everything for clarity and to prevent bugs
 "TODO"#check and ensure numerical stability
-static func selection_rotate(rotated_basis : Basis):#TODO , point_local : Vector3 = Vector3.ZERO):
+#pivot point is local to the selection bounding box (x 0.5 means 0.5 to the right of the abb)
+static func selection_rotate(rotated_basis : Basis, local_pivot_point : Vector3 = Vector3.ZERO):
 	var original_basis : Basis = Basis(selected_parts_abb.transform.basis)
-	
 	#calculate difference between original basis and new basis
 	var difference : Basis = rotated_basis * original_basis.inverse()
+	var global_pivot_point = selected_parts_abb.transform.basis * local_pivot_point
+	#rotate pivot vector
+	var global_pivot_point_rotated = difference * global_pivot_point 
 	drag_offset = difference * drag_offset
+	
+	#rotate abb
+	if WorkspaceManager.pivot_custom_mode_active:
+		selected_parts_abb.transform.origin = selected_parts_abb.transform.origin + global_pivot_point
+		selected_parts_abb.transform.basis = difference * selected_parts_abb.transform.basis
+		selected_parts_abb.transform.origin = selected_parts_abb.transform.origin - global_pivot_point_rotated
+		#recalculate local pivot transform
+		WorkspaceManager.pivot_transform = WorkspaceManager.selected_parts_abb.transform * WorkspaceManager.pivot_local_transform
+	else:
+		selected_parts_abb.transform.basis = difference * selected_parts_abb.transform.basis
 	
 	#rotate the offset_abb_to_selected_array vector by the difference between the
 	#original basis and rotated basis
@@ -526,7 +711,7 @@ static func selection_rotate(rotated_basis : Basis):#TODO , point_local : Vector
 	while i < selected_parts_array.size():
 		#rotate offset_dragged_to_selected_array vector by the difference basis
 		offset_abb_to_selected_array[i] = difference * offset_abb_to_selected_array[i]
-		#move part to ray_result.position for easier pivoting
+		#move part to ray_result.position for easier pivoting (drag-specific functionality)
 		if not Main.ray_result.is_empty():
 			selected_parts_array[i].global_position = Main.ray_result.position
 		else:
@@ -541,9 +726,6 @@ static func selection_rotate(rotated_basis : Basis):#TODO , point_local : Vector
 		#copy transform
 		selection_box_array[i].global_transform = selected_parts_array[i].global_transform
 		i = i + 1
-	
-	#rotate abb
-	selected_parts_abb.transform.basis = difference * selected_parts_abb.transform.basis
 	
 	#move transform handles with selection
 	selection_moved = true
