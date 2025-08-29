@@ -1,0 +1,8 @@
+[gd_resource type="Theme" load_steps=2 format=3 uid="uid://bjyf4445wjca1"]
+
+[ext_resource type="FontFile" uid="uid://88ciqyvgar2m" path="res://editor/data_ui/assets/noto_sans_symbols/NotoSansSymbols-Regular.ttf" id="1_bkqet"]
+
+[resource]
+Control/colors/font_color = Color(0.913725, 0.913725, 0.913725, 1)
+Control/font_sizes/font_size = 14
+Control/fonts/font = ExtResource("1_bkqet")

@@ -145,21 +145,52 @@ static func initialize(
 	var color_list : Array[Color] = []
 	var color_names_list : Array[String] = []
 	
-	"DEBUG"#testing the loading of materials and meshes that are not there
 	var load_directory : String = FilePathRegistry.data_folder_user_assets
-	#var load_directory : String = FilePathRegistry.data_folder_default_assets
 	
 	var file_list = SaveUtils.get_files_recursive(load_directory)
 	
 	
 	const color_autosort_enabled : String = "autosort = true"
 	
+	#load images first
+	for file_name in file_list:
+		var extension : String = file_name.get_extension().to_lower()
+		
+		if extension != "png" and extension != "jpeg" and extension != "jpg":
+			continue
+		
+		var image : Image = Image.new()
+		if extension == "png":
+			image.load_png_from_buffer(FileAccess.get_file_as_bytes(load_directory + file_name))
+		elif extension == "jpg" or extension == "jpeg":
+			image.load_jpg_from_buffer(FileAccess.get_file_as_bytes(load_directory + file_name))
+		
+		image.generate_mipmaps()
+		var image_texture : ImageTexture = ImageTexture.create_from_image(image)
+		image_texture.resource_path = load_directory + file_name
+		AssetManager.register_asset(image_texture)
 	
+	
+	#then shaders
+	for file_name in file_list:
+		var extension : String = file_name.get_extension().to_lower()
+		
+		if extension != "gdshader":
+			continue
+		var data_bytes : PackedByteArray = FileAccess.get_file_as_bytes(load_directory + file_name)
+		var shader_result : Shader = Shader.new()
+		shader_result.code = data_bytes.get_string_from_utf8()
+		shader_result.resource_path = load_directory + file_name
+		
+		AssetManager.register_asset(shader_result)
+	
+	
+	#finally load the main resources
 	for file_name in file_list:
 		var extension : String = file_name.get_extension().to_lower()
 		
 		#load an asset
-		if extension == "res" or extension == "tres" or extension == "gdshader":
+		if extension == "res" or extension == "tres":
 			var asset : Resource = ResourceLoader.load(load_directory + file_name)
 			
 			if asset is BaseMaterial3D or asset is ShaderMaterial:
@@ -228,16 +259,24 @@ static func initialize(
 
 
 static func initialize_user_folder():
-	#copy default assets to user folder
-	DirAccess.make_dir_recursive_absolute(FilePathRegistry.data_folder_user_assets)
-	for file in SaveUtils.get_files_recursive(FilePathRegistry.data_folder_default_assets):
-		
-		if file.get_extension().to_lower() != "import":
-			if not DirAccess.dir_exists_absolute(FilePathRegistry.data_folder_user_assets.path_join(file.get_base_dir())):
-				DirAccess.make_dir_absolute(FilePathRegistry.data_folder_user_assets.path_join(file.get_base_dir()))
-			
-			DirAccess.copy_absolute(FilePathRegistry.data_folder_default_assets + file, FilePathRegistry.data_folder_user_assets + file)
-			#print("copied ", FilePathRegistry.data_folder_default_assets + file, " to ", FilePathRegistry.data_folder_user_assets + file) 
+	SaveUtils.copy_dir_recursively(FilePathRegistry.data_folder_default_assets, FilePathRegistry.data_folder_user_assets)
+	
+	#experimental
+	var filenames : PackedStringArray = SaveUtils.get_files_recursive(FilePathRegistry.data_folder_user_assets)
+	for i in filenames:
+		if i.get_extension().to_lower() == "tres":
+			var file : String = FileAccess.get_file_as_string(FilePathRegistry.data_folder_user_assets + i)
+			var lines : PackedStringArray = file.split("\n")
+			var lines_new : String = ""
+			for j in lines:
+				#EXPERIMENTAL
+				var replaced : String = j.replace(FilePathRegistry.resource_path_original, FilePathRegistry.resource_path_replacement)
+				lines_new = lines_new + replaced + "\n"
+			var file_access : FileAccess = FileAccess.open(i, FileAccess.WRITE)
+			file_access.store_string(lines_new)
+			file_access.close()
+	
+	
 	
 	#write settings.json
 	var file_access : FileAccess = FileAccess.open(FilePathRegistry.data_user_settings, FileAccess.WRITE)

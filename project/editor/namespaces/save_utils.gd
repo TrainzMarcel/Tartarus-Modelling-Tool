@@ -625,3 +625,17 @@ static func get_files_recursive(filepath : String, file_names : PackedStringArra
 			file_names.append(i.path_join(j))
 	
 	return file_names
+
+
+#https://www.reddit.com/r/godot/comments/19f0mf2/deleted_by_user/
+static func copy_dir_recursively(source: String, destination: String):
+	DirAccess.make_dir_recursive_absolute(destination)
+	
+	var source_dir = DirAccess.open(source);
+	
+	for filename in source_dir.get_files():
+		#OS.alert(source + filename, 'Datei erkannt')
+		source_dir.copy(source + filename, destination + filename)
+		
+	for dir in source_dir.get_directories():
+		copy_dir_recursively(source + dir + "/", destination + dir + "/")

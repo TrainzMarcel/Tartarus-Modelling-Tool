@@ -1,4 +1,4 @@
-[gd_scene load_steps=68 format=3 uid="uid://cwt02lxvderye"]
+[gd_scene load_steps=69 format=3 uid="uid://cwt02lxvderye"]
 
 [ext_resource type="Script" path="res://editor/classes/ui_editor/editor_ui.gd" id="1_mcko4"]
 [ext_resource type="StyleBox" uid="uid://bkbmbfniourik" path="res://editor/data_ui/styles/panel_styles/panel_rounded_bottom.tres" id="1_pntfv"]
@@ -36,6 +36,7 @@
 [ext_resource type="StyleBox" uid="uid://l8wdqqom1c4k" path="res://editor/data_ui/styles/button_and_line_edit_styles/bottom_bar/mini_button/pressed.tres" id="31_a6skq"]
 [ext_resource type="Script" path="res://editor/classes/ui_editor/line_edit_numeric.gd" id="32_5rtk1"]
 [ext_resource type="PackedScene" uid="uid://bln1og3mu36mh" path="res://editor/classes/ui_document_display/document_display.tscn" id="32_epjev"]
+[ext_resource type="Theme" uid="uid://bjyf4445wjca1" path="res://editor/data_ui/styles/font_styles/t_symbol.tres" id="36_xr5bj"]
 [ext_resource type="PackedScene" uid="uid://bjtrfenn2qo0u" path="res://editor/classes/ui_file_manager/file_manager.tscn" id="38_fpasr"]
 [ext_resource type="StyleBox" uid="uid://dh6vu252gy7u" path="res://editor/data_ui/styles/panel_styles/tooltip_panel.tres" id="38_wu7c1"]
 
@@ -193,6 +194,7 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_mcko4")
 metadata/_edit_lock_ = true
+metadata/_edit_horizontal_guides_ = []
 
 [node name="PanelContainerTopLeftBlock" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -534,6 +536,8 @@ vertical_alignment = 2
 [node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart" node_paths=PackedStringArray("attached_control")]
 layout_mode = 2
 tooltip_text = "Choose a part type"
+theme = ExtResource("36_xr5bj")
+theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = ExtResource("20_ibnk4")
 theme_override_styles/hover = ExtResource("20_ibnk4")
 theme_override_styles/pressed = ExtResource("21_oijav")
@@ -682,6 +686,8 @@ vertical_alignment = 2
 [node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool" node_paths=PackedStringArray("attached_control", "attached_button")]
 layout_mode = 2
 tooltip_text = "Choose a color"
+theme = ExtResource("36_xr5bj")
+theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = ExtResource("20_ibnk4")
 theme_override_styles/hover = ExtResource("20_ibnk4")
 theme_override_styles/pressed = ExtResource("21_oijav")
@@ -796,6 +802,8 @@ vertical_alignment = 2
 [node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerMaterialTool" node_paths=PackedStringArray("attached_control", "attached_button")]
 layout_mode = 2
 tooltip_text = "Choose a Material"
+theme = ExtResource("36_xr5bj")
+theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = ExtResource("20_ibnk4")
 theme_override_styles/hover = ExtResource("20_ibnk4")
 theme_override_styles/pressed = ExtResource("21_oijav")
@@ -1203,7 +1211,8 @@ unique_name_in_owner = true
 clip_contents = true
 custom_minimum_size = Vector2(19, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
+theme = ExtResource("36_xr5bj")
+theme_override_font_sizes/font_size = 9
 theme_override_styles/normal = ExtResource("30_5372q")
 theme_override_styles/hover = ExtResource("30_5372q")
 theme_override_styles/pressed = ExtResource("31_a6skq")
@@ -1215,7 +1224,8 @@ text = "➕"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(19, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
+theme = ExtResource("36_xr5bj")
+theme_override_font_sizes/font_size = 9
 theme_override_styles/normal = ExtResource("30_5372q")
 theme_override_styles/hover = ExtResource("30_5372q")
 theme_override_styles/pressed = ExtResource("31_a6skq")
@@ -1295,7 +1305,8 @@ unique_name_in_owner = true
 clip_contents = true
 custom_minimum_size = Vector2(19, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
+theme = ExtResource("36_xr5bj")
+theme_override_font_sizes/font_size = 9
 theme_override_styles/normal = ExtResource("30_5372q")
 theme_override_styles/hover = ExtResource("30_5372q")
 theme_override_styles/pressed = ExtResource("31_a6skq")
@@ -1307,7 +1318,8 @@ text = "➕"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(19, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
+theme = ExtResource("36_xr5bj")
+theme_override_font_sizes/font_size = 9
 theme_override_styles/normal = ExtResource("30_5372q")
 theme_override_styles/hover = ExtResource("30_5372q")
 theme_override_styles/pressed = ExtResource("31_a6skq")

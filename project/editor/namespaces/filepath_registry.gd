@@ -9,6 +9,10 @@ const data_folder_default_assets : String = "res://editor/data_editor/"
 const data_folder_user_assets : String = "user://user/assets/"
 const data_user_settings : String = "user://user/settings.json"
 
+#experimental path replacement in tres files
+const resource_path_original : String = "res://editor/data_editor/"
+const resource_path_replacement : String = "user://assets/"
+
 #used as fallbacks for null values
 const data_default_material : String = "res://editor/data_editor/plastic_01.tres"
 const data_default_part : String = "res://editor/data_editor/cuboid.tres"
