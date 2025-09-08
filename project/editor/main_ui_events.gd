@@ -165,7 +165,7 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 	#asset dropdown---------------------
 	elif pm == EditorUI.pm_assets:
 		#theres only one button anyway
-		OS.shell_show_in_file_manager(ProjectSettings.globalize_path("user://user/"))
+		OS.shell_show_in_file_manager(ProjectSettings.globalize_path(FilePathRegistry.data_folder_assets))
 		
 	#help dropdown----------------------
 	elif pm == EditorUI.pm_help:

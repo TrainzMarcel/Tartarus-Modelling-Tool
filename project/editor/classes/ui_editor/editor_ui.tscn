@@ -1420,8 +1420,8 @@ Materials
 - StandardMaterial3D: Enable [code]triplanar[/code] and [code]world_triplanar[/code] to avoid stretching when scaling parts.[/p]
 
 How to add:
-1. Save materials as .tres or .res and make sure all assets are named differently.
-2. Ensure texture paths in the resources are relative (not absolute).
+1. Save materials ⚠️ only as .tres ⚠️ and make sure all assets are named differently. The file extension does 
+2. Ensure there are no name collisions with other existing assets.
 3. Place in assets folder with their textures.
 4. Restart the editor.
 

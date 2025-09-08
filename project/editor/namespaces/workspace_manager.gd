@@ -108,9 +108,10 @@ const data_headers : Array = [
 	"::MODEL::"
 ]
 
-#so far only used for checking if default assets have been moved to the user folder before
-static var settings_dict_default : Dictionary = {
-	"default_assets_copied_to_user_folder" = true
+#program_data.json file
+static var data_dict_default : Dictionary = {
+	"directory_on_last_launch" = "",
+	"filenames_of_updated_filepaths" = []
 }
 
 
@@ -125,19 +126,14 @@ static func initialize(
 	WorkspaceManager.workspace = workspace
 	WorkspaceManager.hover_selection_box = hover_selection_box
 	
+	#set paths
+	FilePathRegistry.data_folder_executable = ProjectSettings.globalize_path(OS.get_executable_path()).get_base_dir()
+	FilePathRegistry.data_program = FilePathRegistry.data_folder_executable.path_join(FilePathRegistry.data_program)
+	FilePathRegistry.data_folder_assets = FilePathRegistry.data_folder_executable.path_join(FilePathRegistry.data_folder_assets)
 	
-	#if settings.json is not there or is not set to true "default_assets_copied_to_user_folder" = true
-	var file_access : FileAccess = FileAccess.open(FilePathRegistry.data_user_settings, FileAccess.READ)
-	if file_access != null:
-		#get settings and compare with default
-		var settings = JSON.parse_string(file_access.get_as_text())
-		file_access.close()
-		
-		if settings is Dictionary and not settings.default_assets_copied_to_user_folder:
-			initialize_user_folder()
-	else:
-		initialize_user_folder()
-	
+	#automagically reset asset paths if required, record which assets have had their paths corrected
+	#record if the executable has moved meaning all paths must be reset
+	initialize_user_folder()
 	
 	#get part types and materials from .tres files, get colors and names from .csv file
 	var materials_list : Array[Material] = []
@@ -145,10 +141,10 @@ static func initialize(
 	var color_list : Array[Color] = []
 	var color_names_list : Array[String] = []
 	
-	var load_directory : String = FilePathRegistry.data_folder_user_assets
+	"TODO"
+	var load_directory : String = FilePathRegistry.data_folder_assets
 	
-	var file_list = SaveUtils.get_files_recursive(load_directory)
-	
+	var file_list = DataUtils.get_files_recursive(load_directory)
 	
 	const color_autosort_enabled : String = "autosort = true"
 	
@@ -195,7 +191,8 @@ static func initialize(
 			
 			if asset is BaseMaterial3D or asset is ShaderMaterial:
 				materials_list.append(asset)
-				AssetManager.register_asset_with_subresources(asset)
+				#causes a shitload of errors about resources having no name and no path AssetManager.register_asset_with_subresources(asset)
+				AssetManager.register_asset(asset)
 			elif asset is Mesh:
 				var new : Part = Part.new()
 				new.part_mesh_node.mesh = asset
@@ -238,6 +235,7 @@ static func initialize(
 			WorkspaceManager.available_color_names.append_array(r_dict.color_name_array)
 			EditorUI.create_color_buttons(EditorUI.gc_paint_panel, on_color_selected, r_dict.color_array, r_dict.color_name_array)
 			
+	print("assets initialized! dumping asset database contents...")
 	AssetManager.debug_pretty_print()
 	
 	WorkspaceManager.available_materials = materials_list
@@ -251,37 +249,93 @@ static func initialize(
 	EditorUI.create_part_type_buttons(on_part_type_selected, parts_list)
 	
 	
-	
-	
+	#set singular part to grass texture after loading
+	workspace.get_node("Part").part_material = AssetManager.get_asset_by_name("grass_01")
 	#_ready was getting called in the parts before main and before textures loaded so this is done manually now
 	#this line is only required for the manually placed parts in the main scene
-	workspace.get_children().map(func(input): if input is Part: input.initialize())
+	workspace.get_node("Part").initialize()
+	#workspace.get_children().map(func(input): if input is Part: input.initialize())
 
 
 static func initialize_user_folder():
-	SaveUtils.copy_dir_recursively(FilePathRegistry.data_folder_default_assets, FilePathRegistry.data_folder_user_assets)
+	"TODO"#make algorithm to only refresh the paths that need it
+	"TODO"#make something to convert .res to .tres files or warn the user
+	var data_program_file_missing : bool = false
+	var launch_directory_different : bool = false
+	var tres_paths_must_be_refreshed : bool = false
 	
-	#experimental
-	var filenames : PackedStringArray = SaveUtils.get_files_recursive(FilePathRegistry.data_folder_user_assets)
-	for i in filenames:
-		if i.get_extension().to_lower() == "tres":
-			var file : String = FileAccess.get_file_as_string(FilePathRegistry.data_folder_user_assets + i)
-			var lines : PackedStringArray = file.split("\n")
-			var lines_new : String = ""
-			for j in lines:
-				#EXPERIMENTAL
-				var replaced : String = j.replace(FilePathRegistry.resource_path_original, FilePathRegistry.resource_path_replacement)
-				lines_new = lines_new + replaced + "\n"
-			var file_access : FileAccess = FileAccess.open(i, FileAccess.WRITE)
-			file_access.store_string(lines_new)
-			file_access.close()
+	var file_access : FileAccess
+	var data_program : Dictionary
+	var assets_folder_contents : PackedStringArray = DataUtils.get_files_recursive(FilePathRegistry.data_folder_assets)
+	var tres_filenames : PackedStringArray = []
+	
+#first, set flags for what needs to be done
+#check if program_data.json exists
+	if FileAccess.file_exists(FilePathRegistry.data_program):
+		#compare
+		data_program = JSON.parse_string(FileAccess.get_file_as_string(FilePathRegistry.data_program))
+		
+#check if app directory has changed (breaking the absolute resource paths)
+		launch_directory_different = (data_program.get("directory_on_last_launch") != FilePathRegistry.data_folder_executable)
+		tres_paths_must_be_refreshed = launch_directory_different
+		
+#check if resource file paths must be refreshed
+		if not tres_paths_must_be_refreshed:
+			var tres_files : PackedStringArray = assets_folder_contents
+			#filter for tres only
+			var temp : PackedStringArray = []
+			for i in tres_files:
+				if i.get_extension().to_lower() == "tres":
+					temp.append(i)
+			tres_files = temp
+			
+			tres_paths_must_be_refreshed = data_program.get("filenames_of_updated_filepaths") != (tres_files as Array)
+		
+		#all good, dont need to change anything
+		if not tres_paths_must_be_refreshed:
+			return
+	else:
+		data_program_file_missing = true
+	
+	
+#second section: do everything according to the flags
+	#correct tres paths
+	var asset_files : PackedStringArray = assets_folder_contents
+	var tres_files : PackedStringArray = []
+	if launch_directory_different or tres_paths_must_be_refreshed or data_program_file_missing:
+		#experimental
+		var asset_file_mapping : Dictionary = {}
+		
+		#filter for tres only 
+		var temp : PackedStringArray = []
+		for i in asset_files:
+			if i.get_extension().to_lower() != "tres":
+				temp.append(i)
+		asset_files = temp
+		
+		
+		#create mapping from file name to relative filepath
+		for j in asset_files:
+			asset_file_mapping[j.get_file()] = j
+		
+		#replace the dependency paths in every .tres file
+		var filenames : PackedStringArray = DataUtils.get_files_recursive(FilePathRegistry.data_folder_assets)
+		for i in filenames:
+			if i.get_extension().to_lower() == "tres":
+				DataUtils.replace_tres_filepaths(FilePathRegistry.data_folder_assets, i, asset_file_mapping)
+				tres_files.append(i)
 	
 	
 	
-	#write settings.json
-	var file_access : FileAccess = FileAccess.open(FilePathRegistry.data_user_settings, FileAccess.WRITE)
-	file_access.store_string(JSON.stringify(settings_dict_default, "\t"))
-	file_access.close()
+	#reset settings.json
+	if launch_directory_different or tres_paths_must_be_refreshed or data_program_file_missing:
+		data_dict_default["directory_on_last_launch"] = FilePathRegistry.data_folder_executable
+		data_dict_default["filenames_of_updated_filepaths"] = tres_files
+		
+		#write settings.json
+		file_access = FileAccess.open(FilePathRegistry.data_program, FileAccess.WRITE)
+		file_access.store_string(JSON.stringify(data_dict_default, "\t"))
+		file_access.close()
 
 
 #part functions-----------------------------------------------------------------
@@ -988,9 +1042,9 @@ static func save_model(filepath : String, name : String):
 	const separator : String = ","
 	
 	#get used colors, materials and meshes
-	used_colors = SaveUtils.get_colors_from_parts(selected_parts_array)
-	used_materials = SaveUtils.get_materials_from_parts(selected_parts_array)
-	used_meshes = SaveUtils.get_meshes_from_parts(selected_parts_array)
+	used_colors = DataUtils.get_colors_from_parts(selected_parts_array)
+	used_materials = DataUtils.get_materials_from_parts(selected_parts_array)
+	used_meshes = DataUtils.get_meshes_from_parts(selected_parts_array)
 	
 	#create mappings to quickly assign the used color and material ids
 	color_to_int_mapping = create_mapping(used_colors)
@@ -1003,7 +1057,7 @@ static func save_model(filepath : String, name : String):
 	#and/or use a function dispatch for each header type
 	file.append("::COLOR::")
 	while i < used_colors.size():
-		file.append(separator.join(SaveUtils.color_serialize(used_colors[i])))
+		file.append(separator.join(DataUtils.color_serialize(used_colors[i])))
 		i = i + 1
 	
 	#add materials to save
@@ -1012,7 +1066,7 @@ static func save_model(filepath : String, name : String):
 	while i < used_materials.size():
 		if not assets_used.has(used_materials[i]):
 			assets_used.append(used_materials[i])
-		file.append(separator.join(SaveUtils.material_serialize(used_materials[i])))
+		file.append(separator.join(DataUtils.material_serialize(used_materials[i])))
 		i = i + 1
 	
 	#add meshes to save
@@ -1022,7 +1076,7 @@ static func save_model(filepath : String, name : String):
 	while i < used_meshes.size():
 		if not assets_used.has(used_meshes[i]):
 			assets_used.append(used_meshes[i])
-		file.append(separator.join(SaveUtils.mesh_serialize(used_meshes[i])))
+		file.append(separator.join(DataUtils.mesh_serialize(used_meshes[i])))
 		i = i + 1
 	
 	
@@ -1030,12 +1084,12 @@ static func save_model(filepath : String, name : String):
 	i = 0
 	file.append("::MODEL::")
 	while i < selected_parts_array.size():
-		file.append(separator.join(SaveUtils.part_serialize(selected_parts_array[i], color_to_int_mapping, material_name_to_int_mapping, mesh_to_int_mapping)))
+		file.append(separator.join(DataUtils.part_serialize(selected_parts_array[i], color_to_int_mapping, material_name_to_int_mapping, mesh_to_int_mapping)))
 		i = i + 1
 	
 	
 	#package everything up
-	SaveUtils.data_zip(assets_used, file, filepath, name)
+	DataUtils.data_zip(assets_used, file, filepath, name)
 
 
 static func load_model(filepath : String, name : String):
@@ -1046,7 +1100,7 @@ static func load_model(filepath : String, name : String):
 	var file : PackedStringArray = []
 	var i : int = 0
 	
-	file = SaveUtils.data_unzip(filepath, name)
+	file = DataUtils.data_unzip(filepath, name)
 	
 	#mode from headers
 	var mode : String
@@ -1064,17 +1118,17 @@ static func load_model(filepath : String, name : String):
 		var line = file[i].split(",")
 	#load color
 		if mode == data_headers[0]:
-			used_colors.append(SaveUtils.color_deserialize(line))
+			used_colors.append(DataUtils.color_deserialize(line))
 			
 	#load material
 		elif mode == data_headers[1]:
-			used_materials.append(SaveUtils.material_deserialize(line))
+			used_materials.append(DataUtils.material_deserialize(line))
 	#load mesh
 		elif mode == data_headers[2]:
-			used_meshes.append(SaveUtils.mesh_deserialize(line))
+			used_meshes.append(DataUtils.mesh_deserialize(line))
 	#load parts
 		elif mode == data_headers[3]:
-			var new : Part = SaveUtils.part_deserialize(line, used_colors, used_materials, used_meshes)
+			var new : Part = DataUtils.part_deserialize(line, used_colors, used_materials, used_meshes)
 			
 			workspace.add_child(new)
 			new.initialize()
@@ -1159,6 +1213,7 @@ static func selection_box_hover_on_part(part : Part, is_hovering_allowed : bool)
 
 
 #utils
+"TODO"# move both functions to DataUtils
 static func refresh_offset_abb_to_selected_array():
 	var i : int = 0
 	offset_abb_to_selected_array.clear()

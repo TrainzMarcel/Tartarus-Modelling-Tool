@@ -138,6 +138,7 @@ func _ready():
 	hover_selection_box = e_hover_selection_box
 	panel_selection_rect = e_panel_selection_rect
 	
+	
 	#parameterized signals to make them more explicit and visible
 	ui_node.initialize(
 	MainUIEvents.on_spawn_pressed,

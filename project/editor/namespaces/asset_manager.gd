@@ -86,7 +86,7 @@ static func get_material_by_name_any_color(asset_name : String):
 			return name_to_asset_map.get(i)
 
 
-#required by saveutils to save all the imagetextures used by materials among other subresources
+#required by DataUtils to save all the imagetextures used by materials among other subresources
 static func get_subresources(asset : Resource, subresources : Array = []):
 	#loop through all properties
 	for property in asset.get_property_list():

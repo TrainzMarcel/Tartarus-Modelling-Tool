@@ -1,5 +1,5 @@
 extends RefCounted
-class_name SaveUtils
+class_name DataUtils
 
 
 static func color_serialize(input : Color):
@@ -639,3 +639,52 @@ static func copy_dir_recursively(source: String, destination: String):
 		
 	for dir in source_dir.get_directories():
 		copy_dir_recursively(source + dir + "/", destination + dir + "/")
+
+
+#experimental
+"TODO"#test
+static func replace_tres_filepaths(filepath : String, filename : String, dependency_filename_mapping : Dictionary):
+	var combined_path : String = filepath.path_join(filename)
+	var file : String = FileAccess.get_file_as_string(combined_path)
+	var lines : PackedStringArray = file.split("\n")
+	var lines_new : String = ""
+	for i in lines:
+		var result : String = ""
+		var sections : PackedStringArray = []
+		var index_first : int = i.find("path=\"")
+		var index_last : int = i.find("\" id=", index_first)
+		var ext_resource_true : bool = i.begins_with("[ext_resource")
+		#replace everything between index_first
+		#found a path to a dependency
+		if index_first != -1 and index_last != -1 and ext_resource_true:
+			#+6 because i need the index of the last char, not the first
+			index_first = index_first + 6
+			#before the filepath begins
+			sections.append(i.substr(0, index_first))
+			#dependency filepath
+			sections.append(i.substr(index_first, (index_last) - index_first))
+			#after the filepath
+			sections.append(i.substr(index_last))
+			
+			#get the dependency file name and
+			var dependency_file_new_path : String = dependency_filename_mapping.get(sections[1].get_file())
+			
+			if dependency_file_new_path.is_empty():
+				push_error("no file found in filenames for", filename, ", at line:\n", i, "\nskipping line")
+				lines_new = i + "\n"
+				continue
+			
+			#replace the problematic dependency path
+			result = sections[0] + filepath.path_join(dependency_file_new_path) + sections[2]
+		#no dependency path found 
+		else:
+			result = i
+			
+			if ext_resource_true:
+				push_error("no path to dependency found at:", filepath.path_join(filename), ", at line:\n", i, "\nskipping line")
+		
+		lines_new = lines_new + result + "\n"
+	
+	var file_access : FileAccess = FileAccess.open(combined_path, FileAccess.WRITE)
+	file_access.store_string(lines_new)
+	file_access.close()

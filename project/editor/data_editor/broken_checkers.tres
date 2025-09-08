@@ -1,0 +1,11 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://dn53222vo1d5l"]
+
+[ext_resource type="Texture2D" uid="uid://ci58mowio6vh8" path="res://editor/data_editor/broken_checkers.png" id="1_qvxmo"]
+
+[resource]
+shading_mode = 0
+albedo_texture = ExtResource("1_qvxmo")
+uv1_scale = Vector3(10, 10, 10)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 0
