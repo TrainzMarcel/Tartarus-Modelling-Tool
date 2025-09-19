@@ -245,10 +245,11 @@ func _input(event : InputEvent):
 					#if mouse was pressed down over a hovered part, we know the user is most likely starting a drag
 					#drag has a tolerance before it actually starts
 					WorkspaceManager.drag_prepare(event)
+					
 				#if handle is detected, set dragged_handle
 				elif Main.safety_check(hovered_handle):
 					WorkspaceManager.transform_handle_prepare(event)
-				else:
+				elif not is_ui_hovered:
 					WorkspaceManager.selection_rect_prepare(event, panel_selection_rect)
 			
 		#lmb release
@@ -308,7 +309,11 @@ func _input(event : InputEvent):
 						hovered_part.part_color = WorkspaceManager.selected_color
 					
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_delete:
-						hovered_part.free()
+						if WorkspaceManager.selected_parts_array.has(hovered_part):
+							WorkspaceManager.selection_remove_part(hovered_part)
+						else:
+							hovered_part.free()
+						
 						#hide selection box
 						hover_selection_box.visible = false
 						#immediately update hovered_part in case theres another part behind the deleted one

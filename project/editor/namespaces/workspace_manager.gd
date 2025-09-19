@@ -244,6 +244,8 @@ static func initialize(
 	if available_part_types.size() > 0:
 		selected_part_type = available_part_types[0]
 	
+	selected_color = Color.WHITE
+	selected_material = AssetManager.get_asset_by_name("plastic_01,ffffff")
 	
 	EditorUI.create_material_buttons(on_material_selected, materials_list)
 	EditorUI.create_part_type_buttons(on_part_type_selected, parts_list)
@@ -345,6 +347,9 @@ static func part_spawn(selected_part_type : Part):
 	var new_part : Part = selected_part_type.copy()
 	workspace.add_child(new_part)
 	new_part.initialize()
+	new_part.part_material = selected_material
+	new_part.part_color = selected_color
+	
 	
 	if ray_result.is_empty():
 		new_part.transform.origin = Main.cam.global_position + Main.part_spawn_distance * -Main.cam.basis.z

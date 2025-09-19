@@ -530,16 +530,24 @@ static func data_unzip(filepath : String, filename : String):
 		elif extension == "csv":
 			var data_bytes : PackedByteArray = zip_reader.read_file(file_name)
 			file = data_bytes.get_string_from_utf8().split("\n")
-			"DEBUG"
-			#print(file)
 			
 	#image file
 		elif extension == "png" or extension == "jpg" or extension == "jpeg":
 			var image : Image = Image.new()
-			image.load_png_from_buffer(zip_reader.read_file(file_name))
+			"TODO"#stupid code but whatever i will fix it later in a major refactoring
+			if extension != "png":
+				image.load_jpg_from_buffer(zip_reader.read_file(file_name))
+				if image.is_empty():
+					image.load_png_from_buffer(zip_reader.read_file(file_name))
+			else:
+				image.load_png_from_buffer(zip_reader.read_file(file_name))
+				if image.is_empty():
+					image.load_jpg_from_buffer(zip_reader.read_file(file_name))
+			
 			image.generate_mipmaps()
 			var image_texture : ImageTexture = ImageTexture.create_from_image(image)
 			image_texture.resource_path = filepath + file_name
+			print(image_texture.resource_path)
 			AssetManager.register_asset(image_texture)
 	#shader code
 		elif extension == "gdshader":

@@ -1,19 +1,21 @@
+TOP PRIORITY
+implement undo/redo
+implement subassemblies and/or grouping of parts
+implement csg
+implement snapping for wedge face
+
+NORMAL PRIORITY
+implement import/export (.obj, .gltf, .tres/.res)
+implement configurable modes for filemanager
+implement multiple filters at once for filemanager
+
+procedural shapes: cylinders and torus with tweakable number of vertices
+
 take care of materials
 	(use better shader)
-	(add at least 5 for testing)
 
 
 unify the naming scheme in ui for rotation vs degrees
-create icon for .tmv (tesseract)
-create icon for .tmvp (wooden art palette)
-x make an icon for rotation pivot tool
-
-implement undo/redo
-implement import/export
-implement configurable modes for filemanager
-implement multiple filters at once for filemanager
-implement rotation pivot tool
-implement snapping for wedge face
 
 
 clean up/segregate main into a higher level view
@@ -21,25 +23,16 @@ figure out what data can be hidden behind namespace facades
 what data or variables can be segregated out of main and how far
 
 reduce code duplication in snapping code
+reduce code duplication in asset manager
 
-write code for: ctrl+z, +y
+
 settings menu? dataloader settings csv?
 
 
-import obj, gltf
-export obj, gltf
 export to godot project -> make sure all required materials are there -> find all instances of the previously exported meshes and replace them, recolor them the way they were colored before replacing
 
-asset manager menus for color palette, material palette, part type palette (include default parts? checkbox)
-	option to mass import things with visible parallel arrays (left to right for example albedo image files, then below another array which has the normal maps then below the material names, etc)
-
-write instructions manual
-
 v0.2
-implement subassemblies and/or grouping of parts
-implement part inspector
+implement part properties inspector
 implement automatic hidden face reduction algorithm
-implement csg
-v0.3
-possibly binary save files if not in v0.2
+binary save files
 implement uv mapping

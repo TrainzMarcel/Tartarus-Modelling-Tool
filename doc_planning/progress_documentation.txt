@@ -96,7 +96,7 @@
 22.7. fixed assetmanager unnamed key bug
 23.7. working on splitting loading into structured pipeline: 1. unzip save file, 2. load assets (meshes, textures), 3. deserialize data from csv file (and saving works in reverse)
 24.7. nearly finished saving logic restructuring
-10.8. slowly recovering from burnout, did some work on the save system 
+10.8. slowly recovering from burnout, did some work on the save system
 11.8. finished zipping function
 12.8. worked a bit on unzipping function (load process)
 14.8. finally finished and cleaned up saving and loading of models, moved save format specification, made reading editor data independent from folder structures (recursive), moved editorui button initialization into WorkspaceManager, added settings.json file, changed asset loading to read from user://assets, added more customization by reading in any mesh, material and color (.csv) the user may put in the asset folder
@@ -108,3 +108,8 @@
 26.8. FINALLY fixed the snapping problems, now selections truly snap by the dragged part when being dragged, commencing work on accomodating the pivot edit tool in the codebase
 27.8. abstracted transform handle drag preparation, handling and termination into WorkspaceManager, implemented pivot edit tool, with one bug which is that it moves when the selection changes
 28.8. finished pivot edit tool functionality (without bugs as far as ive tested) :D
+8.9. fixed tres issues by manually tracking the dependencies and rewriting filepaths on program startup when they break
+9.9. made newly spawned parts use selected material and color instead of default plastic_01 and exported the program once again
+10.9. reset default directory for file manager (forgot to reset after debugging), attempted to fix jpg loading issues and failed because this is a godot (4.1.2 uses an outdated jpg library) issue. i will have to upgrade the project version eventually anyway.
+17.9. set up windows vm and exported the editor in the windows vm, which fixed the crash on startup
+19.9. fixed crashing bug when deleting selected part, fixed marquee select starting when in a menu
