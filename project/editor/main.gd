@@ -245,6 +245,11 @@ func _input(event : InputEvent):
 					#if mouse was pressed down over a hovered part, we know the user is most likely starting a drag
 					#drag has a tolerance before it actually starts
 					WorkspaceManager.drag_prepare(event)
+					var action = UndoManager.ActionData.new()
+					action.action = WorkspaceManager.selection_move
+					action.reverse_action = WorkspaceManager.selection_move
+					action.prev_transform = WorkspaceManager.selected_parts_abb.transform
+					UndoManager.undo_stack.append(action)
 					
 				#if handle is detected, set dragged_handle
 				elif Main.safety_check(hovered_handle):
@@ -257,6 +262,7 @@ func _input(event : InputEvent):
 				is_mouse_button_held = false
 				#drag has a tolerance of a few pixels before it starts
 				WorkspaceManager.drag_terminate()
+				UndoManager.undo_stack[UndoManager.undo_stack.size() - 1].transform = WorkspaceManager.selected_parts_abb.transform
 				WorkspaceManager.selection_rect_terminate(panel_selection_rect)
 				WorkspaceManager.transform_handle_terminate()
 	
@@ -406,11 +412,11 @@ func _input(event : InputEvent):
 		#undo
 		elif event.keycode == KEY_Z and event.ctrl_pressed:
 			"TODO"
-			WorkspaceManager.undo()
+			UndoManager.undo()
 		#redo
 		elif event.keycode == KEY_Y and event.ctrl_pressed:
 			"TODO"
-			WorkspaceManager.redo()
+			UndoManager.redo()
 		elif event.keycode == KEY_F1:
 			EditorUI.dd_manual.popup()
 	

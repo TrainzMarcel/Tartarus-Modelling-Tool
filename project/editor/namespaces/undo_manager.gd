@@ -14,10 +14,13 @@ static var pointer : int = 0
 
 
 
+static func undo():
+	var current = undo_stack[undo_stack.size() - 1]
+	current.reverse_action.call(current.prev_transform.origin)
+	
 
-
-
-
+static func redo():
+	return
 
 
 

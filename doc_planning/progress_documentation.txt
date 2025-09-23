@@ -112,4 +112,4 @@
 9.9. made newly spawned parts use selected material and color instead of default plastic_01 and exported the program once again
 10.9. reset default directory for file manager (forgot to reset after debugging), attempted to fix jpg loading issues and failed because this is a godot (4.1.2 uses an outdated jpg library) issue. i will have to upgrade the project version eventually anyway.
 17.9. set up windows vm and exported the editor in the windows vm, which fixed the crash on startup
-19.9. fixed crashing bug when deleting selected part, fixed marquee select starting when in a menu
+19.9. fixed crashing bug when deleting selected part, fixed marquee select starting when in a menu, first steps working on undo functionality
