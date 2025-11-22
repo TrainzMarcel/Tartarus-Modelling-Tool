@@ -343,7 +343,7 @@ static func initialize_user_folder():
 #part functions-----------------------------------------------------------------
 #only meant for spawning a part from the part spawn button
 static func part_spawn(selected_part_type : Part):
-	var ray_result = Main.raycast(Main.cam, Main.cam.global_position, -Main.cam.basis.z * Main.raycast_length, [], [1])
+	var ray_result = Main.raycast(Main.cam, Main.cam.global_position, Main.cam.global_position + (-Main.cam.basis.z * Main.part_spawn_raycast_length), [], [1])
 	var new_part : Part = selected_part_type.copy()
 	workspace.add_child(new_part)
 	new_part.initialize()
@@ -354,7 +354,16 @@ static func part_spawn(selected_part_type : Part):
 	if ray_result.is_empty():
 		new_part.transform.origin = Main.cam.global_position + Main.part_spawn_distance * -Main.cam.basis.z
 	else:
-		new_part.transform.origin = ray_result.position
+		#normal bump
+		#first find closest basis vectors to normal vector and use that to determine which side length of the part to use
+		var r_dict : Dictionary = SnapUtils.find_closest_vector_abs(new_part.transform.basis, ray_result.normal, true)
+		#normal_length is used to move the part up until the bottom surface meets with the "canvas" surface
+		var normal_length : float = new_part.part_scale[r_dict.index]
+		print("---------------------------------------------")
+		#print("normal_length ", normal_length)
+		print("ray_result.normal ", ray_result.normal)
+		print("ray_result.position ", ray_result.position)
+		new_part.transform.origin = ray_result.position + (ray_result.normal * normal_length * 0.5)
 	return new_part
 
 
@@ -965,13 +974,13 @@ static func selection_scale(scale_absolute : Vector3):
 
 #undo redo system---------------------------------------------------------------
 static func undo():
-	return
-	#print("UNDO")
+	UndoManager.undo()
+	print("UNDO")
 
 
 static func redo():
-	return
-	#print("REDO")
+	UndoManager.redo()
+	print("REDO")
 
 
 #save load system---------------------------------------------------------------

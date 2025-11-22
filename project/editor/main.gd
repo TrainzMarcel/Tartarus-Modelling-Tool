@@ -2,12 +2,12 @@ extends Node3D
 class_name Main
 
 #features (from most important to least)
-"TODO"#implement model import export
 "TODO"#implement undo redo
-"TODO"#implement asset import export
-"TODO"#implement csg
 "TODO"#implement selection grouping
-"TODO"#implement pivot move tool
+"TODO"#implement csg
+"TODO"#implement model import export
+"TODO"#implement asset import export
+
 
 
 #performance
@@ -84,9 +84,13 @@ static var drag_tolerance : float = 10
 
 #how many units away a part spawns if theres no parts in front of the raycast
 "TODO"#add "normal bump" like with dragging
-static var part_spawn_distance : float = 4
-#length of raycast for dragging
+static var part_spawn_distance : float = 5
+#length of raycast for part spawning only (closer part spawn is better ux by being less confusing)
+static var part_spawn_raycast_length : float = 5
+#length of raycast for dragging selections and handles
 static var raycast_length : float = 1024
+#undo data object storage while its not yet registered
+static var undo_data_drag : UndoManager.UndoData
 
 
 #transform handle data----------------------------------------------------------
@@ -245,11 +249,14 @@ func _input(event : InputEvent):
 					#if mouse was pressed down over a hovered part, we know the user is most likely starting a drag
 					#drag has a tolerance before it actually starts
 					WorkspaceManager.drag_prepare(event)
-					var action = UndoManager.ActionData.new()
-					action.action = WorkspaceManager.selection_move
-					action.reverse_action = WorkspaceManager.selection_move
-					action.prev_transform = WorkspaceManager.selected_parts_abb.transform
-					UndoManager.undo_stack.append(action)
+					
+					undo_data_drag = UndoManager.UndoData.new()
+					print("selection: ", WorkspaceManager.selected_parts_array.map(func(input): return input.name))
+					var selection_with_dragged = WorkspaceManager.selected_parts_array.duplicate_deep()
+					selection_with_dragged.append(Main.dragged_part)
+					undo_data_drag.append_undo_action_with_args(WorkspaceManager.selection_clear, [])
+					undo_data_drag.append_undo_action_with_args(WorkspaceManager.selection_set_to_part_array, [selection_with_dragged, Main.dragged_part])
+					undo_data_drag.append_undo_action_with_args(WorkspaceManager.selection_move, [WorkspaceManager.selected_parts_abb.transform.origin])
 					
 				#if handle is detected, set dragged_handle
 				elif Main.safety_check(hovered_handle):
@@ -261,8 +268,12 @@ func _input(event : InputEvent):
 			else:
 				is_mouse_button_held = false
 				#drag has a tolerance of a few pixels before it starts
+				undo_data_drag.append_redo_action_with_args(WorkspaceManager.selection_clear, [])
+				undo_data_drag.append_redo_action_with_args(WorkspaceManager.selection_set_to_part_array, [WorkspaceManager.selected_parts_array.duplicate_deep(), Main.dragged_part])
+				undo_data_drag.append_redo_action_with_args(WorkspaceManager.selection_move, [WorkspaceManager.selected_parts_abb.transform.origin])
+				UndoManager.register_undo_data(undo_data_drag)
 				WorkspaceManager.drag_terminate()
-				UndoManager.undo_stack[UndoManager.undo_stack.size() - 1].transform = WorkspaceManager.selected_parts_abb.transform
+				
 				WorkspaceManager.selection_rect_terminate(panel_selection_rect)
 				WorkspaceManager.transform_handle_terminate()
 	

@@ -1,6 +1,6 @@
 [gd_scene load_steps=20 format=3 uid="uid://bjtrfenn2qo0u"]
 
-[ext_resource type="Script" path="res://editor/classes/ui_file_manager/file_manager.gd" id="1_omhfy"]
+[ext_resource type="Script" uid="uid://rd10txw1b76c" path="res://editor/classes/ui_file_manager/file_manager.gd" id="1_omhfy"]
 [ext_resource type="Texture2D" uid="uid://bul8005ajw68t" path="res://editor/data_ui/assets/File.svg" id="2_1m6pn"]
 [ext_resource type="StyleBox" uid="uid://fvm4br3npkws" path="res://editor/data_ui/styles/panel_styles/window_panel.tres" id="2_olk3o"]
 [ext_resource type="Texture2D" uid="uid://cid7rqf0bcc1e" path="res://editor/data_ui/assets/Folder.svg" id="3_in7kl"]
@@ -17,7 +17,7 @@
 [ext_resource type="StyleBox" uid="uid://bkftmueyia8ln" path="res://editor/data_ui/styles/button_and_line_edit_styles/file_dialog/hover_normal.tres" id="13_m66pr"]
 [ext_resource type="StyleBox" uid="uid://bxumeweegtu36" path="res://editor/data_ui/styles/button_and_line_edit_styles/file_dialog/pressed.tres" id="14_f3j7t"]
 [ext_resource type="StyleBox" uid="uid://ux7uqdijiwdh" path="res://editor/data_ui/styles/panel_styles/submenu_panel.tres" id="15_3kflr"]
-[ext_resource type="Script" path="res://editor/classes/ui_editor/label_numeric.gd" id="15_56d13"]
+[ext_resource type="Script" uid="uid://b0qnitcp3u5s6" path="res://editor/classes/ui_editor/label_numeric.gd" id="15_56d13"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_6oyx8"]
 content_margin_bottom = 6.0
@@ -75,8 +75,8 @@ custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
 theme = ExtResource("3_y5lmk")
 theme_override_styles/normal = ExtResource("4_v8wiq")
-theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/focus = ExtResource("6_itj42")
 text = "<"
 
@@ -86,8 +86,8 @@ custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
 theme = ExtResource("3_y5lmk")
 theme_override_styles/normal = ExtResource("4_v8wiq")
-theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/focus = ExtResource("6_itj42")
 text = ">"
 
@@ -98,8 +98,8 @@ layout_mode = 2
 theme = ExtResource("3_y5lmk")
 theme_override_font_sizes/font_size = 0
 theme_override_styles/normal = ExtResource("4_v8wiq")
-theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/focus = ExtResource("6_itj42")
 text = "^"
 
@@ -111,8 +111,8 @@ tooltip_text = "Refresh"
 theme = ExtResource("3_y5lmk")
 theme_override_font_sizes/font_size = 23
 theme_override_styles/normal = ExtResource("4_v8wiq")
-theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/focus = ExtResource("6_itj42")
 text = "🔁"
 
@@ -123,8 +123,8 @@ layout_mode = 2
 theme = ExtResource("3_y5lmk")
 theme_override_font_sizes/font_size = 0
 theme_override_styles/normal = ExtResource("4_v8wiq")
-theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/focus = ExtResource("6_itj42")
 toggle_mode = true
 text = " list "
@@ -136,8 +136,8 @@ layout_mode = 2
 theme = ExtResource("3_y5lmk")
 theme_override_font_sizes/font_size = 0
 theme_override_styles/normal = ExtResource("4_v8wiq")
-theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/focus = ExtResource("6_itj42")
 text = " Root "
 
@@ -163,8 +163,8 @@ custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
 theme = ExtResource("3_y5lmk")
 theme_override_styles/normal = ExtResource("9_h3x70")
-theme_override_styles/hover = ExtResource("9_h3x70")
 theme_override_styles/pressed = ExtResource("10_hguuo")
+theme_override_styles/hover = ExtResource("9_h3x70")
 theme_override_styles/focus = ExtResource("6_itj42")
 text = "❌"
 
@@ -190,10 +190,10 @@ caret_blink = true
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_styles/focus = ExtResource("6_itj42")
 theme_override_styles/normal = ExtResource("13_m66pr")
-theme_override_styles/hover = ExtResource("13_m66pr")
 theme_override_styles/pressed = ExtResource("14_f3j7t")
+theme_override_styles/hover = ExtResource("13_m66pr")
+theme_override_styles/focus = ExtResource("6_itj42")
 clip_text = true
 fit_to_longest_item = false
 allow_reselect = true
@@ -235,6 +235,7 @@ size_flags_vertical = 3
 
 [node name="PanelContainerExtraOptions" type="PanelContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection"]
 unique_name_in_owner = true
+visible = false
 custom_minimum_size = Vector2(248, 0)
 layout_mode = 2
 theme_override_styles/panel = ExtResource("15_3kflr")
@@ -309,8 +310,8 @@ size_flags_horizontal = 4
 theme = ExtResource("3_y5lmk")
 theme_override_font_sizes/font_size = 0
 theme_override_styles/normal = ExtResource("4_v8wiq")
-theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/focus = ExtResource("6_itj42")
 text = " Accept "
 
@@ -330,7 +331,7 @@ caret_blink = true
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_styles/focus = ExtResource("6_itj42")
 theme_override_styles/normal = ExtResource("13_m66pr")
-theme_override_styles/hover = ExtResource("13_m66pr")
 theme_override_styles/pressed = ExtResource("14_f3j7t")
+theme_override_styles/hover = ExtResource("13_m66pr")
+theme_override_styles/focus = ExtResource("6_itj42")

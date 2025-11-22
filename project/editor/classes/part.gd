@@ -154,4 +154,3 @@ func copy():
 	#setter automatically calls reapply function
 	new.part_color = part_color
 	return new
-

@@ -346,4 +346,3 @@ func on_t_file_display_item_activated(tree : Tree):
 		change_dir(selected_text, true)
 	elif dir_access.file_exists(dir_access.get_current_dir() + "/" + selected_text):
 		le_file_name.text = selected_text.rsplit(".", true, 1)[0]
-

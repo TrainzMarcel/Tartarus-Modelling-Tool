@@ -1,9 +1,7 @@
 11.7. started work on 3d level editor software
 12.7. started to implement spawning, dragging and visual selection of cuboids
 17.7. finished implementing selection box
-
 24.7. implementing dragging
-
 2.10. returned to this project
 3.10. renamed this project to tartarus modelling tool and uploaded this project and the flowcharting tool to github along with setting up git vcs
 14.10. finished writing out requirements
@@ -26,7 +24,6 @@
 24.1. removed state enum and changed out with array which contains each transformhandle, renamed some functions to make more sense, changed transformhandle code to work at any orientation, reorganized some functions into transformhandleutils
 29.1. added a bunch of functionality to set the position and rotation of the transform tools, optimized functions in snap_utils to iterate through basis instead of redundant arrays
 30.1. optimized and fixed calculation of mouse in 3d space for transform handles, got too exhausted to add snapping, added snapping options ui, added signals and functionality for said ui
-
 3.2. added snapping to transform handles, added torus collider generator, started work on rotation tool, added partially automated setup to transform handles (tool script)
 4.2. implemented rotation tool
 5.2. solved problem of transform handles getting too small from too far away (subviewport with second camera), albeit with some tech debt, deleted render_over shader as it is no longer needed
@@ -113,3 +110,5 @@
 10.9. reset default directory for file manager (forgot to reset after debugging), attempted to fix jpg loading issues and failed because this is a godot (4.1.2 uses an outdated jpg library) issue. i will have to upgrade the project version eventually anyway.
 17.9. set up windows vm and exported the editor in the windows vm, which fixed the crash on startup
 19.9. fixed crashing bug when deleting selected part, fixed marquee select starting when in a menu, first steps working on undo functionality
+20.11. renamed variables and functions in undomanager as well as partially cleaning them up, added a normal bump to part_spawn() function as well as fixing a bug with the intersect_ray() "to" parameter and adjusted ray length to be shorter and less confusing (part spawning too far from the user)
+22.11. added debug_pretty_print() function to undomanager for easier debugging and completed undomanager functionality. next i need to figure out how to adapt the codebase (probably move the drag-undo management in main.gd to workspacemanager and feed the drag functions the necessary state from main) this system.
