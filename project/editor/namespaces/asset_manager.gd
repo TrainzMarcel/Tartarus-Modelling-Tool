@@ -264,4 +264,3 @@ static func debug_pretty_print():
 
 #static func refresh_file_storage():
 #	return
-

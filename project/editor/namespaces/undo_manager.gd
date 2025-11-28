@@ -6,6 +6,8 @@ static var undo_limit : int = 8#255
 #how much to subtract from the array size if the limit is exceeded
 static var limit_decrement : int = 2#16
 
+"TODO"#add history undo option
+
 class UndoData:
 	#parallel arrays of functions and corresponding arguments
 	var undo_action : Array[Callable]
@@ -51,11 +53,11 @@ static func undo():
 	if undo_index < 0:
 		return
 	
-	if undo_index > undo_stack.size() - 1:
+	if undo_index > undo_stack.size() - 1 or undo_index < -1:
 		push_warning("undo_index out of range, is this on purpose?")
 		undo_index = undo_stack.size() - 1
 	
-	var current = undo_stack[undo_index]
+	var current = undo_stack[max(undo_index, 0)]
 	#can be null
 	if not is_instance_valid(current):
 		return
@@ -64,7 +66,9 @@ static func undo():
 	while i < current.undo_action.size():
 		current.undo_action[i].callv(current.undo_args[i])
 		i = i + 1
-	undo_index = max(undo_index - 1, 0)
+	
+	#
+	undo_index = max(undo_index - 1, -1)
 	debug_pretty_print()
 
 static func redo():
@@ -100,6 +104,9 @@ static func debug_pretty_print(stack_print_limit : int = 10):
 	
 	
 	var output_undo_index : String = "undo_index"
+	if undo_index < 0:
+		output_undo_index = output_undo_index + " (-1)"
+	
 	var output_v : String = "V"
 	var output_index : String = ""
 	var output_undo_func : String = ""
@@ -124,8 +131,3 @@ static func debug_pretty_print(stack_print_limit : int = 10):
 	print(output_redo_func)
 	print("stack size: ", undo_stack.size())
 	print()
-	
-	#print("undo_action:   ", undo_stack[i].undo_action)
-	#print("undo_args:     ", undo_stack[i].undo_args)
-	#print("redo_action:   ", undo_stack[i].redo_action)
-	#print("redo_args:     ", undo_stack[i].redo_args)

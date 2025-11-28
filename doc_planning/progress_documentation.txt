@@ -1,114 +1,116 @@
-11.7. started work on 3d level editor software
-12.7. started to implement spawning, dragging and visual selection of cuboids
-17.7. finished implementing selection box
-24.7. implementing dragging
-2.10. returned to this project
-3.10. renamed this project to tartarus modelling tool and uploaded this project and the flowcharting tool to github along with setting up git vcs
-14.10. finished writing out requirements
-18.10. selection system and selection boxes are working
-21.10. selection system cleaned up
-23.10. got crude rotation snapping done, brought in 3d vector arrows for easier debugging
-25.10. fixed snap_rotation inconsistencies depending on surface normal
-28.10. created unit_test.gd, removed drag_state, added rotation using r and t
-6.11. moved dragging logic into update_snap(), added aabb calculation for determining size of selection
-18.11. drag_offset became offset from raycast hit to dragged part, main_offset became offset from dragged part to rest of selection
-20.11. refactored and cleaned up snap_position()
-27.11. further improved snapping (odd/even offset) and moved lots of static functions into snap_utils.gd
-5.12. updated readme
-20.12. added shader to render handles on top, started work on transform_handle.gd, added collision layers to raycast functions
-27.12. continued to roughly work out how to make transform handles work
-8.1. figuring out projection of mouse movement onto transform handle axis
-20.1. squashed bug when user tries to drag already selected part by holding shift, reorganized some code
-22.1. replaced aabb with my own abb class to avoid having to rotate my data to fit the aabb and temporarily added a mesh representation
-23.1. worked on studying better architecture for input() in the main class
-24.1. removed state enum and changed out with array which contains each transformhandle, renamed some functions to make more sense, changed transformhandle code to work at any orientation, reorganized some functions into transformhandleutils
-29.1. added a bunch of functionality to set the position and rotation of the transform tools, optimized functions in snap_utils to iterate through basis instead of redundant arrays
-30.1. optimized and fixed calculation of mouse in 3d space for transform handles, got too exhausted to add snapping, added snapping options ui, added signals and functionality for said ui
-3.2. added snapping to transform handles, added torus collider generator, started work on rotation tool, added partially automated setup to transform handles (tool script)
-4.2. implemented rotation tool
-5.2. solved problem of transform handles getting too small from too far away (subviewport with second camera), albeit with some tech debt, deleted render_over shader as it is no longer needed
-6.2. rewrote math for linear movement of transform handles
-7.2. merged and deleted transform_handles branch, started to refine architecture of codebase
-10.2. fixed ALL transform handle bugs, added hovered color, deleted offset_dragged_to_selected_array and replaced it with offset_abb_to_selected_array, thereby making the abb the central reference point for transformations and selections, used abb in snap_position for "normal bump", added double and half button for positional snapping, properly managed state of freelookcamera, added snapping_active to snap_position()
-11.2. properly implemented scaling tool for single part selections
-13.2. started working on shaders for material which can be colored per instance and is always visible even at full black and full white
-14.2. fixed wrongly handled edge case in snap_rotation() when dragged part is aligned to hovered part with normal vector but not others, fixed bug in apply_snap_rotation() where selected_parts_abb.basis was being set wrong in some cases (and was getting out of sync from the selection), fixed bug in snap_position() where "normal bump" was still using side length of dragged part, added centralized tool enum in main and got rid of string identifiers in transform handles
-17.2. implemented HyperDebug to the best of my ability, tried to make an easy interface to use; define an action in HyperDebug.config(), then call .do() on the action, passing all required data for visualization or the string to print, hastily moved scaling math into snap_utils.transform()
-26.2. back from long break, brainstormed about ui and ux, made negative axis positioning handles dashed to indicate theyre the negative direction, made new "dropdown" control class
-27.2. finished dropdown button class, started work on automatic color sorting algorithm
-28.2. finished color sorting algorithm
-3.3. created icons for: drag, move, rotate, scale, add part, delete part, color tool, material tool, lock part, unlock part, all in blender.
-5.3. reworked material tool icon, made moodboard for ui styling, created basic layout for new ui
-6.3. cleaned up test ui, reworked folder structure, continued work on ui, made themes for ui
-7.3. cleaned up and removed all themes in favor of going back to theme overrides, added sci fi font, finalized bottom panel, added functionality for having no tools selected (which i did so hastily that i broke some tool selecting code)
-17.3. back from other work, styled tooltips, started work on document displaying ui
-20.3. finished document displaying ui; added page change buttons, added search function
-21.3. added incomplete search result marking function
-24.3. working on search result marking function
-25.3. working on search result marking function
-26.3. working on search result marking function + jumping between search results + marking selected search result
-27.3. finished working on document viewer, started working on material and color picker ui
-28.3. designed logo, added ExpandPanel class
-31.3. fixed dropdown button issues, restructured repo
-2.4. finished color, material and part picker uis, made new ui functional, added dataloader util, added numericlineedit class, moved ui functions out of automatedcolorpicker
-3.4. made a to do list to keep track of what needs to get done, started working out how best to save models and asset palettes
-4.4. continued to study possibilities for saving models and asset palettes, made first draft of save data structure, added uuid util in preparation for saving
-7.4. further worked on save data planning, created rotation pivot icon
-9.4. continued working on save data planning
-10.4. continued working on workspacedata (formerly dataloader)
-11.4. continued working on workspacedata, did not think it would be so hard to read in the save files i designed
-16.4. further refine architecture of workspacedata
-21.4. further refine architecture of workspacedata (thought of using an save/load instruction object to persist any kind of data just by configuring instructions for the program on how to do so (like telling it which lines have which columns and data types in them)
-25.4. started working on ui to manage palettes, mostly finished data_to_tmv_line() function
-28.4. brainstormed ui/ux of managing palettes, came to conclusion that saving, loading, import, export, adding, deleting and equipping palettes should be shared by one window, with the top bar only there to switch between palette creator types and palette list display
-30.4. created material palette tab ui, considered adding standalone assets to models which are saved separate from any palettes, will be saved under section header ::STANDALONEASSETS:: and parts with these assets assigned will have -1 as palette id and null as palette reference in the editor
-12.5. decided to stop working on palettes for now and to instead have it load everything from the data folder without using my save file specification. added a bunch of assets for testing.
-14.5. fixed uv stretching problems with shader, considered ways to clean up the programs architecture (API style abstractions), major rework of the programs architecture using the previous considerations, reformed WorkspaceData into WorkspaceManager and mostly used it like an API in main, kept all the old save/load code inside, moved all ui events in Main into MainUIEvents
-15.5. researched undo redo systems and whether i should make my own, cleaned up part.gd a little bit, made top bar ui functional using MainUIEvents
-16.5. made selection box get colored according to tool used (paint tool = selected color, material tool = orange, delete tool = red), added is_hover_tool flag, added a 10 pixel tolerance for starting a drag, reworked snap_position() to snap by corner of dragged and hovered part
-19.5. prefixed SnapUtils.snap_rotation() and SnapUtils.snap_position() with drag_ to make their purpose clearer, completely rearchitected TransformHandleUtils.transform() as it was handling input and snapping
-21.5. finished rearchitecting TransformHandleUtils.transform(), implemented all ctrl + key functions except undo and redo
-22.5. implemented multi-part scaling in WorkspaceManager.selection_scale()
-26.5. disabled subresource duplicating in part.copy() for major performance gain, fixed bug where one was able to paint, material and delete even when hovering over ui
-28.5. implemented rudimentary saving and loading
-30.5. worked on file dialog for saving and loading
-2.6. made my own file dialog instead (named file manager)
-4.6. integrated file manager into save load process (yay)
-5.6. heavily improved save-load system, only loading assets from the save file when they arent already present
+11.7.	started work on 3d level editor software
+12.7.	started to implement spawning, dragging and visual selection of cuboids
+17.7.	finished implementing selection box
+24.7.	implementing dragging
+2.10.	returned to this project
+3.10.	renamed this project to tartarus modelling tool and uploaded this project and the flowcharting tool to github along with setting up git vcs
+14.10.	finished writing out requirements
+18.10.	selection system and selection boxes are working
+21.10.	selection system cleaned up
+23.10.	got crude rotation snapping done, brought in 3d vector arrows for easier debugging
+25.10.	fixed snap_rotation inconsistencies depending on surface normal
+28.10.	created unit_test.gd, removed drag_state, added rotation using r and t
+6.11.	moved dragging logic into update_snap(), added aabb calculation for determining size of selection
+18.11.	drag_offset became offset from raycast hit to dragged part, main_offset became offset from dragged part to rest of selection
+20.11.	refactored and cleaned up snap_position()
+27.11.	further improved snapping (odd/even offset) and moved lots of static functions into snap_utils.gd
+5.12.	updated readme
+20.12.	added shader to render handles on top, started work on transform_handle.gd, added collision layers to raycast functions
+27.12.	continued to roughly work out how to make transform handles work
+8.1.	figuring out projection of mouse movement onto transform handle axis
+20.1.	squashed bug when user tries to drag already selected part by holding shift, reorganized some code
+22.1.	replaced aabb with my own abb class to avoid having to rotate my data to fit the aabb and temporarily added a mesh representation
+23.1.	worked on studying better architecture for input() in the main class
+24.1.	removed state enum and changed out with array which contains each transformhandle, renamed some functions to make more sense, changed transformhandle code to work at any orientation, reorganized some functions into transformhandleutils
+29.1.	added a bunch of functionality to set the position and rotation of the transform tools, optimized functions in snap_utils to iterate through basis instead of redundant arrays
+30.1.	optimized and fixed calculation of mouse in 3d space for transform handles, got too exhausted to add snapping, added snapping options ui, added signals and functionality for said ui
+3.2.	added snapping to transform handles, added torus collider generator, started work on rotation tool, added partially automated setup to transform handles (tool script)
+4.2.	implemented rotation tool
+5.2.	solved problem of transform handles getting too small from too far away (subviewport with second camera), albeit with some tech debt, deleted render_over shader as it is no longer needed
+6.2.	rewrote math for linear movement of transform handles
+7.2.	merged and deleted transform_handles branch, started to refine architecture of codebase
+10.2.	fixed ALL transform handle bugs, added hovered color, deleted offset_dragged_to_selected_array and replaced it with offset_abb_to_selected_array, thereby making the abb the central reference point for transformations and selections, used abb in snap_position for "normal bump", added double and half button for positional snapping, properly managed state of freelookcamera, added snapping_active to snap_position()
+11.2.	properly implemented scaling tool for single part selections
+13.2.	started working on shaders for material which can be colored per instance and is always visible even at full black and full white
+14.2.	fixed wrongly handled edge case in snap_rotation() when dragged part is aligned to hovered part with normal vector but not others, fixed bug in apply_snap_rotation() where selected_parts_abb.basis was being set wrong in some cases (and was getting out of sync from the selection), fixed bug in snap_position() where "normal bump" was still using side length of dragged part, added centralized tool enum in main and got rid of string identifiers in transform handles
+17.2.	implemented HyperDebug to the best of my ability, tried to make an easy interface to use; define an action in HyperDebug.config(), then call .do() on the action, passing all required data for visualization or the string to print, hastily moved scaling math into snap_utils.transform()
+26.2.	back from long break, brainstormed about ui and ux, made negative axis positioning handles dashed to indicate theyre the negative direction, made new "dropdown" control class
+27.2.	finished dropdown button class, started work on automatic color sorting algorithm
+28.2.	finished color sorting algorithm
+3.3.	created icons for: drag, move, rotate, scale, add part, delete part, color tool, material tool, lock part, unlock part, all in blender.
+5.3.	reworked material tool icon, made moodboard for ui styling, created basic layout for new ui
+6.3.	cleaned up test ui, reworked folder structure, continued work on ui, made themes for ui
+7.3.	cleaned up and removed all themes in favor of going back to theme overrides, added sci fi font, finalized bottom panel, added functionality for having no tools selected (which i did so hastily that i broke some tool selecting code)
+17.3.	back from other work, styled tooltips, started work on document displaying ui
+20.3.	finished document displaying ui; added page change buttons, added search function
+21.3.	added incomplete search result marking function
+24.3.	working on search result marking function
+25.3.	working on search result marking function
+26.3.	working on search result marking function + jumping between search results + marking selected search result
+27.3.	finished working on document viewer, started working on material and color picker ui
+28.3.	designed logo, added ExpandPanel class
+31.3.	fixed dropdown button issues, restructured repo
+2.4.	finished color, material and part picker uis, made new ui functional, added dataloader util, added numericlineedit class, moved ui functions out of automatedcolorpicker
+3.4.	made a to do list to keep track of what needs to get done, started working out how best to save models and asset palettes
+4.4.	continued to study possibilities for saving models and asset palettes, made first draft of save data structure, added uuid util in preparation for saving
+7.4.	further worked on save data planning, created rotation pivot icon
+9.4.	continued working on save data planning
+10.4.	continued working on workspacedata (formerly dataloader)
+11.4.	continued working on workspacedata, did not think it would be so hard to read in the save files i designed
+16.4.	further refine architecture of workspacedata
+21.4.	further refine architecture of workspacedata (thought of using an save/load instruction object to persist any kind of data just by configuring instructions for the program on how to do so (like telling it which lines have which columns and data types in them)
+25.4.	started working on ui to manage palettes, mostly finished data_to_tmv_line() function
+28.4.	brainstormed ui/ux of managing palettes, came to conclusion that saving, loading, import, export, adding, deleting and equipping palettes should be shared by one window, with the top bar only there to switch between palette creator types and palette list display
+30.4.	created material palette tab ui, considered adding standalone assets to models which are saved separate from any palettes, will be saved under section header ::STANDALONEASSETS:: and parts with these assets assigned will have -1 as palette id and null as palette reference in the editor
+12.5.	decided to stop working on palettes for now and to instead have it load everything from the data folder without using my save file specification. added a bunch of assets for testing.
+14.5.	fixed uv stretching problems with shader, considered ways to clean up the programs architecture (API style abstractions), major rework of the programs architecture using the previous considerations, reformed WorkspaceData into WorkspaceManager and mostly used it like an API in main, kept all the old save/load code inside, moved all ui events in Main into MainUIEvents
+15.5.	researched undo redo systems and whether i should make my own, cleaned up part.gd a little bit, made top bar ui functional using MainUIEvents
+16.5.	made selection box get colored according to tool used (paint tool = selected color, material tool = orange, delete tool = red), added is_hover_tool flag, added a 10 pixel tolerance for starting a drag, reworked snap_position() to snap by corner of dragged and hovered part
+19.5.	prefixed SnapUtils.snap_rotation() and SnapUtils.snap_position() with drag_ to make their purpose clearer, completely rearchitected TransformHandleUtils.transform() as it was handling input and snapping
+21.5.	finished rearchitecting TransformHandleUtils.transform(), implemented all ctrl + key functions except undo and redo
+22.5.	implemented multi-part scaling in WorkspaceManager.selection_scale()
+26.5.	disabled subresource duplicating in part.copy() for major performance gain, fixed bug where one was able to paint, material and delete even when hovering over ui
+28.5.	implemented rudimentary saving and loading
+30.5.	worked on file dialog for saving and loading
+2.6.	made my own file dialog instead (named file manager)
+4.6.	integrated file manager into save load process (yay)
+5.6.	heavily improved save-load system, only loading assets from the save file when they arent already present
+18.6.	returned to this project after other work got in the way, abstracted dragging logic into workspacemanager, started to add rectangle/marquee selection
+20.6.	mostly finished adding rectangle/marquee selection and thinking about how to clean up selection and bounding box related logic
+21.6.	fixed part spawning too close to camera bug and drag_offset being updated while dragging bug
+23.6.	fixed transform handles sometimes staying highlighted
+25.6.	improved marquee select shift behavior (adds unselected parts and removes selected parts from selection) and improved architecture somewhat
+26.6.	added ability to export models (theyre hardcoded to export to user://exported_models/export0.res, this will change), (!) discovered that instance shader variables can only be set for each meshinstance, not each surface in a meshinstance, that means i have to rework my whole workflow
+27.6.	after further investigation, ive decided to develop a system which keeps track of all material + color combinations and instances a new colored material if a combination hasnt been made before
+30.6.	hastily finished materialmanager, still need to code it more robustly + made a better grouping function in meshutils
+1.7.	started thinking about how to properly integrate export options into the ui flow, probably some sort of add-on to the file manager, improved meshutils functions, started to work on accomodating standardmaterial3d in save process
+2.7.	working on integrating standardmaterial3d into save process and re-planning the software architecture encompassing material management and file operations (save, load, export, import)
+7.7.	on break
+14.7.	back from break, renamed materialmanager to assetmanager and worked on generalizing the code to all resource types
+15.7.	now integrating assetmanager into rest of program and thinking about how to further improve/architect saving and loading processes
+21.7.	properly implemented assetmanager.recolor_material(), added recursive subresource registering function
+22.7.	fixed assetmanager unnamed key bug
+23.7.	working on splitting loading into structured pipeline: 1. unzip save file, 2. load assets (meshes, textures), 3. deserialize data from csv file (and saving works in reverse)
+24.7.	nearly finished saving logic restructuring
+10.8.	slowly recovering from burnout, did some work on the save system
+11.8.	finished zipping function
+12.8.	worked a bit on unzipping function (load process)
+14.8.	finally finished and cleaned up saving and loading of models, moved save format specification, made reading editor data independent from folder structures (recursive), moved editorui button initialization into WorkspaceManager, added settings.json file, changed asset loading to read from user://assets, added more customization by reading in any mesh, material and color (.csv) the user may put in the asset folder
+18.8.	renamed transformhandleutils to toolmanager and refactored all of the tool selecting logic to be in toolmanager and to use a tooldata struct instead of a big switch statement, abstracted set_transform_handle_root_position into toolmanager, made camera movement also call drag handling function in case user is dragging a selection while moving the camera, added textures: checkers, concrete_01, diamond_plate_01, metal_grate, office_ceiling_01, planks_01, sand_01, slate_01, slate_02, tiles_01, tiles_02, tiles_03
+19.8.	found bugs in material serialization code, added grass_01 texture
+21.8.	fixed major bugs in standardmaterial3d serializing and deserializing code, added quarter cylinder and inverse quarter cylinder, added central version number setter
+22.8.	added loading screen, found bug with snapping while dragging multi selections with bounding box sizes that arent divisible by the snapping increment
+23.8.	working on a solution to the snapping issues
+26.8.	FINALLY fixed the snapping problems, now selections truly snap by the dragged part when being dragged, commencing work on accomodating the pivot edit tool in the codebase
+27.8.	abstracted transform handle drag preparation, handling and termination into WorkspaceManager, implemented pivot edit tool, with one bug which is that it moves when the selection changes
+28.8.	finished pivot edit tool functionality (without bugs as far as ive tested) :D
+8.9.	fixed tres issues by manually tracking the dependencies and rewriting filepaths on program startup when they break
+9.9.	made newly spawned parts use selected material and color instead of default plastic_01 and exported the program once again
+10.9.	reset default directory for file manager (forgot to reset after debugging), attempted to fix jpg loading issues and failed because this is a godot (4.1.2 uses an outdated jpg library) issue. i will have to upgrade the project version eventually anyway.
+17.9.	set up windows vm and exported the editor in the windows vm, which fixed the crash on startup
+19.9.	fixed crashing bug when deleting selected part, fixed marquee select starting when in a menu, first steps working on undo functionality
+20.11.	renamed variables and functions in undomanager as well as partially cleaning them up, added a normal bump to part_spawn() function as well as fixing a bug with the intersect_ray() "to" parameter and adjusted ray length to be shorter and less confusing (part spawning too far from the user)
+22.11.	added debug_pretty_print() function to undomanager for easier debugging and completed undomanager functionality. next i need to figure out how to adapt the codebase (probably move the drag-undo management in main.gd to workspacemanager and feed the drag functions the necessary state from main) this system.
+25.11.	minor fix for undo being unable to correctly call redo on the first undodata object
+28.11.	ive decided to try a component system refactor, commit and branch before i do anything.
 
-18.6. returned to this project after other work got in the way, abstracted dragging logic into workspacemanager, started to add rectangle/marquee selection
-20.6. mostly finished adding rectangle/marquee selection and thinking about how to clean up selection and bounding box related logic
-21.6. fixed part spawning too close to camera bug and drag_offset being updated while dragging bug
-23.6. fixed transform handles sometimes staying highlighted
-25.6. improved marquee select shift behavior (adds unselected parts and removes selected parts from selection) and improved architecture somewhat
-26.6. added ability to export models (theyre hardcoded to export to user://exported_models/export0.res, this will change), (!) discovered that instance shader variables can only be set for each meshinstance, not each surface in a meshinstance, that means i have to rework my whole workflow
-27.6. after further investigation, ive decided to develop a system which keeps track of all material + color combinations and instances a new colored material if a combination hasnt been made before
-30.6. hastily finished materialmanager, still need to code it more robustly + made a better grouping function in meshutils
-1.7. started thinking about how to properly integrate export options into the ui flow, probably some sort of add-on to the file manager, improved meshutils functions, started to work on accomodating standardmaterial3d in save process
-2.7. working on integrating standardmaterial3d into save process and re-planning the software architecture encompassing material management and file operations (save, load, export, import)
-7.7. on break
-14.7. back from break, renamed materialmanager to assetmanager and worked on generalizing the code to all resource types
-15.7. now integrating assetmanager into rest of program and thinking about how to further improve/architect saving and loading processes
-21.7. properly implemented assetmanager.recolor_material(), added recursive subresource registering function
-22.7. fixed assetmanager unnamed key bug
-23.7. working on splitting loading into structured pipeline: 1. unzip save file, 2. load assets (meshes, textures), 3. deserialize data from csv file (and saving works in reverse)
-24.7. nearly finished saving logic restructuring
-10.8. slowly recovering from burnout, did some work on the save system
-11.8. finished zipping function
-12.8. worked a bit on unzipping function (load process)
-14.8. finally finished and cleaned up saving and loading of models, moved save format specification, made reading editor data independent from folder structures (recursive), moved editorui button initialization into WorkspaceManager, added settings.json file, changed asset loading to read from user://assets, added more customization by reading in any mesh, material and color (.csv) the user may put in the asset folder
-18.8. renamed transformhandleutils to toolmanager and refactored all of the tool selecting logic to be in toolmanager and to use a tooldata struct instead of a big switch statement, abstracted set_transform_handle_root_position into toolmanager, made camera movement also call drag handling function in case user is dragging a selection while moving the camera, added textures: checkers, concrete_01, diamond_plate_01, metal_grate, office_ceiling_01, planks_01, sand_01, slate_01, slate_02, tiles_01, tiles_02, tiles_03
-19.8. found bugs in material serialization code, added grass_01 texture
-21.8. fixed major bugs in standardmaterial3d serializing and deserializing code, added quarter cylinder and inverse quarter cylinder, added central version number setter
-22.8. added loading screen, found bug with snapping while dragging multi selections with bounding box sizes that arent divisible by the snapping increment
-23.8. working on a solution to the snapping issues
-26.8. FINALLY fixed the snapping problems, now selections truly snap by the dragged part when being dragged, commencing work on accomodating the pivot edit tool in the codebase
-27.8. abstracted transform handle drag preparation, handling and termination into WorkspaceManager, implemented pivot edit tool, with one bug which is that it moves when the selection changes
-28.8. finished pivot edit tool functionality (without bugs as far as ive tested) :D
-8.9. fixed tres issues by manually tracking the dependencies and rewriting filepaths on program startup when they break
-9.9. made newly spawned parts use selected material and color instead of default plastic_01 and exported the program once again
-10.9. reset default directory for file manager (forgot to reset after debugging), attempted to fix jpg loading issues and failed because this is a godot (4.1.2 uses an outdated jpg library) issue. i will have to upgrade the project version eventually anyway.
-17.9. set up windows vm and exported the editor in the windows vm, which fixed the crash on startup
-19.9. fixed crashing bug when deleting selected part, fixed marquee select starting when in a menu, first steps working on undo functionality
-20.11. renamed variables and functions in undomanager as well as partially cleaning them up, added a normal bump to part_spawn() function as well as fixing a bug with the intersect_ray() "to" parameter and adjusted ray length to be shorter and less confusing (part spawning too far from the user)
-22.11. added debug_pretty_print() function to undomanager for easier debugging and completed undomanager functionality. next i need to figure out how to adapt the codebase (probably move the drag-undo management in main.gd to workspacemanager and feed the drag functions the necessary state from main) this system.

@@ -6,8 +6,11 @@ class_name Main
 "TODO"#implement selection grouping
 "TODO"#implement csg
 "TODO"#implement model import export
-"TODO"#implement asset import export
+#implement multi part coloring and material application
+#implement part locking
+#add selectionbox around abb
 
+"TODO"#implement asset import export
 
 
 #performance
@@ -422,11 +425,9 @@ func _input(event : InputEvent):
 			EditorUI.l_message.text = "duplicated " + str(WorkspaceManager.selected_parts_array.size()) + " parts"
 		#undo
 		elif event.keycode == KEY_Z and event.ctrl_pressed:
-			"TODO"
 			UndoManager.undo()
 		#redo
 		elif event.keycode == KEY_Y and event.ctrl_pressed:
-			"TODO"
 			UndoManager.redo()
 		elif event.keycode == KEY_F1:
 			EditorUI.dd_manual.popup()
