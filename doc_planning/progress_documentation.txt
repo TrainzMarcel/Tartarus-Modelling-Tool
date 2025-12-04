@@ -112,5 +112,5 @@
 20.11.	renamed variables and functions in undomanager as well as partially cleaning them up, added a normal bump to part_spawn() function as well as fixing a bug with the intersect_ray() "to" parameter and adjusted ray length to be shorter and less confusing (part spawning too far from the user)
 22.11.	added debug_pretty_print() function to undomanager for easier debugging and completed undomanager functionality. next i need to figure out how to adapt the codebase (probably move the drag-undo management in main.gd to workspacemanager and feed the drag functions the necessary state from main) this system.
 25.11.	minor fix for undo being unable to correctly call redo on the first undodata object
-28.11.	ive decided to try a component system refactor, commit and branch before i do anything.
-
+28.11.	ive decided to try a component system refactor, commit and branch before i do anything
+4.12.	nevermind, extract half of workspacemanager into new selectionmanager instead and also all scattered abb code into selectionmanager

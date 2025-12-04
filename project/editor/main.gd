@@ -92,8 +92,6 @@ static var part_spawn_distance : float = 5
 static var part_spawn_raycast_length : float = 5
 #length of raycast for dragging selections and handles
 static var raycast_length : float = 1024
-#undo data object storage while its not yet registered
-static var undo_data_drag : UndoManager.UndoData
 
 
 #transform handle data----------------------------------------------------------
@@ -253,14 +251,6 @@ func _input(event : InputEvent):
 					#drag has a tolerance before it actually starts
 					WorkspaceManager.drag_prepare(event)
 					
-					undo_data_drag = UndoManager.UndoData.new()
-					print("selection: ", WorkspaceManager.selected_parts_array.map(func(input): return input.name))
-					var selection_with_dragged = WorkspaceManager.selected_parts_array.duplicate_deep()
-					selection_with_dragged.append(Main.dragged_part)
-					undo_data_drag.append_undo_action_with_args(WorkspaceManager.selection_clear, [])
-					undo_data_drag.append_undo_action_with_args(WorkspaceManager.selection_set_to_part_array, [selection_with_dragged, Main.dragged_part])
-					undo_data_drag.append_undo_action_with_args(WorkspaceManager.selection_move, [WorkspaceManager.selected_parts_abb.transform.origin])
-					
 				#if handle is detected, set dragged_handle
 				elif Main.safety_check(hovered_handle):
 					WorkspaceManager.transform_handle_prepare(event)
@@ -270,11 +260,6 @@ func _input(event : InputEvent):
 		#lmb release
 			else:
 				is_mouse_button_held = false
-				#drag has a tolerance of a few pixels before it starts
-				undo_data_drag.append_redo_action_with_args(WorkspaceManager.selection_clear, [])
-				undo_data_drag.append_redo_action_with_args(WorkspaceManager.selection_set_to_part_array, [WorkspaceManager.selected_parts_array.duplicate_deep(), Main.dragged_part])
-				undo_data_drag.append_redo_action_with_args(WorkspaceManager.selection_move, [WorkspaceManager.selected_parts_abb.transform.origin])
-				UndoManager.register_undo_data(undo_data_drag)
 				WorkspaceManager.drag_terminate()
 				
 				WorkspaceManager.selection_rect_terminate(panel_selection_rect)

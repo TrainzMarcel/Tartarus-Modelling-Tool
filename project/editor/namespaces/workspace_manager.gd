@@ -3,6 +3,7 @@ class_name WorkspaceManager
 
 #was meant to handle saving and loading but i dropped that for now
 #now handles selection logic, selection box logic and undo redo logic
+#it also handles transform handle logic 
 
 #dependencies
 static var hover_selection_box : SelectionBox
