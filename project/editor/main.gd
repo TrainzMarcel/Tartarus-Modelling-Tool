@@ -158,9 +158,10 @@ func _ready():
 	version_number
 	)
 	
+	SelectionManager.initialize(e_hover_selection_box)
+	
 	WorkspaceManager.initialize(
 		e_workspace,
-		hover_selection_box,
 		MainUIEvents.on_color_selected,
 		MainUIEvents.on_material_selected,
 		MainUIEvents.on_part_type_selected
@@ -193,9 +194,10 @@ func _input(event : InputEvent):
 	is_hovering_allowed = is_hover_tool and not is_ui_hovered
 	is_hovering_allowed = is_hovering_allowed and Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED
 	
+	"TODO"#get rid of these if possible
 	#reset each frame
-	WorkspaceManager.selection_changed = false
-	WorkspaceManager.selection_moved = false
+	SelectionManager.selection_changed = false
+	SelectionManager.selection_moved = false
 	#set previous hovered handle for this input frame
 	prev_hovered_handle = hovered_handle
 	
@@ -227,10 +229,10 @@ func _input(event : InputEvent):
 		if is_hovering_allowed and not Main.safety_check(hovered_handle):
 			#handle wasnt detected
 				hovered_part = Main.part_hover_check()
-				WorkspaceManager.selection_box_hover_on_part(hovered_part, is_hovering_allowed)
+				SelectionManager.selection_box_hover_on_part(hovered_part, is_hovering_allowed)
 		else:
 			#hide selection box
-			WorkspaceManager.selection_box_hover_on_part(null, is_hovering_allowed)
+			SelectionManager.selection_box_hover_on_part(null, is_hovering_allowed)
 	
 	
 #set dragged_part and dragged_handle--------------------------------------------
@@ -254,57 +256,24 @@ func _input(event : InputEvent):
 				#if handle is detected, set dragged_handle
 				elif Main.safety_check(hovered_handle):
 					WorkspaceManager.transform_handle_prepare(event)
-				elif not is_ui_hovered:
-					WorkspaceManager.selection_rect_prepare(event, panel_selection_rect)
 			
 		#lmb release
 			else:
 				is_mouse_button_held = false
 				WorkspaceManager.drag_terminate()
-				
-				WorkspaceManager.selection_rect_terminate(panel_selection_rect)
 				WorkspaceManager.transform_handle_terminate()
 	
 	
 #selection handling and non-drag-tool logic-------------------------------------
-#if click on unselected part, set it as the selection (array with only that part, discard any prior selection)
-#if click on unselected part while shift is held, append to selection
-#if click on part in selection while shift is held, remove from selection
-#if click on nothing, clear selection array
-#if click on nothing while shift is held, do nothing
+	SelectionManager.handle_input(event, is_ui_hovered, hovered_part, dragged_part, hovered_handle)
+	
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 		#lmb down
 			if event.pressed:
 				var is_part_hovered : bool = Main.safety_check(hovered_part)
-		#if part is hovered
-				if is_part_hovered and is_selecting_allowed:
-				#hovered part is in selection
-					if WorkspaceManager.selected_parts_array.has(hovered_part):
-					#shift is held
-						if Input.is_key_pressed(KEY_SHIFT):
-							#patch to stop dragging when holding shift and
-							#dragging on an already selected part
-							if WorkspaceManager.selected_parts_array.has(hovered_part) and hovered_part == dragged_part:
-								dragged_part = null
-							WorkspaceManager.selection_remove_part(hovered_part)
-				#hovered part is not in selection
-					else:
-					#shift is held
-						if Input.is_key_pressed(KEY_SHIFT):
-							WorkspaceManager.selection_add_part(hovered_part, dragged_part)
-						else:
-							WorkspaceManager.selection_set_to_part(hovered_part, dragged_part)
-		#no parts hovered
-				elif is_selecting_allowed:
-					#shift is unheld
-					if not Input.is_key_pressed(KEY_SHIFT):
-						if not Main.safety_check(hovered_handle):
-							WorkspaceManager.selection_clear()
-					
-		#parts hovered but selecting not allowed
 		#handle hover-only tools
-				elif is_part_hovered and not is_selecting_allowed and is_hovering_allowed:# is_part_hovered and not is_drag_tool:
+				if is_part_hovered and not is_selecting_allowed and is_hovering_allowed:# is_part_hovered and not is_drag_tool:
 					
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_material:
 						hovered_part.part_material = WorkspaceManager.selected_material
@@ -314,23 +283,19 @@ func _input(event : InputEvent):
 						hovered_part.part_color = WorkspaceManager.selected_color
 					
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_delete:
-						if WorkspaceManager.selected_parts_array.has(hovered_part):
-							WorkspaceManager.selection_remove_part(hovered_part)
-						else:
-							hovered_part.free()
+						if SelectionManager.selected_parts_array.has(hovered_part):
+							SelectionManager.selection_remove_part(hovered_part)
+						
+						WorkspaceManager.part_delete(hovered_part)
 						
 						#hide selection box
 						hover_selection_box.visible = false
 						#immediately update hovered_part in case theres another part behind the deleted one
 						hovered_part = Main.part_hover_check()
-						WorkspaceManager.selection_box_hover_on_part(hovered_part, true)
+						SelectionManager.selection_box_hover_on_part(hovered_part, true)
 	#lmb up
 			else:
 				pass
-	
-	#selection rect/marquee select handling
-	if event is InputEventMouseMotion:
-		WorkspaceManager.selection_rect_handle(event, panel_selection_rect, cam)
 	
 	
 #handle editing related keyboard inputs-----------------------------------------
@@ -342,11 +307,11 @@ func _input(event : InputEvent):
 				initial_rotation = initial_rotation.rotated(ray_result.normal, PI * 0.5)
 				#use initial_rotation so that dragged_part doesnt continually rotate further 
 				#from its initial rotation after being dragged over multiple off-grid parts
-				WorkspaceManager.selection_rotate(SnapUtils.drag_snap_rotation_to_hovered(initial_rotation, ray_result))
-				WorkspaceManager.selection_move(SnapUtils.drag_snap_position_to_hovered(
+				SelectionManager.selection_rotate(SnapUtils.drag_snap_rotation_to_hovered(initial_rotation, ray_result))
+				SelectionManager.selection_move(SnapUtils.drag_snap_position_to_hovered(
 					ray_result,
 					dragged_part,
-					WorkspaceManager.selected_parts_abb,
+					SelectionManager.selected_parts_abb,
 					WorkspaceManager.drag_offset,
 					positional_snap_increment,
 					snapping_active
@@ -360,22 +325,22 @@ func _input(event : InputEvent):
 				#use initial_rotation so that dragged_part doesnt continually rotate further 
 				#from its initial rotation after being dragged over multiple off-grid parts
 				
-				WorkspaceManager.selection_rotate(SnapUtils.drag_snap_rotation_to_hovered(initial_rotation, ray_result))
-				WorkspaceManager.selection_move(SnapUtils.drag_snap_position_to_hovered(
+				SelectionManager.selection_rotate(SnapUtils.drag_snap_rotation_to_hovered(initial_rotation, ray_result))
+				SelectionManager.selection_move(SnapUtils.drag_snap_position_to_hovered(
 					ray_result,
 					dragged_part,
-					WorkspaceManager.selected_parts_abb,
+					SelectionManager.selected_parts_abb,
 					WorkspaceManager.drag_offset,
 					positional_snap_increment,
 					snapping_active
 				))
 		elif event.keycode == KEY_DELETE:
 			if is_selecting_allowed:
-				EditorUI.l_message.text = "deleted " + str(WorkspaceManager.selected_parts_array.size()) + " parts"
-				WorkspaceManager.selection_delete()
+				EditorUI.l_message.text = "deleted " + str(SelectionManager.selected_parts_array.size()) + " parts"
+				SelectionManager.selection_delete()
 				#immediately update hovered_part in case theres another part behind the deleted one(s)
 				hovered_part = Main.part_hover_check()
-				WorkspaceManager.selection_box_hover_on_part(hovered_part, is_hovering_allowed)
+				SelectionManager.selection_box_hover_on_part(hovered_part, is_hovering_allowed)
 		#save as
 		elif event.keycode == KEY_S and event.ctrl_pressed and event.shift_pressed:
 			WorkspaceManager.request_save_as()
@@ -385,29 +350,29 @@ func _input(event : InputEvent):
 		#deselect all
 		elif event.keycode == KEY_A and event.ctrl_pressed and event.shift_pressed:
 			if is_selecting_allowed:
-				WorkspaceManager.selection_clear()
+				SelectionManager.selection_clear()
 				EditorUI.l_message.text = "cleared selection"
 		#select all
 		elif event.keycode == KEY_A and event.ctrl_pressed:
 			if is_selecting_allowed:
-				WorkspaceManager.selection_set_to_workspace()
+				SelectionManager.selection_set_to_workspace()
 		#cut
 		elif event.keycode == KEY_X and event.ctrl_pressed:
-			WorkspaceManager.selection_copy()
-			WorkspaceManager.selection_delete()
-			EditorUI.l_message.text = "cut " + str(WorkspaceManager.parts_clipboard.size()) + " parts"
+			SelectionManager.selection_copy()
+			SelectionManager.selection_delete()
+			EditorUI.l_message.text = "cut " + str(SelectionManager.parts_clipboard.size()) + " parts"
 		#copy
 		elif event.keycode == KEY_C and event.ctrl_pressed:
-			WorkspaceManager.selection_copy()
-			EditorUI.l_message.text = "copied " + str(WorkspaceManager.parts_clipboard.size()) + " parts"
+			SelectionManager.selection_copy()
+			EditorUI.l_message.text = "copied " + str(SelectionManager.parts_clipboard.size()) + " parts"
 		#paste
 		elif event.keycode == KEY_V and event.ctrl_pressed:
-			WorkspaceManager.selection_paste()
-			EditorUI.l_message.text = "pasted " + str(WorkspaceManager.parts_clipboard.size()) + " parts"
+			SelectionManager.selection_paste()
+			EditorUI.l_message.text = "pasted " + str(SelectionManager.parts_clipboard.size()) + " parts"
 		#duplicate
 		elif event.keycode == KEY_D and event.ctrl_pressed:
-			WorkspaceManager.selection_duplicate()
-			EditorUI.l_message.text = "duplicated " + str(WorkspaceManager.selected_parts_array.size()) + " parts"
+			SelectionManager.selection_duplicate()
+			EditorUI.l_message.text = "duplicated " + str(SelectionManager.selected_parts_array.size()) + " parts"
 		#undo
 		elif event.keycode == KEY_Z and event.ctrl_pressed:
 			UndoManager.undo()
@@ -430,24 +395,24 @@ func _input(event : InputEvent):
 	
 	
 #post input updates-------------------------------------------------------------
-	if WorkspaceManager.selected_parts_array.size() > 0 and (is_selecting_allowed or ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot):
+	if SelectionManager.selected_parts_array.size() > 0 and (is_selecting_allowed or ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot):
 		#refresh bounding box on definitive selection change
 		#automatically refreshes abb offset array
-		if WorkspaceManager.selection_changed:
-			WorkspaceManager.refresh_bounding_box()
+		if SelectionManager.selection_changed:
+			SelectionManager.refresh_bounding_box()
 			#this only actually needs to be called when the selection changes from size 0 to size > 0
 			#but i didnt feel like tracking that
 			ToolManager.handle_set_active(selected_tool_handle_array, true)
 		
 		
-		if WorkspaceManager.selection_changed or WorkspaceManager.selection_moved:
+		if SelectionManager.selection_changed or SelectionManager.selection_moved:
 			#recalculate local pivot transform on selection change
 			if WorkspaceManager.pivot_custom_mode_active:
-				WorkspaceManager.pivot_local_transform = WorkspaceManager.selected_parts_abb.transform.inverse() * WorkspaceManager.pivot_transform
+				WorkspaceManager.pivot_local_transform = SelectionManager.selected_parts_abb.transform.inverse() * WorkspaceManager.pivot_transform
 			
 			ToolManager.handle_set_root_position(
 				transform_handle_root,
-				WorkspaceManager.selected_parts_abb,
+				SelectionManager.selected_parts_abb,
 				WorkspaceManager.pivot_transform,
 				WorkspaceManager.pivot_custom_mode_active,
 				local_transform_active,
@@ -456,20 +421,20 @@ func _input(event : InputEvent):
 		
 		#this definitively tells us a drag motion has started
 		if not ray_result.is_empty() and Main.safety_check(dragged_part) and dragged_part == hovered_part:
-			WorkspaceManager.drag_offset = WorkspaceManager.selected_parts_abb.transform.origin - Main.ray_result.position
+			WorkspaceManager.drag_offset = SelectionManager.selected_parts_abb.transform.origin - Main.ray_result.position
 		
-	elif WorkspaceManager.selected_parts_array.size() == 0 and WorkspaceManager.selection_changed and ToolManager.selected_tool != ToolManager.SelectedToolEnum.t_pivot:
+	elif SelectionManager.selected_parts_array.size() == 0 and SelectionManager.selection_changed and ToolManager.selected_tool != ToolManager.SelectedToolEnum.t_pivot:
 		ToolManager.handle_set_active(selected_tool_handle_array, false)
 	
 	
 	#camera controls
-	cam.cam_input(event, second_cam, WorkspaceManager.selected_parts_array, WorkspaceManager.selected_parts_abb, EditorUI.l_message, EditorUI.l_camera_speed)
+	cam.cam_input(event, second_cam, SelectionManager.selected_parts_array, SelectionManager.selected_parts_abb, EditorUI.l_message, EditorUI.l_camera_speed)
 
 
 func _process(delta : float):
 	if ui_menu_block_check(EditorUI.ui_menu) or not is_input_active:
 		return
-	cam.cam_process(delta, second_cam, transform_handle_root, transform_handle_scale, selected_tool_handle_array, WorkspaceManager.selected_parts_abb, last_mouse_event)
+	cam.cam_process(delta, second_cam, transform_handle_root, transform_handle_scale, selected_tool_handle_array, SelectionManager.selected_parts_abb, last_mouse_event)
 
 
 #utility functions
@@ -545,7 +510,7 @@ static func part_hover_check():
 	if is_mouse_button_held and Main.safety_check(dragged_part):
 		#exclude selection
 		var rids : Array[RID] = []
-		for i in WorkspaceManager.selected_parts_array:
+		for i in SelectionManager.selected_parts_array:
 			if Main.safety_check(i):
 				rids.append(i.get_rid())
 		ray_result = Main.raycast_mouse_pos(cam, raycast_length, rids, [1])

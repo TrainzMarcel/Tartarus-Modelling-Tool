@@ -14,13 +14,13 @@ static func on_pivot_reset_pressed():
 	if ToolManager.selected_tool != ToolManager.SelectedToolEnum.t_pivot:
 		WorkspaceManager.pivot_mesh.visible = false
 		WorkspaceManager.pivot_custom_mode_active = false
-	WorkspaceManager.pivot_transform = WorkspaceManager.selected_parts_abb.transform
+	WorkspaceManager.pivot_transform = SelectionManager.selected_parts_abb.transform
 	print("----------------")
 	print(WorkspaceManager.pivot_transform.origin)
-	print(WorkspaceManager.selected_parts_abb.transform.origin)
+	print(SelectionManager.selected_parts_abb.transform.origin)
 	ToolManager.handle_set_root_position(
 		Main.transform_handle_root,
-		WorkspaceManager.selected_parts_abb,
+		SelectionManager.selected_parts_abb,
 		WorkspaceManager.pivot_transform,
 		WorkspaceManager.pivot_custom_mode_active,
 		Main.local_transform_active,
@@ -34,7 +34,7 @@ static func on_spawn_pressed():
 
 static func on_color_selected(button : Button):
 	WorkspaceManager.selected_color = button.self_modulate
-	WorkspaceManager.hover_selection_box.material_regular_color(button.self_modulate)
+	SelectionManager.hover_selection_box.material_regular_color(button.self_modulate)
 	EditorUI.l_message.text = button.tooltip_text + " selected"
 
 
@@ -85,7 +85,7 @@ static func on_local_transform_active_set(active):
 	Main.local_transform_active = active
 	ToolManager.handle_set_root_position(
 		Main.transform_handle_root,
-		WorkspaceManager.selected_parts_abb,
+		SelectionManager.selected_parts_abb,
 		WorkspaceManager.pivot_transform,
 		WorkspaceManager.pivot_custom_mode_active,
 		Main.local_transform_active,
@@ -134,28 +134,28 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 			#redo
 			WorkspaceManager.redo()
 		elif id == 3:
-			WorkspaceManager.selection_set_to_workspace()
+			SelectionManager.selection_set_to_workspace()
 		elif id == 4:
 			#ctrl c copy selection
-			WorkspaceManager.selection_copy()
-			EditorUI.l_message.text = "copied " + str(WorkspaceManager.parts_clipboard.size()) + " parts"
+			SelectionManager.selection_copy()
+			EditorUI.l_message.text = "copied " + str(SelectionManager.parts_clipboard.size()) + " parts"
 		elif id == 5:
 			#ctrl v paste selection
-			WorkspaceManager.selection_paste()
-			EditorUI.l_message.text = "pasted " + str(WorkspaceManager.parts_clipboard.size()) + " parts"
+			SelectionManager.selection_paste()
+			EditorUI.l_message.text = "pasted " + str(SelectionManager.parts_clipboard.size()) + " parts"
 		elif id == 6:
 			#ctrl x cut selection
-			WorkspaceManager.selection_copy()
-			WorkspaceManager.selection_delete()
-			EditorUI.l_message.text = "cut " + str(WorkspaceManager.parts_clipboard.size()) + " parts"
+			SelectionManager.selection_copy()
+			SelectionManager.selection_delete()
+			EditorUI.l_message.text = "cut " + str(SelectionManager.parts_clipboard.size()) + " parts"
 		elif id == 7:
 			#ctrl d duplicate selection
-			WorkspaceManager.selection_duplicate()
-			EditorUI.l_message.text = "duplicated " + str(WorkspaceManager.selected_parts_array.size()) + " parts"
+			SelectionManager.selection_duplicate()
+			EditorUI.l_message.text = "duplicated " + str(SelectionManager.selected_parts_array.size()) + " parts"
 		elif id == 8:
 			#delete clear selection
-			EditorUI.l_message.text = "deleted " + str(WorkspaceManager.selected_parts_array.size()) + " parts"
-			WorkspaceManager.selection_delete()
+			EditorUI.l_message.text = "deleted " + str(SelectionManager.selected_parts_array.size()) + " parts"
+			SelectionManager.selection_delete()
 		elif id == 8:
 			#settings window
 			pass

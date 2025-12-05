@@ -7,37 +7,15 @@ class_name SelectionManager
 
 #dependencies
 static var hover_selection_box : SelectionBox
-static var workspace : Node
 
 #bounding box of selected parts for positional snapping
 static var selected_parts_abb : ABB = ABB.new()
-static var initial_abb_state : ABB = ABB.new()
 
 
-#initial transform to make snapping work with transformhandles
+"TODO not sure if necessary"#initial transform to make snapping work with transformhandles
 static var initial_transform_handle_root_transform : Transform3D
-static var initial_handle_event : InputEvent
 
 
-#asset data
-#gets set in on_color_selected
-static var selected_color : Color
-#static var button_color_mapping : Dictionary
-#static var available_colors : Array[Color]
-
-#gets set in on_material_selected
-static var selected_material : Material
-static var button_material_mapping : Dictionary
-static var available_materials : Array[Material]
-
-#gets set in on_part_type_selected
-static var selected_part_type : Part
-static var button_part_type_mapping : Dictionary
-static var available_part_types : Array[Part]
-
-
-static var available_colors : Array[Color] = []
-static var available_color_names : PackedStringArray = []
 
 
 #!!!selected_parts_array, offset_dragged_to_selected_array and selection_box_array are parallel arrays!!!
@@ -56,16 +34,6 @@ static var selection_moved : bool = false
 #for copy pasting
 static var parts_clipboard : Array[Part] = []
 
-#vector pointing from ray_result.position to selected_parts_abb
-static var drag_offset : Vector3
-
-
-#initial drag event to check if user exceeded 10 pixel drag tolerance
-#this makes sure when the user is selecting with shift
-#that parts dont get moved when the user accidentally moves their mouse a tiny bit
-static var initial_drag_event : InputEvent
-#once the drag tolerance is exceeded this is set to true and dragging starts
-static var drag_confirmed : bool
 
 #initial selection rect event where the user starts dragging while not hovered over anything draggable
 static var initial_selection_rect_event : InputEvent
@@ -75,45 +43,64 @@ static var first_part_selection_rect : Part
 static var initial_selected_parts : Array[Part]
 
 
-#EXTRA: pivot edit tool data
-#global vector pointing of the rotation pivot when pivot mode is active
-#this vector stays where it is no matter what is selected, but it does move with the selection
-static var pivot_custom_mode_active : bool = false
-static var pivot_mesh : MeshInstance3D
-#transform local to bounding box which gets recalculated when the selection changes and pivot_custom_mode_active is true
-#calculated by using abb.transform.inverse() * pivot_transform
-static var pivot_local_transform : Transform3D
-#global transform as a global reference point for the pivot and only counts when pivot_custom_mode_active is true
-static var pivot_transform : Transform3D
-#initial transform which is set each time transform_handle_prepare is called
-static var pivot_initial_transform : Transform3D
+static func initialize(hover_selection_box : SelectionBox):
+	SelectionManager.hover_selection_box = hover_selection_box
 
-#saving and loading related variables
-#static var saving_thread : Thread
 
-"TODO"#move into file explorer ui class and make it modular
-enum FileOperation {
-	save,
-	save_as,
-	load
-}
-static var file_operation : FileOperation
-static var last_save_location : String = ""
-static var last_save_name : String = ""
+#input handling functions-------------------------------------------------------
+static func handle_input(
+	event : InputEvent,
+	is_ui_hovered : bool,
+	hovered_part : Part,
+	dragged_part : Part,
+	hovered_handle : TransformHandle
+	):
 
-"TODO"#do something about this
-const data_headers : Array = [
-	"::COLOR::",
-	"::MATERIAL::",
-	"::MESH::",
-	"::MODEL::"
-]
-
-#program_data.json file
-static var data_dict_default : Dictionary = {
-	"directory_on_last_launch" = "",
-	"filenames_of_updated_filepaths" = []
-}
+#click selecting behavior
+#if click on unselected part, set it as the selection (array with only that part, discard any prior selection)
+#if click on unselected part while shift is held, append to selection
+#if click on part in selection while shift is held, remove from selection
+#if click on nothing, clear selection array
+#if click on nothing while shift is held, do nothing
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+#lmb down
+		if event.pressed:
+			var is_part_hovered : bool = Main.safety_check(Main.hovered_part)
+	#if part is hovered
+			if is_part_hovered and Main.is_selecting_allowed:
+			#hovered part is in selection
+				if SelectionManager.selected_parts_array.has(hovered_part):
+				#shift is held
+					if Input.is_key_pressed(KEY_SHIFT):
+						#patch to stop dragging when holding shift and
+						#dragging on an already selected part
+						if SelectionManager.selected_parts_array.has(hovered_part) and hovered_part == dragged_part:
+							dragged_part = null
+						SelectionManager.selection_remove_part(hovered_part)
+			#hovered part is not in selection
+				else:
+				#shift is held
+					if Input.is_key_pressed(KEY_SHIFT):
+						SelectionManager.selection_add_part(hovered_part, dragged_part)
+					else:
+						SelectionManager.selection_set_to_part(hovered_part, dragged_part)
+	#no parts hovered
+			elif Main.is_selecting_allowed:
+				#shift is unheld
+				if not Input.is_key_pressed(KEY_SHIFT):
+					if not Main.safety_check(hovered_handle):
+						SelectionManager.selection_clear()
+		
+		#if no parts, handles or ui detected, start selection rect
+		if not Main.safety_check(hovered_part) and not Main.safety_check(hovered_handle) and not is_ui_hovered:
+				SelectionManager.selection_rect_prepare(event, Main.panel_selection_rect)
+#lmb up
+		else:
+			SelectionManager.selection_rect_terminate(Main.panel_selection_rect)
+	
+	#selection rect/marquee select handling
+	if event is InputEventMouseMotion:
+		selection_rect_handle(event, Main.panel_selection_rect, Main.cam)
 
 
 "TODO"#add logic for appending to selection when shift is held
@@ -193,12 +180,12 @@ static func selection_rect_handle(event : InputEvent, selection_rect : Panel, ca
 						else:
 							result_parts.append(part)
 				
-				WorkspaceManager.selection_set_to_part_array(result_parts, first_part_selection_rect)
+				selection_set_to_part_array(result_parts, first_part_selection_rect)
 		else:
 			if Input.is_key_pressed(KEY_SHIFT) and initial_selected_parts.size() > 0:
-				WorkspaceManager.selection_set_to_part_array(initial_selected_parts, initial_selected_parts[0])
+				selection_set_to_part_array(initial_selected_parts, initial_selected_parts[0])
 			else:
-				WorkspaceManager.selection_clear()
+				selection_clear()
 			first_part_selection_rect = null
 
 
@@ -208,22 +195,6 @@ static func selection_rect_terminate(selection_rect : Panel):
 	first_part_selection_rect = null
 	initial_selected_parts = []
 	selection_changed = true
-
-
-static func refresh_bounding_box():
-	if not Main.safety_check(selected_parts_array[0]) and not selection_changed:
-		return
-	selected_parts_abb = SnapUtils.calculate_extents(selected_parts_abb, selected_parts_array[-1], selected_parts_array)
-	#debug
-	var d_input = {}
-	d_input.transform = WorkspaceManager.selected_parts_abb.transform
-	d_input.extents = WorkspaceManager.selected_parts_abb.extents
-	HyperDebug.actions.abb_visualize.do(d_input)
-	
-	
-	#refresh offset abb to selected array
-	#this array is used for transforming the whole selection with the position of the abb
-	WorkspaceManager.refresh_offset_abb_to_selected_array()
 
 
 #selection functions------------------------------------------------------------
@@ -244,7 +215,8 @@ static func selection_add_part(hovered_part : Part, abb_orientation : Part):
 
 static func selection_set_to_workspace():
 	selection_clear()
-	var workspace_parts = workspace.get_children().filter(func(part):
+	"TODO"#get all parts function in workspacemanager
+	var workspace_parts = WorkspaceManager.workspace.get_children().filter(func(part):
 		return part is Part
 		)
 	
@@ -291,21 +263,23 @@ static func selection_copy():
 		parts_clipboard.append(i.copy())
 
 static func selection_paste():
-	if not parts_clipboard.is_empty():
-		selection_clear()
-		for i in parts_clipboard:
-			var copy : Part = i.copy()
-			workspace.add_child(copy)
-			copy.initialize()
-			selection_add_part(copy, copy)
-		refresh_bounding_box()
-		selection_moved = true
+	if parts_clipboard.is_empty():
+		return
+	
+	selection_clear()
+	for i in parts_clipboard:
+		var copy : Part = i.copy()
+		WorkspaceManager.workspace.add_child(copy)
+		copy.initialize()
+		selection_add_part(copy, copy)
+	refresh_bounding_box()
+	selection_moved = true
 
 
 static func selection_duplicate():
 	for i in selected_parts_array:
 		var copy : Part = i.copy()
-		workspace.add_child(copy)
+		WorkspaceManager.workspace.add_child(copy)
 		copy.initialize()
 
 
@@ -339,7 +313,7 @@ static func selection_rotate(rotated_basis : Basis, local_pivot_point : Vector3 
 	var global_pivot_point = selected_parts_abb.transform.basis * local_pivot_point
 	#rotate pivot vector
 	var global_pivot_point_rotated = difference * global_pivot_point 
-	drag_offset = difference * drag_offset
+	WorkspaceManager.drag_offset = difference * WorkspaceManager.drag_offset
 	
 	#rotate abb
 	if WorkspaceManager.pivot_custom_mode_active:
@@ -347,7 +321,7 @@ static func selection_rotate(rotated_basis : Basis, local_pivot_point : Vector3 
 		selected_parts_abb.transform.basis = difference * selected_parts_abb.transform.basis
 		selected_parts_abb.transform.origin = selected_parts_abb.transform.origin - global_pivot_point_rotated
 		#recalculate local pivot transform
-		WorkspaceManager.pivot_transform = WorkspaceManager.selected_parts_abb.transform * WorkspaceManager.pivot_local_transform
+		WorkspaceManager.pivot_transform = selected_parts_abb.transform * WorkspaceManager.pivot_local_transform
 	else:
 		selected_parts_abb.transform.basis = difference * selected_parts_abb.transform.basis
 	
@@ -515,7 +489,7 @@ static func selection_scale(scale_absolute : Vector3):
 static func selection_box_instance_on_part(assigned_part : Part):
 	var new : SelectionBox = SelectionBox.new()
 	selection_box_array.append(new)
-	workspace.add_child(new)
+	WorkspaceManager.workspace.add_child(new)
 	new.assigned_node = assigned_part
 	new.box_scale = assigned_part.part_scale
 	new.transform = assigned_part.transform
@@ -581,8 +555,24 @@ static func selection_box_hover_on_part(part : Part, is_hovering_allowed : bool)
 #		hover_selection_box.visible = false
 
 
+static func refresh_bounding_box():
+	if not Main.safety_check(selected_parts_array[0]) and not selection_changed:
+		return
+	selected_parts_abb = SnapUtils.calculate_extents(selected_parts_abb, selected_parts_array[-1], selected_parts_array)
+	#debug
+	var d_input = {}
+	d_input.transform = selected_parts_abb.transform
+	d_input.extents = selected_parts_abb.extents
+	HyperDebug.actions.abb_visualize.do(d_input)
+	
+	
+	#refresh offset abb to selected array
+	#this array is used for transforming the whole selection with the position of the abb
+	refresh_offset_abb_to_selected_array()
+
+
 #utils
-"TODO"# move both functions to DataUtils
+#this function is finally only used right above
 static func refresh_offset_abb_to_selected_array():
 	var i : int = 0
 	offset_abb_to_selected_array.clear()

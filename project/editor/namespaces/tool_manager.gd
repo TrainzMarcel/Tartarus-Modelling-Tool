@@ -186,10 +186,9 @@ static func select_tool(button : Button):
 			#ToolManager.handle_set_active(associated_transform_handles, true)
 			
 			if Main.is_drag_tool:
-				ToolManager.handle_set_root_position(Main.transform_handle_root, WorkspaceManager.selected_parts_abb, WorkspaceManager.pivot_transform, WorkspaceManager.pivot_custom_mode_active, Main.local_transform_active, Main.selected_tool_handle_array)
-				if WorkspaceManager.selected_parts_array.size() > 0:
+				ToolManager.handle_set_root_position(Main.transform_handle_root, SelectionManager.selected_parts_abb, WorkspaceManager.pivot_transform, WorkspaceManager.pivot_custom_mode_active, Main.local_transform_active, Main.selected_tool_handle_array)
+				if SelectionManager.selected_parts_array.size() > 0:
 					ToolManager.handle_set_active(Main.selected_tool_handle_array, true)
-			#"TODO"
 			#special case
 			elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot:
 				
@@ -197,23 +196,24 @@ static func select_tool(button : Button):
 					WorkspaceManager.pivot_custom_mode_active = true
 					WorkspaceManager.pivot_mesh.visible = true
 					"TODO"
-					#only move the pivot transform when uhhh uhh
-					if WorkspaceManager.selected_parts_array.size() != 0:
-						WorkspaceManager.pivot_transform = WorkspaceManager.selected_parts_abb.transform
+					#only move the pivot transform when something is selected
+					#otherwise, the pivot stays in the same place
+					if SelectionManager.selected_parts_array.size() != 0:
+						WorkspaceManager.pivot_transform = SelectionManager.selected_parts_abb.transform
 				
 				
 				ToolManager.handle_set_active(Main.selected_tool_handle_array, true)
-				ToolManager.handle_set_root_position(Main.transform_handle_root, WorkspaceManager.selected_parts_abb, WorkspaceManager.pivot_transform, WorkspaceManager.pivot_custom_mode_active, Main.local_transform_active, Main.selected_tool_handle_array)
+				ToolManager.handle_set_root_position(Main.transform_handle_root, SelectionManager.selected_parts_abb, WorkspaceManager.pivot_transform, WorkspaceManager.pivot_custom_mode_active, Main.local_transform_active, Main.selected_tool_handle_array)
 		else:
 			Main.selected_tool_handle_array = []
 		
 		#set hover selection box color
 		if data.selection_box_color_action == SelectionBoxColorAction.use_default:
-			WorkspaceManager.hover_selection_box.material_highlighter()
+			SelectionManager.hover_selection_box.material_highlighter()
 		elif data.selection_box_color_action == SelectionBoxColorAction.use_custom_color:
-			WorkspaceManager.hover_selection_box.material_regular_color(data.custom_selection_box_color)
+			SelectionManager.hover_selection_box.material_regular_color(data.custom_selection_box_color)
 		elif data.selection_box_color_action == SelectionBoxColorAction.use_selected_color:
-			WorkspaceManager.hover_selection_box.material_regular_color(WorkspaceManager.selected_color)
+			SelectionManager.hover_selection_box.material_regular_color(WorkspaceManager.selected_color)
 		
 	else:
 		ToolManager.selected_tool = ToolManager.SelectedToolEnum.none
@@ -331,7 +331,6 @@ static func handle_set_active(handles : Array, input : bool):
 			j.disabled = not input
 
 
-"TODO"#cleaner parameters, like an enum or set color
 static func handle_set_highlight(handle : TransformHandle, color : Color):
 		for i in handle.mesh_array:
 			i.material_override.albedo_color = color
@@ -359,7 +358,6 @@ static func handle_set_root_position(
 	if must_stay_aligned_to_part:
 		root.transform = selected_parts_abb.transform
 	elif pivot_custom_mode_active:
-		"TODO"#make some kind of mechanism for moving with a selection
 		root.transform = selected_parts_abb.transform * WorkspaceManager.pivot_local_transform
 	elif local_transform_active:
 		root.transform = selected_parts_abb.transform
