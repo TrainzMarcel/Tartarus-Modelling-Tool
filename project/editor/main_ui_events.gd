@@ -134,28 +134,35 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 			#redo
 			WorkspaceManager.redo()
 		elif id == 3:
-			SelectionManager.selection_set_to_workspace()
+			#select all
+			SelectionManager.selection_set_to_workspace_undoable()
+			SelectionManager.post_selection_update()
 		elif id == 4:
 			#ctrl c copy selection
 			SelectionManager.selection_copy()
+			SelectionManager.post_selection_update()
 			EditorUI.l_message.text = "copied " + str(SelectionManager.parts_clipboard.size()) + " parts"
 		elif id == 5:
 			#ctrl v paste selection
 			SelectionManager.selection_paste()
+			SelectionManager.post_selection_update()
 			EditorUI.l_message.text = "pasted " + str(SelectionManager.parts_clipboard.size()) + " parts"
 		elif id == 6:
 			#ctrl x cut selection
 			SelectionManager.selection_copy()
 			SelectionManager.selection_delete()
+			SelectionManager.post_selection_update()
 			EditorUI.l_message.text = "cut " + str(SelectionManager.parts_clipboard.size()) + " parts"
 		elif id == 7:
 			#ctrl d duplicate selection
 			SelectionManager.selection_duplicate()
+			SelectionManager.post_selection_update()
 			EditorUI.l_message.text = "duplicated " + str(SelectionManager.selected_parts_array.size()) + " parts"
 		elif id == 8:
 			#delete clear selection
 			EditorUI.l_message.text = "deleted " + str(SelectionManager.selected_parts_array.size()) + " parts"
 			SelectionManager.selection_delete()
+			SelectionManager.post_selection_update()
 		elif id == 8:
 			#settings window
 			pass

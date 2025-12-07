@@ -114,4 +114,5 @@
 25.11.	minor fix for undo being unable to correctly call redo on the first undodata object
 28.11.	ive decided to try a component system refactor, commit and branch before i do anything
 4.12.	nevermind, extract half of workspacemanager into new selectionmanager instead and also all scattered abb code into selectionmanager
-5.12.	fix selected part delete tool crashing bug, moved click-selecting and selection rect logic from main into selectionmanager
+5.12.	(probably) fix selected part delete tool crashing bug, moved click-selecting and selection rect logic and selection-related keyboard shortcuts from main into selectionmanager.handle_input()
+

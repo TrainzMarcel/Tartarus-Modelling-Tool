@@ -72,7 +72,11 @@ static var last_mouse_event : InputEventMouse
 #dragging data------------------------------------------------------------------
 #raw ray result
 static var ray_result : Dictionary
-static var dragged_part : Part
+static var dragged_part : Part:
+	set(value):
+		dragged_part = value
+		print("set dragged part")
+		print_stack()
 static var hovered_part : Part
 #purely rotational basis set from start of drag as a reference for snapping
 static var initial_rotation : Basis
@@ -184,7 +188,7 @@ func _input(event : InputEvent):
 		return
 #start by setting all control variables
 	#check validity of selecting
-	#is_drag_tool is set by func main_ui lovei_events.on_tool_selected
+	#is_drag_tool is set by func main_ui_events.on_tool_selected
 	is_ui_hovered = ui_hover_check(EditorUI.ui_no_drag)
 	is_selecting_allowed = is_drag_tool and not is_ui_hovered
 	is_selecting_allowed = is_selecting_allowed and Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED
@@ -194,7 +198,7 @@ func _input(event : InputEvent):
 	is_hovering_allowed = is_hover_tool and not is_ui_hovered
 	is_hovering_allowed = is_hovering_allowed and Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED
 	
-	"TODO"#get rid of these if possible
+	
 	#reset each frame
 	SelectionManager.selection_changed = false
 	SelectionManager.selection_moved = false
@@ -205,12 +209,11 @@ func _input(event : InputEvent):
 	if event is InputEventMouse:
 		last_mouse_event = event
 	
-#do raycasting, set hovered_handle
+#do raycasting, set hovered_part (and hovered_part)
 #if handle wasnt found, raycast and set hovered_part, render selectionbox around hovered_part
 #transform handles take priority over parts
 	if event is InputEventMouseMotion:
 		hovered_handle = handle_hover_check()
-		
 		if not is_mouse_button_held and Main.safety_check(hovered_handle):
 			ToolManager.handle_set_highlight(hovered_handle, hovered_handle.color_hover)
 			
@@ -235,44 +238,87 @@ func _input(event : InputEvent):
 			SelectionManager.selection_box_hover_on_part(null, is_hovering_allowed)
 	
 	
-#set dragged_part and dragged_handle--------------------------------------------
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT:
-			if event.pressed:
-				#important control variable
-				is_mouse_button_held = true
-				#if there is a mouse click off ui, release focus
-				if not is_ui_hovered:
-					var ui_focus = get_viewport().gui_get_focus_owner()
-					if Main.safety_check(ui_focus):
-						ui_focus.release_focus()
-				
-				#part detected
-				if Main.safety_check(hovered_part):
-					#if mouse was pressed down over a hovered part, we know the user is most likely starting a drag
-					#drag has a tolerance before it actually starts
-					WorkspaceManager.drag_prepare(event)
-					
-				#if handle is detected, set dragged_handle
-				elif Main.safety_check(hovered_handle):
-					WorkspaceManager.transform_handle_prepare(event)
-			
-		#lmb release
-			else:
-				is_mouse_button_held = false
-				WorkspaceManager.drag_terminate()
-				WorkspaceManager.transform_handle_terminate()
+	#set dragged_part and dragged_handle----------------------------------------
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+	#lmb down
+		if event.pressed:
+			#important control variable
+			is_mouse_button_held = true
+			#if there is a mouse click off ui, release focus
+			if not is_ui_hovered:
+				var ui_focus = get_viewport().gui_get_focus_owner()
+				if Main.safety_check(ui_focus):
+					ui_focus.release_focus()
+			#part detected
+			if Main.safety_check(hovered_part):
+				#if mouse was pressed down over a hovered part, we know the user is most likely starting a drag
+				#drag has a tolerance before it actually starts
+				dragged_part = hovered_part
+			#if handle is detected, set dragged_handle
+			elif Main.safety_check(hovered_handle):
+				dragged_handle = hovered_handle
+		
+	#lmb up
+		else:
+			is_mouse_button_held = false
 	
 	
 #selection handling and non-drag-tool logic-------------------------------------
-	SelectionManager.handle_input(event, is_ui_hovered, hovered_part, dragged_part, hovered_handle)
+	if safety_check(dragged_part) and safety_check(hovered_part):
+		SelectionManager.handle_input(
+			event,
+			is_ui_hovered,
+			is_selecting_allowed,
+			is_hovering_allowed,
+			hovered_part,
+			dragged_part,
+			hovered_handle,
+			ray_result,
+			positional_snap_increment,
+			snapping_active,
+			cam
+			)
+		SelectionManager.post_selection_update()
 	
+#prepare and terminate drag and transform operations----------------------------
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+	#lmb down
+		if event.pressed:
+			#part detected
+			if Main.safety_check(hovered_part):
+				#if mouse was pressed down over a hovered part, we know the user is most likely starting a drag
+				#drag has a tolerance before it actually starts
+				WorkspaceManager.drag_prepare(event)
+				
+			#if handle is detected, set dragged_handle
+			elif Main.safety_check(hovered_handle):
+				WorkspaceManager.transform_handle_prepare(event)
+			
+	#lmb up
+		else:
+			WorkspaceManager.drag_terminate()
+			WorkspaceManager.transform_handle_terminate()
+	
+	
+#dragging parts + transform handle calculations---------------------------------
+	if event is InputEventMouseMotion:
+		#parts dragging
+		if is_mouse_button_held:
+			WorkspaceManager.drag_handle(event)
+		
+		#transform handle dragging
+		#handles do not need a "canvas" collider to be dragged over
+		#so theres no check of hovered_part or hovered_handle
+		if is_mouse_button_held and (is_selecting_allowed or ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot):
+			WorkspaceManager.transform_handle_handle(event)
+	
+	
+#handle hover-only tools--------------------------------------------------------
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 		#lmb down
 			if event.pressed:
 				var is_part_hovered : bool = Main.safety_check(hovered_part)
-		#handle hover-only tools
 				if is_part_hovered and not is_selecting_allowed and is_hovering_allowed:# is_part_hovered and not is_drag_tool:
 					
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_material:
@@ -294,85 +340,18 @@ func _input(event : InputEvent):
 						hovered_part = Main.part_hover_check()
 						SelectionManager.selection_box_hover_on_part(hovered_part, true)
 	#lmb up
-			else:
-				pass
+			#else:
+			#	pass
 	
 	
 #handle editing related keyboard inputs-----------------------------------------
 	if event is InputEventKey and event.is_pressed() and not event.is_echo():
-#change initial_transform on r or t press
-	#rotate clockwise around normal vector
-		if event.keycode == KEY_R:
-			if Main.safety_check(hovered_part) and Main.safety_check(dragged_part) and is_selecting_allowed and not ray_result.is_empty():
-				initial_rotation = initial_rotation.rotated(ray_result.normal, PI * 0.5)
-				#use initial_rotation so that dragged_part doesnt continually rotate further 
-				#from its initial rotation after being dragged over multiple off-grid parts
-				SelectionManager.selection_rotate(SnapUtils.drag_snap_rotation_to_hovered(initial_rotation, ray_result))
-				SelectionManager.selection_move(SnapUtils.drag_snap_position_to_hovered(
-					ray_result,
-					dragged_part,
-					SelectionManager.selected_parts_abb,
-					WorkspaceManager.drag_offset,
-					positional_snap_increment,
-					snapping_active
-				))
-	#rotate around part vector which is closest to cam.basis.x
-		elif event.keycode == KEY_T:
-			if Main.safety_check(hovered_part) and Main.safety_check(dragged_part) and is_selecting_allowed and not ray_result.is_empty():
-				var r_dict = SnapUtils.find_closest_vector(initial_rotation, cam.basis.x, true)
-				
-				initial_rotation = initial_rotation.rotated(r_dict.vector.normalized(), PI * 0.5)
-				#use initial_rotation so that dragged_part doesnt continually rotate further 
-				#from its initial rotation after being dragged over multiple off-grid parts
-				
-				SelectionManager.selection_rotate(SnapUtils.drag_snap_rotation_to_hovered(initial_rotation, ray_result))
-				SelectionManager.selection_move(SnapUtils.drag_snap_position_to_hovered(
-					ray_result,
-					dragged_part,
-					SelectionManager.selected_parts_abb,
-					WorkspaceManager.drag_offset,
-					positional_snap_increment,
-					snapping_active
-				))
-		elif event.keycode == KEY_DELETE:
-			if is_selecting_allowed:
-				EditorUI.l_message.text = "deleted " + str(SelectionManager.selected_parts_array.size()) + " parts"
-				SelectionManager.selection_delete()
-				#immediately update hovered_part in case theres another part behind the deleted one(s)
-				hovered_part = Main.part_hover_check()
-				SelectionManager.selection_box_hover_on_part(hovered_part, is_hovering_allowed)
 		#save as
-		elif event.keycode == KEY_S and event.ctrl_pressed and event.shift_pressed:
+		if event.keycode == KEY_S and event.ctrl_pressed and event.shift_pressed:
 			WorkspaceManager.request_save_as()
 		#save
 		elif event.keycode == KEY_S and event.ctrl_pressed:
 			WorkspaceManager.request_save()
-		#deselect all
-		elif event.keycode == KEY_A and event.ctrl_pressed and event.shift_pressed:
-			if is_selecting_allowed:
-				SelectionManager.selection_clear()
-				EditorUI.l_message.text = "cleared selection"
-		#select all
-		elif event.keycode == KEY_A and event.ctrl_pressed:
-			if is_selecting_allowed:
-				SelectionManager.selection_set_to_workspace()
-		#cut
-		elif event.keycode == KEY_X and event.ctrl_pressed:
-			SelectionManager.selection_copy()
-			SelectionManager.selection_delete()
-			EditorUI.l_message.text = "cut " + str(SelectionManager.parts_clipboard.size()) + " parts"
-		#copy
-		elif event.keycode == KEY_C and event.ctrl_pressed:
-			SelectionManager.selection_copy()
-			EditorUI.l_message.text = "copied " + str(SelectionManager.parts_clipboard.size()) + " parts"
-		#paste
-		elif event.keycode == KEY_V and event.ctrl_pressed:
-			SelectionManager.selection_paste()
-			EditorUI.l_message.text = "pasted " + str(SelectionManager.parts_clipboard.size()) + " parts"
-		#duplicate
-		elif event.keycode == KEY_D and event.ctrl_pressed:
-			SelectionManager.selection_duplicate()
-			EditorUI.l_message.text = "duplicated " + str(SelectionManager.selected_parts_array.size()) + " parts"
 		#undo
 		elif event.keycode == KEY_Z and event.ctrl_pressed:
 			UndoManager.undo()
@@ -382,29 +361,11 @@ func _input(event : InputEvent):
 		elif event.keycode == KEY_F1:
 			EditorUI.dd_manual.popup()
 	
-#dragging parts + transform handle calculations---------------------------------
-	if event is InputEventMouseMotion:
-		#parts dragging
-		WorkspaceManager.drag_handle(event)
-		
-		#transform handle dragging
-		#handles do not need a "canvas" collider to be dragged over
-		#so theres no check of hovered_part or hovered_handle
-		if is_mouse_button_held and (is_selecting_allowed or ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot):
-			WorkspaceManager.transform_handle_handle(event)
-	
 	
 #post input updates-------------------------------------------------------------
+#if something is selected and selecting is allowed or pivot tool is selected
 	if SelectionManager.selected_parts_array.size() > 0 and (is_selecting_allowed or ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot):
-		#refresh bounding box on definitive selection change
-		#automatically refreshes abb offset array
-		if SelectionManager.selection_changed:
-			SelectionManager.refresh_bounding_box()
-			#this only actually needs to be called when the selection changes from size 0 to size > 0
-			#but i didnt feel like tracking that
-			ToolManager.handle_set_active(selected_tool_handle_array, true)
-		
-		
+		"TODO"#take care of this stuff later
 		if SelectionManager.selection_changed or SelectionManager.selection_moved:
 			#recalculate local pivot transform on selection change
 			if WorkspaceManager.pivot_custom_mode_active:
@@ -418,14 +379,6 @@ func _input(event : InputEvent):
 				local_transform_active,
 				selected_tool_handle_array
 			)
-		
-		#this definitively tells us a drag motion has started
-		if not ray_result.is_empty() and Main.safety_check(dragged_part) and dragged_part == hovered_part:
-			WorkspaceManager.drag_offset = SelectionManager.selected_parts_abb.transform.origin - Main.ray_result.position
-		
-	elif SelectionManager.selected_parts_array.size() == 0 and SelectionManager.selection_changed and ToolManager.selected_tool != ToolManager.SelectedToolEnum.t_pivot:
-		ToolManager.handle_set_active(selected_tool_handle_array, false)
-	
 	
 	#camera controls
 	cam.cam_input(event, second_cam, SelectionManager.selected_parts_array, SelectionManager.selected_parts_abb, EditorUI.l_message, EditorUI.l_camera_speed)

@@ -353,15 +353,18 @@ static func part_copy(part : Part):
 #at this point ray_result shouldnt be empty
 static func drag_prepare(event : InputEvent):
 	Main.initial_rotation = SelectionManager.selected_parts_abb.transform.basis
-	Main.dragged_part = Main.hovered_part
+	if not Main.ray_result.is_empty():
+		WorkspaceManager.drag_offset = SelectionManager.selected_parts_abb.transform.origin - Main.ray_result.position
 	initial_drag_event = event
+	
 
 
 static func drag_handle(event : InputEvent):
 	#first make sure the user actually wants to start a drag
 	if initial_drag_event != null:
-		if (event.position - initial_drag_event.position).length() > Main.drag_tolerance: 
+		if (event.position - initial_drag_event.position).length() > Main.drag_tolerance:
 			drag_confirmed = true
+	
 	
 	if Main.is_mouse_button_held and not Main.ray_result.is_empty() and Main.is_selecting_allowed and drag_confirmed:
 		if Main.safety_check(Main.dragged_part) and Main.safety_check(Main.hovered_part):
@@ -387,6 +390,7 @@ static func drag_handle(event : InputEvent):
 
 
 static func drag_terminate():
+	print("motherfucker")
 	Main.dragged_part = null
 	drag_confirmed = false
 	initial_drag_event = null
@@ -394,7 +398,6 @@ static func drag_terminate():
 
 #transform handle abstractions
 static func transform_handle_prepare(event : InputEvent):
-	Main.dragged_handle = Main.hovered_handle
 	#get initial data on click, for calculating transforms performed by transformhandle
 	WorkspaceManager.initial_transform_handle_root_transform = Main.transform_handle_root.transform
 	WorkspaceManager.initial_abb_state.transform = SelectionManager.selected_parts_abb.transform

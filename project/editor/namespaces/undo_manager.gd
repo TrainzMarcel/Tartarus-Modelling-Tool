@@ -73,6 +73,9 @@ static func undo():
 
 static func redo():
 	undo_index = min(undo_index + 1, undo_stack.size() - 1 )
+	if undo_index == -1:
+		return
+	
 	var current = undo_stack[undo_index]
 	#can be null
 	if not is_instance_valid(current):

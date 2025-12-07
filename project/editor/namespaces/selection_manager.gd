@@ -1,14 +1,14 @@
 extends RefCounted
 class_name SelectionManager
 
-"TODO"
-#was meant to handle saving and loading but i dropped that for now
-#now handles selection logic, selection box logic and undo redo logic
+
+#handles all logic related to selected objects and selecting objects 
+"TODO"#refactor messy, overly coupled abb orientation setting logic!!
 
 #dependencies
 static var hover_selection_box : SelectionBox
 
-#bounding box of selected parts for positional snapping
+#bounding box of selected parts for snapping purposes
 static var selected_parts_abb : ABB = ABB.new()
 
 
@@ -16,9 +16,7 @@ static var selected_parts_abb : ABB = ABB.new()
 static var initial_transform_handle_root_transform : Transform3D
 
 
-
-
-#!!!selected_parts_array, offset_dragged_to_selected_array and selection_box_array are parallel arrays!!!
+#!!!selected_parts_array, offset_abb_to_selected_array and selection_box_array are parallel arrays!!!
 static var offset_abb_to_selected_array : Array[Vector3] = []
 #offset from the dragged parts position to the raycast hit position
 static var selection_box_array : Array[SelectionBox] = []
@@ -51,9 +49,15 @@ static func initialize(hover_selection_box : SelectionBox):
 static func handle_input(
 	event : InputEvent,
 	is_ui_hovered : bool,
+	is_selecting_allowed : bool,
+	is_hovering_allowed : bool,
 	hovered_part : Part,
 	dragged_part : Part,
-	hovered_handle : TransformHandle
+	hovered_handle : TransformHandle,
+	ray_result : Dictionary,
+	positional_snap_increment : float,
+	snapping_active : bool,
+	cam : FreeLookCamera
 	):
 
 #click selecting behavior
@@ -67,7 +71,7 @@ static func handle_input(
 		if event.pressed:
 			var is_part_hovered : bool = Main.safety_check(Main.hovered_part)
 	#if part is hovered
-			if is_part_hovered and Main.is_selecting_allowed:
+			if is_part_hovered and is_selecting_allowed:
 			#hovered part is in selection
 				if SelectionManager.selected_parts_array.has(hovered_part):
 				#shift is held
@@ -76,24 +80,24 @@ static func handle_input(
 						#dragging on an already selected part
 						if SelectionManager.selected_parts_array.has(hovered_part) and hovered_part == dragged_part:
 							dragged_part = null
-						SelectionManager.selection_remove_part(hovered_part)
+						SelectionManager.selection_remove_part_undoable(hovered_part)
 			#hovered part is not in selection
 				else:
 				#shift is held
 					if Input.is_key_pressed(KEY_SHIFT):
-						SelectionManager.selection_add_part(hovered_part, dragged_part)
+						SelectionManager.selection_add_part_undoable(hovered_part, dragged_part)
 					else:
-						SelectionManager.selection_set_to_part(hovered_part, dragged_part)
+						SelectionManager.selection_set_to_part_undoable(hovered_part, dragged_part)
 	#no parts hovered
-			elif Main.is_selecting_allowed:
+			elif is_selecting_allowed:
 				#shift is unheld
 				if not Input.is_key_pressed(KEY_SHIFT):
 					if not Main.safety_check(hovered_handle):
-						SelectionManager.selection_clear()
+						SelectionManager.selection_clear_undoable()
 		
 		#if no parts, handles or ui detected, start selection rect
 		if not Main.safety_check(hovered_part) and not Main.safety_check(hovered_handle) and not is_ui_hovered:
-				SelectionManager.selection_rect_prepare(event, Main.panel_selection_rect)
+			SelectionManager.selection_rect_prepare(event, Main.panel_selection_rect)
 #lmb up
 		else:
 			SelectionManager.selection_rect_terminate(Main.panel_selection_rect)
@@ -101,6 +105,91 @@ static func handle_input(
 	#selection rect/marquee select handling
 	if event is InputEventMouseMotion:
 		selection_rect_handle(event, Main.panel_selection_rect, Main.cam)
+	
+	
+#keyboard input-----------------------------------------------------------------
+	if event is InputEventKey and event.is_pressed() and not event.is_echo():
+		#change initial_transform on r or t press
+	#rotate clockwise around normal vector
+		if event.keycode == KEY_R:
+			if Main.safety_check(hovered_part) and Main.safety_check(dragged_part) and is_selecting_allowed and not ray_result.is_empty():
+				Main.initial_rotation = Main.initial_rotation.rotated(ray_result.normal, PI * 0.5)
+				#use initial_rotation so that dragged_part doesnt continually rotate further 
+				#from its initial rotation after being dragged over multiple off-grid parts
+				SelectionManager.selection_rotate(SnapUtils.drag_snap_rotation_to_hovered(Main.initial_rotation, ray_result))
+				SelectionManager.selection_move(SnapUtils.drag_snap_position_to_hovered(
+					ray_result,
+					dragged_part,
+					SelectionManager.selected_parts_abb,
+					WorkspaceManager.drag_offset,
+					positional_snap_increment,
+					snapping_active
+				))
+	#rotate around part vector which is closest to cam.basis.x
+		elif event.keycode == KEY_T:
+			if Main.safety_check(hovered_part) and Main.safety_check(dragged_part) and is_selecting_allowed and not ray_result.is_empty():
+				var r_dict = SnapUtils.find_closest_vector(Main.initial_rotation, cam.basis.x, true)
+				
+				Main.initial_rotation = Main.initial_rotation.rotated(r_dict.vector.normalized(), PI * 0.5)
+				#use initial_rotation so that dragged_part doesnt continually rotate further 
+				#from its initial rotation after being dragged over multiple off-grid parts
+				
+				SelectionManager.selection_rotate(SnapUtils.drag_snap_rotation_to_hovered(Main.initial_rotation, ray_result))
+				SelectionManager.selection_move(SnapUtils.drag_snap_position_to_hovered(
+					ray_result,
+					dragged_part,
+					SelectionManager.selected_parts_abb,
+					WorkspaceManager.drag_offset,
+					positional_snap_increment,
+					snapping_active
+				))
+		elif event.keycode == KEY_DELETE:
+			if is_selecting_allowed:
+				EditorUI.l_message.text = "deleted " + str(SelectionManager.selected_parts_array.size()) + " parts"
+				SelectionManager.selection_delete()
+				#immediately update hovered_part in case theres another part behind the deleted one(s)
+				hovered_part = Main.part_hover_check()
+				SelectionManager.selection_box_hover_on_part(hovered_part, is_hovering_allowed)
+		#deselect all
+		elif event.keycode == KEY_A and event.ctrl_pressed and event.shift_pressed:
+			if is_selecting_allowed:
+				SelectionManager.selection_clear_undoable()
+				EditorUI.l_message.text = "cleared selection"
+		#select all
+		elif event.keycode == KEY_A and event.ctrl_pressed:
+			if is_selecting_allowed:
+				SelectionManager.selection_set_to_workspace_undoable()
+		#cut
+		elif event.keycode == KEY_X and event.ctrl_pressed:
+			SelectionManager.selection_copy()
+			SelectionManager.selection_delete()
+			EditorUI.l_message.text = "cut " + str(SelectionManager.parts_clipboard.size()) + " parts"
+		#copy
+		elif event.keycode == KEY_C and event.ctrl_pressed:
+			SelectionManager.selection_copy()
+			EditorUI.l_message.text = "copied " + str(SelectionManager.parts_clipboard.size()) + " parts"
+		#paste
+		elif event.keycode == KEY_V and event.ctrl_pressed:
+			SelectionManager.selection_paste()
+			EditorUI.l_message.text = "pasted " + str(SelectionManager.parts_clipboard.size()) + " parts"
+		#duplicate
+		elif event.keycode == KEY_D and event.ctrl_pressed:
+			SelectionManager.selection_duplicate()
+			EditorUI.l_message.text = "duplicated " + str(SelectionManager.selected_parts_array.size()) + " parts"
+
+
+"TODO"#parameterize variables from main
+static func post_selection_update():
+	if SelectionManager.selected_parts_array.size() > 0 and (Main.is_selecting_allowed or ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot):
+		#refresh bounding box on definitive selection change
+		#automatically refreshes abb offset array
+		SelectionManager.refresh_bounding_box()
+		#TODO this only actually needs to be called when the selection changes from size 0 to size > 0
+		ToolManager.handle_set_active(Main.selected_tool_handle_array, true)
+	
+	elif SelectionManager.selected_parts_array.size() == 0 and SelectionManager.selection_changed and ToolManager.selected_tool != ToolManager.SelectedToolEnum.t_pivot:
+		#TODO this only needs to be called when the selection changes from size > 0 to 0
+		ToolManager.handle_set_active(Main.selected_tool_handle_array, false)
 
 
 "TODO"#add logic for appending to selection when shift is held
@@ -198,7 +287,23 @@ static func selection_rect_terminate(selection_rect : Panel):
 
 
 #selection functions------------------------------------------------------------
-static func selection_remove_part(hovered_part):
+static func selection_add_part(hovered_part : Part, abb_orientation : Part):
+	selected_parts_array.append(hovered_part)
+	selection_box_instance_on_part(hovered_part)
+	offset_abb_to_selected_array.append(hovered_part.transform.origin - abb_orientation.transform.origin)
+	selection_changed = true
+
+
+static func selection_add_part_undoable(hovered_part : Part, abb_orientation : Part):
+	selection_add_part(hovered_part, abb_orientation)
+	
+	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
+	undo.append_undo_action_with_args(selection_remove_part, [hovered_part])
+	undo.append_redo_action_with_args(selection_add_part, [hovered_part, abb_orientation])
+	UndoManager.register_undo_data(undo)
+
+
+static func selection_remove_part(hovered_part : Part):
 	selection_box_delete_on_part(hovered_part)
 	#erase the same index as hovered_part
 	offset_abb_to_selected_array.remove_at(selected_parts_array.find(hovered_part))
@@ -206,11 +311,17 @@ static func selection_remove_part(hovered_part):
 	selection_changed = true
 
 
-static func selection_add_part(hovered_part : Part, abb_orientation : Part):
-	selected_parts_array.append(hovered_part)
-	selection_box_instance_on_part(hovered_part)
-	offset_abb_to_selected_array.append(hovered_part.transform.origin - abb_orientation.transform.origin)
-	selection_changed = true
+static func selection_remove_part_undoable(hovered_part : Part):
+	selection_remove_part(hovered_part)
+	
+	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
+	"TODO"#bounding box orientation setting should be SEPARATE from selecting functions!!
+	#this causes the bounding box to be a different orientation after the undo!!
+	#bad ux!
+	undo.append_undo_action_with_args(selection_add_part, [hovered_part, hovered_part])
+	undo.append_redo_action_with_args(selection_remove_part, [hovered_part])
+	UndoManager.register_undo_data(undo)
+
 
 
 static func selection_set_to_workspace():
@@ -225,12 +336,36 @@ static func selection_set_to_workspace():
 	selection_changed = true
 
 
+static func selection_set_to_workspace_undoable():
+	var selection_before : Array = selected_parts_array.duplicate_deep()
+	
+	selection_set_to_workspace()
+	
+	var selection_after : Array = selected_parts_array.duplicate_deep()
+	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
+	undo.append_undo_action_with_args(selection_set_to_part_array, [selection_before, selection_before.get(0)])
+	undo.append_redo_action_with_args(selection_set_to_part_array, [selection_after, selection_after.get(0)])
+	UndoManager.register_undo_data(undo)
+
+
 static func selection_set_to_part(hovered_part : Part, abb_orientation : Part):
 	selected_parts_array = [hovered_part]
 	offset_abb_to_selected_array = [hovered_part.global_position]
 	selection_boxes_clear_all()
 	selection_box_instance_on_part(hovered_part)
 	selection_changed = true
+
+
+static func selection_set_to_part_undoable(hovered_part : Part, abb_orientation : Part):
+	var selection : Array = selected_parts_array.duplicate_deep()
+	
+	selection_set_to_part(hovered_part, abb_orientation)
+	
+	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
+	"TODO"#do something about get function pushing an error if 0 is out of bounds
+	undo.append_undo_action_with_args(selection_set_to_part_array, [selection, selection.get(0)])
+	undo.append_redo_action_with_args(selection_set_to_part, [hovered_part, abb_orientation])
+	UndoManager.register_undo_data(undo)
 
 
 #for undo operations
@@ -249,6 +384,16 @@ static func selection_clear():
 	offset_abb_to_selected_array.clear()
 	selection_changed = true
 	#does not need to call selection_changed as the bounding box doesnt matter when nothing is selected
+
+static func selection_clear_undoable():
+	var selection : Array = selected_parts_array.duplicate_deep()
+	
+	selection_clear()
+	
+	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
+	undo.append_undo_action_with_args(selection_set_to_part_array, [selection, selection.get(0)])
+	undo.append_redo_action_with_args(selection_clear, [])
+	UndoManager.register_undo_data(undo)
 
 
 static func selection_delete():
