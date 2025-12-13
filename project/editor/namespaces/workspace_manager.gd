@@ -42,7 +42,10 @@ static var drag_offset : Vector3
 static var initial_drag_event : InputEvent
 #once the drag tolerance is exceeded this is set to true and dragging starts
 static var drag_confirmed : bool
-
+static var undo_data_drag : UndoManager.UndoData
+static var undo_data_transform : UndoManager.UndoData
+#then the deleting functions
+#then the rest
 
 #EXTRA: pivot edit tool data
 #global vector pointing of the rotation pivot when pivot mode is active
@@ -357,6 +360,9 @@ static func drag_prepare(event : InputEvent):
 		WorkspaceManager.drag_offset = SelectionManager.selected_parts_abb.transform.origin - Main.ray_result.position
 	initial_drag_event = event
 	
+	undo_data_drag = UndoManager.UndoData.new()
+	undo_data_drag.append_undo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
+	undo_data_drag.append_undo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis])
 
 
 static func drag_handle(event : InputEvent):
@@ -390,13 +396,19 @@ static func drag_handle(event : InputEvent):
 
 
 static func drag_terminate():
-	print("motherfucker")
+	if drag_confirmed:
+			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
+			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis])
+			UndoManager.register_undo_data(undo_data_drag)
+	undo_data_drag = null
 	Main.dragged_part = null
 	drag_confirmed = false
 	initial_drag_event = null
 
 
 #transform handle abstractions
+"TODO"#add some checks to confirm that the selection actually got transformed
+#if it didnt, do not register the undo object
 static func transform_handle_prepare(event : InputEvent):
 	#get initial data on click, for calculating transforms performed by transformhandle
 	WorkspaceManager.initial_transform_handle_root_transform = Main.transform_handle_root.transform
@@ -409,7 +421,17 @@ static func transform_handle_prepare(event : InputEvent):
 	
 	if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot:
 		pivot_initial_transform = Main.transform_handle_root.transform
-		
+	
+	#undo logic
+	undo_data_transform = UndoManager.UndoData.new()
+	if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_move:
+		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
+	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_rotate:
+		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis])
+		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
+	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale:
+		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_scale, [SelectionManager.selected_parts_abb.extents])
+		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 
 
 static func transform_handle_handle(event : InputEvent):
@@ -548,6 +570,27 @@ static func transform_handle_terminate():
 		ToolManager.handle_set_highlight(Main.hovered_handle, Main.hovered_handle.color_hover)
 	
 	Main.dragged_handle = null
+	
+	#undo logic
+	if undo_data_transform == null:
+		return
+	
+	var selection_transformed : bool = false
+	if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_move:
+		selection_transformed = undo_data_transform.undo_args.back().back() != SelectionManager.selected_parts_abb.transform.origin
+		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
+	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_rotate:
+		selection_transformed = undo_data_transform.undo_args.back().front() != SelectionManager.selected_parts_abb.transform.basis
+		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis])
+		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
+	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale:
+		selection_transformed = undo_data_transform.undo_args.back().back() != SelectionManager.selected_parts_abb.extents
+		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_scale, [SelectionManager.selected_parts_abb.extents])
+		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
+	
+	if selection_transformed:
+		UndoManager.register_undo_data(undo_data_transform)
+	undo_data_transform = null
 
 
 #undo redo system---------------------------------------------------------------

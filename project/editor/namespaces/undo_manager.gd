@@ -2,11 +2,23 @@ extends RefCounted
 class_name UndoManager
 
 #limit of undodata objects in undo stack
-static var undo_limit : int = 8#255
+static var undo_limit : int = 16#255
 #how much to subtract from the array size if the limit is exceeded
-static var limit_decrement : int = 2#16
+static var limit_decrement : int = 4#16
+
+#purely for user feedback
+static var undo_counter : int = 1
+static var redo_counter : int = 1
+
+"TODO"#add dependency tracking for deleting objects:
+#dictionary of object keys and int items
+#the object key will be for quick lookup, the int will track the amount of references
+#whenever undodata is registered and whenever the undo stack is
+#shortened (by popping undo data past undo_index or because its getting too long)
+#undodata should have an object array for holding references in a non-nested way
 
 "TODO"#add history undo option
+
 
 class UndoData:
 	#parallel arrays of functions and corresponding arguments
@@ -29,6 +41,7 @@ class UndoData:
 static var undo_stack : Array = []
 static var undo_index : int = -1
 
+
 #undodata structs can be registered
 static func register_undo_data(undo_data : UndoData):
 	#if undo was pressed, any proceeding actions must be deleted first
@@ -46,7 +59,9 @@ static func register_undo_data(undo_data : UndoData):
 		undo_stack = undo_stack.slice(limit_decrement, undo_stack.size())
 		undo_index = undo_index - limit_decrement
 	debug_pretty_print()
-
+	
+	undo_counter = 1
+	redo_counter = 1
 
 
 static func undo():
@@ -67,9 +82,14 @@ static func undo():
 		current.undo_action[i].callv(current.undo_args[i])
 		i = i + 1
 	
-	#
 	undo_index = max(undo_index - 1, -1)
 	debug_pretty_print()
+	
+	#undo redo message count
+	EditorUI.l_message.text = "Undo (x" + str(undo_counter) + ")"
+	undo_counter = undo_counter + 1
+	redo_counter = 1
+
 
 static func redo():
 	undo_index = min(undo_index + 1, undo_stack.size() - 1 )
@@ -87,7 +107,10 @@ static func redo():
 		i = i + 1
 	
 	debug_pretty_print()
-	
+	#undo redo message count
+	EditorUI.l_message.text = "Redo (x" + str(redo_counter) + ")"
+	undo_counter = 1
+	redo_counter = redo_counter + 1
 
 
 #print out whats in the undo stack

@@ -39,6 +39,11 @@ static var initial_selection_rect_event : InputEvent
 static var first_part_selection_rect : Part
 #for shift-selecting, i need to keep track of the initial selection
 static var initial_selected_parts : Array[Part]
+#i also need a place for the undo data from start to end of a marquee selection
+static var undo_data_selection_rect : UndoManager.UndoData
+"TODO"#rename this better
+static var is_rect_selecting_active : bool = false
+
 
 
 static func initialize(hover_selection_box : SelectionBox):
@@ -84,7 +89,7 @@ static func handle_input(
 			#hovered part is not in selection
 				else:
 				#shift is held
-					if Input.is_key_pressed(KEY_SHIFT):
+					if Input.is_key_pressed(KEY_SHIFT) and Main.safety_check(dragged_part):
 						SelectionManager.selection_add_part_undoable(hovered_part, dragged_part)
 					else:
 						SelectionManager.selection_set_to_part_undoable(hovered_part, dragged_part)
@@ -94,13 +99,14 @@ static func handle_input(
 				if not Input.is_key_pressed(KEY_SHIFT):
 					if not Main.safety_check(hovered_handle):
 						SelectionManager.selection_clear_undoable()
-		
-		#if no parts, handles or ui detected, start selection rect
-		if not Main.safety_check(hovered_part) and not Main.safety_check(hovered_handle) and not is_ui_hovered:
-			SelectionManager.selection_rect_prepare(event, Main.panel_selection_rect)
-#lmb up
+			
+			#if no parts, handles or ui detected, start selection rect
+			if not Main.safety_check(hovered_part) and not Main.safety_check(hovered_handle) and not is_ui_hovered:
+				selection_rect_prepare(event, Main.panel_selection_rect)
+	#lmb up
 		else:
-			SelectionManager.selection_rect_terminate(Main.panel_selection_rect)
+			if is_rect_selecting_active:
+				selection_rect_terminate(Main.panel_selection_rect)
 	
 	#selection rect/marquee select handling
 	if event is InputEventMouseMotion:
@@ -194,9 +200,12 @@ static func post_selection_update():
 
 "TODO"#add logic for appending to selection when shift is held
 static func selection_rect_prepare(event : InputEvent, selection_rect : Panel):
+	is_rect_selecting_active = true
 	initial_selection_rect_event = event
 	#duplicate to avoid mutation
 	initial_selected_parts = selected_parts_array.duplicate()
+	undo_data_selection_rect = UndoManager.UndoData.new()
+	undo_data_selection_rect.append_undo_action_with_args(selection_set_to_part_array, [initial_selected_parts, last_element(initial_selected_parts)])
 	selection_rect.position = initial_selection_rect_event.position
 	selection_rect.size = Vector2.ZERO
 	selection_rect.visible = true
@@ -279,11 +288,16 @@ static func selection_rect_handle(event : InputEvent, selection_rect : Panel, ca
 
 
 static func selection_rect_terminate(selection_rect : Panel):
+	is_rect_selecting_active = false
 	selection_rect.visible = false
 	initial_selection_rect_event = null
 	first_part_selection_rect = null
 	initial_selected_parts = []
 	selection_changed = true
+	var selection = selected_parts_array.duplicate()
+	undo_data_selection_rect.append_redo_action_with_args(selection_set_to_part_array, [selection, last_element(selection)])
+	UndoManager.register_undo_data(undo_data_selection_rect)
+	undo_data_selection_rect = null
 
 
 #selection functions------------------------------------------------------------
@@ -337,14 +351,14 @@ static func selection_set_to_workspace():
 
 
 static func selection_set_to_workspace_undoable():
-	var selection_before : Array = selected_parts_array.duplicate_deep()
+	var selection_before : Array = selected_parts_array.duplicate()
 	
 	selection_set_to_workspace()
 	
-	var selection_after : Array = selected_parts_array.duplicate_deep()
+	var selection_after : Array = selected_parts_array.duplicate()
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
-	undo.append_undo_action_with_args(selection_set_to_part_array, [selection_before, selection_before.get(0)])
-	undo.append_redo_action_with_args(selection_set_to_part_array, [selection_after, selection_after.get(0)])
+	undo.append_undo_action_with_args(selection_set_to_part_array, [selection_before, last_element(selection_before)])
+	undo.append_redo_action_with_args(selection_set_to_part_array, [selection_after, last_element(selection_after)])
 	UndoManager.register_undo_data(undo)
 
 
@@ -357,13 +371,13 @@ static func selection_set_to_part(hovered_part : Part, abb_orientation : Part):
 
 
 static func selection_set_to_part_undoable(hovered_part : Part, abb_orientation : Part):
-	var selection : Array = selected_parts_array.duplicate_deep()
+	var selection : Array = selected_parts_array.duplicate()
 	
 	selection_set_to_part(hovered_part, abb_orientation)
 	
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
 	"TODO"#do something about get function pushing an error if 0 is out of bounds
-	undo.append_undo_action_with_args(selection_set_to_part_array, [selection, selection.get(0)])
+	undo.append_undo_action_with_args(selection_set_to_part_array, [selection, last_element(selection)])
 	undo.append_redo_action_with_args(selection_set_to_part, [hovered_part, abb_orientation])
 	UndoManager.register_undo_data(undo)
 
@@ -378,6 +392,18 @@ static func selection_set_to_part_array(input : Array[Part], abb_orientation : P
 	selection_changed = true
 
 
+static func selection_set_to_part_array_undoable(input : Array[Part], abb_orientation : Part):
+	var selection : Array = selected_parts_array.duplicate()
+	
+	selection_set_to_part_array(input, abb_orientation)
+	
+	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
+	"TODO"#do something about get function pushing an error if 0 is out of bounds
+	undo.append_undo_action_with_args(selection_set_to_part_array, [selection, last_element(selection)])
+	undo.append_redo_action_with_args(selection_set_to_part_array, [input, abb_orientation])
+	UndoManager.register_undo_data(undo)
+
+
 static func selection_clear():
 	selected_parts_array.clear()
 	selection_boxes_clear_all()
@@ -386,12 +412,12 @@ static func selection_clear():
 	#does not need to call selection_changed as the bounding box doesnt matter when nothing is selected
 
 static func selection_clear_undoable():
-	var selection : Array = selected_parts_array.duplicate_deep()
+	var selection : Array = selected_parts_array.duplicate()
 	
 	selection_clear()
 	
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
-	undo.append_undo_action_with_args(selection_set_to_part_array, [selection, selection.get(0)])
+	undo.append_undo_action_with_args(selection_set_to_part_array, [selection, last_element(selection)])
 	undo.append_redo_action_with_args(selection_clear, [])
 	UndoManager.register_undo_data(undo)
 
@@ -435,7 +461,7 @@ static func selection_move(input_absolute : Vector3):
 	if WorkspaceManager.pivot_custom_mode_active:
 		WorkspaceManager.pivot_transform.origin = WorkspaceManager.pivot_transform.origin + input_absolute - selected_parts_abb.transform.origin
 	
-	selected_parts_abb.transform.origin = input_absolute 
+	selected_parts_abb.transform.origin = input_absolute
 	var i : int = 0
 	while i < selected_parts_array.size():
 		selected_parts_array[i].transform.origin = selected_parts_abb.transform.origin + offset_abb_to_selected_array[i]
@@ -444,7 +470,6 @@ static func selection_move(input_absolute : Vector3):
 	
 	#move transform handles with selection
 	selection_moved = true
-	
 
 
 #rotation only
@@ -724,3 +749,10 @@ static func refresh_offset_abb_to_selected_array():
 	while i < selected_parts_array.size():
 		offset_abb_to_selected_array.append(selected_parts_array[i].transform.origin - selected_parts_abb.transform.origin)
 		i = i + 1
+
+
+static func last_element(input : Array):
+	if input.size() == 0:
+		return null
+	else:
+		return input.get(input.size() - 1)

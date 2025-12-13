@@ -308,6 +308,11 @@ static func create_material_buttons(on_material_selected : Callable, materials_l
 	WorkspaceManager.button_material_mapping = WorkspaceManager.create_mapping(new_buttons)
 
 
+#for undo/redo action information
+static func set_l_msg(text : String):
+	l_message.text = text
+
+
 #tooltip styling
 static var tooltip_panel : StyleBox = preload(FilePathRegistry.style_tooltip_panel)
 static var tooltip_font : Theme = preload(FilePathRegistry.style_font_tooltip)

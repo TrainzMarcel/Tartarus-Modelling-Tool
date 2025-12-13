@@ -9,7 +9,7 @@ class_name Main
 #implement multi part coloring and material application
 #implement part locking
 #add selectionbox around abb
-
+#automatic build tutorial i think: https://www.youtube.com/watch?v=wZsAY_SdEb8
 "TODO"#implement asset import export
 
 
@@ -72,11 +72,7 @@ static var last_mouse_event : InputEventMouse
 #dragging data------------------------------------------------------------------
 #raw ray result
 static var ray_result : Dictionary
-static var dragged_part : Part:
-	set(value):
-		dragged_part = value
-		print("set dragged part")
-		print_stack()
+static var dragged_part : Part
 static var hovered_part : Part
 #purely rotational basis set from start of drag as a reference for snapping
 static var initial_rotation : Basis
@@ -174,10 +170,10 @@ func _ready():
 	cam.initialize(EditorUI.l_camera_speed)
 	ToolManager.initialize(transform_handle_root)
 	
-	"TODO"#fix this damn class its broken again
+	"TODO"#fix this class because its broken again
 	HyperDebug.initialize(false, get_tree().root)
 	
-	#for convenience sakes so my console isnt covered up every time i start the software
+	#for convenience so my console isnt covered up every time i start the software
 	get_window().position = Vector2(1920*0.5 - 1152 * 0.3, 40)
 
 
@@ -264,21 +260,20 @@ func _input(event : InputEvent):
 	
 	
 #selection handling and non-drag-tool logic-------------------------------------
-	if safety_check(dragged_part) and safety_check(hovered_part):
-		SelectionManager.handle_input(
-			event,
-			is_ui_hovered,
-			is_selecting_allowed,
-			is_hovering_allowed,
-			hovered_part,
-			dragged_part,
-			hovered_handle,
-			ray_result,
-			positional_snap_increment,
-			snapping_active,
-			cam
-			)
-		SelectionManager.post_selection_update()
+	SelectionManager.handle_input(
+		event,
+		is_ui_hovered,
+		is_selecting_allowed,
+		is_hovering_allowed,
+		hovered_part,
+		dragged_part,
+		hovered_handle,
+		ray_result,
+		positional_snap_increment,
+		snapping_active,
+		cam
+		)
+	SelectionManager.post_selection_update()
 	
 #prepare and terminate drag and transform operations----------------------------
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
