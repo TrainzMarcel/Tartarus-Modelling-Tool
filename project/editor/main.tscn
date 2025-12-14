@@ -61,7 +61,7 @@ e_transform_handle_root = NodePath("SubViewportContainer/SubViewport/TransformHa
 e_hover_selection_box = NodePath("Workspace/HoverSelectionBox")
 ui_node = NodePath("EditorUI")
 e_panel_selection_rect = NodePath("PanelSelectionRect")
-version_number = "v0.1-indev-1"
+version_number = "v0.1-indev-2"
 transform_handle_scale = 10.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]

@@ -73,7 +73,7 @@ func reapply_part_color(color : Color):
 		if part_mesh_node.material_override == null:
 			part_mesh_node.material_override = StandardMaterial3D.new()#AssetManager.recolor_material(load(FilePathRegistry.data_default_material), part_color, true)
 		else:
-			part_mesh_node.material_override = AssetManager.recolor_material(part_mesh_node.material_override, part_color, true)
+			part_mesh_node.material_override = AssetManager.recolor_material(part_mesh_node.material_override, color, true)
 
 
 func _init():

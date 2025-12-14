@@ -317,17 +317,24 @@ func _input(event : InputEvent):
 				if is_part_hovered and not is_selecting_allowed and is_hovering_allowed:# is_part_hovered and not is_drag_tool:
 					
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_material:
+						var undo : UndoManager.UndoData = UndoManager.UndoData.new()
+						undo.append_undo_action_with_args(hovered_part.reapply_part_material, [hovered_part.part_material])
 						hovered_part.part_material = WorkspaceManager.selected_material
+						undo.explicit_object_references = [hovered_part]
+						undo.append_redo_action_with_args(hovered_part.reapply_part_material, [WorkspaceManager.selected_material])
+						UndoManager.register_undo_data(undo)
 					
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_paint:
 						"TODO"#call recolor_material on selecting color/material if possible, not on part
+						var undo : UndoManager.UndoData = UndoManager.UndoData.new()
+						undo.append_undo_action_with_args(hovered_part.reapply_part_color, [Color(hovered_part.part_color)])
 						hovered_part.part_color = WorkspaceManager.selected_color
+						undo.explicit_object_references = [hovered_part]
+						undo.append_redo_action_with_args(hovered_part.reapply_part_color, [Color(WorkspaceManager.selected_color)])
+						UndoManager.register_undo_data(undo)
 					
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_delete:
-						if SelectionManager.selected_parts_array.has(hovered_part):
-							SelectionManager.selection_remove_part(hovered_part)
-						
-						WorkspaceManager.part_delete(hovered_part)
+						WorkspaceManager.part_delete_undoable(hovered_part)
 						
 						#hide selection box
 						hover_selection_box.visible = false

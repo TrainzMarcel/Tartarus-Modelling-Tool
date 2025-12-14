@@ -114,7 +114,8 @@
 25.11.	minor fix for undo being unable to correctly call redo on the first undodata object
 28.11.	ive decided to try a component system refactor, commit and branch before i do anything
 4.12.	nevermind, extract half of workspacemanager into new selectionmanager instead and also all scattered abb code into selectionmanager
-5.12.	(probably) fix selected part delete tool crashing bug, moved click-selecting and selection rect logic and selection-related keyboard shortcuts from main into selectionmanager.handle_input()
+5.12.	(probably) fix selected part delete tool crashing bug, moved click-selecting, selection rect logic and selection-related keyboard shortcuts from main into selectionmanager.handle_input()
 7.12.	created undoable versions of selecting and deselecting functions that just wrap the function. this seems to be the ideal way to hook undo into my program.
 9.12.	working on adding undo to marquee select, added last_element() instead of messy array.get(0) method
 13.12.	added undo to selection dragging and transform handle operations, added undo count message for better editing feedback
+14.12.	added reference counting logic for when objects are deleted, added undo to selection deletion, delete tool, part spawning, selection cut, paste, duplicate, coloring and material application, fixed part.reapply_part_color was not using its color parameter but the part's color member variable, version bump to v0.1-indev-2

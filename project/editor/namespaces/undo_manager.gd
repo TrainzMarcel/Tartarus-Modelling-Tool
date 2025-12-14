@@ -2,20 +2,20 @@ extends RefCounted
 class_name UndoManager
 
 #limit of undodata objects in undo stack
-static var undo_limit : int = 16#255
+static var undo_limit : int = 8#255
 #how much to subtract from the array size if the limit is exceeded
-static var limit_decrement : int = 4#16
+static var limit_decrement : int = 2#16
+
+static var undo_stack : Array = []
+static var undo_index : int = -1
+
+#object key, int item counting the number of refs in undo data stack
+#gets incremented and decremented whenever undodata is added or removed
+static var reference_counter : Dictionary = {}
 
 #purely for user feedback
 static var undo_counter : int = 1
 static var redo_counter : int = 1
-
-"TODO"#add dependency tracking for deleting objects:
-#dictionary of object keys and int items
-#the object key will be for quick lookup, the int will track the amount of references
-#whenever undodata is registered and whenever the undo stack is
-#shortened (by popping undo data past undo_index or because its getting too long)
-#undodata should have an object array for holding references in a non-nested way
 
 "TODO"#add history undo option
 
@@ -28,6 +28,11 @@ class UndoData:
 	var redo_action : Array[Callable]
 	var redo_args : Array[Array]
 	
+	#simple storage of object references to track references to delete objects
+	#this must be filled with any objects that can get deleted
+	#such as parts but not materials
+	var explicit_object_references : Array
+	
 	#actions are executed in the same order as they are added
 	func append_undo_action_with_args(undo_action : Callable, undo_args : Array):
 		self.undo_action.append(undo_action)
@@ -38,30 +43,69 @@ class UndoData:
 		self.redo_args.append(redo_args)
 
 
-static var undo_stack : Array = []
-static var undo_index : int = -1
-
-
 #undodata structs can be registered
 static func register_undo_data(undo_data : UndoData):
+	#ref tracking
+	var to_be_removed : Array = undo_stack.slice(undo_index + 1, undo_stack.size())
+	print("---------------------------------------------------------------------------")
+	print("---------------------------------------------------------------------------")
+	print("removing the following parts from undo data:")
+	print(to_be_removed)
+	to_be_removed.map(func (input): update_dependencies(input, false))
+	
 	#if undo was pressed, any proceeding actions must be deleted first
 	#so shorten array to current
-	
 	undo_index = undo_index + 1
 	undo_stack.resize(undo_index)
 	undo_stack.append(undo_data)
-	
-	#increment index to take us to the element we just appended
+	update_dependencies(undo_data, true)
 	
 	if undo_stack.size() > undo_limit:
+		#ref tracking
+		to_be_removed = undo_stack.slice(0, limit_decrement)
+		to_be_removed.map(func (input): update_dependencies(input, false))
+		
 		print("decrementing... from ", undo_stack.size(), " to ", undo_stack.size() - limit_decrement)
 		#take away from the front of the stack
 		undo_stack = undo_stack.slice(limit_decrement, undo_stack.size())
 		undo_index = undo_index - limit_decrement
-	debug_pretty_print()
 	
+	debug_pretty_print()
 	undo_counter = 1
 	redo_counter = 1
+
+
+#this function updates the dependency tracking 
+static func update_dependencies(undo_data : UndoData, is_appending : bool):
+	#increment counter/add to counter if object doesnt exist
+	if is_appending:
+		for i in undo_data.explicit_object_references:
+			var has_reference = reference_counter.get(i) is int
+			if has_reference:
+				#increment
+				reference_counter[i] = reference_counter[i] + 1
+			else:
+				#first counted reference
+				reference_counter[i] = 1
+	#decrement counter/remove from counter if object count reaches 0
+	else:
+		for i in undo_data.explicit_object_references:
+			var has_reference = reference_counter.get(i) is int
+			if has_reference:
+				#decrement
+				reference_counter[i] = reference_counter[i] - 1
+				#if this was the last reference to this object
+				if reference_counter[i] == 0:
+					reference_counter.erase(i)
+					#only delete fully from memory when this is an orphan node
+					print("i.get_parent()")
+					print(i.get_parent())
+					if i.get_parent() == null:
+						i.queue_free()
+			else:
+				push_error("tried to remove nonexistant reference")
+	print(reference_counter.keys())
+	print(reference_counter.values())
 
 
 static func undo():
@@ -83,7 +127,7 @@ static func undo():
 		i = i + 1
 	
 	undo_index = max(undo_index - 1, -1)
-	debug_pretty_print()
+	debug_pretty_print(32)
 	
 	#undo redo message count
 	EditorUI.l_message.text = "Undo (x" + str(undo_counter) + ")"
@@ -92,9 +136,10 @@ static func undo():
 
 
 static func redo():
-	undo_index = min(undo_index + 1, undo_stack.size() - 1 )
-	if undo_index == -1:
+	if undo_index + 1 == undo_stack.size():
 		return
+	
+	undo_index = min(undo_index + 1, undo_stack.size() - 1 )
 	
 	var current = undo_stack[undo_index]
 	#can be null
@@ -156,4 +201,5 @@ static func debug_pretty_print(stack_print_limit : int = 10):
 	print(output_undo_func)
 	print(output_redo_func)
 	print("stack size: ", undo_stack.size())
+	print("print limit: ", stack_print_limit)
 	print()

@@ -323,7 +323,6 @@ static func part_spawn(selected_part_type : Part):
 	new_part.part_material = selected_material
 	new_part.part_color = selected_color
 	
-	
 	if ray_result.is_empty():
 		new_part.transform.origin = Main.cam.global_position + Main.part_spawn_distance * -Main.cam.basis.z
 	else:
@@ -332,16 +331,51 @@ static func part_spawn(selected_part_type : Part):
 		var r_dict : Dictionary = SnapUtils.find_closest_vector_abs(new_part.transform.basis, ray_result.normal, true)
 		#normal_length is used to move the part up until the bottom surface meets with the "canvas" surface
 		var normal_length : float = new_part.part_scale[r_dict.index]
-		print("---------------------------------------------")
+		#print("---------------------------------------------")
 		#print("normal_length ", normal_length)
-		print("ray_result.normal ", ray_result.normal)
-		print("ray_result.position ", ray_result.position)
+		#print("ray_result.normal ", ray_result.normal)
+		#print("ray_result.position ", ray_result.position)
 		new_part.transform.origin = ray_result.position + (ray_result.normal * normal_length * 0.5)
+	
+	#undo logic
+	var undo_data : UndoManager.UndoData = UndoManager.UndoData.new()
+	undo_data.append_undo_action_with_args(workspace.remove_child, [new_part])
+	undo_data.explicit_object_references = [new_part]
+	undo_data.append_redo_action_with_args(workspace.add_child, [new_part])
+	UndoManager.register_undo_data(undo_data)
+	
 	return new_part
 
 
 static func part_delete(hovered_part : Part):
+	if SelectionManager.selected_parts_array.has(hovered_part):
+		SelectionManager.selection_remove_part(hovered_part)
 	hovered_part.queue_free()
+
+
+static func part_delete_undoable(hovered_part : Part):
+	var undo_data : UndoManager.UndoData = UndoManager.UndoData.new()
+	var part_was_selected : bool = SelectionManager.selected_parts_array.has(hovered_part)
+	
+	#undo: first add the child node, then select it if needed
+	undo_data.append_undo_action_with_args(workspace.add_child, [hovered_part])
+	
+	#if part was selected, add selecting to the undo actions
+	if part_was_selected:
+		undo_data.append_undo_action_with_args(SelectionManager.selection_add_part, [hovered_part, hovered_part])
+		SelectionManager.selection_remove_part(hovered_part)
+	
+	workspace.remove_child(hovered_part)
+	undo_data.explicit_object_references = [hovered_part]
+	
+	#if part was selected, remove from selection on redo first
+	if part_was_selected:
+		undo_data.append_redo_action_with_args(SelectionManager.selection_remove_part, [hovered_part])
+	
+	#then remove from workspace
+	undo_data.append_redo_action_with_args(workspace.remove_child, [hovered_part])
+	UndoManager.register_undo_data(undo_data)
+
 
 "TODO"#theres a second copy function in part.gd, decide on which function to keep!!
 static func part_copy(part : Part):
