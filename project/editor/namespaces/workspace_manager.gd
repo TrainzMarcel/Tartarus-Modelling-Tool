@@ -610,11 +610,12 @@ static func transform_handle_terminate():
 		return
 	
 	var selection_transformed : bool = false
+	"TODO"#this code is awful
 	if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_move:
 		selection_transformed = undo_data_transform.undo_args.back().back() != SelectionManager.selected_parts_abb.transform.origin
 		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_rotate:
-		selection_transformed = undo_data_transform.undo_args.back().front() != SelectionManager.selected_parts_abb.transform.basis
+		selection_transformed = undo_data_transform.undo_args.front().front() != SelectionManager.selected_parts_abb.transform.basis
 		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis])
 		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale:

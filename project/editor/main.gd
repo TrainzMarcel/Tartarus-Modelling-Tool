@@ -392,6 +392,15 @@ func _process(delta : float):
 	cam.cam_process(delta, second_cam, transform_handle_root, transform_handle_scale, selected_tool_handle_array, SelectionManager.selected_parts_abb, last_mouse_event)
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN:
+		Engine.max_fps = 0 #Zero means uncapped
+		get_tree().paused = false
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		Engine.max_fps = 1
+		get_tree().paused = true
+
+
 #utility functions
 #returns true if hovering over visible ui
 func ui_hover_check(ui_list : Array[Control]):

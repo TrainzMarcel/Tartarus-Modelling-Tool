@@ -14,7 +14,9 @@ enum FileMode {
 @export var file_list_max_entries : int = 10
 
 @export var filters : Array[String] = ["*"]
-@export var dir_start : String = "/"
+@export var dir_start_linux : String = "/"
+@export var dir_start_windows : String = "C:"
+var dir_start : String
 var selected_filter : String = filters[0]
 var dir_current : String = "/"
 var dir_current_globalized : String = ""
@@ -85,6 +87,11 @@ func _ready():
 	ob_filters = %OptionButtonFilters
 	
 #initialize control variables
+	if OS.has_feature("windows"):
+		dir_start = dir_start_windows
+	elif OS.has_feature("linuxbsd"):
+		dir_start = dir_start_linux
+	
 	dir_history.append(dir_start)
 	dir_access = DirAccess.open(dir_start)
 	

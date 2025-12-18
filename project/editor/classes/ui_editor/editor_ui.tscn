@@ -1408,7 +1408,7 @@ Colors
 [p]Open the assets folder (found by using the assets dropdown) and edit the default_color_codes.txt file. If you disable autosort (set to false or omit the line entirely), colors will be placed in order from left to right, fixed to 15 columns.[/p]
 
 Materials
-[p]Supported: StandardMaterial3D or ShaderMaterial (from Godot 4.1.4).
+[p]Supported: StandardMaterial3D or ShaderMaterial (from Godot 4.5).
 - ShaderMaterial: Must have a [code]color[/code] uniform for tinting and have triplanar mapping (the mesh's transform is used for scaling).
 - StandardMaterial3D: Enable [code]triplanar[/code] and [code]world_triplanar[/code] to avoid stretching when scaling parts.[/p]
 
@@ -1419,7 +1419,7 @@ How to add:
 4. Restart the editor.
 
 Meshes
-[p]Supported: Any mesh saved as .tres or .res from Godot 4.1.4.
+[p]Supported: Any mesh saved as .tres or .res from Godot 4.5.
 Meshes are allowed to have multiple surfaces because godot's [code]Mesh.surface_override[/code] is used for material application.[/p]
 
 How to add:
@@ -1779,7 +1779,6 @@ Public License instead of this License.[/code][/indent][/indent][/indent][/inden
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
-file_list_max_entries = null
 
 [node name="ControlLoadingMessage" type="Control" parent="."]
 unique_name_in_owner = true

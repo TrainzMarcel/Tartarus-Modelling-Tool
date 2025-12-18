@@ -47,7 +47,7 @@ v0.1
 	x IC10 dragging	pressing r will always rotate a dragged part (or group of parts) around the surface normal
 	x IC11 dragging	pressing t will always rotate a dragged part (or group of parts) around the horizontal axis from the camera
 	x IC12 camera	hitting f when any number of parts is selected should center the camera on them
-	  IC13 dragging	ability to copy, cut or paste selections of parts using ctrl, c, v and x, select all with ctrl a, undo and redo with ctrl z and y and duplicate with ctrl d
+	x IC13 dragging	ability to copy, cut or paste selections of parts using ctrl, c, v and x, select all with ctrl a, undo and redo with ctrl z and y and duplicate with ctrl d
 	x IC14 tool 5	implement coloring tool which tints a part with the desired paint when clicked on
 	x IC15 tool 6	implement material tool which changes a parts material (still keeping its tint)
 	x IC16 tool 2	add checkbox or hotkey to switch between global axes and local part axes
@@ -66,5 +66,9 @@ v0.1
 	  MI2 loading of obj or gltf models
 	  MI3 automated build/export chain
 
-
+	EXTRAS (requirements added later on)
+	  E1	possibility to group selections using ctrl + g and to ungroup ctrl + shift + g. groupings should be able to contain other groupings.
+	  
 ```
+
+

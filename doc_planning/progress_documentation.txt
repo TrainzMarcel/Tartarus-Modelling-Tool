@@ -119,3 +119,7 @@
 9.12.	working on adding undo to marquee select, added last_element() instead of messy array.get(0) method
 13.12.	added undo to selection dragging and transform handle operations, added undo count message for better editing feedback
 14.12.	added reference counting logic for when objects are deleted, added undo to selection deletion, delete tool, part spawning, selection cut, paste, duplicate, coloring and material application, fixed part.reapply_part_color was not using its color parameter but the part's color member variable, version bump to v0.1-indev-2
+15.12.	exported and uploaded new program versions, added materials: warning_stripes, metal_01, glass_01, updated manual page 3 to say godot 4.5 instead of godot 4.1.4
+16.12.	fixed windows startup crash: diraccess was trying to open "/" and returning null to filemanager instead of a diraccess object. re-exported windows version and confirmed it works.
+TODO:	TODO cleanup
+TODO:	add v0.2 planned features section in requirements like csg
