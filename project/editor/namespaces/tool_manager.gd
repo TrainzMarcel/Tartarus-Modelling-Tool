@@ -8,6 +8,9 @@ static var selected_tool : SelectedToolEnum = SelectedToolEnum.none
 static var button_to_tool_data_mapping : Dictionary = {}
 static var tool_data_to_transform_handle_mapping : Dictionary = {}
 
+#contains the transformhandles of any currently selected tool
+static var selected_tool_handle_array : Array[TransformHandle]
+
 #tool identifier
 enum SelectedToolEnum
 {
@@ -167,8 +170,8 @@ static func initialize(transform_handle_root : TransformHandleRoot):
 
 static func select_tool(button : Button):
 	#disable transform handles of the previously active tool
-	if not Main.selected_tool_handle_array.is_empty():
-		ToolManager.handle_set_active(Main.selected_tool_handle_array, false)
+	if not selected_tool_handle_array.is_empty():
+		ToolManager.handle_set_active(selected_tool_handle_array, false)
 	
 	if button.button_pressed:
 		var data : ToolData = ToolManager.button_to_tool_data_mapping.get(button)
@@ -181,14 +184,19 @@ static func select_tool(button : Button):
 		#activate transform handles
 		if data.has_associated_transform_handles:
 			var associated_transform_handles : Array = ToolManager.tool_data_to_transform_handle_mapping[data]
-			"TODO"#abstract this variable out of main and into toolmanager
-			Main.selected_tool_handle_array = associated_transform_handles
-			#ToolManager.handle_set_active(associated_transform_handles, true)
+			selected_tool_handle_array = associated_transform_handles
 			
 			if Main.is_drag_tool:
-				ToolManager.handle_set_root_position(Main.transform_handle_root, SelectionManager.selected_parts_abb, WorkspaceManager.pivot_transform, WorkspaceManager.pivot_custom_mode_active, Main.local_transform_active, Main.selected_tool_handle_array)
+				ToolManager.handle_set_root_position(
+					Main.transform_handle_root,
+					SelectionManager.selected_parts_abb,
+					WorkspaceManager.pivot_transform,
+					WorkspaceManager.pivot_custom_mode_active,
+					Main.local_transform_active,
+					selected_tool_handle_array
+				)
 				if SelectionManager.selected_parts_array.size() > 0:
-					ToolManager.handle_set_active(Main.selected_tool_handle_array, true)
+					ToolManager.handle_set_active(selected_tool_handle_array, true)
 			#special case
 			elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot:
 				
@@ -201,11 +209,17 @@ static func select_tool(button : Button):
 					if SelectionManager.selected_parts_array.size() != 0:
 						WorkspaceManager.pivot_transform = SelectionManager.selected_parts_abb.transform
 				
-				
-				ToolManager.handle_set_active(Main.selected_tool_handle_array, true)
-				ToolManager.handle_set_root_position(Main.transform_handle_root, SelectionManager.selected_parts_abb, WorkspaceManager.pivot_transform, WorkspaceManager.pivot_custom_mode_active, Main.local_transform_active, Main.selected_tool_handle_array)
+				ToolManager.handle_set_active(selected_tool_handle_array, true)
+				ToolManager.handle_set_root_position(
+					Main.transform_handle_root,
+					SelectionManager.selected_parts_abb,
+					WorkspaceManager.pivot_transform,
+					WorkspaceManager.pivot_custom_mode_active,
+					Main.local_transform_active,
+					selected_tool_handle_array
+				)
 		else:
-			Main.selected_tool_handle_array = []
+			selected_tool_handle_array = []
 		
 		#set hover selection box color
 		if data.selection_box_color_action == SelectionBoxColorAction.use_default:
@@ -345,7 +359,6 @@ static func handle_set_root_position(
 	selected_tool_handle_array
 	):
 	
-	
 	var must_stay_aligned_to_part : bool = false
 	if not selected_tool_handle_array.is_empty():
 		must_stay_aligned_to_part = selected_tool_handle_array[0].handle_force_follow_abb_surface
@@ -361,7 +374,7 @@ static func handle_set_root_position(
 		root.transform = selected_parts_abb.transform * WorkspaceManager.pivot_local_transform
 	elif local_transform_active:
 		root.transform = selected_parts_abb.transform
-	#global transform
+	#global transformed
 	else:
 		root.transform.origin = selected_parts_abb.transform.origin
 		root.transform.basis = Basis.IDENTITY

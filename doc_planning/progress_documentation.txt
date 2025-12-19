@@ -121,5 +121,8 @@
 14.12.	added reference counting logic for when objects are deleted, added undo to selection deletion, delete tool, part spawning, selection cut, paste, duplicate, coloring and material application, fixed part.reapply_part_color was not using its color parameter but the part's color member variable, version bump to v0.1-indev-2
 15.12.	exported and uploaded new program versions, added materials: warning_stripes, metal_01, glass_01, updated manual page 3 to say godot 4.5 instead of godot 4.1.4
 16.12.	fixed windows startup crash: diraccess was trying to open "/" and returning null to filemanager instead of a diraccess object. re-exported windows version and confirmed it works.
+17.12.	
+18.12.	major bug discovered while playing with tool: hitting ctrl + s while holding right click SOFTLOCKS the user.
+19.12.	mouse is now set to visible every input event when menus are open, abstracted selected_tool_handle_array from main to toolmanager, fixed pivot reset functionality, stopped adding features, started maintenance and refactoring
 TODO:	TODO cleanup
 TODO:	add v0.2 planned features section in requirements like csg

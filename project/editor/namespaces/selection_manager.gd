@@ -69,6 +69,7 @@ static func handle_input(
 #if click on nothing while shift is held, do nothing
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 #lmb down
+		#handle_left_click()
 		if event.pressed:
 			var is_part_hovered : bool = Main.safety_check(Main.hovered_part)
 	#if part is hovered
@@ -181,6 +182,45 @@ static func handle_input(
 			EditorUI.l_message.text = "duplicated " + str(SelectionManager.selected_parts_array.size()) + " parts"
 
 
+static func handle_left_click(event : InputEvent, is_selecting_allowed : bool, hovered_part : Part, dragged_part, hovered_handle : TransformHandle, is_ui_hovered : bool):
+#click selecting behavior
+#if click on unselected part, set it as the selection (array with only that part, discard any prior selection)
+#if click on unselected part while shift is held, append to selection
+#if click on part in selection while shift is held, remove from selection
+#if click on nothing, clear selection array
+#if click on nothing while shift is held, do nothing
+	if event.pressed:
+		var is_part_hovered : bool = Main.safety_check(Main.hovered_part)
+	#if part is hovered
+		if is_part_hovered and is_selecting_allowed:
+		#hovered part is in selection
+			if SelectionManager.selected_parts_array.has(hovered_part):
+			#shift is held
+				if Input.is_key_pressed(KEY_SHIFT):
+					#patch to stop dragging when holding shift and
+					#dragging on an already selected part
+					if SelectionManager.selected_parts_array.has(hovered_part) and hovered_part == dragged_part:
+						dragged_part = null
+					SelectionManager.selection_remove_part_undoable(hovered_part)
+		#hovered part is not in selection
+			else:
+			#shift is held
+				if Input.is_key_pressed(KEY_SHIFT) and Main.safety_check(dragged_part):
+					SelectionManager.selection_add_part_undoable(hovered_part, dragged_part)
+				else:
+					SelectionManager.selection_set_to_part_undoable(hovered_part, dragged_part)
+	#no parts hovered
+		elif is_selecting_allowed:
+			#shift is unheld
+			if not Input.is_key_pressed(KEY_SHIFT) and not Main.safety_check(hovered_handle):
+				SelectionManager.selection_clear_undoable()
+		
+		#if no parts, handles or ui detected, start selection rect
+		if not Main.safety_check(hovered_part) and not Main.safety_check(hovered_handle) and not is_ui_hovered:
+			selection_rect_prepare(event, Main.panel_selection_rect)
+
+
+
 "TODO"#parameterize variables from main
 static func post_selection_update():
 	if SelectionManager.selected_parts_array.size() > 0 and (Main.is_selecting_allowed or ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot):
@@ -188,11 +228,11 @@ static func post_selection_update():
 		#automatically refreshes abb offset array
 		SelectionManager.refresh_bounding_box()
 		#TODO this only actually needs to be called when the selection changes from size 0 to size > 0
-		ToolManager.handle_set_active(Main.selected_tool_handle_array, true)
+		ToolManager.handle_set_active(ToolManager.selected_tool_handle_array, true)
 	
 	elif SelectionManager.selected_parts_array.size() == 0 and SelectionManager.selection_changed and ToolManager.selected_tool != ToolManager.SelectedToolEnum.t_pivot:
 		#TODO this only needs to be called when the selection changes from size > 0 to 0
-		ToolManager.handle_set_active(Main.selected_tool_handle_array, false)
+		ToolManager.handle_set_active(ToolManager.selected_tool_handle_array, false)
 
 
 "TODO"#add logic for appending to selection when shift is held
@@ -783,7 +823,7 @@ static func selection_box_hover_on_part(part : Part, is_hovering_allowed : bool)
 
 
 static func refresh_bounding_box():
-	if not Main.safety_check(selected_parts_array[0]) and not selection_changed:
+	if selected_parts_array.is_empty() or not Main.safety_check(selected_parts_array) and not selection_changed:
 		return
 	selected_parts_abb = SnapUtils.calculate_extents(selected_parts_abb, selected_parts_array[-1], selected_parts_array)
 	#debug

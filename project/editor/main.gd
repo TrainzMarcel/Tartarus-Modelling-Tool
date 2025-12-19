@@ -1,46 +1,10 @@
 extends Node3D
 class_name Main
 
-#features (from most important to least)
-"TODO"#implement undo redo
-"TODO"#implement selection grouping
-"TODO"#implement csg
-"TODO"#implement model import export
-#implement multi part coloring and material application
-#implement part locking
-#add selectionbox around abb
-#automatic build tutorial i think: https://www.youtube.com/watch?v=wZsAY_SdEb8
-"TODO"#implement asset import export
-
-
-#performance
-"TODO"#WorkspaceManager.selection_scale() is also very slow
-"TODO"#WorkspaceManager.selection_add_part() is also a bit slow
-#could benefit from changing second parameter to a mere vector3
-"TODO"#use meshdatatool and edit existing vertices instead of clearing and reconstructing them each time
-"TODO"#selectionbox script is very slow, box_update() took 170.5ms for 192 calls on my machine
-#draw_frame() had 1152 calls for 130.97ms
-#draw_quad() had 9216 calls for 113.18ms
-#itd be best if i precomputed the vertex coordinates of the selection box and just moved them or scaled them
-#instead of regenerating them every time
-#itd also be better perhaps to group a number of selectionboxes into one node.
-#same with part meshes and part colliders.
-#another fix could be to only use one selectionbox to denote selections but this might be too vague looking
-
-
-#architecture
-#simplify API for the transform handles in preparation for pivot edit tool
-#(maybe?) refine selection system to work with normal godot assets because it would be fun to use this as a level editor
-
-"TODO"#decide whether the word "is" should be a standard part of naming bools
+"TODO"#prefix all bool variables with "is_"
+"inner classes"#v(it isnt ideal, annoyingly the object lifetime has to be managed but there are no structs and no better way)
 "TODO"#find a good way to group variables
 "TODO"#put all the things one has to edit to add a new tool to transformhandleroot into one file (if possible)
-#this would involve creating a centralized data object array to hold the properties of each tool
-#as well as making a mapping for ui buttons -> tool data object
-
-#future idea: put selection box around selected_parts_abb as a visual cue (still keeping the selectionboxes of individual parts)
-#future idea 2: recolor selection box to red if 2 selected parts are overlapping perfectly
-
 
 #dependencies
 @export_category("Dependencies")
@@ -86,7 +50,6 @@ static var initial_rotation : Basis
 static var drag_tolerance : float = 10
 
 #how many units away a part spawns if theres no parts in front of the raycast
-"TODO"#add "normal bump" like with dragging
 static var part_spawn_distance : float = 5
 #length of raycast for part spawning only (closer part spawn is better ux by being less confusing)
 static var part_spawn_raycast_length : float = 5
@@ -107,11 +70,8 @@ static var local_transform_active : bool = false
 
 #fixed distance of camera to transformhandleroot
 @export_category("Tweakables")
-@export var transform_handle_scale : float = 12
-
-#contains the transformhandles of any currently selected tool
-"TODO"#abstract this variable out of main and into toolmanager
-static var selected_tool_handle_array : Array[TransformHandle]
+static var transform_handle_scale : float = 12
+@export var e_transform_handle_scale : float = 10
 
 #conditionals-------------------------------------------------------------------
 #main override for when ui like a document view or an asset menu or a file explorer is open
@@ -142,6 +102,7 @@ func _ready():
 	cam = e_cam
 	hover_selection_box = e_hover_selection_box
 	panel_selection_rect = e_panel_selection_rect
+	transform_handle_scale = e_transform_handle_scale
 	
 	
 	#parameterized signals to make them more explicit and visible
@@ -181,18 +142,20 @@ func _ready():
 func _input(event : InputEvent):
 #if any menus are open, stop processing
 	if ui_menu_block_check(EditorUI.ui_menu) or not is_input_active:
+		#make SURE the users mouse is not hidden while in a menu
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		return
 #start by setting all control variables
 	#check validity of selecting
 	#is_drag_tool is set by func main_ui_events.on_tool_selected
 	is_ui_hovered = ui_hover_check(EditorUI.ui_no_drag)
 	is_selecting_allowed = is_drag_tool and not is_ui_hovered
-	is_selecting_allowed = is_selecting_allowed and Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED
+	is_selecting_allowed = is_selecting_allowed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED
 	
 	#if selecting is not allowed, hovering can still be allowed
 	#hovering is not allowed if cursor is captured or over ui
 	is_hovering_allowed = is_hover_tool and not is_ui_hovered
-	is_hovering_allowed = is_hovering_allowed and Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED
+	is_hovering_allowed = is_hovering_allowed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED
 	
 	
 	#reset each frame
@@ -379,7 +342,7 @@ func _input(event : InputEvent):
 				WorkspaceManager.pivot_transform,
 				WorkspaceManager.pivot_custom_mode_active,
 				local_transform_active,
-				selected_tool_handle_array
+				ToolManager.selected_tool_handle_array
 			)
 	
 	#camera controls
@@ -389,7 +352,7 @@ func _input(event : InputEvent):
 func _process(delta : float):
 	if ui_menu_block_check(EditorUI.ui_menu) or not is_input_active:
 		return
-	cam.cam_process(delta, second_cam, transform_handle_root, transform_handle_scale, selected_tool_handle_array, SelectionManager.selected_parts_abb, last_mouse_event)
+	cam.cam_process(delta, second_cam, transform_handle_root, transform_handle_scale, ToolManager.selected_tool_handle_array, SelectionManager.selected_parts_abb, last_mouse_event)
 
 
 func _notification(what: int) -> void:
@@ -399,6 +362,9 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
 		Engine.max_fps = 1
 		get_tree().paused = true
+	#if what == NOTIFICATION_CRASH:
+		"TODO"#need to disable asset file embedding for saving.
+		#WorkspaceManager.save_model()
 
 
 #utility functions

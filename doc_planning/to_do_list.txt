@@ -1,38 +1,56 @@
 TOP PRIORITY
-implement undo/redo
-implement subassemblies and/or grouping of parts
-implement csg
-implement snapping for wedge face
-
-NORMAL PRIORITY
-implement import/export (.obj, .gltf, .tres/.res)
-implement configurable modes for filemanager
-implement multiple filters at once for filemanager
-
-procedural shapes: cylinders and torus with tweakable number of vertices
-
-take care of materials
-	(use better shader)
-
-
+clean up TODOS
+prefix all booleans with "is"
 unify the naming scheme in ui for rotation vs degrees
-
-
-clean up/segregate main into a higher level view
-figure out what data can be hidden behind namespace facades
-what data or variables can be segregated out of main and how far
-
+investigate color/material undo supposedly not working correctly
 reduce code duplication in snapping code
 reduce code duplication in asset manager
+settings menu? centralized settings loader? csv? automated property setting ui? skybox picker? hint system disable?
+add a setting for changing if camera uses scroll wheel to set speed or to scroll (same as lock-on mode except it uses a raycast to determine distance and scroll amount. if raycast hits nothing, use a default scroll distance.)
+add BETTER hint system than manual (gmod droplet noise with timer progressbar)
+add better user feedback for part, color and material selector (selected shape, color or material are shown above the dropdown instead of just message bar)
+add selectionbox around abb
+use better shader/improve existing shader
+implement correct colliders for non-cuboid shapes
+implement subassemblies and/or grouping of parts
+implement import/export (.obj, .gltf, .tres/.res)
 
 
-settings menu? dataloader settings csv?
+NORMAL PRIORITY
+automated build system: https://www.youtube.com/watch?v=wZsAY_SdEb8
+implement snapping for wedge face
+implement configurable modes for filemanager
+implement new folder button for filemanager
+implement multiple filters at once for filemanager
+implement asset import export (reference images, meshes)
+
+PERFORMANCE
+WorkspaceManager.selection_add_part() is also a bit slow
+WorkspaceManager.selection_scale() is also very slow
+could benefit from changing second parameter to a mere vector3
+
+use meshdatatool and edit existing vertices instead of clearing and reconstructing them each time
+selectionbox script is very slow, box_update() took 170.5ms for 192 calls on my machine
+draw_frame() had 1152 calls for 130.97ms
+draw_quad() had 9216 calls for 113.18ms
+itd be best if i precomputed the vertex coordinates of the selection box and just moved them or scaled them
+instead of regenerating them every time
+itd also be better perhaps to group a number of selectionboxes into one node.
+same with part meshes and part colliders.
 
 
 export to godot project -> make sure all required materials are there -> find all instances of the previously exported meshes and replace them, recolor them the way they were colored before replacing
 
+
+
 v0.2
+procedural shapes: cylinders and torus with tweakable number of vertices
+implement csg (first with godot csg, then my own) https://www.youtube.com/watch?v=Iqmg4gblreo&pp=ygUlY29uc3RydWN0aXZlIHNvbGlkIGdlb21ldHJ5IGdhbWUgdGFsaw%3D%3D
 implement part properties inspector
+implement part locking
+recolor selection box to red if 2 selected parts are overlapping perfectly
+implement multi part coloring and material application
 implement automatic hidden face reduction algorithm
 binary save files
 implement uv mapping
+(maybe?) refine selection system to work with normal godot assets because it would be fun to use this as a level editor

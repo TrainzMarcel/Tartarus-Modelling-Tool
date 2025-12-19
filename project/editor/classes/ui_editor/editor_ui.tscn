@@ -1391,7 +1391,7 @@ The snapping enabled toggle is self explanatory.[/p]", "[font_size=24]Other tool
 
 [font_size=24]Advanced tools[/font_size]
 [table={2}]
-[cell]Pivot edit tool    [/cell][cell]Caution: may have bugs. Use the transform handles to set your desired pivot point. The pivot point moves with transformations and dragging but does not move when discarding the selection or changing what parts are selected.[/cell]
+[cell]Pivot edit tool    [/cell][cell]Use the transform handles to set your desired pivot point. The pivot point starts out at the current bounding box position and it moves with transformations and dragging but does not move when discarding the selection or changing what parts are selected.[/cell]
 [cell]Pivot reset button    [/cell][cell]Hit the reset button to set the pivot back to normal.[/cell]
 [/table]", "[font_size=24]Saving, Loading[/font_size]
 [p]The editor has its own save/load format. All used assets are embedded which is what makes saving so slow. An embed toggle will be available when v0.1 is finished. Simply unzip a save file if you wish to look inside.[/p]

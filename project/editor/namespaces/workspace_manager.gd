@@ -561,7 +561,7 @@ static func transform_handle_handle(event : InputEvent):
 				WorkspaceManager.pivot_transform,
 				WorkspaceManager.pivot_custom_mode_active,
 				Main.local_transform_active,
-				Main.selected_tool_handle_array)
+				ToolManager.selected_tool_handle_array)
 			EditorUI.l_message.text = "Pivot offset: " + str(WorkspaceManager.pivot_local_transform.origin)
 	#pivot edit tool axis-rotate portion
 		elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_rotate:
@@ -587,7 +587,8 @@ static func transform_handle_handle(event : InputEvent):
 				WorkspaceManager.pivot_transform,
 				WorkspaceManager.pivot_custom_mode_active,
 				Main.local_transform_active,
-				Main.selected_tool_handle_array)
+				ToolManager.selected_tool_handle_array
+			)
 			
 			#var angle_display : Vector3 = WorkspaceManager.pivot_transform.basis.get_euler()
 			#angle_display.x = rad_to_deg(angle_display.x)

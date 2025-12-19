@@ -14,17 +14,16 @@ static func on_pivot_reset_pressed():
 	if ToolManager.selected_tool != ToolManager.SelectedToolEnum.t_pivot:
 		WorkspaceManager.pivot_mesh.visible = false
 		WorkspaceManager.pivot_custom_mode_active = false
+	SelectionManager.refresh_bounding_box()
+	WorkspaceManager.pivot_local_transform = Transform3D.IDENTITY
 	WorkspaceManager.pivot_transform = SelectionManager.selected_parts_abb.transform
-	print("----------------")
-	print(WorkspaceManager.pivot_transform.origin)
-	print(SelectionManager.selected_parts_abb.transform.origin)
 	ToolManager.handle_set_root_position(
 		Main.transform_handle_root,
 		SelectionManager.selected_parts_abb,
 		WorkspaceManager.pivot_transform,
 		WorkspaceManager.pivot_custom_mode_active,
 		Main.local_transform_active,
-		Main.selected_tool_handle_array
+		ToolManager.selected_tool_handle_array
 	)
 
 
@@ -89,7 +88,7 @@ static func on_local_transform_active_set(active):
 		WorkspaceManager.pivot_transform,
 		WorkspaceManager.pivot_custom_mode_active,
 		Main.local_transform_active,
-		Main.selected_tool_handle_array
+		ToolManager.selected_tool_handle_array
 	)
 
 

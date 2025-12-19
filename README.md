@@ -68,7 +68,6 @@ v0.1
 
 	EXTRAS (requirements added later on)
 	  E1	possibility to group selections using ctrl + g and to ungroup ctrl + shift + g. groupings should be able to contain other groupings.
-	  
 ```
 
 
