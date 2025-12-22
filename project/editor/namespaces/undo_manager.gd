@@ -2,9 +2,9 @@ extends RefCounted
 class_name UndoManager
 
 #limit of undodata objects in undo stack
-static var undo_limit : int = 255
+static var undo_limit : int = 10#255
 #how much to subtract from the array size if the limit is exceeded
-static var limit_decrement : int = 16
+static var limit_decrement : int = 2#16
 
 static var undo_stack : Array = []
 static var undo_index : int = -1
@@ -203,3 +203,10 @@ static func debug_pretty_print(stack_print_limit : int = 10):
 	print("stack size: ", undo_stack.size())
 	print("print limit: ", stack_print_limit)
 	print()
+	
+	print("current undo_args:")
+	print(undo_stack[undo_index].undo_args)
+	print("current redo_args:")
+	print(undo_stack[undo_index].redo_args)
+	print()
+	

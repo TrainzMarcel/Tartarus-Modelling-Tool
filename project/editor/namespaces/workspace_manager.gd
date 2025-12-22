@@ -363,7 +363,10 @@ static func part_delete_undoable(hovered_part : Part):
 	#if part was selected, add selecting to the undo actions
 	if part_was_selected:
 		undo_data.append_undo_action_with_args(SelectionManager.selection_add_part, [hovered_part, hovered_part])
+		undo_data.append_undo_action_with_args(SelectionManager.post_selection_update, [])
 		SelectionManager.selection_remove_part(hovered_part)
+		SelectionManager.post_selection_update()
+		
 	
 	workspace.remove_child(hovered_part)
 	undo_data.explicit_object_references = [hovered_part]
@@ -371,6 +374,7 @@ static func part_delete_undoable(hovered_part : Part):
 	#if part was selected, remove from selection on redo first
 	if part_was_selected:
 		undo_data.append_redo_action_with_args(SelectionManager.selection_remove_part, [hovered_part])
+		undo_data.append_redo_action_with_args(SelectionManager.post_selection_update, [])
 	
 	#then remove from workspace
 	undo_data.append_redo_action_with_args(workspace.remove_child, [hovered_part])
@@ -431,6 +435,7 @@ static func drag_handle(event : InputEvent):
 
 static func drag_terminate():
 	if drag_confirmed:
+			var selection : Array = SelectionManager.selected_parts_array.duplicate()
 			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis])
 			UndoManager.register_undo_data(undo_data_drag)
@@ -464,8 +469,11 @@ static func transform_handle_prepare(event : InputEvent):
 		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis])
 		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale:
-		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_scale, [SelectionManager.selected_parts_abb.extents])
+		#get transforms with basis vectors scaled by part_scale
+		var transform_array : Array = SelectionManager.selected_parts_array.map(func(input): return input.global_transform)
+		var scale_array : Array = SelectionManager.selected_parts_array.map(func(input): return input.part_scale)
 		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
+		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_set_exact_transforms, [transform_array, scale_array, SelectionManager.selected_parts_abb.extents])
 
 
 static func transform_handle_handle(event : InputEvent):
@@ -621,8 +629,11 @@ static func transform_handle_terminate():
 		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale:
 		selection_transformed = undo_data_transform.undo_args.back().back() != SelectionManager.selected_parts_abb.extents
-		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_scale, [SelectionManager.selected_parts_abb.extents])
+		#get transforms with basis vectors scaled by part_scale
+		var transform_array : Array = SelectionManager.selected_parts_array.map(func(input): return input.transform)
+		var scale_array : Array = SelectionManager.selected_parts_array.map(func(input): return input.part_scale)
 		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
+		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_set_exact_transforms, [transform_array, scale_array, SelectionManager.selected_parts_abb.extents])
 	
 	if selection_transformed:
 		UndoManager.register_undo_data(undo_data_transform)

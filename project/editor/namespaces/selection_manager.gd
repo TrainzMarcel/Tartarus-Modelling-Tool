@@ -83,19 +83,23 @@ static func handle_input(
 						if SelectionManager.selected_parts_array.has(hovered_part) and hovered_part == dragged_part:
 							dragged_part = null
 						SelectionManager.selection_remove_part_undoable(hovered_part)
+						SelectionManager.post_selection_update()
 			#hovered part is not in selection
 				else:
 				#shift is held
 					if Input.is_key_pressed(KEY_SHIFT) and Main.safety_check(dragged_part):
 						SelectionManager.selection_add_part_undoable(hovered_part, dragged_part)
+						SelectionManager.post_selection_update()
 					else:
 						SelectionManager.selection_set_to_part_undoable(hovered_part, dragged_part)
+						SelectionManager.post_selection_update()
 	#no parts hovered
 			elif is_selecting_allowed:
 				#shift is unheld
 				if not Input.is_key_pressed(KEY_SHIFT):
 					if not Main.safety_check(hovered_handle):
 						SelectionManager.selection_clear_undoable()
+						SelectionManager.post_selection_update()
 			
 			#if no parts, handles or ui detected, start selection rect
 			if not Main.safety_check(hovered_part) and not Main.safety_check(hovered_handle) and not is_ui_hovered:
@@ -108,7 +112,7 @@ static func handle_input(
 	#selection rect/marquee select handling
 	if event is InputEventMouseMotion:
 		selection_rect_handle(event, Main.panel_selection_rect, Main.cam)
-	
+		SelectionManager.post_selection_update()
 	
 #keyboard input-----------------------------------------------------------------
 	if event is InputEventKey and event.is_pressed() and not event.is_echo():
@@ -150,6 +154,7 @@ static func handle_input(
 			if is_selecting_allowed:
 				EditorUI.l_message.text = "deleted " + str(SelectionManager.selected_parts_array.size()) + " parts"
 				SelectionManager.selection_delete_undoable()
+				SelectionManager.post_selection_update()
 				#immediately update hovered_part in case theres another part behind the deleted one(s)
 				hovered_part = Main.part_hover_check()
 				SelectionManager.selection_box_hover_on_part(hovered_part, is_hovering_allowed)
@@ -157,31 +162,38 @@ static func handle_input(
 		elif event.keycode == KEY_A and event.ctrl_pressed and event.shift_pressed:
 			if is_selecting_allowed:
 				SelectionManager.selection_clear_undoable()
+				SelectionManager.post_selection_update()
 				EditorUI.l_message.text = "cleared selection"
 		#select all
 		elif event.keycode == KEY_A and event.ctrl_pressed:
 			if is_selecting_allowed:
 				SelectionManager.selection_set_to_workspace_undoable()
+				SelectionManager.post_selection_update()
 				EditorUI.l_message.text = "selected all parts"
 		#cut
 		elif event.keycode == KEY_X and event.ctrl_pressed:
 			SelectionManager.selection_copy()
 			SelectionManager.selection_delete_undoable()
+			SelectionManager.post_selection_update()
 			EditorUI.l_message.text = "cut " + str(SelectionManager.parts_clipboard.size()) + " parts"
 		#copy
 		elif event.keycode == KEY_C and event.ctrl_pressed:
 			SelectionManager.selection_copy()
+			SelectionManager.post_selection_update()
 			EditorUI.l_message.text = "copied " + str(SelectionManager.parts_clipboard.size()) + " parts"
 		#paste
 		elif event.keycode == KEY_V and event.ctrl_pressed:
 			SelectionManager.selection_paste_undoable()
+			SelectionManager.post_selection_update()
 			EditorUI.l_message.text = "pasted " + str(SelectionManager.parts_clipboard.size()) + " parts"
 		#duplicate
 		elif event.keycode == KEY_D and event.ctrl_pressed:
 			SelectionManager.selection_duplicate_undoable()
+			SelectionManager.post_selection_update()
 			EditorUI.l_message.text = "duplicated " + str(SelectionManager.selected_parts_array.size()) + " parts"
 
 
+"TODO"#make guard clauses and use returns to flatten this mess
 static func handle_left_click(event : InputEvent, is_selecting_allowed : bool, hovered_part : Part, dragged_part, hovered_handle : TransformHandle, is_ui_hovered : bool):
 #click selecting behavior
 #if click on unselected part, set it as the selection (array with only that part, discard any prior selection)
@@ -222,6 +234,9 @@ static func handle_left_click(event : InputEvent, is_selecting_allowed : bool, h
 
 
 "TODO"#parameterize variables from main
+#this function MUST be called whenever the number of selected parts changes
+#it is separate because you may save performance by
+#making multiple selection calls before calling this one
 static func post_selection_update():
 	if SelectionManager.selected_parts_array.size() > 0 and (Main.is_selecting_allowed or ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot):
 		#refresh bounding box on definitive selection change
@@ -352,8 +367,10 @@ static func selection_add_part_undoable(hovered_part : Part, abb_orientation : P
 	
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
 	undo.append_undo_action_with_args(selection_remove_part, [hovered_part])
+	undo.append_undo_action_with_args(post_selection_update, [])
 	undo.explicit_object_references.append(hovered_part)
 	undo.append_redo_action_with_args(selection_add_part, [hovered_part, abb_orientation])
+	undo.append_redo_action_with_args(post_selection_update, [])
 	UndoManager.register_undo_data(undo)
 
 
@@ -373,8 +390,10 @@ static func selection_remove_part_undoable(hovered_part : Part):
 	#this causes the bounding box to be a different orientation after the undo!!
 	#bad ux!
 	undo.append_undo_action_with_args(selection_add_part, [hovered_part, hovered_part])
+	undo.append_undo_action_with_args(post_selection_update, [])
 	undo.explicit_object_references.append(hovered_part)
 	undo.append_redo_action_with_args(selection_remove_part, [hovered_part])
+	undo.append_redo_action_with_args(post_selection_update, [])
 	UndoManager.register_undo_data(undo)
 
 
@@ -394,13 +413,16 @@ static func selection_set_to_workspace_undoable():
 	var selection_before : Array = selected_parts_array.duplicate()
 	
 	selection_set_to_workspace()
+	post_selection_update()
 	
 	var selection_after : Array = selected_parts_array.duplicate()
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
 	undo.append_undo_action_with_args(selection_set_to_part_array, [selection_before, last_element(selection_before)])
+	undo.append_undo_action_with_args(post_selection_update, [])
 	undo.explicit_object_references.append_array(selection_before)
 	undo.explicit_object_references.append_array(selection_after)
 	undo.append_redo_action_with_args(selection_set_to_part_array, [selection_after, last_element(selection_after)])
+	undo.append_redo_action_with_args(post_selection_update, [])
 	UndoManager.register_undo_data(undo)
 
 
@@ -420,9 +442,11 @@ static func selection_set_to_part_undoable(hovered_part : Part, abb_orientation 
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
 	"TODO"#do something about get function pushing an error if 0 is out of bounds
 	undo.append_undo_action_with_args(selection_set_to_part_array, [selection, last_element(selection)])
+	undo.append_undo_action_with_args(post_selection_update, [])
 	undo.explicit_object_references.append_array(selection)
 	undo.explicit_object_references.append(hovered_part)
 	undo.append_redo_action_with_args(selection_set_to_part, [hovered_part, abb_orientation])
+	undo.append_redo_action_with_args(post_selection_update, [])
 	UndoManager.register_undo_data(undo)
 
 
@@ -444,9 +468,11 @@ static func selection_set_to_part_array_undoable(input : Array[Part], abb_orient
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
 	"TODO"#do something about get function pushing an error if 0 is out of bounds
 	undo.append_undo_action_with_args(selection_set_to_part_array, [selection, last_element(selection)])
+	undo.append_undo_action_with_args(post_selection_update, [])
 	undo.explicit_object_references.append_array(selection)
 	undo.explicit_object_references.append_array(input)
 	undo.append_redo_action_with_args(selection_set_to_part_array, [input, abb_orientation])
+	undo.append_redo_action_with_args(post_selection_update, [])
 	UndoManager.register_undo_data(undo)
 
 
@@ -464,8 +490,10 @@ static func selection_clear_undoable():
 	
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
 	undo.append_undo_action_with_args(selection_set_to_part_array, [selection, last_element(selection)])
+	undo.append_undo_action_with_args(post_selection_update, [])
 	undo.explicit_object_references.append_array(selection)
 	undo.append_redo_action_with_args(selection_clear, [])
+	undo.append_redo_action_with_args(post_selection_update, [])
 	UndoManager.register_undo_data(undo)
 
 
@@ -480,9 +508,11 @@ static func selection_delete_undoable():
 	var selection : Array = selected_parts_array.duplicate()
 	undo.append_undo_action_with_args(add_children, [WorkspaceManager.workspace, selection])
 	undo.append_undo_action_with_args(selection_set_to_part_array, [selection, last_element(selection)])
+	undo.append_undo_action_with_args(post_selection_update, [])
 	undo.explicit_object_references = selection
 	undo.append_redo_action_with_args(remove_children, [WorkspaceManager.workspace, selection])
 	undo.append_redo_action_with_args(selection_clear, [])
+	undo.append_redo_action_with_args(post_selection_update, [])
 	UndoManager.register_undo_data(undo)
 	
 	remove_children(WorkspaceManager.workspace, selection) 
@@ -519,11 +549,13 @@ static func selection_paste_undoable():
 	var selection_after : Array = selected_parts_array.duplicate()
 	
 	undo.append_undo_action_with_args(selection_set_to_part_array, [selection_before])
+	undo.append_undo_action_with_args(post_selection_update, [])
 	undo.append_undo_action_with_args(remove_children, [WorkspaceManager.workspace, selection_after])
 	undo.explicit_object_references.append_array(selection_before)
 	undo.explicit_object_references.append_array(selection_after)
 	undo.append_redo_action_with_args(add_children, [WorkspaceManager.workspace, selection_after])
 	undo.append_redo_action_with_args(selection_set_to_part_array, [selection_after, last_element(selection_after)])
+	undo.append_redo_action_with_args(post_selection_update, [])
 	UndoManager.register_undo_data(undo)
 
 
@@ -734,7 +766,7 @@ static func selection_scale(scale_absolute : Vector3):
 		#world space to part space
 		var diff_reverse = p.inverse()
 		var local_scale = diff_reverse * world_scale_again
-
+		
 		local_scale.x = abs(local_scale.x)
 		local_scale.y = abs(local_scale.y)
 		local_scale.z = abs(local_scale.z)
@@ -749,6 +781,23 @@ static func selection_scale(scale_absolute : Vector3):
 	
 	selection_boxes_redraw_all()
 	#move transform handles with selection
+	selection_moved = true
+
+
+#this is for precisely reversing scale operations with undo
+static func selection_set_exact_transforms(transform_array : Array, scale_array : Array, scale_absolute : Vector3):
+	assert(selected_parts_array.size() == transform_array.size())
+	var i : int = 0
+	
+	while i < selected_parts_array.size():
+		selected_parts_array[i].part_scale = scale_array[i]
+		selected_parts_array[i].transform = transform_array[i]
+		selection_box_array[i].transform = transform_array[i]
+		i = i + 1
+	
+	selected_parts_abb.extents = scale_absolute
+	refresh_offset_abb_to_selected_array()
+	selection_boxes_redraw_all()
 	selection_moved = true
 
 #selection box functions--------------------------------------------------------
@@ -839,7 +888,7 @@ static func refresh_bounding_box():
 
 
 #utils
-#this function is finally only used right above
+#this function is only used in refresh_bounding_box() and selection_set_exact_transforms()
 static func refresh_offset_abb_to_selected_array():
 	var i : int = 0
 	offset_abb_to_selected_array.clear()

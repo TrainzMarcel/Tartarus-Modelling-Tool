@@ -236,7 +236,6 @@ func _input(event : InputEvent):
 		snapping_active,
 		cam
 		)
-	SelectionManager.post_selection_update()
 	
 #prepare and terminate drag and transform operations----------------------------
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
@@ -281,19 +280,19 @@ func _input(event : InputEvent):
 					
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_material:
 						var undo : UndoManager.UndoData = UndoManager.UndoData.new()
-						undo.append_undo_action_with_args(hovered_part.reapply_part_material, [hovered_part.part_material])
+						undo.append_undo_action_with_args(hovered_part.set, ["part_material", hovered_part.part_material])
 						hovered_part.part_material = WorkspaceManager.selected_material
 						undo.explicit_object_references = [hovered_part]
-						undo.append_redo_action_with_args(hovered_part.reapply_part_material, [WorkspaceManager.selected_material])
+						undo.append_redo_action_with_args(hovered_part.set, ["part_material", WorkspaceManager.selected_material])
 						UndoManager.register_undo_data(undo)
 					
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_paint:
 						"TODO"#call recolor_material on selecting color/material if possible, not on part
 						var undo : UndoManager.UndoData = UndoManager.UndoData.new()
-						undo.append_undo_action_with_args(hovered_part.reapply_part_color, [Color(hovered_part.part_color)])
+						undo.append_undo_action_with_args(hovered_part.set, ["part_color", hovered_part.part_color])
 						hovered_part.part_color = WorkspaceManager.selected_color
 						undo.explicit_object_references = [hovered_part]
-						undo.append_redo_action_with_args(hovered_part.reapply_part_color, [Color(WorkspaceManager.selected_color)])
+						undo.append_redo_action_with_args(hovered_part.set, ["part_color", WorkspaceManager.selected_color])
 						UndoManager.register_undo_data(undo)
 					
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_delete:
