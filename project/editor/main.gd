@@ -1,7 +1,6 @@
 extends Node3D
 class_name Main
 
-"TODO"#prefix all bool variables with "is_"
 "inner classes"#v(it isnt ideal, annoyingly the object lifetime has to be managed but there are no structs and no better way)
 "TODO"#find a good way to group variables
 "TODO"#put all the things one has to edit to add a new tool to transformhandleroot into one file (if possible)
@@ -287,7 +286,6 @@ func _input(event : InputEvent):
 						UndoManager.register_undo_data(undo)
 					
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_paint:
-						"TODO"#call recolor_material on selecting color/material if possible, not on part
 						var undo : UndoManager.UndoData = UndoManager.UndoData.new()
 						undo.append_undo_action_with_args(hovered_part.set, ["part_color", hovered_part.part_color])
 						hovered_part.part_color = WorkspaceManager.selected_color
@@ -297,12 +295,12 @@ func _input(event : InputEvent):
 					
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_delete:
 						WorkspaceManager.part_delete_undoable(hovered_part)
-						
 						#hide selection box
 						hover_selection_box.visible = false
 						#immediately update hovered_part in case theres another part behind the deleted one
 						hovered_part = Main.part_hover_check()
 						SelectionManager.selection_box_hover_on_part(hovered_part, true)
+						
 	#lmb up
 			#else:
 			#	pass
@@ -345,7 +343,7 @@ func _input(event : InputEvent):
 			)
 	
 	#camera controls
-	cam.cam_input(event, second_cam, SelectionManager.selected_parts_array, SelectionManager.selected_parts_abb, EditorUI.l_message, EditorUI.l_camera_speed)
+	cam.cam_input(event, second_cam, SelectionManager.selected_parts_array, SelectionManager.selected_parts_abb, EditorUI.l_camera_speed)
 
 
 func _process(delta : float):
@@ -359,7 +357,7 @@ func _notification(what: int) -> void:
 		Engine.max_fps = 0 #Zero means uncapped
 		get_tree().paused = false
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
-		Engine.max_fps = 1
+		Engine.max_fps = 15
 		get_tree().paused = true
 	#if what == NOTIFICATION_CRASH:
 		"TODO"#need to disable asset file embedding for saving.

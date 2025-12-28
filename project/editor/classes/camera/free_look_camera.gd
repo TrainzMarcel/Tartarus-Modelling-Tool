@@ -27,7 +27,6 @@ func cam_input(
 	second_camera : Camera3D,
 	selected_parts_array : Array[Part],
 	selected_parts_abb : ABB,
-	msg_label : Label,
 	camera_speed_label : Label
 	):
 	
@@ -43,14 +42,14 @@ func cam_input(
 			
 			global_position = lock_position + basis.z * lock_zoom
 			is_locked_on = true
-			msg_label.text = "camera locked on"
+			EditorUI.set_l_msg("camera locked on")
 	
 	#if any movement keys are pressed, stop locking onto parts
 	var unlock : bool = Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_A)
 	unlock = unlock or Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_D)
 	
 	if is_locked_on and unlock:
-		msg_label.text = "camera unlocked"
+		EditorUI.set_l_msg("camera unlocked")
 	
 	if is_locked_on:
 		is_locked_on = not unlock

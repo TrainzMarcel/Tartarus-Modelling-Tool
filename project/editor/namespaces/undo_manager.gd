@@ -130,7 +130,7 @@ static func undo():
 	debug_pretty_print(32)
 	
 	#undo redo message count
-	EditorUI.l_message.text = "Undo (x" + str(undo_counter) + ")"
+	EditorUI.set_l_msg("Undo (x" + str(undo_counter) + ")")
 	undo_counter = undo_counter + 1
 	redo_counter = 1
 
@@ -153,7 +153,7 @@ static func redo():
 	
 	debug_pretty_print()
 	#undo redo message count
-	EditorUI.l_message.text = "Redo (x" + str(redo_counter) + ")"
+	EditorUI.set_l_msg("Redo (x" + str(redo_counter) + ")")
 	undo_counter = 1
 	redo_counter = redo_counter + 1
 

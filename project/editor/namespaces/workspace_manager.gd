@@ -65,10 +65,12 @@ static var pivot_initial_transform : Transform3D
 
 "TODO"#move into file explorer ui class and make it modular
 enum FileOperation {
-	save,
-	save_as,
-	load
+	save_model,
+	save_model_as,
+	load_model
 }
+static var file_operation_save : StringName = "SaveModelCsv"
+static var file_operation_load : StringName = "LoadModelCsv"
 static var file_operation : FileOperation
 static var last_save_location : String = ""
 static var last_save_name : String = ""
@@ -189,7 +191,7 @@ static func initialize(
 				
 				#mesh types usually dont have any subresources
 				AssetManager.register_asset(asset)
-		
+				
 				"TODO"#i need to centralize csv parsing better
 		#load colors with names and set autosort
 		elif extension == "txt":
@@ -495,7 +497,7 @@ static func transform_handle_handle(event : InputEvent):
 				Main.positional_snap_increment,
 				Main.snapping_active
 			))
-			EditorUI.l_message.text = "Translation: " + str(snapped(delta, Main.positional_snap_increment) * Main.dragged_handle.direction_vector)
+			EditorUI.set_l_msg("Translation: " + str(snapped(delta, Main.positional_snap_increment) * Main.dragged_handle.direction_vector))
 			
 			
 	#rotation
@@ -510,7 +512,7 @@ static func transform_handle_handle(event : InputEvent):
 				deg_to_rad(Main.rotational_snap_increment),
 				Main.snapping_active
 			), WorkspaceManager.pivot_local_transform.origin)
-			EditorUI.l_message.text = "Angle: " + str(snapped(rad_to_deg(angle), Main.rotational_snap_increment) * Main.dragged_handle.direction_vector)
+			EditorUI.set_l_msg("Angle: " + str(snapped(rad_to_deg(angle), Main.rotational_snap_increment) * Main.dragged_handle.direction_vector))
 	#scaling
 		elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_scale:
 			var delta_scale : float = ToolManager.handle_input_linear_move(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial)
@@ -544,7 +546,7 @@ static func transform_handle_handle(event : InputEvent):
 			
 			SelectionManager.selection_move(result_move)
 			
-			EditorUI.l_message.text = "Scale: " + str(result)
+			EditorUI.set_l_msg("Scale: " + str(result))
 	#pivot edit tool axis-move portion
 		elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_move:
 			#process mouse drag on handle into a single value
@@ -570,7 +572,7 @@ static func transform_handle_handle(event : InputEvent):
 				WorkspaceManager.pivot_custom_mode_active,
 				Main.local_transform_active,
 				ToolManager.selected_tool_handle_array)
-			EditorUI.l_message.text = "Pivot offset: " + str(WorkspaceManager.pivot_local_transform.origin)
+			EditorUI.set_l_msg("Pivot offset: " + str(WorkspaceManager.pivot_local_transform.origin))
 	#pivot edit tool axis-rotate portion
 		elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_rotate:
 			#process mouse drag on handle into a single value
@@ -602,7 +604,7 @@ static func transform_handle_handle(event : InputEvent):
 			#angle_display.x = rad_to_deg(angle_display.x)
 			#angle_display.y = rad_to_deg(angle_display.y)
 			#angle_display.z = rad_to_deg(angle_display.z)
-			EditorUI.l_message.text = "Pivot angle: " + str(snapped(rad_to_deg(angle), Main.rotational_snap_increment) * Main.dragged_handle.direction_vector)
+			EditorUI.set_l_msg("Pivot angle: " + str(snapped(rad_to_deg(angle), Main.rotational_snap_increment) * Main.dragged_handle.direction_vector))
 
 
 static func transform_handle_terminate():
@@ -664,21 +666,21 @@ static func validate_filename(filename : String):
 
 
 static func request_save():
-	file_operation = FileOperation.save
+	file_operation = FileOperation.save_model
 	if validate_filepath(last_save_location) and validate_filename(last_save_name):
 		confirm_save_load(last_save_location, last_save_name)
 	else:
-		EditorUI.fm_file.popup(FileManager.FileMode.save_file)
+		EditorUI.fm_file.popup("save_model")
 
 
 static func request_save_as():
-	file_operation = FileOperation.save_as
-	EditorUI.fm_file.popup(FileManager.FileMode.save_file)
+	file_operation = FileOperation.save_model_as
+	EditorUI.fm_file.popup("save_model")
 
 
 static func request_load():
-	file_operation = FileOperation.load
-	EditorUI.fm_file.popup(FileManager.FileMode.open_file)
+	file_operation = FileOperation.load_model
+	EditorUI.fm_file.popup("load_model")
 
 
 static func confirm_save_load(filepath : String, name : String):
@@ -686,23 +688,34 @@ static func confirm_save_load(filepath : String, name : String):
 	#one await wasnt enough for the loading message to show up
 	await EditorUI.c_loading_message.get_tree().process_frame
 	await EditorUI.c_loading_message.get_tree().process_frame
-	if file_operation == FileOperation.save or file_operation == FileOperation.save_as:
-		EditorUI.l_message.text = "saving..."
-		save_model(filepath + "/", name)
+	if file_operation == FileOperation.save_model or file_operation == FileOperation.save_model_as:
+		EditorUI.set_l_msg("saving...")
+		var options : Control = EditorUI.fm_file.get_options_ui("save_model")
+		var embed_assets : bool = false
+		if options != null:
+			var b_embed_assets : Button = options.get_node("ButtonEmbedAssets")
+			embed_assets = b_embed_assets.button_pressed
+		
+		save_model(filepath + "/", name, embed_assets)
 		last_save_location = filepath
 		last_save_name = name
-		EditorUI.l_message.text = "successfully saved " + name + " at " + filepath + "!"
-	elif file_operation == FileOperation.load:
-		EditorUI.l_message.text = "loading..."
-		"TODO"#add return 
+		EditorUI.set_l_msg("successfully saved " + name + " at " + filepath + "!")
+	elif file_operation == FileOperation.load_model:
+		EditorUI.set_l_msg("loading...")
+		var options : Control = EditorUI.fm_file.get_options_ui("load_model")
+		var b_clear_workspace : Button = options.get_node("ButtonClearWorkspace")
+		if b_clear_workspace.button_pressed:
+			SelectionManager.selection_set_to_workspace()
+			SelectionManager.selection_delete()
+		"TODO ERROR"#add error return or log error inside
 		load_model(filepath + "/", name)
-		EditorUI.l_message.text = "successfully loaded " + name + " at " + filepath + "!"
+		EditorUI.set_l_msg("successfully loaded " + name + " at " + filepath + "!")
 	EditorUI.c_loading_message.visible = false
 
 
 #actual save and load functions
 "TODO"#add error handling here and at load()
-static func save_model(filepath : String, name : String):
+static func save_model(filepath : String, name : String, embed_assets : bool):
 	"TODO"#probably add some setting for how much of the model to save
 	#plus add exclude functionality
 	#plus add part lock functionality
@@ -737,14 +750,16 @@ static func save_model(filepath : String, name : String):
 	var i : int = 0
 	"TODO"#make this a safer operation (string variable or const instead of hardcoded)
 	#and/or use a function dispatch for each header type
-	file.append("::COLOR::")
+	#::COLOR::
+	file.append(data_headers[0])
 	while i < used_colors.size():
 		file.append(separator.join(DataUtils.color_serialize(used_colors[i])))
 		i = i + 1
 	
 	#add materials to save
 	i = 0
-	file.append("::MATERIAL::")
+	#::MATERIAL::
+	file.append(data_headers[1])
 	while i < used_materials.size():
 		if not assets_used.has(used_materials[i]):
 			assets_used.append(used_materials[i])
@@ -752,9 +767,10 @@ static func save_model(filepath : String, name : String):
 		i = i + 1
 	
 	#add meshes to save
-	"TODO"#stop using resource files here
+	"TODO"#add support for .obj or .gltf
 	i = 0
-	file.append("::MESH::")
+	#::MESH::
+	file.append(data_headers[2])
 	while i < used_meshes.size():
 		if not assets_used.has(used_meshes[i]):
 			assets_used.append(used_meshes[i])
@@ -764,11 +780,14 @@ static func save_model(filepath : String, name : String):
 	
 	#part data
 	i = 0
-	file.append("::MODEL::")
+	#::MODEL::
+	file.append(data_headers[3])
 	while i < SelectionManager.selected_parts_array.size():
 		file.append(separator.join(DataUtils.part_serialize(SelectionManager.selected_parts_array[i], color_to_int_mapping, material_name_to_int_mapping, mesh_to_int_mapping)))
 		i = i + 1
 	
+	if not embed_assets:
+		assets_used.clear()
 	
 	#package everything up
 	DataUtils.data_zip(assets_used, file, filepath, name)

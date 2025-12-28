@@ -1,7 +1,8 @@
 extends RefCounted
 class_name DataUtils
 
-
+"TODO"#move saving to sqlite
+#https://github.com/2shady4u/godot-sqlite
 static func color_serialize(input : Color):
 	return PackedStringArray([str(input.r8), str(input.g8), str(input.b8)])
 
@@ -353,36 +354,6 @@ static func part_deserialize(input, used_colors : Array, used_materials : Array,
 	return new
 
 
-#i may delete this again
-#same as string.split() except it will not split strings marked by ""
-#double " does not get taken into account for escaping
-#separator must be single character and not "
-#static func csv_line_split(line : String, separator : String):
-#	var result : PackedStringArray = line.split(separator)
-#	var traversing_string : bool = false
-#	var section : String = ""
-#	var i : int = 0
-#	#quote
-#	var q : String = "\""
-#	"UNFINISHED"
-#	#for each line split result
-#	while i < result.size():
-#		#if there is a double quote at the start and not the end
-#		if result[i].begins_with(q) and not result[i].ends_with(q):
-#			traversing_string = true
-#			section = section + result[i]
-#			result.remove_at(i)
-#		elif traversing_string and not result[i].ends_with(q) and not result[i].begins_with(q):
-#			section = section + separator + result[i]
-#			result.remove_at(i)
-#		elif traversing_string and result[i].ends_with(q) and not result[i].begins_with(q):
-#			section = section + result[i]
-#			section = ""
-#			i = i + 1
-#		else:
-#			i = i + 1
-
-
 #saves everything to disk
 static func data_zip(input_assets : Array[Resource], input_save_file : PackedStringArray, filepath : String, filename : String):
 	#get all of the subresources which arent saved in the csv
@@ -433,7 +404,7 @@ static func data_zip(input_assets : Array[Resource], input_save_file : PackedStr
 	var byte_array : PackedByteArray = []
 	for line in input_save_file:
 		byte_array.append_array((line + "\n").to_utf8_buffer())
-		
+	
 	
 	zip_packer.write_file(byte_array)
 	zip_packer.close_file()

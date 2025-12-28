@@ -124,5 +124,7 @@
 18.12.	major bug discovered while playing with tool: hitting ctrl + s while holding right click SOFTLOCKS the user.
 19.12.	mouse is now set to visible every input event when menus are open, abstracted selected_tool_handle_array from main to toolmanager, fixed pivot reset functionality, stopped adding features, started maintenance and refactoring
 22.12.	found and fixed undo transform bugs: i forgot to call post_selection_update in the undo entries. fixed undo color/material bugs: reapply_color was being called by undo and setting the appearance of the part, but not the part_color property. added SelectionManager.selection_set_exact_transforms to accurately undo scaling operations. all known undo bugs fixed.
+26.12.	users asked for save/load options earlier. worked out how to make filemanager extensible.
+27.12.	made modular/extensible modes for filemanager, add multiple file extension filter option, new folder button, rename button and delete button. added option for clearing workspace on load and option for embedding assets on save using the new filemanager mode configuration, fixed enter-press not working when typing in a filepath (editorui.input() now unfocuses at the end of the process frame instead of whenever. thats what stopped the entered signal for the lineedit from emitting)
 TODO:	TODO cleanup
 TODO:	add v0.2 planned features section in requirements like csg

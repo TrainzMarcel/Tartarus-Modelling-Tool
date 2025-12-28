@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://bjtrfenn2qo0u"]
+[gd_scene load_steps=22 format=3 uid="uid://bjtrfenn2qo0u"]
 
 [ext_resource type="Script" uid="uid://rd10txw1b76c" path="res://editor/classes/ui_file_manager/file_manager.gd" id="1_omhfy"]
 [ext_resource type="Texture2D" uid="uid://bul8005ajw68t" path="res://editor/data_ui/assets/File.svg" id="2_1m6pn"]
@@ -18,6 +18,8 @@
 [ext_resource type="StyleBox" uid="uid://bxumeweegtu36" path="res://editor/data_ui/styles/button_and_line_edit_styles/file_dialog/pressed.tres" id="14_f3j7t"]
 [ext_resource type="StyleBox" uid="uid://ux7uqdijiwdh" path="res://editor/data_ui/styles/panel_styles/submenu_panel.tres" id="15_3kflr"]
 [ext_resource type="Script" uid="uid://b0qnitcp3u5s6" path="res://editor/classes/ui_editor/label_numeric.gd" id="15_56d13"]
+[ext_resource type="Script" uid="uid://j6sbjyr0ukj2" path="res://editor/classes/ui_file_manager/file_manager_mode.gd" id="16_xki3j"]
+[ext_resource type="Script" uid="uid://bta5w6pjs8xnc" path="res://editor/classes/ui_editor/tooltip_assign.gd" id="17_jw4td"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_6oyx8"]
 content_margin_bottom = 6.0
@@ -32,7 +34,6 @@ grow_vertical = 2
 script = ExtResource("1_omhfy")
 file_icon = ExtResource("2_1m6pn")
 folder_icon = ExtResource("3_in7kl")
-filters = Array[String](["*.tmv", "*"])
 
 [node name="Panel" type="Panel" parent="."]
 layout_mode = 1
@@ -141,6 +142,42 @@ theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/focus = ExtResource("6_itj42")
 text = " Root "
 
+[node name="ButtonNewFolder" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+text = " New Folder "
+
+[node name="ButtonRename" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+text = " Rename "
+
+[node name="ButtonTrash" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+text = " Trash "
+
 [node name="ControlSpacer" type="Control" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -150,7 +187,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme = ExtResource("3_y5lmk")
 theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
-text = "Save a file"
+text = "Open a file"
 horizontal_alignment = 1
 
 [node name="ControlSpacer2" type="Control" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerControls"]
@@ -233,15 +270,63 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="PanelContainerExtraOptions" type="PanelContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection"]
+[node name="PanelContainerModeData" type="PanelContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection"]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(248, 0)
 layout_mode = 2
+size_flags_horizontal = 8
 theme_override_styles/panel = ExtResource("15_3kflr")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerExtraOptions"]
+[node name="VBoxContainerLoadModel" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData" node_paths=PackedStringArray("settings_ui_array")]
+visible = false
 layout_mode = 2
+script = ExtResource("16_xki3j")
+mode_name = &"load_model"
+mode_title = "Load a Model"
+filters = Array[String](["*.tmv", "*"])
+settings_ui_array = [NodePath("ButtonClearWorkspace")]
+
+[node name="ButtonClearWorkspace" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/VBoxContainerLoadModel"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+tooltip_text = "should the workspace be cleared when load is pressed?"
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+text = "Clear workspace
+on load"
+autowrap_mode = 2
+script = ExtResource("17_jw4td")
+
+[node name="VBoxContainerSaveModel" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData" node_paths=PackedStringArray("settings_ui_array")]
+visible = false
+layout_mode = 2
+script = ExtResource("16_xki3j")
+mode_name = &"save_model"
+mode_title = "Save a Model"
+filters = Array[String](["*.tmv"])
+settings_ui_array = [NodePath("ButtonEmbedAssets")]
+
+[node name="ButtonEmbedAssets" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/VBoxContainerSaveModel"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+tooltip_text = "should used assets be embedded in the save file?
+this is not necessary if you are not using any custom assets."
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+text = "Embed assets"
+autowrap_mode = 2
+script = ExtResource("17_jw4td")
 
 [node name="GradientPanel2" type="Panel" parent="Panel/MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 2)

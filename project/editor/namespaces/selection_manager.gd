@@ -152,7 +152,7 @@ static func handle_input(
 				))
 		elif event.keycode == KEY_DELETE:
 			if is_selecting_allowed:
-				EditorUI.l_message.text = "deleted " + str(SelectionManager.selected_parts_array.size()) + " parts"
+				EditorUI.set_l_msg("deleted " + str(SelectionManager.selected_parts_array.size()) + " parts")
 				SelectionManager.selection_delete_undoable()
 				SelectionManager.post_selection_update()
 				#immediately update hovered_part in case theres another part behind the deleted one(s)
@@ -163,34 +163,34 @@ static func handle_input(
 			if is_selecting_allowed:
 				SelectionManager.selection_clear_undoable()
 				SelectionManager.post_selection_update()
-				EditorUI.l_message.text = "cleared selection"
+				EditorUI.set_l_msg("cleared selection")
 		#select all
 		elif event.keycode == KEY_A and event.ctrl_pressed:
 			if is_selecting_allowed:
 				SelectionManager.selection_set_to_workspace_undoable()
 				SelectionManager.post_selection_update()
-				EditorUI.l_message.text = "selected all parts"
+				EditorUI.set_l_msg("selected all parts")
 		#cut
 		elif event.keycode == KEY_X and event.ctrl_pressed:
 			SelectionManager.selection_copy()
 			SelectionManager.selection_delete_undoable()
 			SelectionManager.post_selection_update()
-			EditorUI.l_message.text = "cut " + str(SelectionManager.parts_clipboard.size()) + " parts"
+			EditorUI.set_l_msg("cut " + str(SelectionManager.parts_clipboard.size()) + " parts")
 		#copy
 		elif event.keycode == KEY_C and event.ctrl_pressed:
 			SelectionManager.selection_copy()
 			SelectionManager.post_selection_update()
-			EditorUI.l_message.text = "copied " + str(SelectionManager.parts_clipboard.size()) + " parts"
+			EditorUI.set_l_msg("copied " + str(SelectionManager.parts_clipboard.size()) + " parts")
 		#paste
 		elif event.keycode == KEY_V and event.ctrl_pressed:
 			SelectionManager.selection_paste_undoable()
 			SelectionManager.post_selection_update()
-			EditorUI.l_message.text = "pasted " + str(SelectionManager.parts_clipboard.size()) + " parts"
+			EditorUI.set_l_msg("pasted " + str(SelectionManager.parts_clipboard.size()) + " parts")
 		#duplicate
 		elif event.keycode == KEY_D and event.ctrl_pressed:
 			SelectionManager.selection_duplicate_undoable()
 			SelectionManager.post_selection_update()
-			EditorUI.l_message.text = "duplicated " + str(SelectionManager.selected_parts_array.size()) + " parts"
+			EditorUI.set_l_msg("duplicated " + str(SelectionManager.selected_parts_array.size()) + " parts")
 
 
 "TODO"#make guard clauses and use returns to flatten this mess

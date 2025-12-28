@@ -1,6 +1,5 @@
 TOP PRIORITY
 clean up TODOS
-unify the naming scheme in ui for rotation vs degrees
 reduce code duplication in snapping code
 reduce code duplication in asset manager
 settings menu? centralized settings loader? csv? automated property setting ui? skybox picker? hint system disable?

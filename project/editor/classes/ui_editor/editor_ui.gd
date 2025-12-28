@@ -245,7 +245,7 @@ func _input(event):
 		if (event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER) and not event.shift_pressed:
 			var focus_owner : Control = get_viewport().gui_get_focus_owner()
 			if focus_owner is LineEdit or focus_owner is TextEdit:
-				focus_owner.release_focus()
+				focus_owner.call_deferred("release_focus")
 
 
 #helper functions
@@ -308,7 +308,7 @@ static func create_material_buttons(on_material_selected : Callable, materials_l
 	WorkspaceManager.button_material_mapping = WorkspaceManager.create_mapping(new_buttons)
 
 
-#for undo/redo action information
+#more convienient to have a function for this
 static func set_l_msg(text : String):
 	l_message.text = text
 

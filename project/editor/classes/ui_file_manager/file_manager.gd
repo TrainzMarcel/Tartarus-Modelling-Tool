@@ -1,27 +1,23 @@
 extends Control
 class_name FileManager
 
-enum FileMode {
-	open_file,
-	save_file
-}
+"TODO ERROR"#add error handling whenever fileaccess and diraccess are used
+#this filemanager can only select single files currently which is fine for my purposes
 
-
-
-#filters like *.jpg
 @export var file_icon : Texture2D
 @export var folder_icon : Texture2D
 @export var file_list_max_entries : int = 10
 
-@export var filters : Array[String] = ["*"]
 @export var dir_start_linux : String = "/"
 @export var dir_start_windows : String = "C:"
 var dir_start : String
-var selected_filter : String = filters[0]
-var dir_current : String = "/"
-var dir_current_globalized : String = ""
+var selected_filters : Array
 var dir_access : DirAccess
-@export var dir_history : Array[String]
+
+#for moving to trash and renaming
+var selected_file_or_folder : String
+
+var dir_history : Array[String]
 var dir_history_index : int = 0
 var subfolder_count : int = 0
 
@@ -34,6 +30,9 @@ var b_parent_folder : Button
 var b_refresh : Button
 var b_list_folder : Button
 var b_root_folder : Button
+var b_new_folder : Button
+var b_rename : Button
+var b_trash : Button
 var b_close_page : Button
 
 #second row
@@ -45,6 +44,10 @@ var t_main_file_display : Tree
 var hbc_list_file_display : HBoxContainer
 var t_list_file_display : Array[Tree]
 var t_list_file_display_extra : Array[Tree]
+var pc_mode_data_holder : PanelContainer
+var mode_name_to_data_map : Dictionary
+var current_mode : StringName
+
 
 #bottom controls
 var l_file_count : LabelNumeric
@@ -55,7 +58,7 @@ var ob_filters : OptionButton
 
 signal accept_button_pressed(path : String, filename : String)
 
-var i : int = 0
+#var i : int = 0
 #enum Icon
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -66,6 +69,10 @@ func _ready():
 	b_refresh = %ButtonRefresh
 	b_list_folder = %ButtonList
 	b_root_folder = %ButtonRoot
+	b_new_folder = %ButtonNewFolder
+	b_rename = %ButtonRename
+	b_trash = %ButtonTrash
+	
 	b_close_page = %ButtonClosePage
 	le_filepath = %LineEditFilepath
 	ob_drives = %OptionButtonDrives
@@ -74,9 +81,11 @@ func _ready():
 #file displays
 	t_main_file_display = %TreeMainFileDisplay
 	hbc_list_file_display = %HBoxContainerListFileDisplay
-	
 	#root of tree
 	t_main_file_display.create_item()
+	
+#options/mode data container
+	pc_mode_data_holder = %PanelContainerModeData
 	
 	
 #bottom controls
@@ -99,13 +108,17 @@ func _ready():
 		var drive_name : String = DirAccess.get_drive_name(drive)
 		ob_drives.add_item(drive_name)
 	
-	for filter in filters:
-		ob_filters.add_item(filter)
-	ob_filters.selected = 0
-	selected_filter = filters[0]
+#get configs from pc_configuration_data
+	for mode_data in pc_mode_data_holder.get_children():
+		mode_data = mode_data as FileManagerModeData
+		mode_name_to_data_map[mode_data.mode_name] = mode_data
+		
+		#create 2d array
+		for filter in mode_data.filters:
+			filter = filter as String
+			mode_data.filters_internal.append(filter.split(","))
 	
-	if dir_start != "/":
-		subfolder_count = dir_start.split("/").size() - 1
+	pc_mode_data_holder.visible = false
 	update_file_display(dir_start)
 	
 	
@@ -113,13 +126,19 @@ func _ready():
 	b_close_page.pressed.connect(on_b_close_page_pressed)
 	
 	t_main_file_display.item_activated.connect(on_t_file_display_item_activated.bind(t_main_file_display))
+	t_main_file_display.item_selected.connect(on_t_file_display_item_selected.bind(t_main_file_display))
 	
-	b_parent_folder.pressed.connect(on_b_parent_folder_pressed)
 	b_next_folder.pressed.connect(on_b_next_folder_pressed)
 	b_previous_folder.pressed.connect(on_b_previous_folder_pressed)
-	b_root_folder.pressed.connect(on_b_root_folder_pressed)
-	b_list_folder.pressed.connect(on_b_list_folder_pressed)
+	b_parent_folder.pressed.connect(on_b_parent_folder_pressed)
 	b_refresh.pressed.connect(on_b_refresh_pressed)
+	b_list_folder.pressed.connect(on_b_list_folder_pressed)
+	b_root_folder.pressed.connect(on_b_root_folder_pressed)
+	b_new_folder.pressed.connect(on_b_new_folder_pressed)
+	b_rename.pressed.connect(on_b_rename_pressed)
+	b_trash.pressed.connect(on_b_trash_pressed)
+	
+	
 	le_filepath.text_submitted.connect(on_le_filepath_text_submitted)
 	ob_drives.item_selected.connect(on_ob_drives_item_selected)
 	ob_filters.item_selected.connect(on_ob_filters_item_selected)
@@ -127,16 +146,41 @@ func _ready():
 
 
 #helper functions
-func popup(mode : FileMode):
+func popup(mode_name : StringName):
 	#i dont actually think users want to re-navigate back each time this opens
 	#change_dir(dir_start, true)
+	var mode_data : FileManagerModeData = mode_name_to_data_map.get(mode_name)
+	if mode_data == null:
+		push_error("file manager mode not found: ", mode_name)
+		return
 	
-	if mode == FileMode.save_file:
-		l_title.text = "Save a file"
+	#keep track of current mode
+	current_mode = mode_name
+	
+	#set filemanager title
+	l_title.text = mode_data.mode_title
+	
+	#if there is no settings ui, hide that panel
+	if mode_data.settings_ui_array.is_empty():
+		pc_mode_data_holder.visible = false
+	#else, hide all except the current modes options
 	else:
-		l_title.text = "Load a file"
+		pc_mode_data_holder.visible = true
+		for settings in pc_mode_data_holder.get_children():
+			settings.visible = false
+		mode_data.visible = true
 	
+	#initialize filters ui
+	ob_filters.clear()
+	if not mode_data.filters.is_empty():
+		for filters in mode_data.filters:
+			ob_filters.add_item(filters)
+			selected_filters = mode_data.filters_internal[0]
+	else:
+		ob_filters.add_item("*")
+		selected_filters = ["*"]
 	
+	ob_filters.selected = 0
 	visible = true
 
 
@@ -144,38 +188,48 @@ func close():
 	visible = false
 
 
-func change_dir(input : String, record : bool):
-	var previous_dir : String = dir_access.get_current_dir()
+#for easily reading ui state from outside
+func get_options_ui(mode_name : StringName):
+	var mode_data = mode_name_to_data_map.get(mode_name)
+	if mode_data == null:
+		push_error("file manager mode data not found: ", mode_name)
+	return mode_data
+
+
+#for easily refreshing from outside after a file operation
+func refresh_file_manager():
+	update_file_display(dir_access.get_current_dir())
+
+
+func change_dir(input : String):
 	dir_access.change_dir(input)
 	var current_dir : String = dir_access.get_current_dir()
 	
-	#record means add to visited filepath history
-	if record:
-		#if index is not at the end
-		if dir_history_index != dir_history.size() - 1:
-			#pop everything past the index off
-			var i : int = 0
-			var index_to_end : int = (dir_history.size() - 1) - dir_history_index
-			while i < index_to_end:
-				dir_history.pop_back()
-				i = i + 1
-			
-		dir_history.append(dir_access.get_current_dir())
-		dir_history_index = dir_history.size() - 1
-	
-	if current_dir == "/":
-		subfolder_count = 0
-	elif current_dir != previous_dir:
-		subfolder_count = current_dir.split("/").size() - 1
-	
-	
 	update_file_display(current_dir)
+
+
+func change_dir_undoable(input : String):
+	if dir_history_index != dir_history.size() - 1:
+		#pop everything past the index off
+		var i : int = 0
+		var index_to_end : int = (dir_history.size() - 1) - dir_history_index
+		while i < index_to_end:
+			dir_history.pop_back()
+			i = i + 1
+	
+	dir_history.append(dir_access.get_current_dir())
+	dir_history_index = dir_history.size() - 1
+	
+	change_dir(input)
 
 
 func update_file_display(current_dir : String):
 	var folders : PackedStringArray = dir_access.get_directories()
 	var files : PackedStringArray = dir_access.get_files()
 	var total : int = folders.size() + files.size()
+	
+	subfolder_count = current_dir.split("/").size() - 1
+	
 	le_filepath.text = ProjectSettings.globalize_path(current_dir)
 	l_file_count.number = total
 	l_subfolder_count.number = subfolder_count
@@ -189,10 +243,11 @@ func update_file_display(current_dir : String):
 		var required_trees : int = max(ceil(float(total) / file_list_max_entries), 4)
 		var existing_trees : Array[Node] = hbc_list_file_display.get_children()
 		if required_trees > existing_trees.size():
-			var i : int = existing_trees.size()
-			while i < required_trees:
+			var k : int = existing_trees.size()
+			while k < required_trees:
 				var new : Tree = Tree.new()
 				new.item_activated.connect(on_t_file_display_item_activated.bind(new))
+				new.item_selected.connect(on_t_file_display_item_selected.bind(new))
 				new.hide_folding = true
 				new.hide_root = true
 				new.custom_minimum_size = Vector2i(248, 301)
@@ -207,20 +262,20 @@ func update_file_display(current_dir : String):
 				new.scroll_horizontal_enabled = false
 				new.scroll_vertical_enabled = false
 				
-				i = i + 1
+				k = k + 1
 		
 		elif required_trees <= existing_trees.size():
 			#unhide needed tree nodes
-			var i : int = 0
-			while i < required_trees:
-				existing_trees[i].visible = true
-				i = i + 1
+			var j : int = 0
+			while j < required_trees:
+				existing_trees[j].visible = true
+				j = j + 1
 			
 			#hide unneeded tree nodes
-			i = required_trees
-			while i < existing_trees.size():
-				existing_trees[i].visible = false
-				i = i + 1
+			j = required_trees
+			while j < existing_trees.size():
+				existing_trees[j].visible = false
+				j = j + 1
 		
 		#refresh after possible changes
 		#only get tree nodes that are set visible
@@ -278,8 +333,12 @@ func regen_tree_ui(tree : Tree, folders : PackedStringArray, files : PackedStrin
 		new.set_icon(0, file_icon)
 		new.set_tooltip_text(0, " ")
 		new.set_text_overrun_behavior(0, TextServer.OVERRUN_TRIM_CHAR)
-		if selected_filter != "*":
-			if not file.ends_with(selected_filter.lstrip("*")):
+		if selected_filters != ["*"]:
+			var is_file_matching : bool = false
+			for filter in selected_filters:
+				is_file_matching = is_file_matching or file.match(filter)
+			
+			if not is_file_matching:
 				new.set_selectable(0, false)
 				new.set_custom_color(0, Color(0.3,0.3,0.3))
 
@@ -293,25 +352,42 @@ func on_b_close_page_pressed():
 func on_b_previous_folder_pressed():
 	#do not exceed 0
 	dir_history_index = max(dir_history_index - 1, 0)
-	change_dir(dir_history[dir_history_index], false)
+	change_dir(dir_history[dir_history_index])
 
 
 func on_b_next_folder_pressed():
 	#do not exceed array size
 	dir_history_index = min(dir_history_index + 1, dir_history.size() - 1)
-	change_dir(dir_history[dir_history_index], false)
+	change_dir(dir_history[dir_history_index])
 
 
 func on_b_parent_folder_pressed():
-	change_dir("..", true)
+	change_dir_undoable("..")
 
 
 func on_b_root_folder_pressed():
-	change_dir("/", true)
+	change_dir_undoable(dir_start)
+
+
+func on_b_new_folder_pressed():
+	if le_file_name.text.is_valid_filename():
+		DirAccess.make_dir_absolute(dir_access.get_current_dir().path_join(le_file_name.text))
+	refresh_file_manager()
+
+
+func on_b_rename_pressed():
+	if le_file_name.text.is_valid_filename():
+		dir_access.rename(selected_file_or_folder, le_file_name.text)
+	refresh_file_manager()
+
+
+func on_b_trash_pressed():
+	OS.move_to_trash(ProjectSettings.globalize_path(dir_access.get_current_dir().path_join(selected_file_or_folder)))
+	refresh_file_manager()
 
 
 func on_b_refresh_pressed():
-	update_file_display(dir_access.get_current_dir())
+	refresh_file_manager()
 
 
 func on_b_list_folder_pressed():
@@ -320,17 +396,17 @@ func on_b_list_folder_pressed():
 
 func on_le_filepath_text_submitted(new : String):
 	if dir_access.dir_exists(new):
-		change_dir(new, true)
+		change_dir_undoable(new)
 
 
 func on_ob_drives_item_selected(index : int):
 	var drive : String = ob_drives.get_item_text(index)
-	change_dir(ProjectSettings.localize_path(drive), true)
+	change_dir_undoable(ProjectSettings.localize_path(drive))
 	le_filepath.text = drive
 
 
 func on_ob_filters_item_selected(index : int):
-	selected_filter = ob_filters.get_item_text(index)
+	selected_filters = mode_name_to_data_map.get(current_mode).filters_internal[index]
 	update_file_display(dir_access.get_current_dir())
 
 
@@ -350,6 +426,13 @@ func on_t_file_display_item_activated(tree : Tree):
 	var selected_text : String = selected.get_text(0)
 	
 	if dir_access.dir_exists(dir_access.get_current_dir() + "/" + selected_text):
-		change_dir(selected_text, true)
+		change_dir_undoable(selected_text)
 	elif dir_access.file_exists(dir_access.get_current_dir() + "/" + selected_text):
 		le_file_name.text = selected_text.rsplit(".", true, 1)[0]
+
+#for deleting (moving to trash) and renaming
+func on_t_file_display_item_selected(tree : Tree):
+	var selected : TreeItem = tree.get_selected()
+	if selected == null:
+		return
+	selected_file_or_folder = selected.get_text(0)
