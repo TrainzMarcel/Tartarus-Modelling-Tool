@@ -1,17 +1,147 @@
 extends RefCounted
 class_name DataUtils
 
-"TODO"#move saving to sqlite
-#https://github.com/2shady4u/godot-sqlite
-static func color_serialize(input : Color):
+"TODO"#improve error handling
+
+class SQLDefinitions:
+	const version_table_name : String = "version"
+	const version_table : Dictionary = {
+		"save_version": {"data_type":"int"},
+		"engine_version": {"data_type":"text"}
+	}
+	const version_data : Dictionary = {"save_version": 1, "engine_version": "v4.5.stable"}
+	
+	const color_table_name : String = "colors"
+	const color_table : Dictionary = {
+		"id": {"data_type":"int", "primary_key": true, "not_null": true, "auto_increment": true},
+		"r": {"data_type":"int"},
+		"g": {"data_type":"int"},
+		"b": {"data_type":"int"}
+	}
+	
+	const material_table_name : String = "materials"
+	const material_table : Dictionary = {
+		"id": {"data_type":"int", "primary_key": true, "not_null": true, "auto_increment": true},
+		"csv_headers": {"data_type":"text"},
+		"csv_values": {"data_type":"text"}
+	}
+	
+	const mesh_table_name : String = "meshes"
+	const mesh_table : Dictionary = {
+		"id": {"data_type":"int", "primary_key": true, "not_null": true, "auto_increment": true},
+		"mesh_filename": {"data_type":"text"},
+	}
+	
+	const part_table_name : String = "parts"
+	const part_table : Dictionary = {
+		"id": {"data_type":"int", "primary_key": true, "not_null": true, "auto_increment": true},
+		"position": {"data_type":"blob"},
+		"rotation": {"data_type":"blob"},
+		"scale": {"data_type":"blob"},
+		"color_id": {"data_type":"int"},
+		"material_id": {"data_type":"int"},
+		"mesh_id": {"data_type":"int"}
+	}
+	
+	const group_table_name : String = "groups"
+	const group_table : Dictionary = {
+		"id": {"data_type":"int", "primary_key": true, "not_null": true, "auto_increment": true},
+		"parent_group_id": {"data_type":"int"}
+	}
+	
+	const group_part_table_name : String = "groups_parts"
+	const group_part_table : Dictionary = {
+		"id": {"data_type":"int", "primary_key": true, "not_null": true, "auto_increment": true},
+		"group_id": {"data_type":"int"},
+		"part_id": {"data_type":"int"}
+	}
+
+static var sql_def : SQLDefinitions = SQLDefinitions.new()
+
+
+static func initialize_sql_db(filepath : String, verbosity : SQLite.VerbosityLevel = SQLite.VerbosityLevel.NORMAL):
+	var sql : SQLite = SQLite.new()
+	sql.path = filepath
+	sql.open_db()
+	sql.create_table(sql_def.color_table_name, sql_def.color_table)
+	sql.create_table(sql_def.material_table_name, sql_def.material_table)
+	sql.create_table(sql_def.mesh_table_name, sql_def.mesh_table)
+	sql.create_table(sql_def.part_table_name, sql_def.part_table)
+	sql.create_table(sql_def.group_part_table_name, sql_def.group_part_table)
+	sql.create_table(sql_def.group_table_name, sql_def.group_table)
+	
+	sql.insert_row(sql_def.version_table_name, sql_def.version_data)
+	
+	return sql
+
+
+static func sql_color_serialize(color : Color, sql : SQLite):
+	return sql.insert_row(sql_def.color_table_name, {"r": color.r8, "g": color.g8, "b": color.b8})
+
+static func sql_color_deserialize(row : Dictionary):
+	return Color.from_rgba8(row["r"], row["g"], row["b"])
+
+
+static func sql_material_serialize(input : Material, sql : SQLite):
+	#saving shadermaterial to file
+	if input is ShaderMaterial:
+		var result_csv_headers : PackedStringArray = []
+		"TODO"
+		var result_csv_values : PackedStringArray = []
+		result_line.append("ShaderMaterial")
+		result_line.append(AssetManager.get_name_of_asset(input.shader))
+		#DONT include colors during serialization, causes huge problems
+		#and there is already a color header anyway
+		result_line.append(AssetManager.get_name_of_asset(input, false))
+		
+		var properties : Array = input.shader.get_shader_uniform_list()
+		
+		var i : int = 0
+		while i < properties.size():
+			var parameter = input.get_shader_parameter(properties[i].name)
+			result_csv_headers.append(properties[i].name)
+			result_csv_values.append_array(shader_property_serialize(parameter, properties[i]))
+			i = i + 1
+		return sql.insert_row(sql_def.material_table_name, {})
+		
+	#saving standardmaterial to file
+	elif input is StandardMaterial3D or input is ORMMaterial3D:
+		var result_line : PackedStringArray = []
+		if input is StandardMaterial3D:
+			result_line.append("StandardMaterial3D")
+		else:
+			result_line.append("ORMMaterial3D")
+		
+		#DONT include colors during serialization, causes huge problems
+		#and there is already a color header anyway
+		#just set the part color on load and it will automatically recolor the required material
+		result_line.append(AssetManager.normalize_asset_name(AssetManager.get_name_of_asset(input, false), false))
+		var properties = input.get_property_list()
+		var i : int = 0
+		
+		while i < properties.size():
+			var property = properties[i]
+			#skip non-persistent/internal properties
+			if property.usage & PROPERTY_USAGE_STORAGE == 0:
+				i = i + 1
+				continue
+			
+			var parameter = input.get(properties[i].name)
+			result_line.append_array(standardmaterial_property_serialize(parameter, property))
+			
+			i = i + 1
+		return result_line
+
+
+static func csv_color_serialize(input : Color):
 	return PackedStringArray([str(input.r8), str(input.g8), str(input.b8)])
 
 
-static func color_deserialize(input : PackedStringArray):
-	return Color8(int(input[0]), int(input[1]), int(input[2]))
+static func csv_color_deserialize(input : PackedStringArray):
+	return Color.from_rgba8(int(input[0]), int(input[1]), int(input[2]))
 
 
-static func material_serialize(input):
+static func csv_material_serialize(input : Material):
 	#saving shadermaterial to file
 	if input is ShaderMaterial:
 		var result_line : PackedStringArray = []
@@ -26,33 +156,7 @@ static func material_serialize(input):
 		var i : int = 0
 		while i < properties.size():
 			var parameter = input.get_shader_parameter(properties[i].name)
-			#print("parameter", parameter)
-			if parameter is Texture2D:
-				result_line.append(AssetManager.get_name_of_asset(parameter, false, true))
-			elif parameter is String:
-				result_line.append(parameter)
-			elif parameter is float or parameter is int:
-				result_line.append(str(parameter))
-			elif parameter is bool:
-				if parameter:
-					result_line.append("t")
-				else:
-					result_line.append("f")
-			elif parameter is Vector3:
-				result_line.append_array([str(parameter.x), str(parameter.y), str(parameter.z)])
-			elif parameter is Vector4:
-				result_line.append_array([str(parameter.w), str(parameter.x), str(parameter.y), str(parameter.z)])
-			elif parameter is Color:
-				result_line.append_array([str(parameter.r8), str(parameter.g8), str(parameter.b8), str(parameter.a8)])
-			elif parameter == null and properties[i].type == TYPE_VECTOR3:
-				result_line.append_array(["","",""])
-			elif parameter == null and properties[i].type == TYPE_VECTOR4 or properties[i].type == TYPE_COLOR:
-				result_line.append_array(["","","",""])
-			elif parameter == null and properties[i].type == TYPE_FLOAT or properties[i].type == TYPE_INT or properties[i].type == TYPE_STRING or properties[i].hint_string == "Texture2D":
-				result_line.append("")
-			else:
-				push_error("unimplemented shadermaterial type: ", properties[i].hint_string, " ", properties[i])
-				return
+			result_line.append_array(shader_property_serialize(parameter, properties[i]))
 			i = i + 1
 		return result_line
 		
@@ -66,56 +170,26 @@ static func material_serialize(input):
 		
 		#DONT include colors during serialization, causes huge problems
 		#and there is already a color header anyway
-		#so just call AssetManager.recolor_material() instead when loading
+		#just set the part color on load and it will automatically recolor the required material
 		result_line.append(AssetManager.normalize_asset_name(AssetManager.get_name_of_asset(input, false), false))
-		
-		
 		var properties = input.get_property_list()
 		var i : int = 0
-		#print("START SERIALIZE-----------------------------------------------------------")
+		
 		while i < properties.size():
 			var property = properties[i]
 			#skip non-persistent/internal properties
 			if property.usage & PROPERTY_USAGE_STORAGE == 0:
 				i = i + 1
 				continue
-			"DEBUG"
-			#print(property.name)
 			
 			var parameter = input.get(properties[i].name)
-			if parameter is Texture2D:
-				result_line.append(AssetManager.normalize_asset_name(AssetManager.get_name_of_asset(parameter, false, true), true))
-			elif parameter is Material:
-				result_line.append("")#recursive use of materials not supported
-			elif parameter is String:
-				result_line.append(parameter)
-			elif parameter is float or parameter is int:
-				result_line.append(str(parameter))
-			elif parameter is bool:
-				if parameter:
-					result_line.append("t")
-				else:
-					result_line.append("f")
-			elif parameter is Vector3:
-				result_line.append_array([str(parameter.x), str(parameter.y), str(parameter.z)])
-			elif parameter is Vector4:
-				result_line.append_array([str(parameter.w), str(parameter.x), str(parameter.y), str(parameter.z)])
-			elif parameter is Color:
-				result_line.append_array([str(parameter.r8), str(parameter.g8), str(parameter.b8), str(parameter.a8)])
-			elif parameter == null and property.type == TYPE_VECTOR3:
-				result_line.append_array(["","",""])
-			elif parameter == null and property.type == TYPE_VECTOR4 or property.type == TYPE_COLOR:
-				result_line.append_array(["","","",""])
-			elif parameter == null:
-				result_line.append("")
-			else:
-				push_error("unimplemented basematerial3d type: ", property.hint_string, " ", parameter)
-				return
+			result_line.append_array(standardmaterial_property_serialize(parameter, property))
+			
 			i = i + 1
 		return result_line
 
 
-static func material_deserialize(input : PackedStringArray):
+static func csv_material_deserialize(input : PackedStringArray):
 #loading shadermaterial from file
 	if input[0] == "ShaderMaterial":
 		#load material
@@ -187,7 +261,7 @@ static func material_deserialize(input : PackedStringArray):
 				i_line = i_line + 3
 		#load color
 			elif parameter.type == TYPE_COLOR:
-				parameter_output = Color8(int(input[i_line]), int(input[i_line + 1]), int(input[i_line + 2]), int(input[i_line + 3]))
+				parameter_output = Color.from_rgba8(int(input[i_line]), int(input[i_line + 1]), int(input[i_line + 2]), int(input[i_line + 3]))
 				#needs to be incremented by 3, the r g b a are stored as separate ints
 				i_line = i_line + 3
 			else:
@@ -283,7 +357,7 @@ static func material_deserialize(input : PackedStringArray):
 				i_line = i_line + 3
 		#load colors
 			elif parameter.type == TYPE_COLOR:
-				parameter_output = Color8(int(input[i_line]), int(input[i_line + 1]), int(input[i_line + 2]), int(input[i_line + 3]))
+				parameter_output = Color.from_rgba8(int(input[i_line]), int(input[i_line + 1]), int(input[i_line + 2]), int(input[i_line + 3]))
 				#needs to be incremented by 3, the r g b a are stored as separate ints
 				i_line = i_line + 3
 			elif parameter.type == TYPE_OBJECT and parameter.hint_string == "Material":
@@ -299,15 +373,15 @@ static func material_deserialize(input : PackedStringArray):
 		return result_asset
 
 
-static func mesh_serialize(input : Mesh):
+static func csv_mesh_serialize(input : Mesh):
 	return PackedStringArray([AssetManager.normalize_asset_name(input.resource_path, true)])
 
 
-static func mesh_deserialize(input : PackedStringArray):
+static func csv_mesh_deserialize(input : PackedStringArray):
 	return AssetManager.get_asset_by_name(AssetManager.normalize_asset_name(input[0], false))
 
 
-static func part_serialize(input, color_to_int_mapping : Dictionary, material_name_to_int_mapping : Dictionary, mesh_name_to_int_mapping : Dictionary):
+static func csv_part_serialize(input, color_to_int_mapping : Dictionary, material_name_to_int_mapping : Dictionary, mesh_name_to_int_mapping : Dictionary):
 	var result_line : PackedStringArray = []
 	#position
 	result_line.append(str(input.transform.origin.x))
@@ -331,7 +405,7 @@ static func part_serialize(input, color_to_int_mapping : Dictionary, material_na
 	return result_line
 
 
-static func part_deserialize(input, used_colors : Array, used_materials : Array, used_meshes : Array):
+static func csv_part_deserialize(input, used_colors : Array, used_materials : Array, used_meshes : Array):
 	var new : Part = Part.new()
 	#position
 	new.transform.origin.x = float(input[0])
@@ -594,6 +668,68 @@ static func get_meshes_from_parts(input_parts : Array):
 	return used_meshes
 
 
+"TODO"#these could be combined
+static func shader_property_serialize(parameter, property : Dictionary):
+	if parameter is Texture2D:
+		return [AssetManager.get_name_of_asset(parameter, false, true)]
+	elif parameter is String:
+		return parameter
+	elif parameter is float or parameter is int:
+		return str(parameter)
+	elif parameter is bool:
+		if parameter:
+			return ["t"]
+		else:
+			return ["f"]
+	elif parameter is Vector3:
+		return [str(parameter.x), str(parameter.y), str(parameter.z)]
+	elif parameter is Vector4:
+		return [str(parameter.w), str(parameter.x), str(parameter.y), str(parameter.z)]
+	elif parameter is Color:
+		return [str(parameter.r8), str(parameter.g8), str(parameter.b8), str(parameter.a8)]
+	#if parameter is null, infer type from dictionary
+	elif parameter == null and property.type == TYPE_VECTOR3:
+		return ["","",""]
+	elif parameter == null and property.type == TYPE_VECTOR4 or property.type == TYPE_COLOR:
+		return ["","","",""]
+	elif parameter == null and property.type == TYPE_FLOAT or property.type == TYPE_INT or property.type == TYPE_STRING or property.hint_string == "Texture2D":
+		return [""]
+	else:
+		push_error("unimplemented shadermaterial type: ", property.hint_string, " ", property)
+		return
+
+
+static func standardmaterial_property_serialize(parameter, property : Dictionary):
+	if parameter is Texture2D:
+		return [AssetManager.normalize_asset_name(AssetManager.get_name_of_asset(parameter, false, true), true)]
+	elif parameter is Material:
+		return [""]#recursive use of materials not supported
+	elif parameter is String:
+		return [parameter]
+	elif parameter is float or parameter is int:
+		return [str(parameter)]
+	elif parameter is bool:
+		if parameter:
+			return ["t"]
+		else:
+			return ["f"]
+	elif parameter is Vector3:
+		return [str(parameter.x), str(parameter.y), str(parameter.z)]
+	elif parameter is Vector4:
+		return [str(parameter.w), str(parameter.x), str(parameter.y), str(parameter.z)]
+	elif parameter is Color:
+		return [str(parameter.r8), str(parameter.g8), str(parameter.b8), str(parameter.a8)]
+	elif parameter == null and property.type == TYPE_VECTOR3:
+		return ["","",""]
+	elif parameter == null and property.type == TYPE_VECTOR4 or property.type == TYPE_COLOR:
+		return ["","","",""]
+	elif parameter == null:
+		return [""]
+	else:
+		push_error("unimplemented basematerial3d type: ", property.hint_string, " ", parameter)
+		return
+
+
 #surprisingly godot did not have recursive functions for getting files or reading files recursively
 static func get_files_recursive(filepath : String, file_names : PackedStringArray = []):
 	file_names.append_array(DirAccess.get_files_at(filepath))
@@ -621,7 +757,7 @@ static func copy_dir_recursively(source: String, destination: String):
 
 
 #experimental
-"TODO"#test
+"TODO"#write test
 static func replace_tres_filepaths(filepath : String, filename : String, dependency_filename_mapping : Dictionary):
 	var combined_path : String = filepath.path_join(filename)
 	var file : String = FileAccess.get_file_as_string(combined_path)

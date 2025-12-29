@@ -2,7 +2,7 @@ TOP PRIORITY
 clean up TODOS
 reduce code duplication in snapping code
 reduce code duplication in asset manager
-settings menu? centralized settings loader? csv? automated property setting ui? skybox picker? hint system disable?
+settings menu? centralized settings loader? csv? automated property setting ui? hint system disable?
 add a setting for changing if camera uses scroll wheel to set speed or to scroll (same as lock-on mode except it uses a raycast to determine distance and scroll amount. if raycast hits nothing, use a default scroll distance.)
 add BETTER hint system than manual (gmod droplet noise with timer progressbar)
 add better user feedback for part, color and material selector (selected shape, color or material are shown above the dropdown instead of just message bar)
@@ -49,6 +49,6 @@ implement part locking
 recolor selection box to red if 2 selected parts are overlapping perfectly
 implement multi part coloring and material application
 implement automatic hidden face reduction algorithm
-binary save files
+skybox picker
 implement uv mapping
 (maybe?) refine selection system to work with normal godot assets because it would be fun to use this as a level editor

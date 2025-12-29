@@ -753,7 +753,7 @@ static func save_model(filepath : String, name : String, embed_assets : bool):
 	#::COLOR::
 	file.append(data_headers[0])
 	while i < used_colors.size():
-		file.append(separator.join(DataUtils.color_serialize(used_colors[i])))
+		file.append(separator.join(DataUtils.csv_color_serialize(used_colors[i])))
 		i = i + 1
 	
 	#add materials to save
@@ -763,7 +763,7 @@ static func save_model(filepath : String, name : String, embed_assets : bool):
 	while i < used_materials.size():
 		if not assets_used.has(used_materials[i]):
 			assets_used.append(used_materials[i])
-		file.append(separator.join(DataUtils.material_serialize(used_materials[i])))
+		file.append(separator.join(DataUtils.csv_material_serialize(used_materials[i])))
 		i = i + 1
 	
 	#add meshes to save
@@ -774,7 +774,7 @@ static func save_model(filepath : String, name : String, embed_assets : bool):
 	while i < used_meshes.size():
 		if not assets_used.has(used_meshes[i]):
 			assets_used.append(used_meshes[i])
-		file.append(separator.join(DataUtils.mesh_serialize(used_meshes[i])))
+		file.append(separator.join(DataUtils.csv_mesh_serialize(used_meshes[i])))
 		i = i + 1
 	
 	
@@ -783,7 +783,7 @@ static func save_model(filepath : String, name : String, embed_assets : bool):
 	#::MODEL::
 	file.append(data_headers[3])
 	while i < SelectionManager.selected_parts_array.size():
-		file.append(separator.join(DataUtils.part_serialize(SelectionManager.selected_parts_array[i], color_to_int_mapping, material_name_to_int_mapping, mesh_to_int_mapping)))
+		file.append(separator.join(DataUtils.csv_part_serialize(SelectionManager.selected_parts_array[i], color_to_int_mapping, material_name_to_int_mapping, mesh_to_int_mapping)))
 		i = i + 1
 	
 	if not embed_assets:
@@ -819,17 +819,17 @@ static func load_model(filepath : String, name : String):
 		var line = file[i].split(",")
 	#load color
 		if mode == data_headers[0]:
-			used_colors.append(DataUtils.color_deserialize(line))
+			used_colors.append(DataUtils.csv_color_deserialize(line))
 			
 	#load material
 		elif mode == data_headers[1]:
-			used_materials.append(DataUtils.material_deserialize(line))
+			used_materials.append(DataUtils.csv_material_deserialize(line))
 	#load mesh
 		elif mode == data_headers[2]:
-			used_meshes.append(DataUtils.mesh_deserialize(line))
+			used_meshes.append(DataUtils.csv_mesh_deserialize(line))
 	#load parts
 		elif mode == data_headers[3]:
-			var new : Part = DataUtils.part_deserialize(line, used_colors, used_materials, used_meshes)
+			var new : Part = DataUtils.csv_part_deserialize(line, used_colors, used_materials, used_meshes)
 			
 			workspace.add_child(new)
 			new.initialize()
