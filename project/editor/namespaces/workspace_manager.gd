@@ -692,11 +692,12 @@ static func confirm_save_load(filepath : String, name : String):
 		EditorUI.set_l_msg("saving...")
 		var options : Control = EditorUI.fm_file.get_options_ui("save_model")
 		var embed_assets : bool = false
+		var selected_only : bool = false
 		if options != null:
-			var b_embed_assets : Button = options.get_node("ButtonEmbedAssets")
-			embed_assets = b_embed_assets.button_pressed
+			embed_assets = options.get_node("ButtonEmbedAssets").button_pressed
+			selected_only = options.get_node("ButtonSaveSelectedOnly").button_pressed
 		
-		save_model(filepath + "/", name, embed_assets)
+		save_model(filepath + "/", name, embed_assets, selected_only)
 		last_save_location = filepath
 		last_save_name = name
 		EditorUI.set_l_msg("successfully saved " + name + " at " + filepath + "!")
@@ -715,7 +716,7 @@ static func confirm_save_load(filepath : String, name : String):
 
 #actual save and load functions
 "TODO"#add error handling here and at load()
-static func save_model(filepath : String, name : String, embed_assets : bool):
+static func save_model(filepath : String, filename : String, embed_assets : bool, selected_only : bool):
 	"TODO"#probably add some setting for how much of the model to save
 	#plus add exclude functionality
 	#plus add part lock functionality
@@ -723,7 +724,7 @@ static func save_model(filepath : String, name : String, embed_assets : bool):
 	#storing the ids horizontally per part would probably be cheaper than vertically
 	#also maybe add comment feature that adds a line describing each column of every header
 	AssetManager.debug_pretty_print()
-	SelectionManager.selection_set_to_workspace()
+	var save_parts : Array = []
 	var used_colors : Array[Color] = []
 	var used_materials : Array[Material] = []
 	var used_meshes : Array[Mesh] = []
@@ -733,13 +734,25 @@ static func save_model(filepath : String, name : String, embed_assets : bool):
 	var assets_used : Array[Resource] = []
 	var line : PackedStringArray = []
 	var line_debug : PackedStringArray = []
-	var file : PackedStringArray = []
-	const separator : String = ","
+	var file : PackedByteArray = []
+	#const separator : String = ","
+	
+	
+	if selected_only:
+		save_parts = SelectionManager.selected_parts_array
+		if save_parts.is_empty():
+			push_error("save selected only is enabled but nothing is selected! aborting.")
+			return
+	else:
+		save_parts = workspace.get_children().filter(func(node): return node is Part)
+	
+	
+	var sql : SQLite = DataUtils.initialize_sql_db(filepath, filename)
 	
 	#get used colors, materials and meshes
-	used_colors = DataUtils.get_colors_from_parts(SelectionManager.selected_parts_array)
-	used_materials = DataUtils.get_materials_from_parts(SelectionManager.selected_parts_array)
-	used_meshes = DataUtils.get_meshes_from_parts(SelectionManager.selected_parts_array)
+	used_colors = DataUtils.get_colors_from_parts(save_parts)
+	used_materials = DataUtils.get_materials_from_parts(save_parts)
+	used_meshes = DataUtils.get_meshes_from_parts(save_parts)
 	
 	#create mappings to quickly assign the used color and material ids
 	color_to_int_mapping = create_mapping(used_colors)
@@ -748,61 +761,89 @@ static func save_model(filepath : String, name : String, embed_assets : bool):
 	
 	#add colors to save
 	var i : int = 0
-	"TODO"#make this a safer operation (string variable or const instead of hardcoded)
-	#and/or use a function dispatch for each header type
-	#::COLOR::
-	file.append(data_headers[0])
 	while i < used_colors.size():
-		file.append(separator.join(DataUtils.csv_color_serialize(used_colors[i])))
+		var success : bool = DataUtils.sql_color_serialize(used_colors[i], sql)
+		if not success:
+			push_error("color serializing failed: color number", i, ", values: ", used_colors[i])
 		i = i + 1
 	
 	#add materials to save
 	i = 0
-	#::MATERIAL::
-	file.append(data_headers[1])
 	while i < used_materials.size():
 		if not assets_used.has(used_materials[i]):
 			assets_used.append(used_materials[i])
-		file.append(separator.join(DataUtils.csv_material_serialize(used_materials[i])))
+		var success : bool = DataUtils.sql_material_serialize(used_materials[i], sql)
+		if not success:
+			push_error("material serializing failed: material number", i, ", values: ", used_materials[i])
 		i = i + 1
 	
-	#add meshes to save
+	
 	"TODO"#add support for .obj or .gltf
+	#add meshes to save
 	i = 0
-	#::MESH::
-	file.append(data_headers[2])
 	while i < used_meshes.size():
 		if not assets_used.has(used_meshes[i]):
 			assets_used.append(used_meshes[i])
-		file.append(separator.join(DataUtils.csv_mesh_serialize(used_meshes[i])))
+		var success : bool = DataUtils.sql_mesh_serialize(used_meshes[i], sql)
+		if not success:
+			push_error("mesh serializing failed: mesh number", i, ", values: ", used_meshes[i])
 		i = i + 1
 	
 	
 	#part data
 	i = 0
-	#::MODEL::
-	file.append(data_headers[3])
-	while i < SelectionManager.selected_parts_array.size():
-		file.append(separator.join(DataUtils.csv_part_serialize(SelectionManager.selected_parts_array[i], color_to_int_mapping, material_name_to_int_mapping, mesh_to_int_mapping)))
+	while i < save_parts.size():
+		var success : bool = DataUtils.sql_part_serialize(save_parts[i], color_to_int_mapping, material_name_to_int_mapping, mesh_to_int_mapping, sql)
+		if not success:
+			"TODO"#log better error
+			push_error("part serializing failed: part number", i, ", values: ", save_parts[i])
 		i = i + 1
 	
+	"TODO"#this could be less wasteful
 	if not embed_assets:
 		assets_used.clear()
 	
+	sql.close_db()
+	file = FileAccess.get_file_as_bytes(filepath.path_join(filename + ".db"))
+	var s : Error = FileAccess.get_open_error()
+	if s != OK:
+		push_error("opening database file failed, error code: ", s, " error name: ", error_string(s))
+	
+	s = DirAccess.remove_absolute(filepath.path_join(filename + ".db"))
+	if s != OK:
+		push_error("cleaning up database file failed, error code: ", s, " error name: ", error_string(s))
+	
 	#package everything up
-	DataUtils.data_zip(assets_used, file, filepath, name)
+	var zip_packer : ZIPPacker = DataUtils.zip_start(filepath, filename)
+	DataUtils.zip_data_file(zip_packer, file, filepath, filename, ".db")
+	DataUtils.zip_assets(assets_used, filepath, zip_packer)
+	DataUtils.zip_end(zip_packer, filepath, [])
 
 
-static func load_model(filepath : String, name : String):
+static func load_model(filepath : String, filename : String):
 	#no mappings required as the indices are already stored
 	var used_colors : Array[Color] = []
 	var used_materials : Array[Material] = []
 	var used_meshes : Array[Mesh] = []
-	var file : PackedStringArray = []
+	var file : PackedByteArray = []
+	
+	var zip_reader : ZIPReader = DataUtils.unzip_start(filepath, filename)
+	DataUtils.unzip_assets(zip_reader, filepath, filename)
+	var save_version : int = DataUtils.zip_check_save_version(zip_reader)
+	
+	file = DataUtils.unzip_data_file(zip_reader, filename)
+	
+	if save_version == 0:
+		load_model_from_csv_data(file, used_colors, used_materials, used_meshes)
+	elif save_version == 1:
+		load_model_from_sql_data(sql, used_colors, used_materials, used_meshes)
+	
+	DataUtils.unzip_end(zip_reader, filepath, [])
+
+
+static func load_model_from_csv_data(input : PackedByteArray, used_colors : Array[Color], used_materials : Array[Material], used_meshes : Array[Mesh]):
+	var file : PackedStringArray
 	var i : int = 0
-	
-	file = DataUtils.data_unzip(filepath, name)
-	
 	#mode from headers
 	var mode : String
 	while i < file.size():
@@ -837,6 +878,10 @@ static func load_model(filepath : String, name : String):
 		i = i + 1
 
 
+static func load_model_from_sql_data():
+	return
+
+"TODO"
 static func export_model():
 	
 	return

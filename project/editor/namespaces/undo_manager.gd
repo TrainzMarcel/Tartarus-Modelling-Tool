@@ -104,6 +104,7 @@ static func update_dependencies(undo_data : UndoData, is_appending : bool):
 						i.queue_free()
 			else:
 				push_error("tried to remove nonexistant reference")
+	print("current reference counter state:")
 	print(reference_counter.keys())
 	print(reference_counter.values())
 

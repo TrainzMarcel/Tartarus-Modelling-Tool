@@ -41,6 +41,7 @@ static func normalize_asset_name(name : String, keep_file_ending : bool, custom_
 	var result : PackedStringArray = name.rsplit("/", true, 1)
 	name = result[result.size() - 1]
 	
+	#strip file ending
 	if not keep_file_ending:
 		name = name.get_slice(".", 0)
 	

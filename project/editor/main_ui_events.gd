@@ -40,6 +40,7 @@ static func on_color_selected(button : Button):
 static func on_part_type_selected(button : Button):
 	WorkspaceManager.selected_part_type = WorkspaceManager.available_part_types[WorkspaceManager.button_part_type_mapping[button]]
 	EditorUI.set_l_msg(button.text.capitalize() + " selected")
+	WorkspaceManager.part_spawn(WorkspaceManager.selected_part_type)
 
 
 static func on_material_selected(button : Button):

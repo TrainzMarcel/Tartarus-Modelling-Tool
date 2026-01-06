@@ -528,7 +528,7 @@ text = "5"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart" node_paths=PackedStringArray("attached_control")]
+[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart" node_paths=PackedStringArray("attached_control", "attached_scroll_container")]
 layout_mode = 2
 tooltip_text = "Choose a part type"
 theme = ExtResource("36_xr5bj")
@@ -546,7 +546,8 @@ script = ExtResource("22_e8bxn")
 folded_in_symbol = "▲"
 folded_out_symbol = "▼"
 attached_control = NodePath("PanelContainerPartType")
-hide_after_click_on_attached_control = true
+attached_scroll_container = NodePath("PanelContainerPartType/MarginContainer/ScrollContainer")
+hide_after_click_on_attached_hitbox_control = true
 
 [node name="PanelContainerPartType" type="PanelContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton"]
 unique_name_in_owner = true
@@ -559,9 +560,10 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -221.0
+offset_left = -229.0
 offset_top = 8.0
-offset_bottom = 72.0
+offset_right = 30.0
+offset_bottom = 102.0
 mouse_filter = 2
 theme_override_styles/panel = ExtResource("12_rh0pf")
 metadata/_edit_group_ = true
@@ -574,7 +576,10 @@ theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 4
 
-[node name="PartPanelGridContainer" type="GridContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType/MarginContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType/MarginContainer"]
+layout_mode = 2
+
+[node name="PartPanelGridContainer" type="GridContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerSpawnPart/DropDownButton/PanelContainerPartType/MarginContainer/ScrollContainer"]
 unique_name_in_owner = true
 clip_contents = true
 layout_mode = 2
@@ -678,7 +683,7 @@ text = "7"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool" node_paths=PackedStringArray("attached_control", "attached_button")]
+[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool" node_paths=PackedStringArray("attached_control", "attached_scroll_container", "attached_button")]
 layout_mode = 2
 tooltip_text = "Choose a color"
 theme = ExtResource("36_xr5bj")
@@ -696,8 +701,9 @@ script = ExtResource("22_e8bxn")
 folded_in_symbol = "▲"
 folded_out_symbol = "▼"
 attached_control = NodePath("PanelContainerColor")
+attached_scroll_container = NodePath("PanelContainerColor/MarginContainer/ScrollContainer")
 attached_button = NodePath("../ButtonPaintTool")
-hide_after_click_on_attached_control = true
+hide_after_click_on_attached_hitbox_control = true
 
 [node name="PanelContainerColor" type="PanelContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerPaintTool/DropDownButton"]
 visible = false
@@ -794,7 +800,7 @@ text = "8"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerMaterialTool" node_paths=PackedStringArray("attached_control", "attached_button")]
+[node name="DropDownButton" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerMaterialTool" node_paths=PackedStringArray("attached_control", "attached_scroll_container", "attached_button")]
 layout_mode = 2
 tooltip_text = "Choose a Material"
 theme = ExtResource("36_xr5bj")
@@ -812,8 +818,9 @@ script = ExtResource("22_e8bxn")
 folded_in_symbol = "▲"
 folded_out_symbol = "▼"
 attached_control = NodePath("PanelContainerMaterial")
+attached_scroll_container = NodePath("PanelContainerMaterial/MarginContainer/ScrollContainer")
 attached_button = NodePath("../ButtonMaterialTool")
-hide_after_click_on_attached_control = true
+hide_after_click_on_attached_hitbox_control = true
 
 [node name="PanelContainerMaterial" type="PanelContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerMaterialTool/DropDownButton"]
 visible = false

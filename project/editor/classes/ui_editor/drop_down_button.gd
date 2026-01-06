@@ -5,18 +5,29 @@ class_name DropDownButton
 
 @export var folded_in_symbol : String = "▼"
 @export var folded_out_symbol : String = "▲"
+#control to show/hide on trigger
 @export var attached_control : Control
+#automatically gets scrollbars and will not
+@export var attached_scroll_container : ScrollContainer
 #button to press if this drop down gets pressed
 @export var attached_button : Button
 #MAKE SURE to set all the buttons in this control to have the action_mode "button press"
 #so that it gets triggered before the attached control disappears
-@export var hide_after_click_on_attached_control : bool = false
+@export var hide_after_click_on_attached_hitbox_control : bool = false
 
+#never close dropdown when a scrollbar was clicked on or
+#after a mouse down inside of the scrollbar, mouse up outside of scrollbar
+var click_started_on_scrollbar : bool = false
+#hold h and v scrollbar
+var scrollbars : Array[ScrollBar]
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	toggle_mode = true
 	self.toggled.connect(on_drop_down_toggled)
+	if attached_scroll_container != null:
+		scrollbars.append(attached_scroll_container.get_h_scroll_bar())
+		scrollbars.append(attached_scroll_container.get_v_scroll_bar())
 
 func _init():
 	text = folded_in_symbol
@@ -35,16 +46,33 @@ func on_drop_down_toggled(button_toggled : bool):
 
 
 func _input(event):
-	if event is InputEventMouseButton:
-		if not event.pressed and event.button_index == MOUSE_BUTTON_LEFT and attached_control != null:
-			var attached_control_rect : Rect2 = Rect2(attached_control.global_position, attached_control.size)
-			var button_rect : Rect2 = Rect2(global_position, size)
+	if not event is InputEventMouseButton:
+		return
+	
+	if not event.button_index == MOUSE_BUTTON_LEFT:
+		return
+	#if left click was released and theres an attached control
+	if not event.pressed and attached_control != null:
+		#if click is outside of attached rect or hide after click is enabled
+		#and if outside of button, close dropdown
+		if (hide_after_click_on_attached_hitbox_control or not is_cursor_inside(attached_control, event.position)) and not is_cursor_inside(self, event.position):
+			#except, do nothing if the last mouse down was on a scrollbar
+			if click_started_on_scrollbar:
+				click_started_on_scrollbar = false
+				return
 			
-			
-			#if click is outside of attached rect and outside of button, close dropdown
-			if (not attached_control_rect.has_point(event.position) or hide_after_click_on_attached_control) and not button_rect.has_point(event.position):
-				button_pressed = false
-				on_drop_down_toggled(button_pressed)
+			button_pressed = false
+			on_drop_down_toggled(button_pressed)
+	else:
+		#set if mouse down on scrollbar
+		var visible_scrollbars : Array = scrollbars.filter(func(scrollbar): return scrollbar.visible)
+		for scrollbar in visible_scrollbars:
+			click_started_on_scrollbar = click_started_on_scrollbar or is_cursor_inside(scrollbar, event.position)
+
+#helper
+func is_cursor_inside(control : Control, cursor_position : Vector2):
+	var control_rect : Rect2 = Rect2(control.global_position, control.size)
+	return control_rect.has_point(cursor_position)
 
 #custom tooltip related functions
 func _make_custom_tooltip(for_text : String):

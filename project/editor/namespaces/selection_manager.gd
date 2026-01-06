@@ -52,7 +52,7 @@ static func handle_input(
 	is_ui_hovered : bool,
 	is_selecting_allowed : bool,
 	is_hovering_allowed : bool,
-	hovered_part : Part,
+	hovered_part,
 	dragged_part,
 	hovered_handle : TransformHandle,
 	ray_result : Dictionary,

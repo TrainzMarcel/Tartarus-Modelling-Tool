@@ -93,8 +93,6 @@ static var is_selecting_allowed : bool = false
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	var sql = DataUtils.initialize_sql_db("/home/marci/Desktop/save testing/modeltest_data")
-	
 	OS.low_processor_usage_mode = true
 	DisplayServer.set_icon(preload("res://editor/data_ui/assets/program_icon_v1E2_CHOSEN.png").get_image())
 	DisplayServer.window_set_title("Tartarus Modelling Tool " + version_number)
