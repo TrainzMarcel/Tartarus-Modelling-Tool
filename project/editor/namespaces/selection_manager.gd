@@ -191,6 +191,12 @@ static func handle_input(
 			SelectionManager.selection_duplicate_undoable()
 			SelectionManager.post_selection_update()
 			EditorUI.set_l_msg("duplicated " + str(SelectionManager.selected_parts_array.size()) + " parts")
+		#group
+		elif event.keycode == KEY_G and event.ctrl_pressed:
+			SelectionManager.selection_group()
+		elif event.keycode == KEY_G and event.ctrl_pressed and event.shift_pressed:
+			SelectionManager.selection_ungroup()
+		#ungroup
 
 
 "TODO"#make guard clauses and use returns to flatten this mess
@@ -783,6 +789,14 @@ static func selection_scale(scale_absolute : Vector3):
 	#move transform handles with selection
 	selection_moved = true
 
+static func selection_group():
+	
+	return
+
+static func selection_ungroup():
+	
+	return
+
 
 #this is for precisely reversing scale operations with undo
 static func selection_set_exact_transforms(transform_array : Array, scale_array : Array, scale_absolute : Vector3):
@@ -873,7 +887,9 @@ static func selection_box_hover_on_part(part : Part, is_hovering_allowed : bool)
 
 static func refresh_bounding_box():
 	if selected_parts_array.is_empty() or not Main.safety_check(selected_parts_array) and not selection_changed:
+		Main.abb_selection_box.visible = false
 		return
+	
 	selected_parts_abb = SnapUtils.calculate_extents(selected_parts_abb, selected_parts_array[-1], selected_parts_array)
 	#debug
 	var d_input = {}
@@ -881,6 +897,9 @@ static func refresh_bounding_box():
 	d_input.extents = selected_parts_abb.extents
 	HyperDebug.actions.abb_visualize.do(d_input)
 	
+	Main.abb_selection_box.visible = true
+	Main.abb_selection_box.transform = selected_parts_abb.transform
+	Main.abb_selection_box.box_scale = selected_parts_abb.extents
 	
 	#refresh offset abb to selected array
 	#this array is used for transforming the whole selection with the position of the abb

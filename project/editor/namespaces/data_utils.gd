@@ -162,6 +162,10 @@ static func sql_material_deserialize(row : Dictionary):
 	#loading shadermaterial from sql row
 	var csv_type_information : PackedStringArray = row["csv_type_information"].split(",")
 	var csv_headers : PackedStringArray = row["csv_headers"].split(",")
+	var csv_headers_unpacked : Array[String] = []
+	for header in csv_headers:
+		csv_headers_unpacked.append(header)
+	
 	var csv_values : PackedStringArray = row["csv_values"].split(",")
 	
 	if csv_type_information[0] == "ShaderMaterial":
@@ -189,14 +193,14 @@ static func sql_material_deserialize(row : Dictionary):
 		
 		var properties : Array = shader.get_shader_uniform_list()
 		var i : int = 0
-		#start at 3 because line item 0, 1 and 2 are the material type, shader name and material name respectively
-		var i_line : int = 3
+		var i_line : int = 0
 		
 		while i < properties.size():
 			var parameter = properties[i]
+			var property_name_index = csv_headers_unpacked.find_custom(func(input : String): return input == parameter.name)
 			var parameter_output = material_property_deserialize(csv_values, parameter, i_line)
+			result_asset.set_shader_parameter(csv_headers[property_name_index], parameter_output)
 			
-			result_asset.set_shader_parameter(properties[i].name, parameter_output)
 			
 			#skip past vectors and colors
 			if csv_values[i_line].begins_with("["):
@@ -229,11 +233,12 @@ static func sql_material_deserialize(row : Dictionary):
 		
 		var properties : Array = result_asset.get_property_list()
 		var i : int = 0
-		#start at 2 because line item 0 and 1 are the material type and material name respectively
-		var i_line : int = 2
+		var i_line : int = 0
 		
 		while i < properties.size():
 			var parameter = properties[i]
+			var property_name_index = csv_headers_unpacked.find_custom(func(input : String): return input == parameter.name)
+			
 			
 			if i_line > csv_values.size() - 1:
 				return result_asset
@@ -247,6 +252,7 @@ static func sql_material_deserialize(row : Dictionary):
 				continue
 			
 			var parameter_output = material_property_deserialize(csv_values, parameter, i_line)
+			result_asset.set(csv_headers[property_name_index], parameter_output)
 			
 			#skip past vectors and colors
 			if csv_values[i_line].begins_with("["):
@@ -257,7 +263,6 @@ static func sql_material_deserialize(row : Dictionary):
 						return
 					i_line = i_line + 1
 			
-			result_asset.set(properties[i].name, parameter_output)
 			i_line = i_line + 1
 			i = i + 1
 		
@@ -294,308 +299,12 @@ static func sql_part_deserialize(row : Dictionary, used_colors : Array[Color], u
 	#scale
 	new.part_scale = bytes_to_var(row["scale"])
 	#mesh
-	new.part_mesh_node.mesh = used_meshes[row["material_id"]]
+	new.part_mesh_node.mesh = used_meshes[row["mesh_id"]]
 	#material
 	new.part_material = used_materials[row["material_id"]]
 	#color
 	new.part_color = used_colors[row["color_id"]]
 	
-	return new
-
-
-#legacy csv functions ----------------------------------------------------------
-static func csv_color_serialize(input : Color):
-	return PackedStringArray([str(input.r8), str(input.g8), str(input.b8)])
-
-
-static func csv_color_deserialize(input : PackedStringArray):
-	return Color.from_rgba8(int(input[0]), int(input[1]), int(input[2]))
-
-
-static func csv_material_serialize(input : Material):
-	#saving shadermaterial to file
-	if input is ShaderMaterial:
-		var result_line : PackedStringArray = []
-		result_line.append("ShaderMaterial")
-		result_line.append(AssetManager.get_name_of_asset(input.shader))
-		#DONT include colors during serialization, causes huge problems
-		#and there is already a color header anyway
-		result_line.append(AssetManager.get_name_of_asset(input, false))
-		
-		var properties : Array = input.shader.get_shader_uniform_list()
-		
-		var i : int = 0
-		while i < properties.size():
-			var parameter = input.get_shader_parameter(properties[i].name)
-			result_line.append_array(material_property_serialize(parameter, properties[i]))
-			i = i + 1
-		return result_line
-		
-	#saving standardmaterial to file
-	elif input is StandardMaterial3D or input is ORMMaterial3D:
-		var result_line : PackedStringArray = []
-		if input is StandardMaterial3D:
-			result_line.append("StandardMaterial3D")
-		else:
-			result_line.append("ORMMaterial3D")
-		
-		#DONT include colors during serialization, causes huge problems
-		#and there is already a color header anyway
-		#just set the part color on load and it will automatically recolor the required material
-		result_line.append(AssetManager.normalize_asset_name(AssetManager.get_name_of_asset(input, false), false))
-		var properties = input.get_property_list()
-		var i : int = 0
-		
-		while i < properties.size():
-			var property = properties[i]
-			#skip non-persistent/internal properties
-			if property.usage & PROPERTY_USAGE_STORAGE == 0:
-				i = i + 1
-				continue
-			
-			var parameter = input.get(properties[i].name)
-			result_line.append_array(material_property_serialize(parameter, property))
-			
-			i = i + 1
-		return result_line
-
-
-static func csv_material_deserialize(input : PackedStringArray):
-#loading shadermaterial from file
-	if input[0] == "ShaderMaterial":
-		#load material
-		var result_asset : ShaderMaterial
-		var asset_name : String = AssetManager.normalize_asset_name(input[2], false)
-		#recolor during part deserialization instead
-		result_asset = AssetManager.get_material_by_name_any_color(asset_name)
-		if result_asset != null:
-			return result_asset
-		else:
-			result_asset = ShaderMaterial.new()
-			result_asset.resource_path = asset_name
-			AssetManager.register_asset(result_asset)
-		
-		#load shader code
-		var shader : Shader
-		asset_name = AssetManager.normalize_asset_name(input[1], false)
-		shader = AssetManager.get_asset_by_name(asset_name)
-		if shader == null:
-			push_error("shader loading failure, name in save file: " + input[1])
-			return
-		
-		result_asset.shader = shader
-		
-		var properties : Array = shader.get_shader_uniform_list()
-		var i : int = 0
-		#start at 3 because line item 0, 1 and 2 are the material type, shader name and material name respectively
-		var i_line : int = 3
-		
-		while i < properties.size():
-			var parameter = properties[i]
-			var parameter_output
-		#load image texture
-			if parameter.type == TYPE_OBJECT and parameter.hint_string == "Texture2D":
-				var image_texture : ImageTexture = AssetManager.get_asset_by_name(AssetManager.normalize_asset_name(input[i_line], false))
-				
-				#if image texture still hasnt loaded, abort
-				if image_texture == null:
-					push_error("image texture loading failure: ", input[i_line], " at line index: ", i_line, " at property index: ", i)
-					return
-				
-				parameter_output = image_texture
-		#load bool
-			elif parameter.type == TYPE_BOOL:
-				if input[i_line] == "t":
-					parameter_output = true
-				if input[i_line] == "f":
-					parameter_output = false
-				else:
-					push_error("unexpected value: ", input[i_line], " | only true or false allowed")
-		#load int
-			elif parameter.type == TYPE_INT:
-				parameter_output = int(input[i_line])
-		#load float
-			elif parameter.type == TYPE_FLOAT:
-				parameter_output = float(input[i_line])
-		#load string
-			elif parameter.type == TYPE_STRING:
-				parameter_output = input[i_line]
-		#load vector3
-			elif parameter.type == TYPE_VECTOR3:
-				parameter_output = Vector3(float(input[i_line]), float(input[i_line + 1]), float(input[i_line + 2]))
-				#needs to be incremented by 2, the x y z are stored as separate floats
-				i_line = i_line + 2
-		#load vector4
-			elif parameter.type == TYPE_VECTOR4:
-				parameter_output = Vector4(float(input[i_line]), float(input[i_line + 1]), float(input[i_line + 2]), float(input[i_line + 3]))
-				#needs to be incremented by 3, the x y z w are stored as separate floats
-				i_line = i_line + 3
-		#load color
-			elif parameter.type == TYPE_COLOR:
-				parameter_output = Color.from_rgba8(int(input[i_line]), int(input[i_line + 1]), int(input[i_line + 2]), int(input[i_line + 3]))
-				#needs to be incremented by 3, the r g b a are stored as separate ints
-				i_line = i_line + 3
-			else:
-				push_error("unimplemented type ", parameter.hint_string, " ", parameter)
-				return
-			
-			result_asset.set_shader_parameter(properties[i].name, parameter_output)
-			i_line = i_line + 1
-			i = i + 1
-		
-		return result_asset
-	
-#loading basematerial3d from file
-	elif input[0] == "StandardMaterial3D" or input[0] == "ORMMaterial3D":
-		#load material
-		var result_asset : BaseMaterial3D
-		var asset_name : String = AssetManager.normalize_asset_name(input[1], false)
-		#recolor during part deserialization instead
-		result_asset = AssetManager.get_material_by_name_any_color(asset_name)
-		if result_asset != null:
-			return result_asset
-		else:
-			result_asset = StandardMaterial3D.new()
-			result_asset.resource_path = asset_name
-			AssetManager.register_asset(result_asset)
-		
-		var properties : Array = result_asset.get_property_list()
-		var i : int = 0
-		#start at 2 because line item 0 and 1 are the material type and material name respectively
-		var i_line : int = 2
-		
-		while i < properties.size():
-			var parameter = properties[i]
-			
-			if i_line > input.size() - 1:
-				return result_asset
-			
-			#skip non-persistent/internal properties
-			if parameter.usage & PROPERTY_USAGE_STORAGE == 0 or input[i_line] == "":
-				#omitting this line caused a nasty desynchronization bug between the two counters
-				if input[i_line] == "":
-					i_line = i_line + 1
-				i = i + 1
-				continue
-			
-			"DEBUG DESERIALIZE"
-			#print(parameter.name)
-			
-			var parameter_output
-		#load image texture
-			if parameter.type == TYPE_OBJECT and parameter.hint_string == "Texture2D":
-				#check if this subresource is reused by any other material
-				#AssetManager.get_asset_by_name(input[i_line])
-				var image_texture : ImageTexture = AssetManager.get_asset_by_name(AssetManager.normalize_asset_name(input[i_line], false))
-				
-				#if image texture still hasnt loaded, abort
-				if image_texture == null:
-					push_error("image texture loading failure: ", input[i_line], " at line index: ", i_line, " at property index: ", i)
-					return
-				
-				parameter_output = image_texture
-			elif parameter.type == TYPE_OBJECT and parameter.hint_string == "Material":
-				#recursive usage of materials not supported
-				
-				parameter_output = null
-		#load bool
-			elif parameter.type == TYPE_BOOL:
-				if input[i_line] == "t":
-					parameter_output = true
-				elif input[i_line] == "f":
-					parameter_output = false
-				else:
-					push_error("unexpected value: ", input[i_line], " at line index: ", i_line, " at property index: ", i, " | only t (true) or f (false) allowed")
-		#load int
-			elif parameter.type == TYPE_INT:
-				parameter_output = int(input[i_line])
-		#load float
-			elif parameter.type == TYPE_FLOAT:
-				parameter_output = float(input[i_line])
-		#load string
-			elif parameter.type == TYPE_STRING:
-				#strip " on both sides
-				parameter_output = input[i_line]
-		#load vector3
-			elif parameter.type == TYPE_VECTOR3:
-				parameter_output = Vector3(float(input[i_line]), float(input[i_line + 1]), float(input[i_line + 2]))
-				#needs to be incremented by 2, the x y z are stored as separate floats
-				i_line = i_line + 2
-		#load vector4
-			elif parameter.type == TYPE_VECTOR4:
-				parameter_output = Vector4(float(input[i_line]), float(input[i_line + 1]), float(input[i_line + 2]), float(input[i_line + 3]))
-				#needs to be incremented by 3, the x y z w are stored as separate floats
-				i_line = i_line + 3
-		#load colors
-			elif parameter.type == TYPE_COLOR:
-				parameter_output = Color.from_rgba8(int(input[i_line]), int(input[i_line + 1]), int(input[i_line + 2]), int(input[i_line + 3]))
-				#needs to be incremented by 3, the r g b a are stored as separate ints
-				i_line = i_line + 3
-			elif parameter.type == TYPE_OBJECT and parameter.hint_string == "Material":
-				parameter_output = null
-			else:
-				push_error("unimplemented type ", parameter)
-				return
-			
-			result_asset.set(properties[i].name, parameter_output)
-			i_line = i_line + 1
-			i = i + 1
-		
-		return result_asset
-
-
-static func csv_mesh_serialize(input : Mesh):
-	return PackedStringArray([AssetManager.normalize_asset_name(input.resource_path, true)])
-
-
-static func csv_mesh_deserialize(input : PackedStringArray):
-	return AssetManager.get_asset_by_name(AssetManager.normalize_asset_name(input[0], false))
-
-
-static func csv_part_serialize(input, color_to_int_mapping : Dictionary, material_name_to_int_mapping : Dictionary, mesh_name_to_int_mapping : Dictionary):
-	var result_line : PackedStringArray = []
-	#position
-	result_line.append(str(input.transform.origin.x))
-	result_line.append(str(input.transform.origin.y))
-	result_line.append(str(input.transform.origin.z))
-	#scale
-	result_line.append(str(input.part_scale.x))
-	result_line.append(str(input.part_scale.y))
-	result_line.append(str(input.part_scale.z))
-	#rotation (quaternion kept failing at certain angles)
-	result_line.append(str(input.rotation_degrees.x))
-	result_line.append(str(input.rotation_degrees.y))
-	result_line.append(str(input.rotation_degrees.z))
-	#color
-	result_line.append(str(color_to_int_mapping[input.part_color]))
-	#material
-	result_line.append(str(material_name_to_int_mapping[AssetManager.get_name_of_asset(input.part_material, false)]))
-	#mesh
-	result_line.append(str(mesh_name_to_int_mapping[AssetManager.get_name_of_asset(input.part_mesh_node.mesh)]))
-	
-	return result_line
-
-
-static func csv_part_deserialize(input, used_colors : Array, used_materials : Array, used_meshes : Array):
-	var new : Part = Part.new()
-	#position
-	new.transform.origin.x = float(input[0])
-	new.transform.origin.y = float(input[1])
-	new.transform.origin.z = float(input[2])
-	#scale
-	new.part_scale.x = float(input[3])
-	new.part_scale.y = float(input[4])
-	new.part_scale.z = float(input[5])
-	#rotation
-	new.rotation_degrees.x = float(input[6])
-	new.rotation_degrees.y = float(input[7])
-	new.rotation_degrees.z = float(input[8])
-	#mesh
-	new.part_mesh_node.mesh = used_meshes[int(input[11])]
-	#material
-	new.part_material = used_materials[int(input[10])]
-	#color
-	new.part_color = used_colors[int(input[9])]
 	return new
 
 
@@ -666,14 +375,27 @@ static func zip_check_save_version(zip_reader : ZIPReader):
 #for copying sql db file out of zip
 static func zip_copy_to_filesystem(zip_reader : ZIPReader, filepath_origin : String, filename : String, filepath_destination : String):
 	var error : int
-	
 	var buffer : PackedByteArray = zip_reader.read_file(filepath_origin.path_join(filename))
-	var file_access : FileAccess = FileAccess.open(filepath_origin.path_join(filename), FileAccess.WRITE)
-	error = file_access.store_buffer(buffer)
-	if error != OK:
-		push_error("copying file ", filename, " from ", filepath_origin, " to ", filepath_destination)
+	
+	#in the rare case that a db file of the same name exists, add a number until it no longer collides
+	if FileAccess.file_exists(filepath_destination.path_join(filename)):
+		var i : int = 0
+		var split : PackedStringArray = filename.rsplit(".", 1)
+		while FileAccess.file_exists(filepath_destination.path_join(split[0] + str(i) + "." + split[1])):
+			i = i + 1
+			if i == 1000:
+				push_error("could not find free filename for ", filename, " after 1000 attempts. aborting loading.")
+				return
+		filename = split[0] + str(i) + "." + split[1]
+	
+	
+	var file_access : FileAccess = FileAccess.open(filepath_destination.path_join(filename), FileAccess.WRITE)
+	var succeeded = file_access.store_buffer(buffer)
+	if not succeeded:
+		push_error("copying file ", filename, " from ", filepath_origin.path_join(filename), " to ", filepath_destination.path_join(filename), " failed, error code: ", error, " error name: ", error_string(error))
 	
 	file_access.close()
+	return filename
 
 
 #zip serialized (csv or sql) data file
@@ -694,17 +416,8 @@ static func zip_data_file(zip_packer : ZIPPacker, data_file_as_bytes : PackedByt
 
 static func unzip_data_file(zip_reader : ZIPReader, filename : String):
 	#data file
-	var data_bytes : PackedByteArray = zip_reader.read_file(filename)
-	return data_bytes.get_string_from_utf8().split("\n")
+	return zip_reader.read_file(filename)
 
-
-#adds newline to each packedstringarray entry and turns it into a byte array
-static func csv_to_bytes(input_csv_file):
-	#quick conversion
-	var byte_array : PackedByteArray = []
-	for line in input_csv_file:
-		byte_array.append_array((line + "\n").to_utf8_buffer())
-	return byte_array
 
 #saves resources to disk
 static func zip_assets(input_assets : Array[Resource], filepath : String, zip_packer : ZIPPacker):
@@ -729,12 +442,11 @@ static func zip_assets(input_assets : Array[Resource], filepath : String, zip_pa
 		var resource_already_listed : bool = false
 		
 		for j in total:
+			if AssetManager.get_name_of_asset(j) == "" or AssetManager.get_name_of_asset(input_assets[i]) == "":
+				resource_already_listed = true
+				break
+			
 			if AssetManager.get_name_of_asset(j) == AssetManager.get_name_of_asset(input_assets[i]):
-				"DEBUG"
-				#print(j.resource_path)
-				#print(j.resource_name)
-				#print(input_assets[i].resource_path)
-				#print(input_assets[i].resource_name)
 				resource_already_listed = true
 				break
 		
@@ -820,8 +532,12 @@ static func unzip_assets(zip_reader : ZIPReader, filepath : String, filename : S
 			continue
 		#otherwise, load subresource
 		
+	#skip data files
+		if extension == "csv" or extension == "db":
+			i = i + 1
+			continue
 	#resource file
-		if extension == "tres" or extension == "res":
+		elif extension == "tres" or extension == "res":
 			var resource_bytes : PackedByteArray = zip_reader.read_file(file_name)
 			var file_access = FileAccess.open(filepath + file_name, FileAccess.WRITE)
 			file_access.store_buffer(resource_bytes)
@@ -844,6 +560,11 @@ static func unzip_assets(zip_reader : ZIPReader, filepath : String, filename : S
 				if image.is_empty():
 					image.load_jpg_from_buffer(zip_reader.read_file(file_name))
 			
+			if image.is_empty():
+				push_error("godot image loader failed to load image: ", file_name, ", skipping to next asset.")
+				i = i + 1
+				continue
+			
 			image.generate_mipmaps()
 			var image_texture : ImageTexture = ImageTexture.create_from_image(image)
 			image_texture.resource_path = filepath + file_name
@@ -860,6 +581,7 @@ static func unzip_assets(zip_reader : ZIPReader, filepath : String, filename : S
 			push_error("unimplemented filetype: ", extension)
 		
 		i = i + 1
+	AssetManager.debug_pretty_print()
 
 
 static func get_colors_from_parts(input_parts : Array):
@@ -955,16 +677,21 @@ static func material_property_deserialize(csv_values : PackedStringArray, parame
 	const l_bracket : String = "["
 	const r_bracket : String = "]"
 	if parameter.type == TYPE_OBJECT and parameter.hint_string == "Material":
-		push_error("recursive usage of materials not supported")
-		return
+		push_error("recursive use of materials not supported")
+		return null
 	elif parameter.type == TYPE_OBJECT and parameter.hint_string == "Texture2D":
-		#check if this subresource is reused by any other material
+		#if no filename has been entered here, assume that the material simply doesnt have a texture assigned
+		if csv_values[i_line] == "":
+			return null
+		
+		#get image from memory as either unzip_assets or program startup have likely already loaded it
 		var image_texture : ImageTexture = AssetManager.get_asset_by_name(AssetManager.normalize_asset_name(csv_values[i_line], false))
 		
-		#if image texture still hasnt loaded, abort
+		
+		#if image texture still hasnt loaded, push an error
 		if image_texture == null:
-			push_error("image texture loading failure: ", csv_values[i_line], ", at line index: ", i_line, ", at property: ", parameter)
-			return
+			push_error("image texture loading failure at value: ", csv_values[i_line], ", at line item number: ", i_line, ", for the property: ", parameter.name)
+			return null
 		
 		return image_texture
 #load bool
@@ -987,7 +714,7 @@ static func material_property_deserialize(csv_values : PackedStringArray, parame
 #load vector3
 	elif parameter.type == TYPE_VECTOR3:
 		if not csv_values[i_line].begins_with(l_bracket) or not csv_values[i_line + 2].ends_with(r_bracket):
-			push_error("malformed csv at item: ", i_line, ", aborting deserialization.")
+			push_error("malformed csv at line item number: ", i_line, ", returning null.")
 			return
 		return Vector3(float(csv_values[i_line].trim_prefix(l_bracket)), float(csv_values[i_line + 1]), float(csv_values[i_line + 2].trim_suffix(r_bracket)))
 		#needs to be incremented by 2, the x y z are stored as separate floats
@@ -995,7 +722,7 @@ static func material_property_deserialize(csv_values : PackedStringArray, parame
 #load vector4
 	elif parameter.type == TYPE_VECTOR4:
 		if not csv_values[i_line].begins_with(l_bracket) or not csv_values[i_line + 3].ends_with(r_bracket):
-			push_error("malformed csv at item: ", i_line, ", aborting deserialization.")
+			push_error("malformed csv at line item number: ", i_line, ", returning null.")
 			return
 		return Vector4(float(csv_values[i_line].trim_prefix(l_bracket)), float(csv_values[i_line + 1]), float(csv_values[i_line + 2]), float(csv_values[i_line + 3].trim_suffix(r_bracket)))
 		#needs to be incremented by 3, the x y z w are stored as separate floats
@@ -1003,7 +730,7 @@ static func material_property_deserialize(csv_values : PackedStringArray, parame
 #load color
 	elif parameter.type == TYPE_COLOR:
 		if not csv_values[i_line].begins_with(l_bracket) or not csv_values[i_line + 3].ends_with(r_bracket):
-			push_error("malformed csv at item: ", i_line, ", aborting deserialization.")
+			push_error("malformed csv at line item number: ", i_line, ", returning null.")
 			return
 		return Color.from_rgba8(int(csv_values[i_line].trim_prefix(l_bracket)), int(csv_values[i_line + 1]), int(csv_values[i_line + 2]), int(csv_values[i_line + 3].trim_suffix(r_bracket)))
 		#needs to be incremented by 3, the r g b a are stored as separate ints

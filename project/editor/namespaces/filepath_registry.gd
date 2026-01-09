@@ -7,6 +7,11 @@ static var data_folder_executable : String
 #these paths get the executable folder path prepended at runtime in WorkspaceManager.initialize()
 static var data_program : String = "program_data.json"
 static var data_folder_assets : String = "assets/"
+static var data_folder_autosaves : String = "autosaves/"
+
+#save names
+static var data_crash_save : String = "crash_save"
+static var data_auto_save : String = "auto_save"
 
 #used as fallbacks for null values
 const data_fallback_material : String = "res://editor/data_editor/broken_checkers.tres"

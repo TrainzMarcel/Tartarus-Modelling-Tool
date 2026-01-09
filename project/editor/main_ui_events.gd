@@ -27,6 +27,16 @@ static func on_pivot_reset_pressed():
 	)
 
 
+static func on_group_selection_pressed():
+	SelectionManager.selection_group()
+	return
+
+
+static func on_ungroup_selection_pressed():
+	SelectionManager.selection_ungroup()
+	return
+
+
 static func on_spawn_pressed():
 	WorkspaceManager.part_spawn(WorkspaceManager.selected_part_type)
 

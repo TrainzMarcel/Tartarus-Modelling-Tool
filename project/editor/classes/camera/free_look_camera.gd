@@ -120,8 +120,20 @@ func cam_process(
 		).normalized()
 	
 	if direction != Vector3.ZERO:
+		#move dragged selection or dragged transform handles while camera is moving
+		Main.hovered_handle = Main.handle_hover_check()
+		WorkspaceManager.transform_handle_handle(last_mouse_event)
 		Main.hovered_part = Main.part_hover_check()
 		WorkspaceManager.drag_handle(last_mouse_event)
+		ToolManager.handle_set_root_position(
+				transform_handle_root,
+				SelectionManager.selected_parts_abb,
+				WorkspaceManager.pivot_transform,
+				WorkspaceManager.pivot_custom_mode_active,
+				Main.local_transform_active,
+				ToolManager.selected_tool_handle_array
+				)
+	
 	
 	if Input.is_physical_key_pressed(KEY_SHIFT): # boost
 		translate(direction * velocity * delta * boost_speed_multiplier)

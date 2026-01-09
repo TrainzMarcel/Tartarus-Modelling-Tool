@@ -161,7 +161,7 @@ static func drag_snap_position_to_hovered(
 	var hovered_part : Part = ray_result.collider
 	var normal : Vector3 = ray_result.normal
 	
-	#first find closest basis vectors to normal vector and use that to determine which side length of the abb to use
+	#first find closest basis vectors to normal vector and use that to determine which side length of the abb to use for the following step
 	var r_dict_1 : Dictionary = SnapUtils.find_closest_vector_abs(selected_parts_abb.transform.basis, normal, true)
 	#abb_normal_length is used to move the selection up until the bottom surface meets with the "canvas" surface that is being dragged onto
 	var abb_normal_length : float = selected_parts_abb.extents[r_dict_1.index]
@@ -244,7 +244,7 @@ static func drag_snap_position_to_hovered(
 	
 	#transform to global space and apply this to dragged_part
 	var result : Vector3 = hovered_part.global_transform * result_local_snap
-	#take away the dragged 
+	#take away the dragged
 	result = result - abb_to_dragged_offset_planar
 	#print("---------------------------------_")
 	#print("dragged_part pos  ", dragged_part.position)

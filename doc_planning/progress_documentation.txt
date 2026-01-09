@@ -132,5 +132,7 @@
 4.1.	continue working on sql saving and loading
 5.1.	figured out how to cleanly use correct loader for save version and so currently in the process of splitting up data_zip function into an open_zip with ziploader return, one or more functions which use the ziploader and a terminate function), fix clicking on scrollbar in dropdown closing dropdown, fix weird looking cursor in select tool icon in toolbar ui, made selecting a part type spawn it immediately afterward
 6.1.	finished all zip functions
+7.1.	finalized sql loading with versioning to allow legacy csv loading
+9.1.	made linearly-moving transform handle operations move with camera while dragging and made transform handles keep up with selection dragging while camera moves, added auto saving and crash saving, started to work on selection grouping
 TODO:	TODO cleanup
 

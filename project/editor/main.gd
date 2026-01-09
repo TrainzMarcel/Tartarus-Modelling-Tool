@@ -9,16 +9,23 @@ class_name Main
 @export_category("Dependencies")
 @export var e_cam : FreeLookCamera
 static var cam : FreeLookCamera
-@export var second_cam : Camera3D
+@export var e_second_cam : Camera3D
+static var second_cam : Camera3D
 @export var e_workspace : Node
 @export var e_transform_handle_root : TransformHandleRoot
 static var transform_handle_root : TransformHandleRoot
 @export var e_hover_selection_box : SelectionBox
 static var hover_selection_box : SelectionBox
+@export var e_abb_selection_box : SelectionBox
+static var abb_selection_box : SelectionBox
 @export var ui_node : EditorUI
 
 static var panel_selection_rect : Panel
 @export var e_panel_selection_rect : Panel
+
+static var autosave_timer : SceneTreeTimer
+#15 minutes per autosave
+static var autosave_time : int = 900
 
 @export_category("Current Version")
 @export var version_number : String = "v0.1"
@@ -99,16 +106,23 @@ func _ready():
 	#get exports from instance variables and assign to static variable
 	transform_handle_root = e_transform_handle_root
 	cam = e_cam
+	second_cam = e_second_cam
 	hover_selection_box = e_hover_selection_box
+	abb_selection_box = e_abb_selection_box
 	panel_selection_rect = e_panel_selection_rect
 	transform_handle_scale = e_transform_handle_scale
 	
+	#autosave for backups
+	autosave_timer = get_tree().create_timer(autosave_time)
+	autosave_timer.timeout.connect(autosave_model)
 	
 	#parameterized signals to make them more explicit and visible
 	ui_node.initialize(
 	MainUIEvents.on_spawn_pressed,
 	MainUIEvents.select_tool,
 	MainUIEvents.on_pivot_reset_pressed,
+	MainUIEvents.on_group_selection_pressed,
+	MainUIEvents.on_ungroup_selection_pressed,
 	MainUIEvents.on_snap_button_pressed,
 	MainUIEvents.on_snap_text_changed,
 	MainUIEvents.on_local_transform_active_set,
@@ -359,10 +373,25 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
 		Engine.max_fps = 15
 		get_tree().paused = true
-	#if what == NOTIFICATION_CRASH:
-		"TODO"#need to disable asset file embedding for saving.
-		#WorkspaceManager.save_model()
+	if what == NOTIFICATION_CRASH:
+		#need to disable asset file embedding for saving.
+		WorkspaceManager.save_model(FilePathRegistry.data_folder_autosaves, FilePathRegistry.data_crash_save, false, false)
 
+
+func autosave_model():
+	EditorUI.c_loading_message.visible = true
+	#one await wasnt enough for the loading message to show up
+	await EditorUI.c_loading_message.get_tree().process_frame
+	await EditorUI.c_loading_message.get_tree().process_frame
+	
+	WorkspaceManager.save_model(FilePathRegistry.data_folder_autosaves, FilePathRegistry.data_auto_save, false, false)
+	EditorUI.c_loading_message.visible = false
+	EditorUI.set_l_msg("autosaved successfully!")
+	
+	
+	
+	autosave_timer = get_tree().create_timer(autosave_time)
+	autosave_timer.timeout.connect(autosave_model)
 
 #utility functions
 #returns true if hovering over visible ui
@@ -422,7 +451,7 @@ static func safety_check(instance):
 
 
 #returns null or any hovered handle
-func handle_hover_check():
+static func handle_hover_check():
 	ray_result = Main.raycast_mouse_pos(second_cam, raycast_length, [], [1])
 	#make sure were not dragging a part before detecting a handle
 	if not ray_result.is_empty() and not Main.safety_check(dragged_part):

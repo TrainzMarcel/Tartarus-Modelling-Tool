@@ -242,13 +242,14 @@ static func handle_input_scale_linear_move(
 		global_vector : Vector3,
 		cam_normal : Vector3,
 		cam_normal_initial : Vector3,
-		is_ctrl_pressed : bool,
+		cam_position_initial : Vector3,
+		is_ctrl_pressed : bool
 	):
 	
 	#ctrl: scale both sides, no movement
 	if is_ctrl_pressed:
 		return 0.0
-	return handle_input_linear_move(cam, active_handle, global_vector, cam_normal, cam_normal_initial)
+	return handle_input_linear_move(cam, active_handle, global_vector, cam_normal, cam_normal_initial, cam_position_initial)
 
 
 #process input for transform handles that rotate
@@ -293,7 +294,8 @@ static func handle_input_linear_move(
 		active_handle : TransformHandle,
 		global_vector : Vector3,
 		cam_normal : Vector3,
-		cam_normal_initial : Vector3
+		cam_normal_initial : Vector3,
+		cam_position_initial : Vector3
 	):
 	#need a plane which acts like a sprite that rotates around the handles direction_vector
 	#vector pointing from handle to camera.global_position
@@ -314,7 +316,7 @@ static func handle_input_linear_move(
 	
 	#vector pointing to mouse position projected onto the plane
 	var cam_normal_plane = plane_cam.intersects_ray(cam.global_position, cam_normal)
-	var cam_normal_plane_initial = plane_cam.intersects_ray(cam.global_position, cam_normal_initial)
+	var cam_normal_plane_initial = plane_cam.intersects_ray(cam_position_initial, cam_normal_initial)
 	
 	HyperDebug.actions.transform_handle_linear_visualize.do({
 		input_vector = plane_cam.normal,

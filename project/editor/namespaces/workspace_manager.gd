@@ -10,11 +10,11 @@ static var workspace : Node
 
 #initial state of bounding box of selected parts for transform purposes
 static var initial_abb_state : ABB = ABB.new()
-
-
 #initial transform to make snapping work with transformhandles
 static var initial_transform_handle_root_transform : Transform3D
 static var initial_handle_event : InputEvent
+#initial camera position to measure difference, to make camera movement while dragging possible
+static var initial_handle_camera_position : Vector3
 
 
 #asset data
@@ -105,6 +105,7 @@ static func initialize(
 	FilePathRegistry.data_folder_executable = ProjectSettings.globalize_path(OS.get_executable_path()).get_base_dir()
 	FilePathRegistry.data_program = FilePathRegistry.data_folder_executable.path_join(FilePathRegistry.data_program)
 	FilePathRegistry.data_folder_assets = FilePathRegistry.data_folder_executable.path_join(FilePathRegistry.data_folder_assets)
+	FilePathRegistry.data_folder_autosaves = FilePathRegistry.data_folder_executable.path_join(FilePathRegistry.data_folder_autosaves)
 	
 	#automagically reset asset paths if required, record which assets have had their paths corrected
 	#record if the executable has moved meaning all paths must be reset
@@ -258,6 +259,7 @@ static func initialize_user_folder():
 		
 #check if resource file paths must be refreshed
 		if not tres_paths_must_be_refreshed:
+			@warning_ignore("confusable_local_declaration")
 			var tres_files : PackedStringArray = assets_folder_contents
 			#filter for tres only
 			var temp : PackedStringArray = []
@@ -413,9 +415,10 @@ static func drag_handle(event : InputEvent):
 	
 	
 	if Main.is_mouse_button_held and not Main.ray_result.is_empty() and Main.is_selecting_allowed and drag_confirmed:
+		#make sure there is a part being dragged and a canvas (hovered part) to drag over
 		if Main.safety_check(Main.dragged_part) and Main.safety_check(Main.hovered_part):
 			if not SnapUtils.part_rectilinear_alignment_check(Main.dragged_part.basis, Main.hovered_part.basis):
-				#use initial_rotation so that dragged_part doesnt continually rotate further 
+				#use initial_rotation so that dragged_part doesnt continually rotate further
 				#from its initial rotation after being dragged over multiple off-grid parts
 				var rotated_basis : Basis = SnapUtils.drag_snap_rotation_to_hovered(Main.initial_rotation, Main.ray_result)
 				
@@ -456,6 +459,7 @@ static func transform_handle_prepare(event : InputEvent):
 	WorkspaceManager.initial_abb_state.transform = SelectionManager.selected_parts_abb.transform
 	WorkspaceManager.initial_abb_state.extents = SelectionManager.selected_parts_abb.extents
 	WorkspaceManager.initial_handle_event = event
+	WorkspaceManager.initial_handle_camera_position = Main.cam.global_position
 	ToolManager.handle_set_highlight(Main.dragged_handle, Main.dragged_handle.color_drag)
 	#hide hover selection_box because it does not move with transforms
 	SelectionManager.hover_selection_box.visible = false
@@ -479,132 +483,136 @@ static func transform_handle_prepare(event : InputEvent):
 
 
 static func transform_handle_handle(event : InputEvent):
-	if Main.safety_check(Main.dragged_handle):
-		var global_vector : Vector3 = (Main.transform_handle_root.basis * Main.dragged_handle.direction_vector).normalized()
-		var global_vector_initial : Vector3 = (WorkspaceManager.initial_transform_handle_root_transform.basis * Main.dragged_handle.direction_vector).normalized()
-		var cam_normal : Vector3 = Main.cam.project_ray_normal(event.position)
-		var cam_normal_initial : Vector3 = Main.cam.project_ray_normal(WorkspaceManager.initial_handle_event.position)
+	if not Main.safety_check(Main.dragged_handle):
+		return
+	
+	#global direction vector of currently dragged transform handle
+	var global_vector : Vector3 = (Main.transform_handle_root.basis * Main.dragged_handle.direction_vector).normalized()
+	var global_vector_initial : Vector3 = (WorkspaceManager.initial_transform_handle_root_transform.basis * Main.dragged_handle.direction_vector).normalized()
+	var cam_normal : Vector3 = Main.cam.project_ray_normal(event.position)
+	var cam_normal_initial : Vector3 = Main.cam.project_ray_normal(WorkspaceManager.initial_handle_event.position)
+	
+#movement single axis
+	if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_move and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_move:
+		#process mouse drag on handle into a single value
+		var delta : float = ToolManager.handle_input_linear_move(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial, initial_handle_camera_position)
 		
-	#movement single axis
-		if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_move and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_move:
-			#process mouse drag on handle into a single value
-			var delta : float = ToolManager.handle_input_linear_move(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial)
-			#take value and convert to vector3, then apply it to selection
-			SelectionManager.selection_move(SnapUtils.transform_handle_snap_position(
-				delta,
-				global_vector,
-				WorkspaceManager.initial_abb_state.transform.origin,
-				Main.positional_snap_increment,
-				Main.snapping_active
-			))
-			EditorUI.set_l_msg("Translation: " + str(snapped(delta, Main.positional_snap_increment) * Main.dragged_handle.direction_vector))
-			
-			
-	#rotation
-		elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_rotate and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_rotate:
-			#process mouse drag on handle into a single value
-			var angle : float = ToolManager.handle_input_rotation(Main.cam, Main.dragged_handle, global_vector_initial, cam_normal, cam_normal_initial)
-			#turn value into a basis and feed it into workspacemanager to process selection
-			SelectionManager.selection_rotate(SnapUtils.transform_handle_snap_rotation(
-				angle,
-				WorkspaceManager.initial_abb_state.transform.basis,
-				global_vector_initial,
-				deg_to_rad(Main.rotational_snap_increment),
-				Main.snapping_active
-			), WorkspaceManager.pivot_local_transform.origin)
-			EditorUI.set_l_msg("Angle: " + str(snapped(rad_to_deg(angle), Main.rotational_snap_increment) * Main.dragged_handle.direction_vector))
-	#scaling
-		elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_scale:
-			var delta_scale : float = ToolManager.handle_input_linear_move(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial)
-			#process mouse drag on handle into a single value
-			var result : Vector3 = SnapUtils.transform_handle_snap_scale(
-				delta_scale,
-				Main.dragged_handle.direction_vector,
-				WorkspaceManager.initial_abb_state.extents,
-				Main.positional_snap_increment,
-				Main.snapping_active,
-				Input.is_key_pressed(KEY_CTRL),
-				Input.is_key_pressed(KEY_SHIFT)
-			)
-			
-			SelectionManager.selection_scale(result)
-			
-			#do the same for the movement portion
-			#turn value into a vector and feed it into workspacemanager to process selection
-			var delta_move : float = ToolManager.handle_input_scale_linear_move(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial, Input.is_key_pressed(KEY_CTRL))
-			
-			delta_move = SnapUtils.scaling_clamp(delta_move, Main.dragged_handle.direction_vector, WorkspaceManager.initial_abb_state.extents, Main.positional_snap_increment, Main.snapping_active)
-			
-			#use half delta and half increment because pulling by one face means only half the movement at the part center
-			var result_move : Vector3 = SnapUtils.transform_handle_snap_position(
-				delta_move * 0.5,
-				global_vector,
-				WorkspaceManager.initial_abb_state.transform.origin,
-				Main.positional_snap_increment * 0.5,
-				Main.snapping_active
-			)
-			
-			SelectionManager.selection_move(result_move)
-			
-			EditorUI.set_l_msg("Scale: " + str(result))
-	#pivot edit tool axis-move portion
-		elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_move:
-			#process mouse drag on handle into a single value
-			var delta : float = ToolManager.handle_input_linear_move(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial)
-			var new_transform : Transform3D = Main.transform_handle_root.transform
-			new_transform.origin = SnapUtils.transform_handle_snap_position(
-				delta,
-				global_vector,
-				WorkspaceManager.pivot_initial_transform.origin,
-				Main.positional_snap_increment,
-				Main.snapping_active
-			)
-			
-			WorkspaceManager.pivot_transform = new_transform
-			
-			#recalculate local pivot transform
-			WorkspaceManager.pivot_local_transform = SelectionManager.selected_parts_abb.transform.inverse() * WorkspaceManager.pivot_transform
-			
-			ToolManager.handle_set_root_position(
-				Main.transform_handle_root,
-				SelectionManager.selected_parts_abb,
-				WorkspaceManager.pivot_transform,
-				WorkspaceManager.pivot_custom_mode_active,
-				Main.local_transform_active,
-				ToolManager.selected_tool_handle_array)
-			EditorUI.set_l_msg("Pivot offset: " + str(WorkspaceManager.pivot_local_transform.origin))
-	#pivot edit tool axis-rotate portion
-		elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_rotate:
-			#process mouse drag on handle into a single value
-			var angle : float = ToolManager.handle_input_rotation(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial)
-			var new_transform : Transform3D = Main.transform_handle_root.transform
-			new_transform.basis = SnapUtils.transform_handle_snap_rotation(
-				angle,
-				WorkspaceManager.pivot_initial_transform.basis,
-				global_vector,
-				Main.positional_snap_increment,
-				Main.snapping_active
-			)
-			
-			WorkspaceManager.pivot_transform = new_transform
-			
-			#recalculate local pivot transform
-			WorkspaceManager.pivot_local_transform = SelectionManager.selected_parts_abb.transform.inverse() * WorkspaceManager.pivot_transform
-			
-			ToolManager.handle_set_root_position(
-				Main.transform_handle_root,
-				SelectionManager.selected_parts_abb,
-				WorkspaceManager.pivot_transform,
-				WorkspaceManager.pivot_custom_mode_active,
-				Main.local_transform_active,
-				ToolManager.selected_tool_handle_array
-			)
-			
-			#var angle_display : Vector3 = WorkspaceManager.pivot_transform.basis.get_euler()
-			#angle_display.x = rad_to_deg(angle_display.x)
-			#angle_display.y = rad_to_deg(angle_display.y)
-			#angle_display.z = rad_to_deg(angle_display.z)
-			EditorUI.set_l_msg("Pivot angle: " + str(snapped(rad_to_deg(angle), Main.rotational_snap_increment) * Main.dragged_handle.direction_vector))
+		#take value and convert to vector3, then apply it to selection
+		SelectionManager.selection_move(SnapUtils.transform_handle_snap_position(
+			delta,
+			global_vector,
+			WorkspaceManager.initial_abb_state.transform.origin,
+			Main.positional_snap_increment,
+			Main.snapping_active
+		))
+		EditorUI.set_l_msg("Translation: " + str(snapped(delta, Main.positional_snap_increment) * Main.dragged_handle.direction_vector))
+		
+		
+#rotation
+	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_rotate and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_rotate:
+		#process mouse drag on handle into a single value
+		var angle : float = ToolManager.handle_input_rotation(Main.cam, Main.dragged_handle, global_vector_initial, cam_normal, cam_normal_initial)
+		#turn value into a basis and feed it into workspacemanager to process selection
+		SelectionManager.selection_rotate(SnapUtils.transform_handle_snap_rotation(
+			angle,
+			WorkspaceManager.initial_abb_state.transform.basis,
+			global_vector_initial,
+			deg_to_rad(Main.rotational_snap_increment),
+			Main.snapping_active
+		), WorkspaceManager.pivot_local_transform.origin)
+		EditorUI.set_l_msg("Angle: " + str(snapped(rad_to_deg(angle), Main.rotational_snap_increment) * Main.dragged_handle.direction_vector))
+#scaling
+	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_scale:
+		var delta_scale : float = ToolManager.handle_input_linear_move(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial, initial_handle_camera_position)
+		#process mouse drag on handle into a single value
+		var result : Vector3 = SnapUtils.transform_handle_snap_scale(
+			delta_scale,
+			Main.dragged_handle.direction_vector,
+			WorkspaceManager.initial_abb_state.extents,
+			Main.positional_snap_increment,
+			Main.snapping_active,
+			Input.is_key_pressed(KEY_CTRL),
+			Input.is_key_pressed(KEY_SHIFT)
+		)
+		
+		SelectionManager.selection_scale(result)
+		
+		#do the same for the movement portion
+		#turn value into a vector and feed it into workspacemanager to process selection
+		var delta_move : float = ToolManager.handle_input_scale_linear_move(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial, initial_handle_camera_position, Input.is_key_pressed(KEY_CTRL))
+		
+		delta_move = SnapUtils.scaling_clamp(delta_move, Main.dragged_handle.direction_vector, WorkspaceManager.initial_abb_state.extents, Main.positional_snap_increment, Main.snapping_active)
+		
+		#use half delta and half increment because pulling by one face means only half the movement at the part center
+		var result_move : Vector3 = SnapUtils.transform_handle_snap_position(
+			delta_move * 0.5,
+			global_vector,
+			WorkspaceManager.initial_abb_state.transform.origin,
+			Main.positional_snap_increment * 0.5,
+			Main.snapping_active
+		)
+		
+		SelectionManager.selection_move(result_move)
+		
+		EditorUI.set_l_msg("Scale: " + str(result))
+#pivot edit tool axis-move portion
+	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_move:
+		#process mouse drag on handle into a single value
+		var delta : float = ToolManager.handle_input_linear_move(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial, initial_handle_camera_position)
+		var new_transform : Transform3D = Main.transform_handle_root.transform
+		new_transform.origin = SnapUtils.transform_handle_snap_position(
+			delta,
+			global_vector,
+			WorkspaceManager.pivot_initial_transform.origin,
+			Main.positional_snap_increment,
+			Main.snapping_active
+		)
+		
+		WorkspaceManager.pivot_transform = new_transform
+		
+		#recalculate local pivot transform
+		WorkspaceManager.pivot_local_transform = SelectionManager.selected_parts_abb.transform.inverse() * WorkspaceManager.pivot_transform
+		
+		ToolManager.handle_set_root_position(
+			Main.transform_handle_root,
+			SelectionManager.selected_parts_abb,
+			WorkspaceManager.pivot_transform,
+			WorkspaceManager.pivot_custom_mode_active,
+			Main.local_transform_active,
+			ToolManager.selected_tool_handle_array)
+		EditorUI.set_l_msg("Pivot offset: " + str(WorkspaceManager.pivot_local_transform.origin))
+#pivot edit tool axis-rotate portion
+	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_rotate:
+		#process mouse drag on handle into a single value
+		var angle : float = ToolManager.handle_input_rotation(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial)
+		var new_transform : Transform3D = Main.transform_handle_root.transform
+		new_transform.basis = SnapUtils.transform_handle_snap_rotation(
+			angle,
+			WorkspaceManager.pivot_initial_transform.basis,
+			global_vector,
+			Main.positional_snap_increment,
+			Main.snapping_active
+		)
+		
+		WorkspaceManager.pivot_transform = new_transform
+		
+		#recalculate local pivot transform
+		WorkspaceManager.pivot_local_transform = SelectionManager.selected_parts_abb.transform.inverse() * WorkspaceManager.pivot_transform
+		
+		ToolManager.handle_set_root_position(
+			Main.transform_handle_root,
+			SelectionManager.selected_parts_abb,
+			WorkspaceManager.pivot_transform,
+			WorkspaceManager.pivot_custom_mode_active,
+			Main.local_transform_active,
+			ToolManager.selected_tool_handle_array
+		)
+		
+		#var angle_display : Vector3 = WorkspaceManager.pivot_transform.basis.get_euler()
+		#angle_display.x = rad_to_deg(angle_display.x)
+		#angle_display.y = rad_to_deg(angle_display.y)
+		#angle_display.z = rad_to_deg(angle_display.z)
+		EditorUI.set_l_msg("Pivot angle: " + str(snapped(rad_to_deg(angle), Main.rotational_snap_increment) * Main.dragged_handle.direction_vector))
 
 
 static func transform_handle_terminate():
@@ -696,6 +704,7 @@ static func confirm_save_load(filepath : String, name : String):
 		if options != null:
 			embed_assets = options.get_node("ButtonEmbedAssets").button_pressed
 			selected_only = options.get_node("ButtonSaveSelectedOnly").button_pressed
+			push_error("no options ui detected in filemanager? continuing save operations with default settings.")
 		
 		save_model(filepath + "/", name, embed_assets, selected_only)
 		last_save_location = filepath
@@ -715,15 +724,12 @@ static func confirm_save_load(filepath : String, name : String):
 
 
 #actual save and load functions
+#dont add file ending to filename parameter
 "TODO"#add error handling here and at load()
+#such as a returned error code
 static func save_model(filepath : String, filename : String, embed_assets : bool, selected_only : bool):
-	"TODO"#probably add some setting for how much of the model to save
-	#plus add exclude functionality
-	#plus add part lock functionality
-	#i think saving a group of parts would also be simple with something like a ::GROUP:: header which has the part ids under it
-	#storing the ids horizontally per part would probably be cheaper than vertically
-	#also maybe add comment feature that adds a line describing each column of every header
-	AssetManager.debug_pretty_print()
+	#TODO add exclude functionality maybe
+	#TODO add part lock functionality
 	var save_parts : Array = []
 	var used_colors : Array[Color] = []
 	var used_materials : Array[Material] = []
@@ -737,6 +743,9 @@ static func save_model(filepath : String, filename : String, embed_assets : bool
 	var file : PackedByteArray = []
 	#const separator : String = ","
 	
+	#create directory just in case
+	if not DirAccess.dir_exists_absolute(filepath):
+		DirAccess.make_dir_recursive_absolute(filepath)
 	
 	if selected_only:
 		save_parts = SelectionManager.selected_parts_array
@@ -822,27 +831,76 @@ static func save_model(filepath : String, filename : String, embed_assets : bool
 
 static func load_model(filepath : String, filename : String):
 	#no mappings required as the indices are already stored
-	var used_colors : Array[Color] = []
-	var used_materials : Array[Material] = []
-	var used_meshes : Array[Mesh] = []
 	var file : PackedByteArray = []
+	var files_to_clean_up : PackedStringArray = []
 	
 	var zip_reader : ZIPReader = DataUtils.unzip_start(filepath, filename)
 	DataUtils.unzip_assets(zip_reader, filepath, filename)
 	var save_version : int = DataUtils.zip_check_save_version(zip_reader)
 	
-	file = DataUtils.unzip_data_file(zip_reader, filename)
+	var data_filename : String
+	if save_version == 0:
+		data_filename = filename + "_data.csv"
+	elif save_version == 1:
+		data_filename = filename + "_data.db"
+		
+	file = DataUtils.unzip_data_file(zip_reader, data_filename)
 	
 	if save_version == 0:
-		load_model_from_csv_data(file, used_colors, used_materials, used_meshes)
+		load_model_from_csv_data(file)
 	elif save_version == 1:
-		load_model_from_sql_data(sql, used_colors, used_materials, used_meshes)
+		data_filename = DataUtils.zip_copy_to_filesystem(zip_reader, "", data_filename, filepath)
+		if data_filename == "" or data_filename == null:
+			push_error("aborting loading.")
+			DataUtils.unzip_end(zip_reader, filepath, files_to_clean_up)
+			return
+		var sql : SQLite = SQLite.new()
+		sql.path = filepath.path_join(data_filename)
+		sql.open_db()
+		load_model_from_sql_data(sql)
+		sql.close_db()
+		files_to_clean_up.append(data_filename)
 	
-	DataUtils.unzip_end(zip_reader, filepath, [])
+	DataUtils.unzip_end(zip_reader, filepath, files_to_clean_up)
 
 
-static func load_model_from_csv_data(input : PackedByteArray, used_colors : Array[Color], used_materials : Array[Material], used_meshes : Array[Mesh]):
-	var file : PackedStringArray
+static func load_model_from_sql_data(sql : SQLite):
+	sql.query("SELECT * FROM " + DataUtils.sql_def.color_table_name + ";")
+	var rows_color_table : Array = sql.select_rows(DataUtils.sql_def.color_table_name, "", ["r", "g", "b"])
+	sql.query("SELECT * FROM " + DataUtils.sql_def.material_table_name + ";")
+	var rows_material_table : Array = sql.select_rows(DataUtils.sql_def.material_table_name, "", ["csv_type_information", "csv_headers", "csv_values"])
+	sql.query("SELECT * FROM " + DataUtils.sql_def.mesh_table_name + ";")
+	var rows_mesh_table : Array = sql.select_rows(DataUtils.sql_def.mesh_table_name, "", ["mesh_filename"])
+	sql.query("SELECT * FROM " + DataUtils.sql_def.part_table_name + ";")
+	var rows_part_table : Array = sql.select_rows(DataUtils.sql_def.part_table_name, "", ["position", "rotation", "scale", "color_id", "material_id", "mesh_id"])
+	
+	var used_colors : Array[Color] = []
+	var used_materials : Array[Material] = []
+	var used_meshes : Array[Mesh] = []
+	
+	
+	#load color
+	for row in rows_color_table:
+		used_colors.append(DataUtils.sql_color_deserialize(row))
+		
+	#load material
+	for row in rows_material_table:
+		used_materials.append(DataUtils.sql_material_deserialize(row))
+	#load mesh
+	for row in rows_mesh_table:
+		used_meshes.append(DataUtils.sql_mesh_deserialize(row))
+	#load parts
+	for row in rows_part_table:
+		var new : Part = DataUtils.sql_part_deserialize(row, used_colors, used_materials, used_meshes)
+		workspace.add_child(new)
+		new.initialize()
+
+
+static func load_model_from_csv_data(input : PackedByteArray):
+	var used_colors : Array[Color] = []
+	var used_materials : Array[Material] = []
+	var used_meshes : Array[Mesh] = []
+	var file : PackedStringArray = input.get_string_from_utf8().split("\n")
 	var i : int = 0
 	#mode from headers
 	var mode : String
@@ -860,26 +918,26 @@ static func load_model_from_csv_data(input : PackedByteArray, used_colors : Arra
 		var line = file[i].split(",")
 	#load color
 		if mode == data_headers[0]:
-			used_colors.append(DataUtils.csv_color_deserialize(line))
+			used_colors.append(DataUtilsLegacy.csv_color_deserialize(line))
 			
 	#load material
 		elif mode == data_headers[1]:
-			used_materials.append(DataUtils.csv_material_deserialize(line))
+			var new_material : Material = DataUtilsLegacy.csv_material_deserialize(line)
+			if new_material == null:
+				push_error("loading material from csv line ", i, " failed")
+			used_materials.append(new_material)
 	#load mesh
 		elif mode == data_headers[2]:
-			used_meshes.append(DataUtils.csv_mesh_deserialize(line))
+			used_meshes.append(DataUtilsLegacy.csv_mesh_deserialize(line))
 	#load parts
 		elif mode == data_headers[3]:
-			var new : Part = DataUtils.csv_part_deserialize(line, used_colors, used_materials, used_meshes)
+			var new : Part = DataUtilsLegacy.csv_part_deserialize(line, used_colors, used_materials, used_meshes)
 			
 			workspace.add_child(new)
 			new.initialize()
 		
 		i = i + 1
 
-
-static func load_model_from_sql_data():
-	return
 
 "TODO"
 static func export_model():
