@@ -204,7 +204,6 @@ static func debug_pretty_print(stack_print_limit : int = 10):
 	print("stack size: ", undo_stack.size())
 	print("print limit: ", stack_print_limit)
 	print()
-	
 	print("current undo_args:")
 	print(undo_stack[undo_index].undo_args)
 	print("current redo_args:")

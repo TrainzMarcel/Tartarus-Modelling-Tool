@@ -25,7 +25,7 @@ func initialize(camera_speed_label : Label):
 func cam_input(
 	event : InputEvent,
 	second_camera : Camera3D,
-	selected_parts_array : Array[Part],
+	selected_parts_internal_array : Array[Part],
 	selected_parts_abb : ABB,
 	camera_speed_label : Label
 	):
@@ -34,7 +34,7 @@ func cam_input(
 		return
 	
 	if Input.is_key_pressed(KEY_F) and event.is_pressed() and not event.is_echo():
-		if selected_parts_array.size() > 0:
+		if selected_parts_internal_array.size() > 0:
 			
 			lock_position = selected_parts_abb.transform.origin
 			"TODO"#this might get long if bounding box is too big

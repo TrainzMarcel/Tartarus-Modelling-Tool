@@ -37,7 +37,6 @@ func material_regular_color(color : Color):
 	material_override.emission = color
 
 
-var assigned_node : Node3D = null
 #dont forget to generate material
 
 

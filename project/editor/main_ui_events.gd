@@ -166,10 +166,10 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 			#ctrl d duplicate selection
 			SelectionManager.selection_duplicate_undoable()
 			SelectionManager.post_selection_update()
-			EditorUI.set_l_msg("duplicated " + str(SelectionManager.selected_parts_array.size()) + " parts")
+			EditorUI.set_l_msg("duplicated " + str(SelectionManager.selected_parts_internal_array.size()) + " parts")
 		elif id == 8:
 			#delete clear selection
-			EditorUI.set_l_msg("deleted " + str(SelectionManager.selected_parts_array.size()) + " parts")
+			EditorUI.set_l_msg("deleted " + str(SelectionManager.selected_parts_internal_array.size()) + " parts")
 			SelectionManager.selection_delete()
 			SelectionManager.post_selection_update()
 		elif id == 8:

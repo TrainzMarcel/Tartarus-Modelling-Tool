@@ -24,8 +24,8 @@ static var panel_selection_rect : Panel
 @export var e_panel_selection_rect : Panel
 
 static var autosave_timer : SceneTreeTimer
-#15 minutes per autosave
-static var autosave_time : int = 900
+#10 minutes per autosave
+static var autosave_time : int = 600
 
 @export_category("Current Version")
 @export var version_number : String = "v0.1"
@@ -43,6 +43,7 @@ static var last_mouse_event : InputEventMouse
 #raw ray result
 static var ray_result : Dictionary
 static var dragged_part : Part
+static var hovered_entity
 static var hovered_part : Part
 #purely rotational basis set from start of drag as a reference for snapping
 static var initial_rotation : Basis
@@ -195,6 +196,7 @@ func _input(event : InputEvent):
 			
 			#set hovered_part to null as mouse is no longer hovering over a part
 			hovered_part = null
+			hovered_entity = null
 		else:
 			if not Main.safety_check(hovered_handle) and not Main.safety_check(dragged_handle):
 				if Main.safety_check(prev_hovered_handle):
@@ -204,10 +206,11 @@ func _input(event : InputEvent):
 		if is_hovering_allowed and not Main.safety_check(hovered_handle):
 			#handle wasnt detected
 				hovered_part = Main.part_hover_check()
-				SelectionManager.selection_box_hover_on_part(hovered_part, is_hovering_allowed)
+				hovered_entity = SelectionManager.get_hovered_entity(hovered_part)
+				SelectionManager.selection_box_hover_on_target(hovered_entity, is_hovering_allowed)
 		else:
 			#hide selection box
-			SelectionManager.selection_box_hover_on_part(null, is_hovering_allowed)
+			SelectionManager.selection_box_hover_on_target(null, is_hovering_allowed)
 	
 	
 	#set dragged_part and dragged_handle----------------------------------------
@@ -225,6 +228,7 @@ func _input(event : InputEvent):
 			if Main.safety_check(hovered_part):
 				#if mouse was pressed down over a hovered part, we know the user is most likely starting a drag
 				#drag has a tolerance before it actually starts
+				hovered_entity = SelectionManager.get_hovered_entity(hovered_part)
 				dragged_part = hovered_part
 			#if handle is detected, set dragged_handle
 			elif Main.safety_check(hovered_handle):
@@ -241,6 +245,7 @@ func _input(event : InputEvent):
 		is_ui_hovered,
 		is_selecting_allowed,
 		is_hovering_allowed,
+		hovered_entity,
 		hovered_part,
 		dragged_part,
 		hovered_handle,
@@ -313,7 +318,7 @@ func _input(event : InputEvent):
 						hover_selection_box.visible = false
 						#immediately update hovered_part in case theres another part behind the deleted one
 						hovered_part = Main.part_hover_check()
-						SelectionManager.selection_box_hover_on_part(hovered_part, true)
+						SelectionManager.selection_box_hover_on_target(hovered_entity, true)
 						
 	#lmb up
 			#else:
@@ -340,7 +345,7 @@ func _input(event : InputEvent):
 	
 #post input updates-------------------------------------------------------------
 #if something is selected and selecting is allowed or pivot tool is selected
-	if SelectionManager.selected_parts_array.size() > 0 and (is_selecting_allowed or ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot):
+	if SelectionManager.selected_parts_internal_array.size() > 0 and (is_selecting_allowed or ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot):
 		"TODO"#take care of this stuff later
 		if SelectionManager.selection_changed or SelectionManager.selection_moved:
 			#recalculate local pivot transform on selection change
@@ -357,7 +362,7 @@ func _input(event : InputEvent):
 			)
 	
 	#camera controls
-	cam.cam_input(event, second_cam, SelectionManager.selected_parts_array, SelectionManager.selected_parts_abb, EditorUI.l_camera_speed)
+	cam.cam_input(event, second_cam, SelectionManager.selected_parts_internal_array, SelectionManager.selected_parts_abb, EditorUI.l_camera_speed)
 
 
 func _process(delta : float):
@@ -466,7 +471,7 @@ static func part_hover_check():
 	if is_mouse_button_held and Main.safety_check(dragged_part):
 		#exclude selection
 		var rids : Array[RID] = []
-		for i in SelectionManager.selected_parts_array:
+		for i in SelectionManager.selected_parts_internal_array:
 			if Main.safety_check(i):
 				rids.append(i.get_rid())
 		ray_result = Main.raycast_mouse_pos(cam, raycast_length, rids, [1])

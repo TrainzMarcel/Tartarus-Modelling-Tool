@@ -51,9 +51,9 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_b685s"]
-
 [sub_resource type="ImmediateMesh" id="ImmediateMesh_jrpsl"]
+
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_ikisg"]
 
 [node name="Main" type="Node3D" node_paths=PackedStringArray("e_cam", "e_second_cam", "e_workspace", "e_transform_handle_root", "e_hover_selection_box", "e_abb_selection_box", "ui_node", "e_panel_selection_rect")]
 script = ExtResource("1_4xdr8")
@@ -129,7 +129,7 @@ part_scale = Vector3(64, 1, 64)
 [node name="HoverSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("8_4p0vi")
-mesh = SubResource("ImmediateMesh_b685s")
+mesh = SubResource("ImmediateMesh_jrpsl")
 skeleton = NodePath("../..")
 script = ExtResource("9_n7hy1")
 box_scale = Vector3(1, 1, 1)
@@ -137,7 +137,7 @@ box_scale = Vector3(1, 1, 1)
 [node name="ABBSelectionBox" type="MeshInstance3D" parent="Workspace"]
 visible = false
 material_override = ExtResource("8_jrpsl")
-mesh = SubResource("ImmediateMesh_jrpsl")
+mesh = SubResource("ImmediateMesh_ikisg")
 skeleton = NodePath("../..")
 script = ExtResource("9_n7hy1")
 box_scale = Vector3(1, 1, 1)

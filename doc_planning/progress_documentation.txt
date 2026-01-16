@@ -134,5 +134,8 @@
 6.1.	finished all zip functions
 7.1.	finalized sql loading with versioning to allow legacy csv loading
 9.1.	made linearly-moving transform handle operations move with camera while dragging and made transform handles keep up with selection dragging while camera moves, added auto saving and crash saving, started to work on selection grouping
+11.1.	worked on design of abstraction for grouping operations
+12.1.	started working on grouping code
+13.1.	thinking about how to make a simple interface for handling selectionboxes on multiple types
+16.1.	starting to fully implement grouping now, although i had a lot of trouble picking between
 TODO:	TODO cleanup
-

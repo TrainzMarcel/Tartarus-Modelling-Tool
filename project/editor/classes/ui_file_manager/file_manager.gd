@@ -395,6 +395,7 @@ func on_b_list_folder_pressed():
 
 
 func on_le_filepath_text_submitted(new : String):
+	new = ProjectSettings.localize_path(new)
 	if dir_access.dir_exists(new):
 		change_dir_undoable(new)
 
@@ -402,7 +403,7 @@ func on_le_filepath_text_submitted(new : String):
 func on_ob_drives_item_selected(index : int):
 	var drive : String = ob_drives.get_item_text(index)
 	change_dir_undoable(ProjectSettings.localize_path(drive))
-	le_filepath.text = drive
+	le_filepath.text = ProjectSettings.globalize_path(drive)
 
 
 func on_ob_filters_item_selected(index : int):

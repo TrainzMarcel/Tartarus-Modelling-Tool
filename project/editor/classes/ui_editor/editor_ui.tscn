@@ -1,4 +1,4 @@
-[gd_scene load_steps=69 format=3 uid="uid://cwt02lxvderye"]
+[gd_scene load_steps=71 format=3 uid="uid://cwt02lxvderye"]
 
 [ext_resource type="Script" uid="uid://ck58vcbkbrhr0" path="res://editor/classes/ui_editor/editor_ui.gd" id="1_mcko4"]
 [ext_resource type="StyleBox" uid="uid://bkbmbfniourik" path="res://editor/data_ui/styles/panel_styles/panel_rounded_bottom.tres" id="1_pntfv"]
@@ -32,8 +32,10 @@
 [ext_resource type="StyleBox" uid="uid://c7csd37xwk66g" path="res://editor/data_ui/styles/panel_styles/panel_rounded_top.tres" id="28_k504t"]
 [ext_resource type="StyleBox" uid="uid://b1bkepq7spu42" path="res://editor/data_ui/styles/panel_styles/number_display_panel.tres" id="29_accpp"]
 [ext_resource type="Theme" uid="uid://j8ity0sbguy1" path="res://editor/data_ui/styles/font_styles/t_sci_fi_small.tres" id="29_j817h"]
+[ext_resource type="StyleBox" uid="uid://dmsugv0uyha2j" path="res://editor/data_ui/styles/button_and_line_edit_styles/tool_bar/button_and_dropdown_center/hover_normal.tres" id="30_38yac"]
 [ext_resource type="StyleBox" uid="uid://bdapxi8kfkyap" path="res://editor/data_ui/styles/button_and_line_edit_styles/bottom_bar/mini_button/hover_normal.tres" id="30_5372q"]
 [ext_resource type="StyleBox" uid="uid://l8wdqqom1c4k" path="res://editor/data_ui/styles/button_and_line_edit_styles/bottom_bar/mini_button/pressed.tres" id="31_a6skq"]
+[ext_resource type="StyleBox" uid="uid://fqcrxq5gwvnn" path="res://editor/data_ui/styles/button_and_line_edit_styles/tool_bar/button_and_dropdown_center/pressed.tres" id="31_hyxqo"]
 [ext_resource type="Script" uid="uid://daccittnn72bi" path="res://editor/classes/ui_editor/line_edit_numeric.gd" id="32_5rtk1"]
 [ext_resource type="PackedScene" uid="uid://bln1og3mu36mh" path="res://editor/classes/ui_document_display/document_display.tscn" id="32_epjev"]
 [ext_resource type="Theme" uid="uid://bjyf4445wjca1" path="res://editor/data_ui/styles/font_styles/t_symbol.tres" id="36_xr5bj"]
@@ -946,7 +948,6 @@ theme_override_constants/separation = 2
 
 [node name="ButtonGroupSelection" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool2"]
 unique_name_in_owner = true
-self_modulate = Color(0.912289, 0.912289, 0.912289, 1)
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
 tooltip_text = "Change rotation pivot"
@@ -958,10 +959,23 @@ theme_override_styles/focus = ExtResource("5_rq1a8")
 action_mode = 0
 text = "Group
  Selection "
-expand_icon = true
 script = ExtResource("11_6a6rl")
 
 [node name="ButtonUngroupSelection" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool2"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Reset pivot"
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = ExtResource("30_38yac")
+theme_override_styles/pressed = ExtResource("31_hyxqo")
+theme_override_styles/hover = ExtResource("30_38yac")
+theme_override_styles/focus = ExtResource("5_rq1a8")
+action_mode = 0
+text = "Ungroup
+ Selection "
+script = ExtResource("11_6a6rl")
+
+[node name="ButtonShowGroups" type="Button" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar/HBoxContainerChangePivotTool2"]
 unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Reset pivot"
@@ -971,8 +985,8 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_0x74o")
 theme_override_styles/hover = ExtResource("20_ibnk4")
 theme_override_styles/focus = ExtResource("5_rq1a8")
 action_mode = 0
-text = "Ungroup
- Selection "
+text = "Display
+  Groups  "
 script = ExtResource("11_6a6rl")
 
 [node name="GridContainerCSGTools" type="GridContainer" parent="PanelContainerTopLeftBlock/MarginContainer/VBoxContainer/ToolBar"]

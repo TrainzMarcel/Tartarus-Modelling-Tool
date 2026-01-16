@@ -352,14 +352,14 @@ static func part_spawn(selected_part_type : Part):
 
 
 static func part_delete(hovered_part : Part):
-	if SelectionManager.selected_parts_array.has(hovered_part):
+	if SelectionManager.selected_parts_internal_array.has(hovered_part):
 		SelectionManager.selection_remove_part(hovered_part)
 	hovered_part.queue_free()
 
 
 static func part_delete_undoable(hovered_part : Part):
 	var undo_data : UndoManager.UndoData = UndoManager.UndoData.new()
-	var part_was_selected : bool = SelectionManager.selected_parts_array.has(hovered_part)
+	var part_was_selected : bool = SelectionManager.selected_parts_internal_array.has(hovered_part)
 	
 	#undo: first add the child node, then select it if needed
 	undo_data.append_undo_action_with_args(workspace.add_child, [hovered_part])
@@ -433,14 +433,13 @@ static func drag_handle(event : InputEvent):
 				Main.snapping_active
 			)
 			
-			
 			#set positions according to offset_dragged_to_selected_array and where the selection is being dragged (ray_result.position)
 			SelectionManager.selection_move(snap_output)
 
 
 static func drag_terminate():
 	if drag_confirmed:
-			var selection : Array = SelectionManager.selected_parts_array.duplicate()
+			var selection : Array = SelectionManager.selected_parts_internal_array.duplicate()
 			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis])
 			UndoManager.register_undo_data(undo_data_drag)
@@ -476,8 +475,8 @@ static func transform_handle_prepare(event : InputEvent):
 		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale:
 		#get transforms with basis vectors scaled by part_scale
-		var transform_array : Array = SelectionManager.selected_parts_array.map(func(input): return input.global_transform)
-		var scale_array : Array = SelectionManager.selected_parts_array.map(func(input): return input.part_scale)
+		var transform_array : Array = SelectionManager.selected_parts_internal_array.map(func(input): return input.global_transform)
+		var scale_array : Array = SelectionManager.selected_parts_internal_array.map(func(input): return input.part_scale)
 		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_set_exact_transforms, [transform_array, scale_array, SelectionManager.selected_parts_abb.extents])
 
@@ -640,8 +639,8 @@ static func transform_handle_terminate():
 	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale:
 		selection_transformed = undo_data_transform.undo_args.back().back() != SelectionManager.selected_parts_abb.extents
 		#get transforms with basis vectors scaled by part_scale
-		var transform_array : Array = SelectionManager.selected_parts_array.map(func(input): return input.transform)
-		var scale_array : Array = SelectionManager.selected_parts_array.map(func(input): return input.part_scale)
+		var transform_array : Array = SelectionManager.selected_parts_internal_array.map(func(input): return input.transform)
+		var scale_array : Array = SelectionManager.selected_parts_internal_array.map(func(input): return input.part_scale)
 		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_set_exact_transforms, [transform_array, scale_array, SelectionManager.selected_parts_abb.extents])
 	
@@ -748,7 +747,7 @@ static func save_model(filepath : String, filename : String, embed_assets : bool
 		DirAccess.make_dir_recursive_absolute(filepath)
 	
 	if selected_only:
-		save_parts = SelectionManager.selected_parts_array
+		save_parts = SelectionManager.selected_parts_internal_array
 		if save_parts.is_empty():
 			push_error("save selected only is enabled but nothing is selected! aborting.")
 			return
