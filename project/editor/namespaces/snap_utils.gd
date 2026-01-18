@@ -365,6 +365,7 @@ static func get_scale_local(part_scale : Vector3, part_rotation : Basis):
 
 
 "TODO"#move to selectionmanager (maybe)
+"TODO"#make a variant of this which takes group abb and group primary part as parameters
 static func calculate_extents(abb : ABB, rotation_origin_part : Part, parts : Array):
 	abb.transform = rotation_origin_part.transform
 	abb.extents = Vector3.ZERO

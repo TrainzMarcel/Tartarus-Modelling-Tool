@@ -195,7 +195,7 @@ static func select_tool(button : Button):
 					Main.local_transform_active,
 					selected_tool_handle_array
 				)
-				if SelectionManager.selected_parts_internal_array.size() > 0:
+				if SelectionManager.selected_entities.size() > 0:
 					ToolManager.handle_set_active(selected_tool_handle_array, true)
 			#special case
 			elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot:
@@ -206,7 +206,7 @@ static func select_tool(button : Button):
 					"TODO"
 					#only move the pivot transform when something is selected
 					#otherwise, the pivot stays in the same place
-					if SelectionManager.selected_parts_internal_array.size() != 0:
+					if SelectionManager.selected_entities.size() != 0:
 						WorkspaceManager.pivot_transform = SelectionManager.selected_parts_abb.transform
 				
 				ToolManager.handle_set_active(selected_tool_handle_array, true)

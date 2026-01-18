@@ -345,7 +345,7 @@ func _input(event : InputEvent):
 	
 #post input updates-------------------------------------------------------------
 #if something is selected and selecting is allowed or pivot tool is selected
-	if SelectionManager.selected_parts_internal_array.size() > 0 and (is_selecting_allowed or ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot):
+	if SelectionManager.selected_entities.size() > 0 and (is_selecting_allowed or ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot):
 		"TODO"#take care of this stuff later
 		if SelectionManager.selection_changed or SelectionManager.selection_moved:
 			#recalculate local pivot transform on selection change
@@ -362,7 +362,7 @@ func _input(event : InputEvent):
 			)
 	
 	#camera controls
-	cam.cam_input(event, second_cam, SelectionManager.selected_parts_internal_array, SelectionManager.selected_parts_abb, EditorUI.l_camera_speed)
+	cam.cam_input(event, second_cam, SelectionManager.selected_entities, SelectionManager.selected_parts_abb, EditorUI.l_camera_speed)
 
 
 func _process(delta : float):
@@ -471,7 +471,7 @@ static func part_hover_check():
 	if is_mouse_button_held and Main.safety_check(dragged_part):
 		#exclude selection
 		var rids : Array[RID] = []
-		for i in SelectionManager.selected_parts_internal_array:
+		for i in SelectionManager.selected_entities_internal.filter(SelectionManager.is_part):
 			if Main.safety_check(i):
 				rids.append(i.get_rid())
 		ray_result = Main.raycast_mouse_pos(cam, raycast_length, rids, [1])

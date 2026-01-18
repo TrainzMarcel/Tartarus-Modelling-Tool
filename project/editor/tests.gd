@@ -38,7 +38,7 @@ func test_undo_with_changing_selection():
 	#clear possible state
 	UndoManager.undo_stack.clear()
 	UndoManager.undo_index = -1
-	SelectionManager.selected_parts_internal_array.clear()
+	SelectionManager.selected_parts_internal.clear()
 	
 	#create mock parts
 	var part_a : Part = Part.new()
@@ -106,7 +106,7 @@ func test_undo_with_changing_selection():
 	#clean up
 	UndoManager.undo_stack.clear()
 	UndoManager.undo_index = -1
-	SelectionManager.selected_parts_internal_array.clear()
+	SelectionManager.selected_parts_internal.clear()
 	
 	print("TEST PASSED: Complex selection-change undo sequence works.")
 """

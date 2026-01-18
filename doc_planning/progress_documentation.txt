@@ -137,5 +137,6 @@
 11.1.	worked on design of abstraction for grouping operations
 12.1.	started working on grouping code
 13.1.	thinking about how to make a simple interface for handling selectionboxes on multiple types
-16.1.	starting to fully implement grouping now, although i had a lot of trouble picking between
+16.1.	starting to fully implement grouping now, although i had a lot of trouble picking between architecture types
+18.1.	the previously chosen architecture was a major failure. now working on implementing a new architecture that solves problems of the previous one. but this means a major rewrite. selected_parts_array has become selected_entities and selected_entities_internal respectively.
 TODO:	TODO cleanup

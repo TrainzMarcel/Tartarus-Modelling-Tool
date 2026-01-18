@@ -98,10 +98,12 @@ static func update_dependencies(undo_data : UndoData, is_appending : bool):
 				if reference_counter[i] == 0:
 					reference_counter.erase(i)
 					#only delete fully from memory when this is an orphan node
-					print("i.get_parent()")
-					print(i.get_parent())
-					if i.get_parent() == null:
-						i.queue_free()
+					"TODO"#add support for groups
+					if i is Node:
+						print("i.get_parent()")
+						print(i.get_parent())
+						if i.get_parent() == null:
+							i.queue_free()
 			else:
 				push_error("tried to remove nonexistant reference")
 	print("current reference counter state:")
