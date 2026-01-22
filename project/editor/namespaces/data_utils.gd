@@ -52,14 +52,20 @@ class SQLDefinitions:
 	const group_table_name : String = "groups"
 	const group_table : Dictionary = {
 		"id": {"data_type":"int", "primary_key": true, "not_null": true, "auto_increment": true},
-		"parent_group_id": {"data_type":"int"}
 	}
 	
-	const group_part_table_name : String = "groups_parts"
-	const group_part_table : Dictionary = {
+	const group_child_part_table_name : String = "groups_child_parts"
+	const group_child_part_table : Dictionary = {
 		"id": {"data_type":"int", "primary_key": true, "not_null": true, "auto_increment": true},
 		"group_id": {"data_type":"int"},
-		"part_id": {"data_type":"int"}
+		"child_part_id": {"data_type":"int"}
+	}
+	
+	const group_child_group_table_name : String = "groups_child_groups"
+	const group_child_group_table : Dictionary = {
+		"id": {"data_type":"int", "primary_key": true, "not_null": true, "auto_increment": true},
+		"group_id": {"data_type":"int"},
+		"child_group_id": {"data_type":"int"}
 	}
 
 static var sql_def : SQLDefinitions = SQLDefinitions.new()
@@ -77,7 +83,8 @@ static func initialize_sql_db(filepath : String, filename : String, verbosity : 
 	sql.create_table(sql_def.material_table_name, sql_def.material_table)
 	sql.create_table(sql_def.mesh_table_name, sql_def.mesh_table)
 	sql.create_table(sql_def.part_table_name, sql_def.part_table)
-	sql.create_table(sql_def.group_part_table_name, sql_def.group_part_table)
+	sql.create_table(sql_def.group_child_part_table_name, sql_def.group_child_part_table)
+	sql.create_table(sql_def.group_child_group_table_name, sql_def.group_child_group_table)
 	sql.create_table(sql_def.group_table_name, sql_def.group_table)
 	
 	sql.create_table(sql_def.version_table_name, sql_def.version_table)
@@ -308,15 +315,29 @@ static func sql_part_deserialize(row : Dictionary, used_colors : Array[Color], u
 	return new
 
 
-"TODO"#i need:
-#zip_add_data_csv
-#zip_read_data_csv
-#zip_add_data_sql
-#zip_read_data_sql
-#zip_add_assets
-#zip_read_assets
-#zip_determine_save_version
-#saves everything to disk
+
+static func sql_group_serialize(part_to_int_mapping : Dictionary, sql : SQLite, root_group : SelectionManager.Group):
+	#this will go outside the function in save_model()
+	for root_group in root_groups:
+		assert((child_parts.size() + child_groups.size()) > 0, "empty root group detected. this should not be happening.")
+		var full_hierarchy : Array = SelectionManager.group_get_full_hierarchy(root_group)
+		"TODO"
+		"TODO"
+		"TODO"
+		"TODO"
+		"TODO"
+		"TODO"
+		"TODO"
+	
+	
+	return sql.insert_row()
+
+
+#call this on each child entity of each group
+static func sql_group_child_entity_serialize(part_to_int_mapping : Dictionary, sql : SQLite, root_group : SelectionManager.Group):
+	return
+
+
 static func zip_start(filepath : String, filename : String):
 	var zip_packer : ZIPPacker = ZIPPacker.new()
 	var error : int = zip_packer.open(filepath.path_join(filename) + ".tmv")

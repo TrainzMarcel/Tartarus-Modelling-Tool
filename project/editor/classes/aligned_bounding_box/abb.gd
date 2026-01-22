@@ -5,7 +5,6 @@ var extents : Vector3 = Vector3.ZERO
 var transform : Transform3D
 
 
-
 #expand bounding box to point in global space
 func expand(point : Vector3):
 	var dir : Array[Vector3]

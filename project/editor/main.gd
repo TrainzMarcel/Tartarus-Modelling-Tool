@@ -79,6 +79,7 @@ static var local_transform_active : bool = false
 @export_category("Tweakables")
 static var transform_handle_scale : float = 12
 @export var e_transform_handle_scale : float = 10
+static var group_exclude_key : Key = KEY_C
 
 #conditionals-------------------------------------------------------------------
 #main override for when ui like a document view or an asset menu or a file explorer is open
@@ -124,6 +125,7 @@ func _ready():
 	MainUIEvents.on_pivot_reset_pressed,
 	MainUIEvents.on_group_selection_pressed,
 	MainUIEvents.on_ungroup_selection_pressed,
+	MainUIEvents.on_display_groups_pressed,
 	MainUIEvents.on_snap_button_pressed,
 	MainUIEvents.on_snap_text_changed,
 	MainUIEvents.on_local_transform_active_set,
@@ -206,7 +208,7 @@ func _input(event : InputEvent):
 		if is_hovering_allowed and not Main.safety_check(hovered_handle):
 			#handle wasnt detected
 				hovered_part = Main.part_hover_check()
-				hovered_entity = SelectionManager.get_hovered_entity(hovered_part)
+				hovered_entity = SelectionManager.get_hovered_entity(hovered_part, group_exclude_key)
 				SelectionManager.selection_box_hover_on_target(hovered_entity, is_hovering_allowed)
 		else:
 			#hide selection box
@@ -228,7 +230,7 @@ func _input(event : InputEvent):
 			if Main.safety_check(hovered_part):
 				#if mouse was pressed down over a hovered part, we know the user is most likely starting a drag
 				#drag has a tolerance before it actually starts
-				hovered_entity = SelectionManager.get_hovered_entity(hovered_part)
+				hovered_entity = SelectionManager.get_hovered_entity(hovered_part, group_exclude_key)
 				dragged_part = hovered_part
 			#if handle is detected, set dragged_handle
 			elif Main.safety_check(hovered_handle):
@@ -295,29 +297,49 @@ func _input(event : InputEvent):
 			if event.pressed:
 				var is_part_hovered : bool = Main.safety_check(hovered_part)
 				if is_part_hovered and not is_selecting_allowed and is_hovering_allowed:# is_part_hovered and not is_drag_tool:
-					
+				#material tool--------------------------------------------------
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_material:
 						var undo : UndoManager.UndoData = UndoManager.UndoData.new()
-						undo.append_undo_action_with_args(hovered_part.set, ["part_material", hovered_part.part_material])
-						hovered_part.part_material = WorkspaceManager.selected_material
-						undo.explicit_object_references = [hovered_part]
-						undo.append_redo_action_with_args(hovered_part.set, ["part_material", WorkspaceManager.selected_material])
+						if hovered_entity is Part:
+							undo.append_undo_action_with_args(hovered_entity.set, ["part_material", hovered_entity.part_material])
+							hovered_entity.part_material = WorkspaceManager.selected_material
+							undo.explicit_object_references = [hovered_entity]
+							undo.append_redo_action_with_args(hovered_entity.set, ["part_material", WorkspaceManager.selected_material])
+						else:
+							var parts_of_hovered_group : Array = SelectionManager.group_get_all_child_parts(SelectionManager.group_get_full_hierarchy(hovered_entity))
+							for part in parts_of_hovered_group:
+								undo.append_undo_action_with_args(part.set, ["part_material", hovered_entity.part_material])
+								part.part_material = WorkspaceManager.selected_material
+								undo.explicit_object_references.append(part)
+								undo.append_redo_action_with_args(part.set, ["part_material", WorkspaceManager.selected_material])
 						UndoManager.register_undo_data(undo)
 					
+				#paint tool--------------------------------------------------
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_paint:
 						var undo : UndoManager.UndoData = UndoManager.UndoData.new()
-						undo.append_undo_action_with_args(hovered_part.set, ["part_color", hovered_part.part_color])
-						hovered_part.part_color = WorkspaceManager.selected_color
-						undo.explicit_object_references = [hovered_part]
-						undo.append_redo_action_with_args(hovered_part.set, ["part_color", WorkspaceManager.selected_color])
+						if hovered_entity is Part:
+							undo.append_undo_action_with_args(hovered_entity.set, ["part_color", hovered_entity.part_color])
+							hovered_entity.part_color = WorkspaceManager.selected_color
+							undo.explicit_object_references = [hovered_part]
+							undo.append_redo_action_with_args(hovered_entity.set, ["part_color", WorkspaceManager.selected_color])
+						else:
+							var parts_of_hovered_group : Array = SelectionManager.group_get_all_child_parts(SelectionManager.group_get_full_hierarchy(hovered_entity))
+							for part in parts_of_hovered_group:
+								undo.append_undo_action_with_args(part.set, ["part_color", part.part_color])
+								part.part_color = WorkspaceManager.selected_color
+								undo.explicit_object_references.append(part)
+								undo.append_redo_action_with_args(part.set, ["part_color", WorkspaceManager.selected_color])
 						UndoManager.register_undo_data(undo)
 					
+				#delete tool--------------------------------------------------
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_delete:
-						WorkspaceManager.part_delete_undoable(hovered_part)
+						WorkspaceManager.part_delete_undoable(hovered_entity)
 						#hide selection box
 						hover_selection_box.visible = false
+						
 						#immediately update hovered_part in case theres another part behind the deleted one
 						hovered_part = Main.part_hover_check()
+						hovered_entity = SelectionManager.get_hovered_entity(hovered_part, group_exclude_key)
 						SelectionManager.selection_box_hover_on_target(hovered_entity, true)
 						
 	#lmb up
@@ -384,6 +406,9 @@ func _notification(what: int) -> void:
 
 
 func autosave_model():
+	var label = EditorUI.c_loading_message.get_child(0)
+	var previous_text = label.text
+	label.text = "autosaving..."
 	EditorUI.c_loading_message.visible = true
 	#one await wasnt enough for the loading message to show up
 	await EditorUI.c_loading_message.get_tree().process_frame
@@ -391,6 +416,7 @@ func autosave_model():
 	
 	WorkspaceManager.save_model(FilePathRegistry.data_folder_autosaves, FilePathRegistry.data_auto_save, false, false)
 	EditorUI.c_loading_message.visible = false
+	label.text = previous_text
 	EditorUI.set_l_msg("autosaved successfully!")
 	
 	

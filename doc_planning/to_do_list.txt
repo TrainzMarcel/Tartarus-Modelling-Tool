@@ -1,11 +1,13 @@
 TOP PRIORITY
-clean up TODOS
 implement subassemblies and/or grouping of parts, holding alt allows for single part selection
 implement saving for subassemblies/grouping
 implement import/export (.obj, .gltf, .tres/.res)
-add selectionbox around abb
 get release notes and use them to update the manual accordingly
 release v0.1-indev-3 with release notes
+(maybe not) add selectionbox around abb
+clean up TODOS
+fix messed up leaky abstractions everywhere
+
 
 clear annoying unpreventable warnings from loading: https://forum.godotengine.org/t/any-way-to-clear-the-output-panel-from-a-tool-script/75135/3
 add #static var saving_thread : Thread to workspacemanager
@@ -26,9 +28,6 @@ implement roblox resizealign and gapfill plugin
 NORMAL PRIORITY
 automated build system: https://www.youtube.com/watch?v=wZsAY_SdEb8
 implement snapping for wedge face
-implement configurable modes for filemanager
-implement new folder button for filemanager
-implement multiple filters at once for filemanager
 implement asset import export (reference images, meshes)
 
 PERFORMANCE

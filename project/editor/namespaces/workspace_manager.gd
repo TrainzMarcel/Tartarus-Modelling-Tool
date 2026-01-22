@@ -357,43 +357,32 @@ static func part_delete(hovered_entity):
 	hovered_entity.queue_free()
 
 
-static func part_delete_undoable(hovered_part : Part):
-	pass
-	"""
+static func part_delete_undoable(hovered_entity):
 	var undo_data : UndoManager.UndoData = UndoManager.UndoData.new()
-	var part_was_selected : bool = SelectionManager.selected_parts_internal.has(hovered_part)
+	var entity_was_selected : bool = SelectionManager.selected_entities_internal.has(hovered_entity)
 	
 	#undo: first add the child node, then select it if needed
-	undo_data.append_undo_action_with_args(workspace.add_child, [hovered_part])
+	undo_data.append_undo_action_with_args(SelectionManager.add_children, [workspace, [hovered_entity]])
 	
 	#if part was selected, add selecting to the undo actions
-	if part_was_selected:
-		undo_data.append_undo_action_with_args(SelectionManager.selection_add_part, [hovered_part, hovered_part])
+	if entity_was_selected:
+		undo_data.append_undo_action_with_args(SelectionManager.selection_add_part, [hovered_entity, hovered_entity])
 		undo_data.append_undo_action_with_args(SelectionManager.post_selection_update, [])
-		SelectionManager.selection_remove_part(hovered_part)
+		SelectionManager.selection_remove_part(hovered_entity)
 		SelectionManager.post_selection_update()
 		
 	
-	workspace.remove_child(hovered_part)
-	undo_data.explicit_object_references = [hovered_part]
+	SelectionManager.remove_children(workspace, [hovered_entity])
+	undo_data.explicit_object_references = [hovered_entity]
 	
 	#if part was selected, remove from selection on redo first
-	if part_was_selected:
-		undo_data.append_redo_action_with_args(SelectionManager.selection_remove_part, [hovered_part])
+	if entity_was_selected:
+		undo_data.append_redo_action_with_args(SelectionManager.selection_remove_part, [hovered_entity])
 		undo_data.append_redo_action_with_args(SelectionManager.post_selection_update, [])
 	
 	#then remove from workspace
-	undo_data.append_redo_action_with_args(workspace.remove_child, [hovered_part])
+	undo_data.append_redo_action_with_args(SelectionManager.remove_children, [workspace, [hovered_entity]])
 	UndoManager.register_undo_data(undo_data)
-"""
-
-"TODO"#theres a second copy function in part.gd, decide on which function to keep!!
-static func part_copy(part : Part):
-	var new_part : Part = selected_part_type.duplicate()
-	new_part.part_mesh_node = selected_part_type.part_mesh_node.duplicate()
-	#optimization
-	new_part.part_mesh_node.mesh = selected_part_type.part_mesh_node.mesh
-	new_part.part_collider_node = selected_part_type.part_collider_node.duplicate()
 
 
 #called when user clicks on a part and drags
@@ -477,8 +466,8 @@ static func transform_handle_prepare(event : InputEvent):
 		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale:
 		#get transforms with basis vectors scaled by part_scale
-		var transform_array : Array = SelectionManager.selection_target_get_transform(SelectionManager.selected_entities_internal)
-		var scale_array : Array = SelectionManager.selection_target_get_extents(SelectionManager.selected_entities_internal)
+		var transform_array : Array = SelectionManager.selected_entities_internal.map(SelectionManager.selection_target_get_transform)
+		var scale_array : Array = SelectionManager.selected_entities_internal.map(SelectionManager.selection_target_get_extents)
 		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_set_exact_transforms, [transform_array, scale_array, SelectionManager.selected_parts_abb.extents])
 
@@ -641,8 +630,8 @@ static func transform_handle_terminate():
 	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale:
 		selection_transformed = undo_data_transform.undo_args.back().back() != SelectionManager.selected_parts_abb.extents
 		#get transforms with basis vectors scaled by part_scale
-		var transform_array : Array = SelectionManager.selection_target_get_transform(SelectionManager.selected_entities_internal)
-		var scale_array : Array = SelectionManager.selection_target_get_extents(SelectionManager.selected_entities_internal)
+		var transform_array : Array = SelectionManager.selected_entities_internal.map(SelectionManager.selection_target_get_transform)
+		var scale_array : Array = SelectionManager.selected_entities_internal.map(SelectionManager.selection_target_get_extents)
 		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_set_exact_transforms, [transform_array, scale_array, SelectionManager.selected_parts_abb.extents])
 	
@@ -742,7 +731,7 @@ static func save_model(filepath : String, filename : String, embed_assets : bool
 	var line : PackedStringArray = []
 	var line_debug : PackedStringArray = []
 	var file : PackedByteArray = []
-	#const separator : String = ","
+	
 	
 	#create directory just in case
 	if not DirAccess.dir_exists_absolute(filepath):

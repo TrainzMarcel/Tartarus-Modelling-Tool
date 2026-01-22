@@ -14,7 +14,7 @@ static func on_pivot_reset_pressed():
 	if ToolManager.selected_tool != ToolManager.SelectedToolEnum.t_pivot:
 		WorkspaceManager.pivot_mesh.visible = false
 		WorkspaceManager.pivot_custom_mode_active = false
-	SelectionManager.refresh_bounding_box()
+	#SelectionManager.refresh_bounding_box()
 	WorkspaceManager.pivot_local_transform = Transform3D.IDENTITY
 	WorkspaceManager.pivot_transform = SelectionManager.selected_parts_abb.transform
 	ToolManager.handle_set_root_position(
@@ -28,13 +28,16 @@ static func on_pivot_reset_pressed():
 
 
 static func on_group_selection_pressed():
-	SelectionManager.selection_group()
-	return
+	SelectionManager.selection_group_undoable()
 
 
 static func on_ungroup_selection_pressed():
-	SelectionManager.selection_ungroup()
-	return
+	SelectionManager.selection_ungroup_undoable()
+
+
+static func on_display_groups_pressed():
+	SelectionManager.is_depth_visualization_active = EditorUI.b_display_groups.button_pressed
+	SelectionManager.group_display()
 
 
 static func on_spawn_pressed():
@@ -150,18 +153,18 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 		elif id == 4:
 			#ctrl c copy selection
 			SelectionManager.selection_copy()
-			EditorUI.set_l_msg("copied " + str(SelectionManager.parts_clipboard.size()) + " parts")
+			EditorUI.set_l_msg("copied " + str(SelectionManager.entities_clipboard.size()) + " parts")
 		elif id == 5:
 			#ctrl v paste selection
 			SelectionManager.selection_paste_undoable()
 			SelectionManager.post_selection_update()
-			EditorUI.set_l_msg("pasted " + str(SelectionManager.parts_clipboard.size()) + " parts")
+			EditorUI.set_l_msg("pasted " + str(SelectionManager.entities_clipboard.size()) + " parts")
 		elif id == 6:
 			#ctrl x cut selection
 			SelectionManager.selection_copy()
 			SelectionManager.selection_delete_undoable()
 			SelectionManager.post_selection_update()
-			EditorUI.set_l_msg("cut " + str(SelectionManager.parts_clipboard.size()) + " parts")
+			EditorUI.set_l_msg("cut " + str(SelectionManager.entities_clipboard.size()) + " parts")
 		elif id == 7:
 			#ctrl d duplicate selection
 			SelectionManager.selection_duplicate_undoable()

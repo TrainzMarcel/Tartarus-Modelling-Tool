@@ -365,21 +365,25 @@ static func get_scale_local(part_scale : Vector3, part_rotation : Basis):
 
 
 "TODO"#move to selectionmanager (maybe)
-"TODO"#make a variant of this which takes group abb and group primary part as parameters
-static func calculate_extents(abb : ABB, rotation_origin_part : Part, parts : Array):
-	abb.transform = rotation_origin_part.transform
+
+static func calculate_extents(abb : ABB, rotation_origin_entity, entities : Array):
+	assert(entities.size() > 0)
+	abb.transform = SelectionManager.selection_target_get_transform(rotation_origin_entity)
 	abb.extents = Vector3.ZERO
 	
 	var i : int = 0
-	while i < parts.size():
+	while i < entities.size():
 		var corners : Array[Vector3] = []
 		for x in [-0.5, 0.5]:
 			for y in [-0.5, 0.5]:
 				for z in [-0.5, 0.5]:
-					var corner = parts[i].transform.origin
-					corner = corner + parts[i].transform.basis.x * (x * parts[i].part_scale.x)
-					corner = corner + parts[i].transform.basis.y * (y * parts[i].part_scale.y)
-					corner = corner + parts[i].transform.basis.z * (z * parts[i].part_scale.z)
+					var entity_transform : Transform3D = SelectionManager.selection_target_get_transform(entities[i])
+					var entity_extents : Vector3 = SelectionManager.selection_target_get_extents(entities[i])
+					var corner : Vector3 = entity_transform.origin
+					
+					corner = corner + entity_transform.basis.x * (x * entity_extents.x)
+					corner = corner + entity_transform.basis.y * (y * entity_extents.y)
+					corner = corner + entity_transform.basis.z * (z * entity_extents.z)
 					corners.append(corner)
 		
 		for j in corners:

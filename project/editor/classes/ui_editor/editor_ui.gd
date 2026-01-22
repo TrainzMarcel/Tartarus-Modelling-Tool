@@ -32,6 +32,7 @@ static var b_pivot_reset : Button
 
 static var b_group_selection : Button
 static var b_ungroup_selection : Button
+static var b_display_groups : Button
 
 #csg buttons
 #∪
@@ -97,6 +98,7 @@ func initialize(
 	on_pivot_reset_pressed : Callable,
 	on_group_selection_pressed : Callable,
 	on_ungroup_selection_pressed : Callable,
+	on_display_groups_pressed : Callable,
 	main_on_snap_button_pressed : Callable,
 	main_on_snap_text_changed : Callable,
 	on_local_transform_active_set : Callable,
@@ -132,6 +134,7 @@ func initialize(
 	b_pivot_reset = %ButtonPivotReset
 	b_group_selection = %ButtonGroupSelection
 	b_ungroup_selection = %ButtonUngroupSelection
+	b_display_groups = %ButtonDisplayGroups
 	
 	
 	#∪
@@ -233,6 +236,7 @@ func initialize(
 	b_pivot_reset.pressed.connect(on_pivot_reset_pressed)
 	b_group_selection.pressed.connect(on_group_selection_pressed)
 	b_ungroup_selection.pressed.connect(on_ungroup_selection_pressed)
+	b_display_groups.pressed.connect(on_display_groups_pressed)
 	
 	
 	pm_file.id_pressed.connect(on_top_bar_id_pressed.bind(pm_file))

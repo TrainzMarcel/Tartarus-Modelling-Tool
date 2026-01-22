@@ -139,4 +139,8 @@
 13.1.	thinking about how to make a simple interface for handling selectionboxes on multiple types
 16.1.	starting to fully implement grouping now, although i had a lot of trouble picking between architecture types
 18.1.	the previously chosen architecture was a major failure. now working on implementing a new architecture that solves problems of the previous one. but this means a major rewrite. selected_parts_array has become selected_entities and selected_entities_internal respectively.
+19.1.	reimplemented selection_rotate
+20.1.	worked on group visualizing function, reimplemented selection_scale
+21.1.	implemented group copy function and with that reimplemented selection_copy(), _duplicate(), _paste() and also cut. group visualization is finished and works well. thinking about whether hover tools should affect full groups or just individual parts within them. implemented individual part-in-group selecting with selection and bounding boxes that update when the group size changes.
+22.1.	made hover tools affect full group for color, material and deletion (and undo has been retrofitted to these too). part-in-group selecting still allows for editing individual parts of groups. reimplemented selection rect/marquee select to work with groups. started working on making grouping undoable and saveable but left the code unfinished because im tired.
 TODO:	TODO cleanup

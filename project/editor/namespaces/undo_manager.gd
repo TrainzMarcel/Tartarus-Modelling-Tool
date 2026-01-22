@@ -1,6 +1,7 @@
 extends RefCounted
 class_name UndoManager
 
+const logging : bool = false
 #limit of undodata objects in undo stack
 static var undo_limit : int = 10#255
 #how much to subtract from the array size if the limit is exceeded
@@ -47,10 +48,11 @@ class UndoData:
 static func register_undo_data(undo_data : UndoData):
 	#ref tracking
 	var to_be_removed : Array = undo_stack.slice(undo_index + 1, undo_stack.size())
-	print("---------------------------------------------------------------------------")
-	print("---------------------------------------------------------------------------")
-	print("removing the following parts from undo data:")
-	print(to_be_removed)
+	if logging:
+		print("---------------------------------------------------------------------------")
+		print("---------------------------------------------------------------------------")
+		print("removing the following parts from undo data:")
+		print(to_be_removed)
 	to_be_removed.map(func (input): update_dependencies(input, false))
 	
 	#if undo was pressed, any proceeding actions must be deleted first
@@ -65,12 +67,14 @@ static func register_undo_data(undo_data : UndoData):
 		to_be_removed = undo_stack.slice(0, limit_decrement)
 		to_be_removed.map(func (input): update_dependencies(input, false))
 		
-		print("decrementing... from ", undo_stack.size(), " to ", undo_stack.size() - limit_decrement)
+		if logging:
+			print("decrementing... from ", undo_stack.size(), " to ", undo_stack.size() - limit_decrement)
 		#take away from the front of the stack
 		undo_stack = undo_stack.slice(limit_decrement, undo_stack.size())
 		undo_index = undo_index - limit_decrement
 	
-	debug_pretty_print()
+	if logging:
+		debug_pretty_print()
 	undo_counter = 1
 	redo_counter = 1
 
@@ -100,15 +104,17 @@ static func update_dependencies(undo_data : UndoData, is_appending : bool):
 					#only delete fully from memory when this is an orphan node
 					"TODO"#add support for groups
 					if i is Node:
-						print("i.get_parent()")
-						print(i.get_parent())
+						if logging:
+							print("i.get_parent()")
+							print(i.get_parent())
 						if i.get_parent() == null:
 							i.queue_free()
 			else:
 				push_error("tried to remove nonexistant reference")
-	print("current reference counter state:")
-	print(reference_counter.keys())
-	print(reference_counter.values())
+	if logging:
+		print("current reference counter state:")
+		print(reference_counter.keys())
+		print(reference_counter.values())
 
 
 static func undo():
@@ -130,7 +136,8 @@ static func undo():
 		i = i + 1
 	
 	undo_index = max(undo_index - 1, -1)
-	debug_pretty_print(32)
+	if logging:
+		debug_pretty_print(32)
 	
 	#undo redo message count
 	EditorUI.set_l_msg("Undo (x" + str(undo_counter) + ")")
@@ -154,7 +161,8 @@ static func redo():
 		current.redo_action[i].callv(current.redo_args[i])
 		i = i + 1
 	
-	debug_pretty_print()
+	if logging:
+		debug_pretty_print()
 	#undo redo message count
 	EditorUI.set_l_msg("Redo (x" + str(redo_counter) + ")")
 	undo_counter = 1
