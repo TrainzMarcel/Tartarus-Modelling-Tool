@@ -57,14 +57,14 @@ class SQLDefinitions:
 	const group_child_part_table_name : String = "groups_child_parts"
 	const group_child_part_table : Dictionary = {
 		"id": {"data_type":"int", "primary_key": true, "not_null": true, "auto_increment": true},
-		"group_id": {"data_type":"int"},
+		"parent_group_id": {"data_type":"int"},
 		"child_part_id": {"data_type":"int"}
 	}
 	
 	const group_child_group_table_name : String = "groups_child_groups"
 	const group_child_group_table : Dictionary = {
 		"id": {"data_type":"int", "primary_key": true, "not_null": true, "auto_increment": true},
-		"group_id": {"data_type":"int"},
+		"parent_group_id": {"data_type":"int"},
 		"child_group_id": {"data_type":"int"}
 	}
 
@@ -243,22 +243,50 @@ static func sql_material_deserialize(row : Dictionary):
 		var i_line : int = 0
 		
 		while i < properties.size():
-			var parameter = properties[i]
-			var property_name_index = csv_headers_unpacked.find_custom(func(input : String): return input == parameter.name)
 			
-			
+			#dont overshoot csv value index
 			if i_line > csv_values.size() - 1:
 				return result_asset
 			
-			#skip non-persistent/internal properties
-			if parameter.usage & PROPERTY_USAGE_STORAGE == 0 or csv_values[i_line] == "":
-				#omitting this line caused a nasty desynchronization bug between the two counters
-				if csv_values[i_line] == "":
-					i_line = i_line + 1
+			#skip over empty values
+			if csv_values[i_line] == "":
+				i_line = i_line + 1
 				i = i + 1
 				continue
 			
+			var parameter = properties[i]
+			var property_name_index = csv_headers_unpacked.find_custom(func(input : String): return input == parameter.name)
+			
+			#skip non-persistent/internal properties
+			#dont skip i_line here as this property is not in the csv_values array
+			if parameter.usage & PROPERTY_USAGE_STORAGE == 0:
+				i = i + 1
+				continue
+			
+			"TODO"#add this to shader deserializing as well
+			#i can see this being triggered by version changes
+			#if a property is not found, continue loading but skip the property
+			if property_name_index == -1:
+				push_error("property not found: ", csv_headers_unpacked[i_line], ", at index: ", i_line, ", skipping this property and continuing loading. details: ", parameter)
+				i = i + 1
+				i_line = i_line + 1
+				continue
+			
+			
+			
+			"TODO"#add in a check if theres a filename for an image texture
+			#and if there is, check if the image texture loaded or not
+			#if it didnt load, the full material loading must be aborted
+			#or risk saving a corrupted material
+			
+			#i should also add a safeguard of some sort to make sure it is not saving
+			#a corrupted or otherwise invalid material like the checkers
 			var parameter_output = material_property_deserialize(csv_values, parameter, i_line)
+			
+			if parameter.type == TYPE_OBJECT and parameter.hint_string == "ImageTexture":
+				push_error("loading image ", csv_values[i_line], "for the material ", " failed, aborting material loading")
+				return
+			
 			result_asset.set(csv_headers[property_name_index], parameter_output)
 			
 			#skip past vectors and colors
@@ -315,27 +343,34 @@ static func sql_part_deserialize(row : Dictionary, used_colors : Array[Color], u
 	return new
 
 
-
-static func sql_group_serialize(part_to_int_mapping : Dictionary, sql : SQLite, root_group : SelectionManager.Group):
-	#this will go outside the function in save_model()
-	for root_group in root_groups:
-		assert((child_parts.size() + child_groups.size()) > 0, "empty root group detected. this should not be happening.")
-		var full_hierarchy : Array = SelectionManager.group_get_full_hierarchy(root_group)
-		"TODO"
-		"TODO"
-		"TODO"
-		"TODO"
-		"TODO"
-		"TODO"
-		"TODO"
-	
-	
-	return sql.insert_row()
+#call this for every existing group in order of given ids from the mapping
+static func sql_group_serialize(sql : SQLite, group_id : int):
+	return sql.insert_row(sql_def.group_table_name, {"id": group_id})
 
 
-#call this on each child entity of each group
-static func sql_group_child_entity_serialize(part_to_int_mapping : Dictionary, sql : SQLite, root_group : SelectionManager.Group):
-	return
+#this function is not helpful
+#static func sql_group_deserialize():
+#	return SelectionManager.Group.new()
+
+
+#then call this on each child entity of each group
+static func sql_group_child_entity_serialize(group_to_int_mapping : Dictionary, part_to_int_mapping : Dictionary, parent_group : SelectionManager.Group, entity, sql : SQLite):
+	if entity is Part:
+		return sql.insert_row(sql_def.group_child_part_table_name, {"parent_group_id": group_to_int_mapping[parent_group], "child_part_id": part_to_int_mapping[entity]})
+	elif entity is SelectionManager.Group:
+		return sql.insert_row(sql_def.group_child_group_table_name, {"parent_group_id": group_to_int_mapping[parent_group], "child_group_id": group_to_int_mapping[entity]})
+
+
+#then call this on each child entity of each group
+static func sql_group_child_part_deserialize(row : Dictionary, used_groups : Array, used_parts : Array):
+	used_groups[row["parent_group_id"]].child_parts.append(used_parts[row["child_part_id"]])
+
+
+static func sql_group_child_group_deserialize(row : Dictionary, used_groups : Array, root_groups : Array):
+	#arrays are passed by reference so this should work
+	used_groups[row["parent_group_id"]].child_groups.append(used_groups[row["child_group_id"]])
+	#process of elimination only leaves root groups by erasing every group which has an entry saying that it is a child group
+	root_groups.erase(used_groups[row["child_group_id"]])
 
 
 static func zip_start(filepath : String, filename : String):
@@ -658,6 +693,22 @@ static func get_meshes_from_parts(input_parts : Array):
 	
 	return used_meshes
 
+
+static func get_groups_from_parts(input_parts : Array, root_group_child_parts_hashmap : Dictionary):
+	var groups : Array = []
+	
+	for part in input_parts:
+		var root_group : SelectionManager.Group = root_group_child_parts_hashmap.get(part)
+		#make sure theres no duplicate references (duplicates are guaranteed with that hashmap)
+		if not groups.has(root_group):
+			groups.append(root_group)
+	
+	if groups.has(null):
+		push_error("null detected in root_group_child_parts_hashmap. continuing load/save process anyway")
+	
+	return groups
+
+
 #utility functions -------------------------------------------------------------
 static func material_property_serialize(parameter, property : Dictionary):
 	const l_bracket : String = "["
@@ -698,20 +749,25 @@ static func material_property_deserialize(csv_values : PackedStringArray, parame
 	const l_bracket : String = "["
 	const r_bracket : String = "]"
 	if parameter.type == TYPE_OBJECT and parameter.hint_string == "Material":
-		push_error("recursive use of materials not supported")
+		push_warning("recursive use of materials not supported")
 		return null
 	elif parameter.type == TYPE_OBJECT and parameter.hint_string == "Texture2D":
 		#if no filename has been entered here, assume that the material simply doesnt have a texture assigned
 		if csv_values[i_line] == "":
 			return null
 		
+		var image_texture : ImageTexture
 		#get image from memory as either unzip_assets or program startup have likely already loaded it
-		var image_texture : ImageTexture = AssetManager.get_asset_by_name(AssetManager.normalize_asset_name(csv_values[i_line], false))
+		var asset = AssetManager.get_asset_by_name(AssetManager.normalize_asset_name(csv_values[i_line], false))
+		#make sure the asset is of the correct type
+		"TODO"#practically anywhere theres an assetmanager.get there should be a type check in place and error handling
+		if asset is ImageTexture:
+			image_texture = asset
 		
 		
-		#if image texture still hasnt loaded, push an error
+		#if image texture still hasnt loaded, push an error and abort
 		if image_texture == null:
-			push_error("image texture loading failure at value: ", csv_values[i_line], ", at line item number: ", i_line, ", for the property: ", parameter.name)
+			push_error("image texture loading failure at value: ", csv_values[i_line], ", at line item number: ", i_line, ", for the property: ", parameter.name, ". aborting...")
 			return null
 		
 		return image_texture
@@ -722,7 +778,7 @@ static func material_property_deserialize(csv_values : PackedStringArray, parame
 		if csv_values[i_line] == "f":
 			return false
 		else:
-			push_error("unexpected value: ", csv_values[i_line], ", at property: ", parameter, ", only t (true) or f (false) allowed.")
+			push_error("unexpected value: ", csv_values[i_line], ", at index ", i_line, ", at property: ", parameter, ", only t (true) or f (false) allowed.")
 #load int
 	elif parameter.type == TYPE_INT:
 		return int(csv_values[i_line])

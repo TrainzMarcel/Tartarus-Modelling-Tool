@@ -103,7 +103,8 @@ static func update_dependencies(undo_data : UndoData, is_appending : bool):
 					reference_counter.erase(i)
 					#only delete fully from memory when this is an orphan node
 					"TODO"#add support for groups
-					if i is Node:
+					
+					if Main.safety_check(i) and i is Node:
 						if logging:
 							print("i.get_parent()")
 							print(i.get_parent())

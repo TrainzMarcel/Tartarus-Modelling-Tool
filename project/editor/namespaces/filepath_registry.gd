@@ -15,7 +15,7 @@ static var data_auto_save : String = "auto_save"
 
 #used as fallbacks for null values
 const data_fallback_material : String = "res://editor/data_editor/broken_checkers.tres"
-const data_fallback_part : String = "res://editor/data_editor/cuboid.tres"
+const data_fallback_part : String = "res://editor/data_editor/error_mesh.tres"
 
 
 #ui tooltip paths

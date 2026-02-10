@@ -11,29 +11,102 @@ class_name Part
 #make unselectable
 @export var locked : bool = false
 
-var collider_type : int = 0
-
 #material setter
 @export var part_material : Material:
 	set(value):
+		if not mesh_node_safety_check("part material"):
+			return
+		
+		#if material is invalid, set part_material to null and display error material
+		if not Main.safety_check(value):
+			part_material = null
+			push_warning("attempted to set part_material to invalid value: ", value, ", setting material to fallback ", FilePathRegistry.data_fallback_material.get_file())
+			part_mesh_node.material_override = preload(FilePathRegistry.data_fallback_material)
+			return
+		
+		#otherwise, proceed as normal
 		part_material = value
-		reapply_part_material(value)
+		if value != null:
+			part_mesh_node.material_override = AssetManager.recolor_material(value, part_color, true)
+
 
 #color setter
 @export var part_color : Color = Color.WHITE:
 	set(value):
 		part_color = value
-		reapply_part_color(value)
+		if not mesh_node_safety_check("part color"):
+			return
+		
+		if part_mesh_node.material_override == null:
+			part_mesh_node.material_override = StandardMaterial3D.new()#AssetManager.recolor_material(load(FilePathRegistry.data_default_material), part_color, true)
+		else:
+			part_mesh_node.material_override = AssetManager.recolor_material(part_mesh_node.material_override, part_color, true)
 
-@export var part_scale : Vector3 = Vector3(0.4, 0.2, 0.8):
+
 #size with setter
+@export var part_scale : Vector3 = Vector3(0.4, 0.2, 0.8):
 	set(value):
 		value.x = max(value.x, 0)
 		value.y = max(value.y, 0)
 		value.z = max(value.z, 0)
 		part_scale = value
 		
-		reapply_part_scale(value)
+		
+		#do both checks regardless of whether one fails
+		#that way both errors will be printed
+		var success : bool = collision_node_safety_check("part scale")
+		success = success and mesh_node_safety_check("part scale")
+		
+		if not success:
+			return
+		
+		var shape : BoxShape3D = part_collider_node.shape
+		shape.size = part_scale
+		
+		"TODO"#implement the different shapes
+		#with this match statement and also with a polygon resizer
+		#match collider_type:
+		#cuboid
+		#	0:
+		#wedge
+		#	1:
+		#		var shape : ConvexPolygonShape3D = ConvexPolygonShape3D.new()
+		#		shape.points = scale_wedge_collider(p_scale, wedge_collider_points)
+		
+		part_mesh_node.scale = part_scale
+
+
+@export var part_mesh : Mesh:
+	set(value):
+		if not mesh_node_safety_check("part type"):
+			return
+		
+		if not Main.safety_check(value):
+			part_mesh_node.mesh = preload(FilePathRegistry.data_fallback_part)
+			part_mesh = null
+			return
+		
+		part_mesh_node.mesh = value
+		part_mesh = value
+
+
+func mesh_node_safety_check(property_name : String):
+	if not Main.safety_check(part_mesh_node):
+		push_error("reference to part mesh node lost on part ", self.name, ", unable to set ", property_name)
+		return false
+	return true
+
+
+func collision_node_safety_check(property_name : String):
+	if not Main.safety_check(part_collider_node):
+		push_error("reference to part collider node lost on part ", self.name, ", unable to set ", property_name)
+		return false
+	
+	if not Main.safety_check(part_collider_node.shape):
+		push_error("reference to part collision node shape property lost on part ", self.name, ", unable to set ", property_name)
+		return false
+	
+	return true
 
 
 #automatic assigning of collision shape
@@ -42,64 +115,29 @@ var part_collider_node : CollisionShape3D
 var part_mesh_node : MeshInstance3D
 
 
-func reapply_part_scale(p_scale : Vector3):
-		if part_collider_node == null or part_mesh_node == null:
-			return
-		
-		if part_collider_node.shape == null:
-			return
-		
-		#implement the different shapes
-		match collider_type:
-		#cuboid
-			0:
-				var shape : BoxShape3D = part_collider_node.shape
-				shape.size = p_scale
-		#wedge
-			1:
-				var shape : ConvexPolygonShape3D = ConvexPolygonShape3D.new()
-				shape.points = scale_wedge_collider(p_scale, wedge_collider_points)
-		
-		part_mesh_node.scale = p_scale
-
-
-func reapply_part_material(material : Material):
-	if part_mesh_node != null and material != null:
-		part_mesh_node.material_override = AssetManager.recolor_material(material, part_color, true)
-
-
-func reapply_part_color(color : Color):
-	if part_mesh_node != null:
-		if part_mesh_node.material_override == null:
-			part_mesh_node.material_override = StandardMaterial3D.new()#AssetManager.recolor_material(load(FilePathRegistry.data_default_material), part_color, true)
-		else:
-			part_mesh_node.material_override = AssetManager.recolor_material(part_mesh_node.material_override, color, true)
-
-
+#on new instance created
 func _init():
 	part_collider_node = CollisionShape3D.new()
 	part_mesh_node = MeshInstance3D.new()
+	
+	#for now, all parts have box/cuboid colliders
+	if part_collider_node.shape == null:
+		part_collider_node.shape = BoxShape3D.new()
 	
 	#set collision mask to not collide with other parts
 	set_collision_mask_value(1, false)
 	set_collision_mask_value(2, true)
 
 
-
+#call manually
 func initialize():
-	if part_collider_node.shape == null:
-		part_collider_node.shape = BoxShape3D.new()
+	#must be added to node tree first to ensure everything works
+	assert(get_parent() != null)
 	
-	
-	if part_mesh_node.mesh == null:
-		part_mesh_node.mesh = preload(FilePathRegistry.data_fallback_part)
-	
-	if part_material == null:
-		part_material = load(FilePathRegistry.data_fallback_material)
-	
-	
-	if part_color != Color.WHITE:
-		reapply_part_color(part_color)
+	#trigger setters
+	part_mesh = part_mesh
+	part_material = part_material
+	part_color = part_color
 	
 	add_child(part_collider_node)
 	part_collider_node.owner = get_tree().edited_scene_root
@@ -107,10 +145,11 @@ func initialize():
 	add_child(part_mesh_node)
 	part_mesh_node.owner = get_tree().edited_scene_root
 	
-#outdated comment, not sure if this still applies
-#only set this after its initialized (does not run through setter if mesh or collider are null)
-	reapply_part_scale(part_scale)
+#only set this after its initialized because it does not run through the setter if mesh or collider are null)
+	part_scale = part_scale
 
+
+"TODO"
 var wedge_collider_points : PackedVector3Array = [
 	Vector3(-0.5, -0.5, -0.5),
 	Vector3(-0.5, -0.5, 0.5),
@@ -120,6 +159,8 @@ var wedge_collider_points : PackedVector3Array = [
 	Vector3(0.5, -0.5, 0.5)
 ]
 
+
+"TODO"
 func scale_wedge_collider(scale_to : Vector3, wedge_collider_points : PackedVector3Array):
 	for i in wedge_collider_points:
 		i = i * scale_to
@@ -130,27 +171,28 @@ func scale_wedge_collider(scale_to : Vector3, wedge_collider_points : PackedVect
 func copy():
 	var new : Part = Part.new()
 	new.part_mesh_node = part_mesh_node.duplicate()
-	#optimization
-	new.part_mesh_node.mesh = part_mesh_node.mesh
+	#optimization (shared meshes)
+	new.part_mesh = part_mesh
 	new.part_collider_node = part_collider_node.duplicate()
+	
 	#do not share the collider
-	if collider_type == 0:
-		new.part_collider_node.shape = BoxShape3D.new()
-		new.part_collider_node.shape.size = part_scale
+	#if collider_type == 0:
+	new.part_collider_node.shape = BoxShape3D.new()
+	new.part_collider_node.shape.size = part_scale
 	#warning: untested
-	elif collider_type == 1:
-		new.part_collider_node.shape = ConvexPolygonShape3D.new()
-		new.scale_wedge_collider(part_scale, wedge_collider_points)
+	#elif collider_type == 1:
+	#	new.part_collider_node.shape = ConvexPolygonShape3D.new()
+	#	new.scale_wedge_collider(part_scale, wedge_collider_points)
 	
 	new.transform = transform
 	new.exclude = exclude
 	new.locked = locked
-	new.collider_type = collider_type
+	#new.collider_type = collider_type
 	new.part_scale = part_scale
 	#shouldnt require duplicating
 	#setter automatically calls reapply function
 	new.part_material = part_material
-	#i assume (hope) this is passed by value and not by reference
+	#this is passed by value and not by reference
 	#setter automatically calls reapply function
 	new.part_color = part_color
 	return new

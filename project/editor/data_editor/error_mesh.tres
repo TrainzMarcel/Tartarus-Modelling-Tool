@@ -1,0 +1,6 @@
+[gd_resource type="TextMesh" format=3 uid="uid://dybno6q80l2bh"]
+
+[resource]
+text = "Error"
+font_size = 45
+depth = 0.2

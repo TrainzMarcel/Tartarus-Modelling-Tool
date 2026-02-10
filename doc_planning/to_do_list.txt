@@ -1,13 +1,20 @@
 TOP PRIORITY
 implement subassemblies and/or grouping of parts, holding alt allows for single part selection
-implement saving for subassemblies/grouping
 implement import/export (.obj, .gltf, .tres/.res)
+fix messed up filemanager back and forward history buttons
 get release notes and use them to update the manual accordingly
+rename assetmanager, undomanager, selectionmanager, toolmanager to AssetSubsystem, UndoSubsystem, SelectionSubsystem, ToolSubsystem
+add cool sounds for saving and loading
 release v0.1-indev-3 with release notes
 (maybe not) add selectionbox around abb
 clean up TODOS
-fix messed up leaky abstractions everywhere
+fix messed up leaky abstractions everywhere: attempt to untangle main, attempt to untangle the managers and only have them communicate through main as well as possible
+add errorsubsystem with cool console that is like a dropdown which slides up from the middle message bar
 
+
+automated build system: https://www.youtube.com/watch?v=wZsAY_SdEb8
+implement snapping for wedge face 
+implement asset import export (reference images)
 
 clear annoying unpreventable warnings from loading: https://forum.godotengine.org/t/any-way-to-clear-the-output-panel-from-a-tool-script/75135/3
 add #static var saving_thread : Thread to workspacemanager
@@ -19,6 +26,7 @@ reduce code duplication in asset manager
 settings menu? centralized settings loader? csv? autosave repeat duration? automated property setting ui? hint system disable?
 add a setting for changing if camera uses scroll wheel to set speed or to scroll (same as lock-on mode except it uses a raycast to determine distance and scroll amount. if raycast hits nothing, use a default scroll distance.)
 add BETTER hint system than manual (gmod droplet noise with timer progressbar)
+add error log console that opens from a dropdown in the bottom panel facing upward
 add better user feedback for part, color and material selector (selected shape, color or material are shown above the dropdown instead of just message bar)
 use better shader/improve existing shader
 implement correct colliders for non-cuboid shapes
@@ -26,9 +34,6 @@ implement roblox resizealign and gapfill plugin
 
 
 NORMAL PRIORITY
-automated build system: https://www.youtube.com/watch?v=wZsAY_SdEb8
-implement snapping for wedge face
-implement asset import export (reference images, meshes)
 
 PERFORMANCE
 WorkspaceManager.selection_add_part() is also a bit slow

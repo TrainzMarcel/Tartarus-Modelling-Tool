@@ -171,7 +171,7 @@ static func initialize(
 				AssetManager.register_asset(asset)
 			elif asset is Mesh:
 				var new : Part = Part.new()
-				new.part_mesh_node.mesh = asset
+				new.part_mesh = asset
 				parts_list.append(new)
 				
 				#set default scale (this must be refactored and not hardcoded!!)
@@ -228,10 +228,12 @@ static func initialize(
 	
 	
 	#set singular part to grass texture after loading
-	workspace.get_node("Part").part_material = AssetManager.get_asset_by_name("grass_01")
+	var baseplate : Part = workspace.get_node("Part")
+	baseplate.part_mesh = AssetManager.get_asset_by_name("cuboid")
+	baseplate.part_material = AssetManager.get_asset_by_name("grass_01")
 	#_ready was getting called in the parts before main and before textures loaded so this is done manually now
 	#this line is only required for the manually placed parts in the main scene
-	workspace.get_node("Part").initialize()
+	baseplate.initialize()
 	#workspace.get_children().map(func(input): if input is Part: input.initialize())
 
 
@@ -321,11 +323,14 @@ static func initialize_user_folder():
 #only meant for spawning a part from the part spawn button
 static func part_spawn(selected_part_type : Part):
 	var ray_result = Main.raycast(Main.cam, Main.cam.global_position, Main.cam.global_position + (-Main.cam.basis.z * Main.part_spawn_raycast_length), [], [1])
-	var new_part : Part = selected_part_type.copy()
+	var new_part : Part = Part.new()
+	
 	workspace.add_child(new_part)
-	new_part.initialize()
 	new_part.part_material = selected_material
 	new_part.part_color = selected_color
+	new_part.part_mesh = selected_part_type.part_mesh
+	new_part.part_scale = selected_part_type.part_scale
+	new_part.initialize()
 	
 	if ray_result.is_empty():
 		new_part.transform.origin = Main.cam.global_position + Main.part_spawn_distance * -Main.cam.basis.z
@@ -347,7 +352,9 @@ static func part_spawn(selected_part_type : Part):
 	undo_data.explicit_object_references = [new_part]
 	undo_data.append_redo_action_with_args(workspace.add_child, [new_part])
 	UndoManager.register_undo_data(undo_data)
-	
+	Main.part_hover_check()
+	Main.hovered_entity = SelectionManager.get_hovered_entity(Main.hovered_part, Main.group_exclude_key)
+	SelectionManager.selection_box_hover_on_target(Main.hovered_entity, Main.is_hovering_allowed)
 	return new_part
 
 
@@ -694,6 +701,7 @@ static func confirm_save_load(filepath : String, name : String):
 		if options != null:
 			embed_assets = options.get_node("ButtonEmbedAssets").button_pressed
 			selected_only = options.get_node("ButtonSaveSelectedOnly").button_pressed
+		else:
 			push_error("no options ui detected in filemanager? continuing save operations with default settings.")
 		
 		save_model(filepath + "/", name, embed_assets, selected_only)
@@ -724,9 +732,12 @@ static func save_model(filepath : String, filename : String, embed_assets : bool
 	var used_colors : Array[Color] = []
 	var used_materials : Array[Material] = []
 	var used_meshes : Array[Mesh] = []
+	var used_root_groups : Array = []
 	var color_to_int_mapping : Dictionary
 	var material_name_to_int_mapping : Dictionary
 	var mesh_to_int_mapping : Dictionary
+	var part_to_int_mapping : Dictionary
+	var group_to_int_mapping : Dictionary
 	var assets_used : Array[Resource] = []
 	var line : PackedStringArray = []
 	var line_debug : PackedStringArray = []
@@ -752,11 +763,28 @@ static func save_model(filepath : String, filename : String, embed_assets : bool
 	used_colors = DataUtils.get_colors_from_parts(save_parts)
 	used_materials = DataUtils.get_materials_from_parts(save_parts)
 	used_meshes = DataUtils.get_meshes_from_parts(save_parts)
+	#possibly save some time if all parts are being saved
+	if selected_only:
+		used_root_groups = DataUtils.get_groups_from_parts(save_parts, SelectionManager.root_group_child_parts_hashmap)
+	else:
+		used_root_groups = SelectionManager.root_groups.duplicate()
+	
 	
 	#create mappings to quickly assign the used color and material ids
 	color_to_int_mapping = create_mapping(used_colors)
 	material_name_to_int_mapping = create_mapping(used_materials.map(func(input): return AssetManager.get_name_of_asset(input, false)))
 	mesh_to_int_mapping = create_mapping(used_meshes.map(func(input): return AssetManager.get_name_of_asset(input)))
+	part_to_int_mapping = create_mapping(save_parts)
+	
+	
+	#flattened full hierarchy of all groups
+	var save_groups : Array = []
+	for root_group in used_root_groups:
+		assert(root_group != null and (root_group.child_parts.size() + root_group.child_groups.size()) > 0, "empty root group detected. this should not be happening.")
+		save_groups.append_array(SelectionManager.group_get_full_hierarchy(root_group))
+	
+	group_to_int_mapping = create_mapping(save_groups)
+	
 	
 	#add colors to save
 	var i : int = 0
@@ -797,6 +825,25 @@ static func save_model(filepath : String, filename : String, embed_assets : bool
 			"TODO"#log better error
 			push_error("part serializing failed: part number", i, ", values: ", save_parts[i])
 		i = i + 1
+	
+	#group data
+	i = 0
+	#first enter every group in the sql table
+	while i < save_groups.size():
+		var success : bool = DataUtils.sql_group_serialize(sql, i)
+		if not success:
+				push_error("group serializing failed: group number", i, ", values: ", save_groups[i])
+		#also enter every child entity of every group
+		for child_part in save_groups[i].child_parts:
+			DataUtils.sql_group_child_entity_serialize(group_to_int_mapping, part_to_int_mapping, save_groups[i], child_part, sql)
+		
+		for child_group in save_groups[i].child_groups:
+			DataUtils.sql_group_child_entity_serialize(group_to_int_mapping, part_to_int_mapping, save_groups[i], child_group, sql)
+		
+		i = i + 1
+	
+	
+	
 	
 	"TODO"#this could be less wasteful
 	if not embed_assets:
@@ -863,11 +910,19 @@ static func load_model_from_sql_data(sql : SQLite):
 	var rows_mesh_table : Array = sql.select_rows(DataUtils.sql_def.mesh_table_name, "", ["mesh_filename"])
 	sql.query("SELECT * FROM " + DataUtils.sql_def.part_table_name + ";")
 	var rows_part_table : Array = sql.select_rows(DataUtils.sql_def.part_table_name, "", ["position", "rotation", "scale", "color_id", "material_id", "mesh_id"])
+	sql.query("SELECT * FROM " + DataUtils.sql_def.group_table_name + ";")
+	var rows_group_table : Array = sql.select_rows(DataUtils.sql_def.group_table_name, "", ["id"])
+	sql.query("SELECT * FROM " + DataUtils.sql_def.group_child_part_table_name + ";")
+	var rows_group_child_part_table : Array = sql.select_rows(DataUtils.sql_def.group_child_part_table_name, "", ["parent_group_id", "child_part_id"])
+	sql.query("SELECT * FROM " + DataUtils.sql_def.group_child_group_table_name + ";")
+	var rows_group_child_group_table : Array = sql.select_rows(DataUtils.sql_def.group_child_group_table_name, "", ["parent_group_id", "child_group_id"])
 	
 	var used_colors : Array[Color] = []
 	var used_materials : Array[Material] = []
 	var used_meshes : Array[Mesh] = []
-	
+	var used_parts : Array[Part] = []
+	var used_groups : Array[SelectionManager.Group] = []
+	var root_groups : Array[SelectionManager.Group] = []
 	
 	#load color
 	for row in rows_color_table:
@@ -884,6 +939,45 @@ static func load_model_from_sql_data(sql : SQLite):
 		var new : Part = DataUtils.sql_part_deserialize(row, used_colors, used_materials, used_meshes)
 		workspace.add_child(new)
 		new.initialize()
+		used_parts.append(new)
+	
+	#first load all groups
+	for row in rows_group_table:
+		var new : SelectionManager.Group = SelectionManager.Group.new()
+		used_groups.append(new)
+	
+	
+	#assign child entities to groups
+	for row in rows_group_child_part_table:
+		DataUtils.sql_group_child_part_deserialize(row, used_groups, used_parts)
+	
+	#get root groups by process of elimination
+	root_groups = used_groups.duplicate()
+	for row in rows_group_child_group_table:
+		DataUtils.sql_group_child_group_deserialize(row, used_groups, root_groups)
+	
+	
+	#recalculate abb and primary_part
+	for group in used_groups:
+		group.primary_entity = SelectionManager.last_element(group.child_parts)
+		if not Main.safety_check(group.primary_entity):
+			group.primary_entity = SelectionManager.last_element(group.child_groups)
+		
+		print("group_abb: ", group.group_abb)
+		var total : Array = []
+		total.append_array(group.child_groups)
+		total.append_array(group.child_parts)
+		group.group_abb = SnapUtils.calculate_extents(group.group_abb, group.primary_entity, total)
+	
+	
+	#update selectionmanager state
+	"TODO"#this should be part of the api of selectionmanager
+	SelectionManager.root_groups.append_array(root_groups)
+	SelectionManager.root_group_child_parts_hashmap.clear()
+	for r_group in SelectionManager.root_groups:
+		for part in SelectionManager.group_get_all_child_parts(SelectionManager.group_get_full_hierarchy(r_group)):
+			SelectionManager.root_group_child_parts_hashmap[part] = r_group
+	
 
 
 static func load_model_from_csv_data(input : PackedByteArray):

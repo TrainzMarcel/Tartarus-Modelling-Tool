@@ -143,4 +143,9 @@
 20.1.	worked on group visualizing function, reimplemented selection_scale
 21.1.	implemented group copy function and with that reimplemented selection_copy(), _duplicate(), _paste() and also cut. group visualization is finished and works well. thinking about whether hover tools should affect full groups or just individual parts within them. implemented individual part-in-group selecting with selection and bounding boxes that update when the group size changes.
 22.1.	made hover tools affect full group for color, material and deletion (and undo has been retrofitted to these too). part-in-group selecting still allows for editing individual parts of groups. reimplemented selection rect/marquee select to work with groups. started working on making grouping undoable and saveable but left the code unfinished because im tired.
+23.1.	retrofitted selection_delete and selection_set_to_workspace for new selectionbox target system and groups (selection_set_to_workspace even takes the group exclude key into account!), implemented sql saving for group
+24.1.	implemented loading of groups from sql
+8.2.	working on making the material loading and saving system more robust
+9.2.	part now applies null to part_material value when attempting to set invalid material and applies the broken checkers on the meshes material override. this means invalid materials will not be set in the model and be clearly displayed as errors in the view. also applied this to mesh
+10.2.	fixed messy initialization and setters in part.gd, 
 TODO:	TODO cleanup

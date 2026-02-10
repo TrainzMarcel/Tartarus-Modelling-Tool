@@ -20,6 +20,8 @@ static var selected_parts_abb : ABB = ABB.new()
 class Group:
 	extends RefCounted
 	#TODO child_entities : Array = []
+	#TODO possibly parent_group : Group with some function to make sure
+	#child_groups of parent_group and vice reversa are always updated in sync
 	var child_groups : Array = []
 	var child_parts : Array = []
 	#group_abb orientation part / group
@@ -426,6 +428,7 @@ static func selection_rect_terminate(selection_rect : Panel):
 	undo_data_selection_rect.explicit_object_references.append_array(selection)
 	UndoManager.register_undo_data(undo_data_selection_rect)
 	undo_data_selection_rect = null
+	post_selection_update()
 
 
 #selection functions------------------------------------------------------------
@@ -441,6 +444,10 @@ static func get_hovered_entity(hovered_part : Part, exclude_group_key : Key):
 
 
 static func selection_add_part(hovered_entity, abb_orientation):
+	if selected_entities.has(hovered_entity):
+		push_error("entities that are already selected are unable to be added")
+		return
+	
 	selected_entities.append(hovered_entity)
 	
 	if hovered_entity is Group:
@@ -466,6 +473,9 @@ static func selection_add_part(hovered_entity, abb_orientation):
 
 
 static func selection_add_part_undoable(hovered_entity, abb_orientation):
+	if selected_entities.has(hovered_entity):
+		push_error("entities that are already selected are unable to be added")
+		return
 	selection_add_part(hovered_entity, abb_orientation)
 	
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
@@ -478,6 +488,10 @@ static func selection_add_part_undoable(hovered_entity, abb_orientation):
 
 
 static func selection_remove_part(hovered_entity):
+	if not selected_entities.has(hovered_entity):
+		push_error("entities that are not selected are unable to be removed")
+		return
+	
 	selection_box_delete_on_part(hovered_entity)
 	selected_entities.erase(hovered_entity)
 	
@@ -501,6 +515,9 @@ static func selection_remove_part(hovered_entity):
 
 
 static func selection_remove_part_undoable(hovered_entity):
+	if not selected_entities.has(hovered_entity):
+		push_error("entities that are not selected are unable to be removed")
+		return
 	selection_remove_part(hovered_entity)
 	
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
@@ -523,7 +540,8 @@ static func selection_set_to_workspace():
 		)
 	
 	for i in workspace_parts:
-		selection_add_part(i, workspace_parts[0])
+		var entity = get_hovered_entity(i, Main.group_exclude_key)
+		selection_add_part(entity, last_element(workspace_parts))
 	selection_changed = true
 
 
@@ -614,21 +632,21 @@ static func selection_clear_undoable():
 
 
 static func selection_delete():
-	for i in selected_entities:
+	var previous_selected_entities : Array = selected_entities.duplicate()
+	selection_clear()
+	for i in previous_selected_entities:
 		if i is Group:
 			root_groups.erase(i)
-			
 			var hierarchy : Array = group_get_full_hierarchy(i)
-			group_get_all_child_parts(hierarchy).map(func(input): i.queue_free())
+			group_get_all_child_parts(hierarchy).map(func(input): input.queue_free())
 			for j in hierarchy:
-				j.child_groups = null
-				j.child_parts = null
+				j.child_groups = []
+				j.child_parts = []
 				j.primary_entity = null
 				j.group_abb = null
 		else:
 			i.queue_free()
 	
-	selection_clear()
 
 
 static func selection_delete_undoable():
@@ -991,7 +1009,7 @@ static var is_group : Callable = func(input_entity): return input_entity is Grou
 static var is_part : Callable = func(input_entity): return input_entity is Part
 
 
-static func selection_group(undo_group : Group = null):
+static func selection_group(undo_group : Group = null, refresh_abb_offsets = true):
 	var selected_parts : Array = selected_entities.filter(is_part)
 	var selected_groups : Array = selected_entities.filter(is_group)
 	
@@ -1055,27 +1073,51 @@ static func selection_group(undo_group : Group = null):
 	#print("group.group_abb: ", group.group_abb.extents)
 	#print("selected abb: ", selected_parts_abb.transform.origin)
 	#print("group.group_abb: ", group.group_abb.transform.origin)
-	refresh_offset_abb_to_selected_array()
+	#skippable in case 
+	if refresh_abb_offsets:
+		refresh_offset_abb_to_selected_array()
 	return group
 
 
 static func selection_group_undoable():
+#first, do a bunch of checks to avoid invalid groups
+	var selected_parts : Array = selected_entities.filter(is_part)
+	var selected_groups : Array = selected_entities.filter(is_group)
+	
+	var depth : int = 0
+	#if depth limit is reached in any of these, cancel
+	for group in selected_groups:
+		depth = max(group_get_hierarchy_depth(group), depth)
+	assert(depth <= group_depth_max)
+	if depth == group_depth_max:
+		EditorUI.set_l_msg("grouping failed: group depth limit (" + str(group_depth_max + 1) + ") reached.")
+		return
+	
+	if selected_entities.size() < 2:
+		EditorUI.set_l_msg("grouping failed: selection must contain at least 2 entities.")
+		return
+	
+	for part in selected_parts:
+		if root_group_child_parts_hashmap.has(part):
+			EditorUI.set_l_msg("grouping failed: parts cant be in two groups at once.")
+			return
+	
 	var selection : Array = selected_entities.duplicate()
 	var undo_group : Group = selection_group()
 	
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
-	undo.append_undo_action_with_args(selection_set_to_part_array, [selection, last_element(selection)])
-	undo.append_undo_action_with_args(selection_ungroup, [])
+	undo.append_undo_action_with_args(selection_set_to_part_array, [undo_group, undo_group])
+	undo.append_undo_action_with_args(selection_ungroup, [undo_group, false])
 	undo.append_undo_action_with_args(post_selection_update, [])
 	undo.explicit_object_references.append_array(selection)
 	undo.explicit_object_references.append(undo_group)
-	undo.append_redo_action_with_args(selection_set_to_part_array, [undo_group, undo_group])
-	undo.append_redo_action_with_args(selection_group, [undo_group])
+	undo.append_redo_action_with_args(selection_set_to_part_array, [selection, last_element(selection)])
+	undo.append_redo_action_with_args(selection_group, [undo_group, false])
 	undo.append_redo_action_with_args(post_selection_update, [])
 	UndoManager.register_undo_data(undo)
 
 
-static func selection_ungroup():
+static func selection_ungroup(refresh_abb_offsets : bool = true):
 	var selected_groups : Array = selected_entities.filter(is_group)
 	
 	if selected_groups.size() < 1:
@@ -1100,10 +1142,12 @@ static func selection_ungroup():
 		for part in group_get_all_child_parts(group_get_full_hierarchy(r_group)):
 			root_group_child_parts_hashmap[part] = r_group
 	
-	refresh_offset_abb_to_selected_array()
+	if refresh_abb_offsets:
+		refresh_offset_abb_to_selected_array()
 
 
 static func selection_ungroup_undoable():
+#preliminary checks
 	var selection : Array = selected_entities.duplicate()
 	var selected_groups : Array = selected_entities.filter(is_group)
 	
@@ -1118,15 +1162,6 @@ static func selection_ungroup_undoable():
 		undo.append_undo_action_with_args(selection_group, [undo_group])
 	
 	selection_ungroup()
-	"TODO"
-	"TODO"
-	"TODO"
-	"TODO"
-	"TODO"
-	"TODO"
-	"TODO"
-	"TODO"
-	"TODO"
 	#undo.append_undo_action_with_args(post_selection_update, [])
 	#undo.explicit_object_references.append_array(selection)
 	#undo.append_redo_action_with_args(selection_set_to_part_array, [undo_group, undo_group])
