@@ -3,9 +3,13 @@ class_name UndoManager
 
 const logging : bool = false
 #limit of undodata objects in undo stack
-static var undo_limit : int = 10#255
+static var undo_limit : int = 255
 #how much to subtract from the array size if the limit is exceeded
-static var limit_decrement : int = 2#16
+static var limit_decrement : int = 16
+
+#DEBUG
+#static var undo_limit : int = 10
+#static var limit_decrement : int = 2
 
 static var undo_stack : Array = []
 static var undo_index : int = -1

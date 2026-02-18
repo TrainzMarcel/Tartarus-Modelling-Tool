@@ -1,5 +1,5 @@
 TOP PRIORITY
-implement subassemblies and/or grouping of parts, holding alt allows for single part selection
+implement subassemblies and/or grouping of parts, holding c (formerly alt) allows for single part selection
 implement import/export (.obj, .gltf, .tres/.res)
 fix messed up filemanager back and forward history buttons
 get release notes and use them to update the manual accordingly

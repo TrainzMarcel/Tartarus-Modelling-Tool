@@ -7,7 +7,10 @@ class_name Part
 #for the time being custom part meshes will just have a box collider
 
 #exclude from export
-@export var exclude : bool = false
+#not sure if i will keep this, u can already exclude by exporting/saving the selected things only
+#perhaps integrate it in a future qol update
+#@export var exclude : bool = false
+
 #make unselectable
 @export var locked : bool = false
 
@@ -26,13 +29,15 @@ class_name Part
 		
 		#otherwise, proceed as normal
 		part_material = value
-		if value != null:
-			part_mesh_node.material_override = AssetManager.recolor_material(value, part_color, true)
+		part_mesh_node.material_override = AssetManager.recolor_material(value, part_color, true)
 
 
 #color setter
 @export var part_color : Color = Color.WHITE:
 	set(value):
+		if value == part_color:
+			return
+		
 		part_color = value
 		if not mesh_node_safety_check("part color"):
 			return
@@ -44,8 +49,12 @@ class_name Part
 
 
 #size with setter
-@export var part_scale : Vector3 = Vector3(0.4, 0.2, 0.8):
+#@export var part_scale : Vector3 = Vector3(0.4, 0.2, 0.8):
+@export var part_scale : Vector3 = Vector3(1.0, 1.0, 1.0):
 	set(value):
+		if value == part_scale:
+			return
+		
 		value.x = max(value.x, 0)
 		value.y = max(value.y, 0)
 		value.z = max(value.z, 0)
@@ -78,6 +87,9 @@ class_name Part
 
 @export var part_mesh : Mesh:
 	set(value):
+		if value == part_mesh:
+			return
+		
 		if not mesh_node_safety_check("part type"):
 			return
 		
@@ -139,60 +151,53 @@ func initialize():
 	part_material = part_material
 	part_color = part_color
 	
+	
 	add_child(part_collider_node)
 	part_collider_node.owner = get_tree().edited_scene_root
 	
 	add_child(part_mesh_node)
 	part_mesh_node.owner = get_tree().edited_scene_root
-	
-#only set this after its initialized because it does not run through the setter if mesh or collider are null)
-	part_scale = part_scale
 
 
-"TODO"
-var wedge_collider_points : PackedVector3Array = [
-	Vector3(-0.5, -0.5, -0.5),
-	Vector3(-0.5, -0.5, 0.5),
-	Vector3(-0.5, 0.5, -0.5),
-	Vector3(-0.5, 0.5, 0.5),
-	Vector3(0.5, -0.5, -0.5),
-	Vector3(0.5, -0.5, 0.5)
-]
+#"TODO"
+#var wedge_collider_points : PackedVector3Array = [
+#	Vector3(-0.5, -0.5, -0.5),
+#	Vector3(-0.5, -0.5, 0.5),
+#	Vector3(-0.5, 0.5, -0.5),
+#	Vector3(-0.5, 0.5, 0.5),
+#	Vector3(0.5, -0.5, -0.5),
+#	Vector3(0.5, -0.5, 0.5)
+#]
 
 
-"TODO"
-func scale_wedge_collider(scale_to : Vector3, wedge_collider_points : PackedVector3Array):
-	for i in wedge_collider_points:
-		i = i * scale_to
-	
-	return wedge_collider_points
+#"TODO"
+#func scale_wedge_collider(scale_to : Vector3, wedge_collider_points : PackedVector3Array):
+#	for i in wedge_collider_points:
+#		i = i * scale_to
+#	
+#	return wedge_collider_points
 
 
 func copy():
 	var new : Part = Part.new()
 	new.part_mesh_node = part_mesh_node.duplicate()
-	#optimization (shared meshes)
-	new.part_mesh = part_mesh
 	new.part_collider_node = part_collider_node.duplicate()
 	
 	#do not share the collider
-	#if collider_type == 0:
+	#TODO implement different colliders
 	new.part_collider_node.shape = BoxShape3D.new()
 	new.part_collider_node.shape.size = part_scale
-	#warning: untested
-	#elif collider_type == 1:
-	#	new.part_collider_node.shape = ConvexPolygonShape3D.new()
-	#	new.scale_wedge_collider(part_scale, wedge_collider_points)
-	
 	new.transform = transform
-	new.exclude = exclude
-	new.locked = locked
-	#new.collider_type = collider_type
+	
+	#not implemented yet
+	#new.locked = locked
+	
+	#setters automatically reapply
+	#optimization (shared meshes and material) scale still differs because they are set on the meshinstance node that contains them
+	new.part_mesh = part_mesh
 	new.part_scale = part_scale
-	#shouldnt require duplicating
-	#setter automatically calls reapply function
 	new.part_material = part_material
 	#this is passed by value and not by reference
-	#setter automatically calls reapply function
+	#setters automatically reapply
 	new.part_color = part_color
 	return new

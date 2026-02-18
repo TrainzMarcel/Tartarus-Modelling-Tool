@@ -125,6 +125,9 @@ static func sql_material_serialize(input : Material, sql : SQLite):
 	elif input is ORMMaterial3D:
 		result_csv_type_information.append("ORMMaterial3D")
 		result_csv_type_information.append(AssetManager.normalize_asset_name(AssetManager.get_name_of_asset(input, false), false))
+	elif input == null:
+		#for when someone tries to save parts with materials which failed to load
+		result_csv_type_information.append("null")
 	else:
 		push_error("invalid type: ", input)
 		return false
@@ -198,18 +201,59 @@ static func sql_material_deserialize(row : Dictionary):
 		#assign shader
 		result_asset.shader = shader
 		
+		
+		var real_length_csv_values : int = count_csv_values(csv_values)
+		if real_length_csv_values == -1:
+			return
+		if real_length_csv_values != csv_headers.size():
+			push_error("material csv_headers vs csv_values count mismatch - csv_headers: ", csv_headers.size(), "csv_values: ", real_length_csv_values, ", aborting loading...")
+			return
+		
+		
 		var properties : Array = shader.get_shader_uniform_list()
 		var i : int = 0
 		var i_line : int = 0
 		
 		while i < properties.size():
+			#dont overshoot csv indices
+			if i_line > csv_headers_unpacked.size() - 1:
+				push_error("counter i_line: ", i_line,", overshot csv_headers_unpacked.size() - 1: ", csv_headers_unpacked.size() - 1)
+				return result_asset
+			
+			if i > csv_values.size() - 1:
+				push_error("counter i: ", i,", overshot csv_values.size() - 1: ", csv_values.size() - 1)
+				return result_asset
+			
+			#skip over empty values
+			if csv_values[i_line] == "":
+				i_line = i_line + 1
+				i = i + 1
+				continue
+			
+			
 			var parameter = properties[i]
 			var property_name_index = csv_headers_unpacked.find_custom(func(input : String): return input == parameter.name)
+			
+			
+			#i can see this being triggered by version changes
+			#if a property is not found, continue loading but skip the property
+			if property_name_index == -1:
+				push_error("property not found: ", csv_headers_unpacked[i_line], ", at index: ", i_line, ", skipping this property and continuing loading. details: ", parameter)
+				i = i + 1
+				i_line = i_line + 1
+				continue
+			
 			var parameter_output = material_property_deserialize(csv_values, parameter, i_line)
+			
+			var is_image_texture : bool = parameter.type == TYPE_OBJECT and parameter.hint_string == "Texture2D"
+			if is_image_texture and parameter_output == null:
+				push_error("loading image ", csv_values[i_line], " for the material ", csv_type_information[1], " failed, aborting material loading")
+				return
+			
 			result_asset.set_shader_parameter(csv_headers[property_name_index], parameter_output)
 			
 			
-			#skip past vectors and colors
+			#read full vectors and colors
 			if csv_values[i_line].begins_with("["):
 				var starting_index : int = i_line
 				while not csv_values[i_line].ends_with("]"):
@@ -238,14 +282,27 @@ static func sql_material_deserialize(row : Dictionary):
 			result_asset.resource_path = asset_name
 			AssetManager.register_asset(result_asset)
 		
+		
+		var real_length_csv_values : int = count_csv_values(csv_values)
+		if real_length_csv_values == -1:
+			return
+		if real_length_csv_values != csv_headers.size():
+			push_error("material csv_headers vs csv_values count mismatch - csv_headers: ", csv_headers.size(), "csv_values: ", real_length_csv_values, ", aborting loading...")
+			return
+		
+		
 		var properties : Array = result_asset.get_property_list()
 		var i : int = 0
 		var i_line : int = 0
 		
 		while i < properties.size():
+			#dont overshoot csv indices
+			if i_line > csv_headers_unpacked.size() - 1:
+				push_error("counter i_line: ", i_line,", overshot csv_headers_unpacked.size() - 1: ", csv_headers_unpacked.size() - 1)
+				return result_asset
 			
-			#dont overshoot csv value index
-			if i_line > csv_values.size() - 1:
+			if i > csv_values.size() - 1:
+				push_error("counter i: ", i,", overshot csv_values.size() - 1: ", csv_values.size() - 1)
 				return result_asset
 			
 			#skip over empty values
@@ -263,7 +320,7 @@ static func sql_material_deserialize(row : Dictionary):
 				i = i + 1
 				continue
 			
-			"TODO"#add this to shader deserializing as well
+			
 			#i can see this being triggered by version changes
 			#if a property is not found, continue loading but skip the property
 			if property_name_index == -1:
@@ -273,23 +330,20 @@ static func sql_material_deserialize(row : Dictionary):
 				continue
 			
 			
-			
-			"TODO"#add in a check if theres a filename for an image texture
-			#and if there is, check if the image texture loaded or not
-			#if it didnt load, the full material loading must be aborted
-			#or risk saving a corrupted material
-			
-			#i should also add a safeguard of some sort to make sure it is not saving
-			#a corrupted or otherwise invalid material like the checkers
 			var parameter_output = material_property_deserialize(csv_values, parameter, i_line)
 			
-			if parameter.type == TYPE_OBJECT and parameter.hint_string == "ImageTexture":
-				push_error("loading image ", csv_values[i_line], "for the material ", " failed, aborting material loading")
+			#check if the image texture loaded or not
+			#if it didnt load, the full material loading must be aborted
+			#or risk saving a corrupted (missing textures and therefore configured inaccurately) material
+			#no need to check if csv_values is empty as empty values get skipped automatically
+			var is_image_texture : bool = parameter.type == TYPE_OBJECT and parameter.hint_string == "Texture2D"
+			if is_image_texture and parameter_output == null:
+				push_error("loading image ", csv_values[i_line], "for the material ", csv_type_information[1], " failed, aborting material loading")
 				return
 			
 			result_asset.set(csv_headers[property_name_index], parameter_output)
 			
-			#skip past vectors and colors
+			#read full vectors and colors
 			if csv_values[i_line].begins_with("["):
 				var starting_index : int = i_line
 				while not csv_values[i_line].ends_with("]"):
@@ -302,6 +356,11 @@ static func sql_material_deserialize(row : Dictionary):
 			i = i + 1
 		
 		return result_asset
+	
+#this is necessary for when somebody saves parts with materials that failed to load
+#user intent data for materials has not been implemented yet
+	elif csv_type_information[0] == "null":
+		return null
 
 
 static func sql_mesh_serialize(input : Mesh, sql : SQLite):
@@ -320,7 +379,7 @@ static func sql_part_serialize(input : Part, color_to_int_mapping : Dictionary, 
 	part_table["scale"] = var_to_bytes(input.part_scale)
 	part_table["color_id"] = color_to_int_mapping[input.part_color]
 	part_table["material_id"] = material_name_to_int_mapping[AssetManager.get_name_of_asset(input.part_material, false)]
-	part_table["mesh_id"] = mesh_name_to_int_mapping[AssetManager.get_name_of_asset(input.part_mesh_node.mesh)]
+	part_table["mesh_id"] = mesh_name_to_int_mapping[AssetManager.get_name_of_asset(input.part_mesh)]
 	
 	return sql.insert_row(sql_def.part_table_name, part_table)
 
@@ -334,9 +393,13 @@ static func sql_part_deserialize(row : Dictionary, used_colors : Array[Color], u
 	#scale
 	new.part_scale = bytes_to_var(row["scale"])
 	#mesh
-	new.part_mesh_node.mesh = used_meshes[row["mesh_id"]]
+	new.part_mesh = used_meshes[row["mesh_id"]]
 	#material
 	new.part_material = used_materials[row["material_id"]]
+	
+	if new.part_material == null:
+		EditorUI.l_message.text = "Save loaded with materials missing"
+	
 	#color
 	new.part_color = used_colors[row["color_id"]]
 	
@@ -677,18 +740,18 @@ static func get_meshes_from_parts(input_parts : Array):
 	var i : int = 0
 	var used_meshes : Array[Mesh] = []
 	
-	used_meshes.append(input_parts[0].part_mesh_node.mesh)
+	used_meshes.append(input_parts[0].part_mesh)
 	while i < input_parts.size():
 		var j : int = 0
 		var has_mesh : bool = false
 		while j < used_meshes.size():
-			if AssetManager.get_name_of_asset(input_parts[i].part_mesh_node.mesh) == AssetManager.get_name_of_asset(used_meshes[j]):
+			if AssetManager.get_name_of_asset(input_parts[i].part_mesh) == AssetManager.get_name_of_asset(used_meshes[j]):
 				has_mesh = true
 				break
 			j = j + 1
 			
 		if not has_mesh:
-			used_meshes.append(input_parts[i].part_mesh_node.mesh)
+			used_meshes.append(input_parts[i].part_mesh)
 		i = i + 1
 	
 	return used_meshes
@@ -710,6 +773,27 @@ static func get_groups_from_parts(input_parts : Array, root_group_child_parts_ha
 
 
 #utility functions -------------------------------------------------------------
+#count the amount of stored values (counting brackets from start to end as one value)
+static func count_csv_values(csv_values):
+	var count : int = 0
+	var i : int = 0
+	
+	#skip over the bracket values
+	while i < csv_values.size():
+		var starting_index : int = 0
+		if csv_values[i].begins_with("["):
+			while not csv_values[i].ends_with("]"):
+				if i == csv_values.size() - 1:
+					push_error("malformed csv, missing closed bracket starting at item ", starting_index, ", aborting loading...")
+					return -1
+				i = i + 1
+		
+		count = count + 1
+		i = i + 1
+	
+	return count
+
+
 static func material_property_serialize(parameter, property : Dictionary):
 	const l_bracket : String = "["
 	const r_bracket : String = "]"

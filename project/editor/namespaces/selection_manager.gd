@@ -83,7 +83,7 @@ class Group:
 
 #0 counts as a level so 2 permits 3 levels
 const group_depth_max : int = 2
-const group_depth_colors : Array[Color] = [Color.DIM_GRAY, Color.DARK_GRAY, Color.WHITE]
+const group_depth_colors : Array[Color] = [Color.BLACK, Color.DIM_GRAY, Color.WHITE]
 
 #keep track of groups which have depth selectionboxes assigned to them
 static var group_depth_assigned_groups : Array = []
@@ -984,8 +984,6 @@ static func selection_scale(scale_absolute : Vector3):
 	selection_moved = true
 
 
-
-"TODO"#SELECT
 #this is for precisely reversing scale operations with undo
 static func selection_set_exact_transforms(transform_array : Array, scale_array : Array, scale_absolute : Vector3):
 	assert(selected_entities_internal.size() == transform_array.size())
@@ -1009,7 +1007,7 @@ static var is_group : Callable = func(input_entity): return input_entity is Grou
 static var is_part : Callable = func(input_entity): return input_entity is Part
 
 
-static func selection_group(undo_group : Group = null, refresh_abb_offsets = true):
+static func selection_group(undo_group_reference : Group = null, refresh_abb_offsets = true):
 	var selected_parts : Array = selected_entities.filter(is_part)
 	var selected_groups : Array = selected_entities.filter(is_group)
 	
@@ -1034,13 +1032,15 @@ static func selection_group(undo_group : Group = null, refresh_abb_offsets = tru
 	
 #initialize the group
 	var group : Group
-	if Main.safety_check(undo_group):
-		group = undo_group
+	if Main.safety_check(undo_group_reference):
+		group = undo_group_reference
 	else:
 		group = Group.new()
 	
 	group.child_groups = selected_groups
 	group.child_parts = selected_parts
+	
+	assert(not group.child_groups.has(group))
 	
 	group.primary_entity = last_element(group.child_parts)
 	if not Main.safety_check(group.primary_entity):
@@ -1107,7 +1107,7 @@ static func selection_group_undoable():
 	
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
 	undo.append_undo_action_with_args(selection_set_to_part_array, [undo_group, undo_group])
-	undo.append_undo_action_with_args(selection_ungroup, [undo_group, false])
+	undo.append_undo_action_with_args(selection_ungroup, [false])
 	undo.append_undo_action_with_args(post_selection_update, [])
 	undo.explicit_object_references.append_array(selection)
 	undo.explicit_object_references.append(undo_group)
@@ -1155,6 +1155,12 @@ static func selection_ungroup_undoable():
 		EditorUI.set_l_msg("ungrouping failed: at least one group must be selected.")
 		return
 	
+	#undo:
+	#1. select all objects that were just ungrouped
+	#2. ungroup
+	#3. post selection update
+	
+	
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
 	undo.append_undo_action_with_args(selection_set_to_part_array, [selection, last_element(selection)])
 	for undo_group in selected_groups:
@@ -1162,13 +1168,23 @@ static func selection_ungroup_undoable():
 		undo.append_undo_action_with_args(selection_group, [undo_group])
 	
 	selection_ungroup()
-	#undo.append_undo_action_with_args(post_selection_update, [])
-	#undo.explicit_object_references.append_array(selection)
-	#undo.append_redo_action_with_args(selection_set_to_part_array, [undo_group, undo_group])
-	#undo.append_redo_action_with_args(selection_group, [undo_group])
-	#undo.append_redo_action_with_args(post_selection_update, [])
+	var selection_after : Array = selected_entities.duplicate()
+	
+	undo.append_undo_action_with_args(post_selection_update, [])
+	undo.explicit_object_references.append_array(selection)
+	undo.append_redo_action_with_args(selection_set_to_part_array, [selection_after, last_element(selection_after)])
+	undo.append_redo_action_with_args(selection_group, [selection_after])
+	undo.append_redo_action_with_args(post_selection_update, [])
 	UndoManager.register_undo_data(undo)
 
+
+#
+static func group_recalculate_hashmap():
+	
+	
+	
+	
+	return
 
 #recursive
 static func group_get_full_hierarchy(group : Group):
@@ -1201,6 +1217,9 @@ static func group_get_hierarchy_depth(group : Group, depth : int = 0):
 	return depth_return
 
 
+"TODO"#this could be better
+#i could assign selectionboxes *while* traversing the hierarchy instead of this
+#i could even do the functional approach like Array.map() but rather like group_full_hierarchy_map(function(input_group))
 static func group_display():
 	if is_depth_visualization_active:
 		
@@ -1217,6 +1236,7 @@ static func group_display():
 				var new : SelectionBox = selection_box_instance_on_target(child_group)
 				var depth : int = group_get_hierarchy_depth(child_group)
 				new.material_regular_color(group_depth_colors[depth])
+				new.box_thickness = 0.014
 				group_depth_assigned_groups.append(child_group)
 	else:
 		if group_depth_assigned_groups.is_empty():
@@ -1236,9 +1256,8 @@ static func selection_box_update_transforms():
 		i = i + 1
 
 
-#instance and fit selection box to a part as child of workspace node and add it to the array
-"TODO"#assigned_node property needs to be removed and checking which part is assigned
-#can just be done by matching indices on the parallel arrays
+"TODO"#make architecture more type agnostic like this so the top level functions practically fully abstract all the ifs away
+#instance and fit selection box to an entity and add it and the target to arrays
 static func selection_box_instance_on_target(target):
 	var new : SelectionBox = SelectionBox.new()
 	selection_boxes.append(new)
@@ -1246,9 +1265,7 @@ static func selection_box_instance_on_target(target):
 	WorkspaceManager.workspace.add_child(new)
 	new.box_scale = selection_target_get_extents(target)
 	new.transform = selection_target_get_transform(target)
-	"TODO"#probably add this to filepathregistry
-	var mat : StandardMaterial3D = preload("res://editor/classes/selection_box/selection_box_mat.res")
-	new.material_override = mat
+	new.material_regular()
 	return new
 
 

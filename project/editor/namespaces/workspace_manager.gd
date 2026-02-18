@@ -175,10 +175,12 @@ static func initialize(
 				parts_list.append(new)
 				
 				#set default scale (this must be refactored and not hardcoded!!)
+				if file_name == "cuboid.tres":
+					new.part_scale = Vector3(0.4, 0.2, 0.8)
 				#cylinder
-				if file_name == "cylinder.tres":
+				elif file_name == "cylinder.tres":
 					new.part_scale = Vector3(0.4, 0.8, 0.4)
-				#quarter cylinde
+				#quarter cylinder
 				elif file_name == "quarter.tres":
 					new.part_scale = Vector3(0.2, 0.8, 0.2)
 				#quarter inverse
@@ -325,6 +327,7 @@ static func part_spawn(selected_part_type : Part):
 	var ray_result = Main.raycast(Main.cam, Main.cam.global_position, Main.cam.global_position + (-Main.cam.basis.z * Main.part_spawn_raycast_length), [], [1])
 	var new_part : Part = Part.new()
 	
+	"TODO"#discovered that adding nodes calls the tooltip creation functions
 	workspace.add_child(new_part)
 	new_part.part_material = selected_material
 	new_part.part_color = selected_color
@@ -352,10 +355,13 @@ static func part_spawn(selected_part_type : Part):
 	undo_data.explicit_object_references = [new_part]
 	undo_data.append_redo_action_with_args(workspace.add_child, [new_part])
 	UndoManager.register_undo_data(undo_data)
-	Main.part_hover_check()
+	
+	#immediately update hovered_part in the cursor is over the spawned part
+	#but first wait for the physics frame so the raycast works
+	await new_part.get_tree().physics_frame
+	Main.hovered_part = Main.part_hover_check()
 	Main.hovered_entity = SelectionManager.get_hovered_entity(Main.hovered_part, Main.group_exclude_key)
 	SelectionManager.selection_box_hover_on_target(Main.hovered_entity, Main.is_hovering_allowed)
-	return new_part
 
 
 static func part_delete(hovered_entity):
@@ -704,10 +710,10 @@ static func confirm_save_load(filepath : String, name : String):
 		else:
 			push_error("no options ui detected in filemanager? continuing save operations with default settings.")
 		
+		EditorUI.set_l_msg("successfully saved " + name + " at " + filepath + "!")
 		save_model(filepath + "/", name, embed_assets, selected_only)
 		last_save_location = filepath
 		last_save_name = name
-		EditorUI.set_l_msg("successfully saved " + name + " at " + filepath + "!")
 	elif file_operation == FileOperation.load_model:
 		EditorUI.set_l_msg("loading...")
 		var options : Control = EditorUI.fm_file.get_options_ui("load_model")
@@ -716,8 +722,9 @@ static func confirm_save_load(filepath : String, name : String):
 			SelectionManager.selection_set_to_workspace()
 			SelectionManager.selection_delete()
 		"TODO ERROR"#add error return or log error inside
-		load_model(filepath + "/", name)
+		#set this first so load_model can show errors
 		EditorUI.set_l_msg("successfully loaded " + name + " at " + filepath + "!")
+		load_model(filepath + "/", name)
 	EditorUI.c_loading_message.visible = false
 
 

@@ -146,6 +146,7 @@
 23.1.	retrofitted selection_delete and selection_set_to_workspace for new selectionbox target system and groups (selection_set_to_workspace even takes the group exclude key into account!), implemented sql saving for group
 24.1.	implemented loading of groups from sql
 8.2.	working on making the material loading and saving system more robust
-9.2.	part now applies null to part_material value when attempting to set invalid material and applies the broken checkers on the meshes material override. this means invalid materials will not be set in the model and be clearly displayed as errors in the view. also applied this to mesh
-10.2.	fixed messy initialization and setters in part.gd, 
+9.2.	part now applies null to part_material value when attempting to set invalid material and applies the broken checkers on the meshes material override. this means invalid materials will not be set in the (mvc style architecture) model and be clearly displayed as errors in the view. also applied this to meshes.
+10.2.	fixed messy initialization and setters in part.gd
+18.2.	added several more sanity checks to material deserializer: whether csv_headers length corresponds to csv_values, checking if material properties exist before setting them, checking if indices are overshooting csv_headers or csv_values, whether texture2ds were able to load from a filename and aborting the material loading based on that, finished grouping and ungrouping with undo albeit with bugs (group.child_groups somehow gets set to itself after a certain sequence of actions)
 TODO:	TODO cleanup

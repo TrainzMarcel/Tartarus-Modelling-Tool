@@ -222,7 +222,7 @@ static func csv_part_deserialize(input, used_colors : Array, used_materials : Ar
 	new.rotation_degrees.y = float(input[7])
 	new.rotation_degrees.z = float(input[8])
 	#mesh
-	new.part_mesh_node.mesh = used_meshes[int(input[11])]
+	new.part_mesh = used_meshes[int(input[11])]
 	#material
 	new.part_material = used_materials[int(input[10])]
 	#color

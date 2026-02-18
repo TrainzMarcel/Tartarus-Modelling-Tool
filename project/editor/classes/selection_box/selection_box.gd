@@ -36,8 +36,9 @@ func material_regular_color(color : Color):
 	material_override.albedo_color = color
 	material_override.emission = color
 
+#"TODO"#pre-generate the mesh then edit with meshdatatool
+#func _ready()
 
-#dont forget to generate material
 
 
 func draw_quad(i_mesh : ImmediateMesh, vec_a : Vector3, vec_b : Vector3, vec_c : Vector3, vec_d : Vector3, normal : Vector3):
