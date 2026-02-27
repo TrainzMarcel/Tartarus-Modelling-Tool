@@ -10,7 +10,8 @@ release v0.1-indev-3 with release notes
 clean up TODOS
 fix messed up leaky abstractions everywhere: attempt to untangle main, attempt to untangle the managers and only have them communicate through main as well as possible
 add errorsubsystem with cool console that is like a dropdown which slides up from the middle message bar
-
+https://docs.godotengine.org/en/stable/tutorials/scripting/logging.html
+https://docs.godotengine.org/en/stable/classes/class_logger.html#class-logger
 
 automated build system: https://www.youtube.com/watch?v=wZsAY_SdEb8
 implement snapping for wedge face 

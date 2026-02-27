@@ -715,7 +715,11 @@ static func confirm_save_load(filepath : String, name : String):
 		last_save_location = filepath
 		last_save_name = name
 	elif file_operation == FileOperation.load_model:
-		EditorUI.set_l_msg("loading...")
+		EditorUI.set_l_msg("successfully loaded " + name + " at " + filepath + "!")
+		if not FileAccess.file_exists(filepath + "/" + name + ".tmv"):
+			EditorUI.set_l_msg("loading failed: " + name + ".tmv could not be found")
+			EditorUI.c_loading_message.visible = false
+			return
 		var options : Control = EditorUI.fm_file.get_options_ui("load_model")
 		var b_clear_workspace : Button = options.get_node("ButtonClearWorkspace")
 		if b_clear_workspace.button_pressed:
@@ -723,7 +727,6 @@ static func confirm_save_load(filepath : String, name : String):
 			SelectionManager.selection_delete()
 		"TODO ERROR"#add error return or log error inside
 		#set this first so load_model can show errors
-		EditorUI.set_l_msg("successfully loaded " + name + " at " + filepath + "!")
 		load_model(filepath + "/", name)
 	EditorUI.c_loading_message.visible = false
 

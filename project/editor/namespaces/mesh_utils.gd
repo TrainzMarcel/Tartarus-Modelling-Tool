@@ -152,12 +152,3 @@ static func get_meshes_from_parts(part_array : Array):
 	return part_array.map(func(input : Part):
 		return input.part_mesh_node.mesh
 		)
-
-
-
-
-
-
-
-
-

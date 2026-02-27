@@ -14,7 +14,7 @@ static func on_pivot_reset_pressed():
 	if ToolManager.selected_tool != ToolManager.SelectedToolEnum.t_pivot:
 		WorkspaceManager.pivot_mesh.visible = false
 		WorkspaceManager.pivot_custom_mode_active = false
-	#SelectionManager.refresh_bounding_box()
+	
 	WorkspaceManager.pivot_local_transform = Transform3D.IDENTITY
 	WorkspaceManager.pivot_transform = SelectionManager.selected_parts_abb.transform
 	ToolManager.handle_set_root_position(
