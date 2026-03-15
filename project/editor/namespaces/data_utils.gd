@@ -398,7 +398,7 @@ static func sql_part_deserialize(row : Dictionary, used_colors : Array[Color], u
 	new.part_material = used_materials[row["material_id"]]
 	
 	if new.part_material == null:
-		EditorUI.l_message.text = "Save loaded with materials missing"
+		EditorUI.set_l_msg("Save loaded with materials missing")
 	
 	#color
 	new.part_color = used_colors[row["color_id"]]
@@ -426,12 +426,12 @@ static func sql_group_child_entity_serialize(group_to_int_mapping : Dictionary, 
 
 #then call this on each child entity of each group
 static func sql_group_child_part_deserialize(row : Dictionary, used_groups : Array, used_parts : Array):
-	used_groups[row["parent_group_id"]].child_parts.append(used_parts[row["child_part_id"]])
+	SelectionManager.group_add_child_entities(used_groups[row["parent_group_id"]], used_parts[row["child_part_id"]])
 
 
 static func sql_group_child_group_deserialize(row : Dictionary, used_groups : Array, root_groups : Array):
 	#arrays are passed by reference so this should work
-	used_groups[row["parent_group_id"]].child_groups.append(used_groups[row["child_group_id"]])
+	SelectionManager.group_add_child_entities(used_groups[row["parent_group_id"]], used_groups[row["child_group_id"]])
 	#process of elimination only leaves root groups by erasing every group which has an entry saying that it is a child group
 	root_groups.erase(used_groups[row["child_group_id"]])
 

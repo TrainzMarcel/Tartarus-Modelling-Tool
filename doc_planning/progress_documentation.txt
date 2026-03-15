@@ -151,4 +151,10 @@
 18.2.	added several more sanity checks to material deserializer: whether csv_headers length corresponds to csv_values, checking if material properties exist before setting them, checking if indices are overshooting csv_headers or csv_values, whether texture2ds were able to load from a filename and aborting the material loading based on that, finished grouping and ungrouping with undo albeit with bugs (group.child_groups somehow gets set to itself after a certain sequence of actions)
 20.2.	added basic and crucial check whether the file one is about to load even exists
 26.2.	working on simplifying the api for the selectionmanager and simplifying/cleaning up its internal workings
+27.2.	found and fixed minor bug that the part spawn function sometimes still created parts in the ground, when the raycast only detected if the objects center would be positioned in the ground when it was spawned
+2.3.	finished reworking selectionmanagers selection adding and removing api and implemented the new api throughout the entire editor.
+3.3.	planned ahead for a better abstraction to manage the state of groups
+13.3.	working on implementing the abstraction: removing child_groups and child_parts from groups in favor of child_entities
+14.3	working on implementing the abstraction: continuing to move to child_entities
+15.3.	
 TODO:	TODO cleanup

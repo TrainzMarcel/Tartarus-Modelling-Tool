@@ -335,6 +335,16 @@ static func part_spawn(selected_part_type : Part):
 	new_part.part_scale = selected_part_type.part_scale
 	new_part.initialize()
 	
+	#do a second check for whether the part would intersect with the ground.
+	#this check makes sure the previous raycast (which only detects the position of the part's center)
+	#does not miss the space between the edge of the part and its center which could intersect the ground but stay undetected by the previous raycast
+	if ray_result.is_empty():
+		var vec_clamped_by_scale : Vector3 = -Main.cam.basis.z * Main.part_spawn_raycast_length
+		var part_scale_half : Vector3 = selected_part_type.part_scale * 0.5
+		vec_clamped_by_scale = vec_clamped_by_scale.clamp(-part_scale_half, part_scale_half)
+		ray_result = Main.raycast(Main.cam, Main.cam.global_position, Main.cam.global_position + (-Main.cam.basis.z * Main.part_spawn_raycast_length + vec_clamped_by_scale), [], [1])
+	
+	#if it has still not detected any floor, then place it in the air a set amount away from the view
 	if ray_result.is_empty():
 		new_part.transform.origin = Main.cam.global_position + Main.part_spawn_distance * -Main.cam.basis.z
 	else:
@@ -365,33 +375,37 @@ static func part_spawn(selected_part_type : Part):
 
 
 static func part_delete(hovered_entity):
-	if SelectionManager.selected_entities.has(hovered_entity):
-		SelectionManager.selection_remove_part(hovered_entity)
+	var entity_was_selected : bool = SelectionManager.selected_entities_internal.has(hovered_entity)
+	#if part was selected, add selecting to the undo actions
+	if entity_was_selected:
+		SelectionManager.selection_remove_entities([hovered_entity])
 	hovered_entity.queue_free()
 
 
 static func part_delete_undoable(hovered_entity):
 	var undo_data : UndoManager.UndoData = UndoManager.UndoData.new()
 	var entity_was_selected : bool = SelectionManager.selected_entities_internal.has(hovered_entity)
+	var entity_was_part_in_group : bool = SelectionManager.root_group_child_parts_hashmap[hovered_entity]
 	
 	#undo: first add the child node, then select it if needed
 	undo_data.append_undo_action_with_args(SelectionManager.add_children, [workspace, [hovered_entity]])
 	
 	#if part was selected, add selecting to the undo actions
 	if entity_was_selected:
-		undo_data.append_undo_action_with_args(SelectionManager.selection_add_part, [hovered_entity, hovered_entity])
-		undo_data.append_undo_action_with_args(SelectionManager.post_selection_update, [])
-		SelectionManager.selection_remove_part(hovered_entity)
-		SelectionManager.post_selection_update()
-		
+		undo_data.append_undo_action_with_args(SelectionManager.selection_add_entities, [hovered_entity])
+		SelectionManager.selection_remove_entities([hovered_entity])
+	
 	
 	SelectionManager.remove_children(workspace, [hovered_entity])
+	#"TODO"investigate why this is needed and why setting selection_changed is not cleaning up the group display selectionboxes
+	#only after a left mouse click does it clean up the remaining selectionboxes
+	SelectionManager.group_display()
+	
 	undo_data.explicit_object_references = [hovered_entity]
 	
 	#if part was selected, remove from selection on redo first
 	if entity_was_selected:
-		undo_data.append_redo_action_with_args(SelectionManager.selection_remove_part, [hovered_entity])
-		undo_data.append_redo_action_with_args(SelectionManager.post_selection_update, [])
+		undo_data.append_redo_action_with_args(SelectionManager.selection_remove_entities, [hovered_entity])
 	
 	#then remove from workspace
 	undo_data.append_redo_action_with_args(SelectionManager.remove_children, [workspace, [hovered_entity]])
@@ -402,6 +416,10 @@ static func part_delete_undoable(hovered_entity):
 #at this point ray_result shouldnt be empty
 static func drag_prepare(event : InputEvent):
 	Main.initial_rotation = SelectionManager.selected_parts_abb.transform.basis
+	
+	#manually call this to make sure the bounding box transform is correct before saving it to the undo data
+	SelectionManager.post_selection_update(true)
+	
 	if not Main.ray_result.is_empty():
 		WorkspaceManager.drag_offset = SelectionManager.selected_parts_abb.transform.origin - Main.ray_result.position
 	initial_drag_event = event
@@ -656,12 +674,12 @@ static func transform_handle_terminate():
 #undo redo system---------------------------------------------------------------
 static func undo():
 	UndoManager.undo()
-	print("UNDO")
+	#print("UNDO")
 
 
 static func redo():
 	UndoManager.redo()
-	print("REDO")
+	#print("REDO")
 
 
 #save load system---------------------------------------------------------------
@@ -723,7 +741,7 @@ static func confirm_save_load(filepath : String, name : String):
 		var options : Control = EditorUI.fm_file.get_options_ui("load_model")
 		var b_clear_workspace : Button = options.get_node("ButtonClearWorkspace")
 		if b_clear_workspace.button_pressed:
-			SelectionManager.selection_set_to_workspace()
+			SelectionManager.selection_add_entities(SelectionManager.get_workspace_entities())
 			SelectionManager.selection_delete()
 		"TODO ERROR"#add error return or log error inside
 		#set this first so load_model can show errors

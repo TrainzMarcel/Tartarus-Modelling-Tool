@@ -1,7 +1,27 @@
 TOP PRIORITY
+
 implement subassemblies and/or grouping of parts, holding c (formerly alt) allows for single part selection
+													^ only deletion left to implement, which has some challenges
+	
+	implement a better api/abstraction for managing groups
+		group:
+			-contains 2+ entities
+			-can be contained by other groups
+			-needs to be tracked centrally somehow
+			-has a bounding box that needs to be updated:
+				when child entities change transform
+				when c. entities are added or removed
+			-has visualization that needs to be updated
+		
+		required refactoring:
+			keeping track of groups using only root_groups and
+			root_group_child_entities_hashmap is not great -> create existing groups array
+			group.child_groups and group.child_parts -> group.child_entities
+			no ref to parent -> parent_group
+			manual management -> add functions to abstract group state management
+			manual management -> post_group_change function triggered at end of frame
+
 implement import/export (.obj, .gltf, .tres/.res)
-fix messed up filemanager back and forward history buttons
 get release notes and use them to update the manual accordingly
 rename assetmanager, undomanager, selectionmanager, toolmanager to AssetSubsystem, UndoSubsystem, SelectionSubsystem, ToolSubsystem
 add cool sounds for saving and loading
@@ -10,8 +30,13 @@ release v0.1-indev-3 with release notes
 clean up TODOS
 fix messed up leaky abstractions everywhere: attempt to untangle main, attempt to untangle the managers and only have them communicate through main as well as possible
 add errorsubsystem with cool console that is like a dropdown which slides up from the middle message bar
+errorsubsystem will implement a tag system for only toggling relevant subsystems messages/warnings/errors
 https://docs.godotengine.org/en/stable/tutorials/scripting/logging.html
 https://docs.godotengine.org/en/stable/classes/class_logger.html#class-logger
+
+automatic recalculation and pooling subsystem that uses wrapper objects and:
+	marks objects as dirty which it then automatically recalculates at the end of the frame
+	doesnt delete objects and doesnt create objects if it has some left in its pool.
 
 automated build system: https://www.youtube.com/watch?v=wZsAY_SdEb8
 implement snapping for wedge face 

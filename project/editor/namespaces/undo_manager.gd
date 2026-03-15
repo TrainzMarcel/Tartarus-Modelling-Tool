@@ -18,10 +18,6 @@ static var undo_index : int = -1
 #gets incremented and decremented whenever undodata is added or removed
 static var reference_counter : Dictionary = {}
 
-#purely for user feedback
-static var undo_counter : int = 1
-static var redo_counter : int = 1
-
 "TODO"#add history undo option
 
 
@@ -79,8 +75,6 @@ static func register_undo_data(undo_data : UndoData):
 	
 	if logging:
 		debug_pretty_print()
-	undo_counter = 1
-	redo_counter = 1
 
 
 #this function updates the dependency tracking 
@@ -144,10 +138,7 @@ static func undo():
 	if logging:
 		debug_pretty_print(32)
 	
-	#undo redo message count
-	EditorUI.set_l_msg("Undo (x" + str(undo_counter) + ")")
-	undo_counter = undo_counter + 1
-	redo_counter = 1
+	EditorUI.set_l_msg("Undo")
 
 
 static func redo():
@@ -168,10 +159,8 @@ static func redo():
 	
 	if logging:
 		debug_pretty_print()
-	#undo redo message count
-	EditorUI.set_l_msg("Redo (x" + str(redo_counter) + ")")
-	undo_counter = 1
-	redo_counter = redo_counter + 1
+	
+	EditorUI.set_l_msg("Redo")
 
 
 #print out whats in the undo stack

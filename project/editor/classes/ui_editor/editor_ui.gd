@@ -321,8 +321,24 @@ static func create_material_buttons(on_material_selected : Callable, materials_l
 
 
 #more convienient to have a function for this
+static var message_repeat_counter : int = 1
+static var message_previous : String = ""
 static func set_l_msg(text : String):
-	l_message.text = text
+	#if previous message is the same as message in parameter
+	#increment message counter 
+	if message_previous == text:
+		message_repeat_counter = message_repeat_counter + 1
+	else:
+		message_repeat_counter = 0
+	
+	#if the message has been repeated
+	#add the counter to the text
+	if message_repeat_counter != 0:
+		l_message.text = text + " (" + str(message_repeat_counter + 1) + "x)"
+	else:
+		l_message.text = text
+	
+	message_previous = text
 
 
 #tooltip styling

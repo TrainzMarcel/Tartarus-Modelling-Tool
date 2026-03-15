@@ -149,7 +149,6 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 		elif id == 3:
 			#select all
 			SelectionManager.selection_set_to_workspace_undoable()
-			SelectionManager.post_selection_update()
 		elif id == 4:
 			#ctrl c copy selection
 			SelectionManager.selection_copy()
@@ -157,24 +156,24 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 		elif id == 5:
 			#ctrl v paste selection
 			SelectionManager.selection_paste_undoable()
-			SelectionManager.post_selection_update()
+			#SelectionManager.post_selection_update()
 			EditorUI.set_l_msg("pasted " + str(SelectionManager.entities_clipboard.size()) + " parts")
 		elif id == 6:
 			#ctrl x cut selection
 			SelectionManager.selection_copy()
 			SelectionManager.selection_delete_undoable()
-			SelectionManager.post_selection_update()
+			#SelectionManager.post_selection_update()
 			EditorUI.set_l_msg("cut " + str(SelectionManager.entities_clipboard.size()) + " parts")
 		elif id == 7:
 			#ctrl d duplicate selection
 			SelectionManager.selection_duplicate_undoable()
-			SelectionManager.post_selection_update()
+			#SelectionManager.post_selection_update()
 			EditorUI.set_l_msg("duplicated " + str(SelectionManager.selected_entities_internal.filter(SelectionManager.is_part).size()) + " parts")
 		elif id == 8:
 			#delete clear selection
 			EditorUI.set_l_msg("deleted " + str(SelectionManager.selected_entities_internal.filter(SelectionManager.is_part)) + " parts")
 			SelectionManager.selection_delete()
-			SelectionManager.post_selection_update()
+			#SelectionManager.post_selection_update()
 		elif id == 8:
 			#settings window
 			pass

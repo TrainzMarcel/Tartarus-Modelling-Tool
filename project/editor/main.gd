@@ -174,9 +174,6 @@ func _input(event : InputEvent):
 	is_hovering_allowed = is_hovering_allowed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED
 	
 	
-	#reset each frame
-	SelectionManager.selection_changed = false
-	SelectionManager.selection_moved = false
 	#set previous hovered handle for this input frame
 	prev_hovered_handle = hovered_handle
 	
@@ -363,25 +360,6 @@ func _input(event : InputEvent):
 			UndoManager.redo()
 		elif event.keycode == KEY_F1:
 			EditorUI.dd_manual.popup()
-	
-	
-#post input updates-------------------------------------------------------------
-#if something is selected and selecting is allowed or pivot tool is selected
-	if SelectionManager.selected_entities.size() > 0 and (is_selecting_allowed or ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot):
-		"TODO"#take care of this stuff later
-		if SelectionManager.selection_changed or SelectionManager.selection_moved:
-			#recalculate local pivot transform on selection change
-			if WorkspaceManager.pivot_custom_mode_active:
-				WorkspaceManager.pivot_local_transform = SelectionManager.selected_parts_abb.transform.inverse() * WorkspaceManager.pivot_transform
-			
-			ToolManager.handle_set_root_position(
-				transform_handle_root,
-				SelectionManager.selected_parts_abb,
-				WorkspaceManager.pivot_transform,
-				WorkspaceManager.pivot_custom_mode_active,
-				local_transform_active,
-				ToolManager.selected_tool_handle_array
-			)
 	
 	#camera controls
 	cam.cam_input(event, second_cam, SelectionManager.selected_entities, SelectionManager.selected_parts_abb, EditorUI.l_camera_speed)
