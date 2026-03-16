@@ -374,6 +374,7 @@ static func part_spawn(selected_part_type : Part):
 	SelectionManager.selection_box_hover_on_target(Main.hovered_entity, Main.is_hovering_allowed)
 
 
+"TODO"#outdated cause unused
 static func part_delete(hovered_entity):
 	var entity_was_selected : bool = SelectionManager.selected_entities_internal.has(hovered_entity)
 	#if part was selected, add selecting to the undo actions
@@ -399,6 +400,7 @@ static func part_delete_undoable(hovered_entity):
 	SelectionManager.remove_children(workspace, [hovered_entity])
 	#"TODO"investigate why this is needed and why setting selection_changed is not cleaning up the group display selectionboxes
 	#only after a left mouse click does it clean up the remaining selectionboxes
+	#new comment: now that i have correctly implemented the abstractions im not sure if this is necessary
 	SelectionManager.group_display()
 	
 	undo_data.explicit_object_references = [hovered_entity]
@@ -808,7 +810,7 @@ static func save_model(filepath : String, filename : String, embed_assets : bool
 	#flattened full hierarchy of all groups
 	var save_groups : Array = []
 	for root_group in used_root_groups:
-		assert(root_group != null and (root_group.child_parts.size() + root_group.child_groups.size()) > 0, "empty root group detected. this should not be happening.")
+		assert(root_group != null and root_group.child_entities.size() > 0, "empty root group detected. this should not be happening.")
 		save_groups.append_array(SelectionManager.group_get_full_hierarchy(root_group))
 	
 	group_to_int_mapping = create_mapping(save_groups)
@@ -862,11 +864,8 @@ static func save_model(filepath : String, filename : String, embed_assets : bool
 		if not success:
 				push_error("group serializing failed: group number", i, ", values: ", save_groups[i])
 		#also enter every child entity of every group
-		for child_part in save_groups[i].child_parts:
-			DataUtils.sql_group_child_entity_serialize(group_to_int_mapping, part_to_int_mapping, save_groups[i], child_part, sql)
-		
-		for child_group in save_groups[i].child_groups:
-			DataUtils.sql_group_child_entity_serialize(group_to_int_mapping, part_to_int_mapping, save_groups[i], child_group, sql)
+		for child_entity in save_groups[i].child_entities:
+			DataUtils.sql_group_child_entity_serialize(group_to_int_mapping, part_to_int_mapping, save_groups[i], child_entity, sql)
 		
 		i = i + 1
 	
@@ -972,6 +971,7 @@ static func load_model_from_sql_data(sql : SQLite):
 	#first load all groups
 	for row in rows_group_table:
 		var new : SelectionManager.Group = SelectionManager.Group.new()
+		SelectionManager.existing_groups.append(new)
 		used_groups.append(new)
 	
 	
@@ -987,15 +987,10 @@ static func load_model_from_sql_data(sql : SQLite):
 	
 	#recalculate abb and primary_part
 	for group in used_groups:
-		group.primary_entity = SelectionManager.last_element(group.child_parts)
-		if not Main.safety_check(group.primary_entity):
-			group.primary_entity = SelectionManager.last_element(group.child_groups)
-		
+		group.primary_entity = SelectionManager.last_element(group.child_entities)
 		print("group_abb: ", group.group_abb)
-		var total : Array = []
-		total.append_array(group.child_groups)
-		total.append_array(group.child_parts)
-		group.group_abb = SnapUtils.calculate_extents(group.group_abb, group.primary_entity, total)
+		
+		SelectionManager.group_recalculate_bounding_box(group)
 	
 	
 	#update selectionmanager state

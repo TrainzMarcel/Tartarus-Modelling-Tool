@@ -411,11 +411,6 @@ static func sql_group_serialize(sql : SQLite, group_id : int):
 	return sql.insert_row(sql_def.group_table_name, {"id": group_id})
 
 
-#this function is not helpful
-#static func sql_group_deserialize():
-#	return SelectionManager.Group.new()
-
-
 #then call this on each child entity of each group
 static func sql_group_child_entity_serialize(group_to_int_mapping : Dictionary, part_to_int_mapping : Dictionary, parent_group : SelectionManager.Group, entity, sql : SQLite):
 	if entity is Part:

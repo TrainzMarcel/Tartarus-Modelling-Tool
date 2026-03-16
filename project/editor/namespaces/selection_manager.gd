@@ -26,6 +26,7 @@ class Group:
 	
 	func copy():
 		var new : Group = Group.new()
+		SelectionManager.existing_groups.append(new)
 		
 		#base case: if no data is in the group, return an empty group
 		#copy child groups
@@ -313,9 +314,7 @@ static func handle_input(
 #if click on part in selection while shift is held, remove from selection
 #if click on nothing, clear selection array
 #if click on nothing while shift is held, do nothing
-	#function....
-
-
+#function....
 
 
 "TODO"#parameterize variables from main, it would help debugging immensely
@@ -369,15 +368,21 @@ static func post_movement_update():
 #static var root_groups : Array[Group] = []
 #post group update would then update these variables and also call group_display
 static func post_group_update():
-	
 	#with in-group part selecting implemented, group bounding boxes must be refreshed
+	#whenever the user selects parts within groups and modifies them
 	var affected_groups : Array = group_get_groups_of_selected_entities()
 	
 	var i : int = 0
 	while i < affected_groups.size():
 		for group in group_get_full_hierarchy(affected_groups[i]):
-			SnapUtils.calculate_extents(group.group_abb, group.primary_entity, group.child_entities)
+			group_recalculate_bounding_box(group)
 		i = i + 1
+	
+	
+	#update external state
+	#process information for hovering over parts and determining if theyre in a group
+	group_recalculate_hashmap_and_root()
+	
 	
 	if affected_groups.size() > 0 and is_depth_visualization_active:
 		selection_box_redraw_all()
@@ -555,7 +560,6 @@ static func selection_remove_entities(entities : Array):
 		
 		selection_box_delete_on_part(entity)
 		selected_entities.erase(entity)
-		
 	
 	selection_changed = true
 
@@ -637,16 +641,15 @@ static func selection_clear_undoable():
 static func selection_delete():
 	var previous_selected_entities : Array = selected_entities.duplicate()
 	selection_clear()
+	
 	for i in previous_selected_entities:
 		if i is Group:
-			root_groups.erase(i)
 			var hierarchy : Array = group_get_full_hierarchy(i)
 			group_get_all_child_parts(hierarchy).map(func(input): input.queue_free())
-			for j in hierarchy:
-				j.clear_children()
+			group_clear_child_entities(i)
+			existing_groups.erase(i)
 		else:
 			i.queue_free()
-	
 
 
 static func selection_delete_undoable():
@@ -1022,6 +1025,8 @@ static func selection_group(undo_group_reference : Group = null, refresh_abb_off
 	var selected_parts : Array = selected_entities.filter(is_part)
 	var selected_groups : Array = selected_entities.filter(is_group)
 	
+	assert(not selected_groups.has(undo_group_reference))
+	
 #first, do a bunch of checks to avoid invalid groups
 	var depth : int = 0
 	#if depth limit is reached in any of these, cancel
@@ -1048,42 +1053,24 @@ static func selection_group(undo_group_reference : Group = null, refresh_abb_off
 	else:
 		group = Group.new()
 	
-	assert(not selected_groups.has(group))
 	
+	existing_groups.append(group)
 	group_add_child_entities(group, selected_entities)
-	group.primary_entity = last_element(group.child_entities)
 	
+	
+	#this shouldnt be possible but i will keep it just in case of some catastrophic failure
 	if not Main.safety_check(group.primary_entity):
-		push_warning("group was initialized without primary entity")
-	
-	var total : Array = []
-	total.append_array(selected_groups)
-	total.append_array(selected_parts)
-	
-	group.group_abb = SnapUtils.calculate_extents(group.group_abb, group.primary_entity, total)
-	
-#update external state
-	#process information for hovering over parts and determining if theyre in a group
-	root_groups.append(group)
-	#filter out groups from root_groups which are now able to be found under group.child_groups
-	var grouped_groups : Callable = func(input): return not group.child_groups.has(input)
-	root_groups = root_groups.filter(grouped_groups)
-	
-	group_recalculate_hashmap()
-	
+		push_error("group was initialized without primary entity; this means the bounding box rotation cannot be set correctly")
 	
 	#group.debug_print()
 	selection_clear()
 	selection_add_entities([group])
 	
-	#todo abb set basis/transform to group.primary_entity
 	#print("selected abb: ", selected_parts_abb.extents)
 	#print("group.group_abb: ", group.group_abb.extents)
 	#print("selected abb: ", selected_parts_abb.transform.origin)
 	#print("group.group_abb: ", group.group_abb.transform.origin)
 	#skippable in case 
-	if refresh_abb_offsets:
-		refresh_offset_abb_to_selected_array()
 	return group
 
 
@@ -1125,7 +1112,7 @@ static func selection_group_undoable():
 	UndoManager.register_undo_data(undo)
 
 
-static func selection_ungroup(refresh_abb_offsets : bool = true):
+static func selection_ungroup():
 	var selected_groups : Array = selected_entities.filter(is_group)
 	var to_remove : Array = []
 	var to_add : Array = []
@@ -1134,26 +1121,22 @@ static func selection_ungroup(refresh_abb_offsets : bool = true):
 		EditorUI.set_l_msg("ungrouping failed: at least one group must be selected.")
 		return
 	
+	
 	for group in selected_groups:
-		to_remove.append(group)
+		existing_groups.erase(group)
 		for child_group in group.child_groups:
 			to_add.append(child_group)
-			root_groups.append(child_group)
-		
 		
 		for child_part in group.child_entities.filter(is_part):
 			to_add.append(child_part)
 		
-		root_groups.erase(group)
+		group_clear_child_entities(group)
+		to_remove.append(group)
 	
+	#TODO figure out whether its better ux wise to clear the selection and only add what was grouped before
+	#or to leave all previously selected entities selected and add what was grouped before
 	selection_remove_entities(to_remove)
 	selection_add_entities(to_add)
-	
-	#recalculate hashmap
-	group_recalculate_hashmap()
-	
-	if refresh_abb_offsets:
-		refresh_offset_abb_to_selected_array()
 
 
 static func selection_ungroup_undoable():
@@ -1190,6 +1173,9 @@ static func group_add_child_entities(group : Group, entities : Array):
 		if entity is Group:
 			entity.parent_group = group
 	
+	#set primary_entity which will determine the rotation of the group bounding box
+	group.primary_entity = last_element(group.child_entities)
+	group_recalculate_bounding_box(group)
 	SelectionManager.groups_changed = true
 
 
@@ -1206,6 +1192,7 @@ static func group_remove_child_entities(group : Group, entities : Array):
 	#if primary entity was removed, attempt to set new primary entity
 	if primary_entity_removed:
 		group.primary_entity = SelectionManager.last_element(group.child_entities)
+	group_recalculate_bounding_box(group)
 	
 	SelectionManager.groups_changed = true
 
@@ -1218,12 +1205,20 @@ static func group_clear_child_entities(group : Group):
 		group.primary_entity = null
 		group.child_entities.clear()
 		SelectionManager.groups_changed = true
-		
+
+
+static func group_recalculate_bounding_box(group : Group):
+	group.group_abb = SnapUtils.calculate_extents(group.group_abb, group.primary_entity, group.child_entities)
 
 
 #recalculate hashmap for whenever root_groups changes
-static func group_recalculate_hashmap():
+static func group_recalculate_hashmap_and_root():
 	root_group_child_parts_hashmap.clear()
+	root_groups.clear()
+	
+	for group in existing_groups:
+		if group.parent_group == null:
+			root_groups.append(group)
 	
 	for r_group in root_groups:
 		for part in group_get_all_child_parts(group_get_full_hierarchy(r_group)):
@@ -1470,11 +1465,11 @@ static func add_children(on_node : Node, input : Array):
 	for i in input:
 		if i is Group:
 			add_children(on_node, group_get_all_child_parts(group_get_full_hierarchy(i)))
-			root_groups.append(i)
+			existing_groups.append(i)
+			groups_changed = true
 		else:
 			on_node.add_child(i)
 	
-	group_recalculate_hashmap()
 
 
 "TODO"#could be optimized by caching each group hierarchy and the parts which it contains
@@ -1482,8 +1477,7 @@ static func remove_children(from_node : Node, input : Array):
 	for i in input:
 		if i is Group:
 			remove_children(from_node, group_get_all_child_parts(group_get_full_hierarchy(i)))
-			root_groups.erase(i)
+			existing_groups.erase(i)
+			groups_changed = true
 		else:
 			from_node.remove_child(i)
-	
-	group_recalculate_hashmap()

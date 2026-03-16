@@ -156,5 +156,5 @@
 3.3.	planned ahead for a better abstraction to manage the state of groups
 13.3.	working on implementing the abstraction: removing child_groups and child_parts from groups in favor of child_entities
 14.3	working on implementing the abstraction: continuing to move to child_entities
-15.3.	
+16.3.	working on implementing the abstraction: finished moving to child_entities, properly abstracted adding and removing and clearing child entities from groups (automated group parent reference, end of frame recalculation trigger, setting a new primary_entity, recalculation of the bounding box), started using existing_groups array to track groups more easily, automated group state (root groups, root group to child part hashmap) recalculation and made it batch processed at the end of the frame. now only undoable in-group part deletion and some major bug testing is left.
 TODO:	TODO cleanup
