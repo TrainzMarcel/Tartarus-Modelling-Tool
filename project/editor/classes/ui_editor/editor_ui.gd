@@ -323,9 +323,13 @@ static func create_material_buttons(on_material_selected : Callable, materials_l
 #more convienient to have a function for this
 static var message_repeat_counter : int = 1
 static var message_previous : String = ""
-static func set_l_msg(text : String):
+static func set_l_msg(text : String, repeatable = false):
 	#if previous message is the same as message in parameter
 	#increment message counter 
+	if repeatable:
+		l_message.text = text
+		return
+	
 	if message_previous == text:
 		message_repeat_counter = message_repeat_counter + 1
 	else:

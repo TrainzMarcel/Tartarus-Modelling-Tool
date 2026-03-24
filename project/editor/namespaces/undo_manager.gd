@@ -101,6 +101,7 @@ static func update_dependencies(undo_data : UndoData, is_appending : bool):
 					reference_counter.erase(i)
 					#only delete fully from memory when this is an orphan node
 					"TODO"#add support for groups
+					"TODO"#assert that group reference counts are at 1 before dereferencing them
 					
 					if Main.safety_check(i) and i is Node:
 						if logging:
@@ -131,6 +132,7 @@ static func undo():
 	
 	var i : int = 0
 	while i < current.undo_action.size():
+		assert(current.undo_action[i].get_argument_count() == current.undo_args[i].size(), "wrong number of arguments has been supplied to the function: " + str(current.undo_action[i]))
 		current.undo_action[i].callv(current.undo_args[i])
 		i = i + 1
 	
@@ -155,6 +157,7 @@ static func redo():
 	var i : int = 0
 	while i < current.redo_action.size():
 		current.redo_action[i].callv(current.redo_args[i])
+		assert(current.redo_action[i].get_argument_count() == current.redo_args[i].size(), "wrong number of arguments has been supplied to the function: " + str(current.redo_action[i]))
 		i = i + 1
 	
 	if logging:

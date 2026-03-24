@@ -1,31 +1,22 @@
 TOP PRIORITY
 
+add existing parts array at some point
+add underscore to existing groups and existing parts arrays
+add hashmap for pointing to parent groups from child entities
+
 implement subassemblies and/or grouping of parts, holding c (formerly alt) allows for single part selection
 													^ only deletion left to implement, which has some challenges
-	
-	implement a better api/abstraction for managing groups
-		group:
-			-contains 2+ entities
-			-can be contained by other groups
-			-needs to be tracked centrally somehow
-			-has a bounding box that needs to be updated:
-				when child entities change transform
-				when c. entities are added or removed
-			-has visualization that needs to be updated
-		
-		required refactoring:
-			keeping track of groups using only root_groups and
-			root_group_child_entities_hashmap is not great -> create existing groups array
-			group.child_groups and group.child_parts -> group.child_entities
-			no ref to parent -> parent_group
-			manual management -> add functions to abstract group state management
-			manual management -> post_group_change function triggered at end of frame
+
 
 implement import/export (.obj, .gltf, .tres/.res)
 get release notes and use them to update the manual accordingly
 rename assetmanager, undomanager, selectionmanager, toolmanager to AssetSubsystem, UndoSubsystem, SelectionSubsystem, ToolSubsystem
 add cool sounds for saving and loading
 release v0.1-indev-3 with release notes
+
+
+
+
 (maybe not) add selectionbox around abb
 clean up TODOS
 fix messed up leaky abstractions everywhere: attempt to untangle main, attempt to untangle the managers and only have them communicate through main as well as possible
@@ -33,6 +24,8 @@ add errorsubsystem with cool console that is like a dropdown which slides up fro
 errorsubsystem will implement a tag system for only toggling relevant subsystems messages/warnings/errors
 https://docs.godotengine.org/en/stable/tutorials/scripting/logging.html
 https://docs.godotengine.org/en/stable/classes/class_logger.html#class-logger
+
+settings menu? centralized settings loader? csv? autosave repeat duration? automated property setting ui? hint system disable? default file manager directory?
 
 automatic recalculation and pooling subsystem that uses wrapper objects and:
 	marks objects as dirty which it then automatically recalculates at the end of the frame
@@ -49,7 +42,6 @@ add margincontainer to PanelContainerModeData in filemanager
 when hovering over color or material, preview the hovered property on selected part (also refine the ux in this todo)
 reduce code duplication in snapping code
 reduce code duplication in asset manager
-settings menu? centralized settings loader? csv? autosave repeat duration? automated property setting ui? hint system disable?
 add a setting for changing if camera uses scroll wheel to set speed or to scroll (same as lock-on mode except it uses a raycast to determine distance and scroll amount. if raycast hits nothing, use a default scroll distance.)
 add BETTER hint system than manual (gmod droplet noise with timer progressbar)
 add error log console that opens from a dropdown in the bottom panel facing upward
@@ -81,6 +73,7 @@ export to godot project -> make sure all required materials are there -> find al
 
 
 v0.2
+implement beveling edges and possibly edge selection mode
 procedural shapes: cylinders and torus with tweakable number of vertices
 implement csg (first with godot csg, then my own) https://www.youtube.com/watch?v=Iqmg4gblreo&pp=ygUlY29uc3RydWN0aXZlIHNvbGlkIGdlb21ldHJ5IGdhbWUgdGFsaw%3D%3D
 implement part properties inspector

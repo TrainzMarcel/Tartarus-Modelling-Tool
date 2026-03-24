@@ -26,7 +26,6 @@ class Group:
 	
 	func copy():
 		var new : Group = Group.new()
-		SelectionManager.existing_groups.append(new)
 		
 		#base case: if no data is in the group, return an empty group
 		#copy child groups
@@ -37,6 +36,7 @@ class Group:
 				new.child_entities.append(child_group.copy())
 		
 		#copy child parts
+		"TODO"#test
 		if not child_parts.is_empty():
 			for child_part in child_parts:
 				var copy = child_part.copy()
@@ -66,6 +66,7 @@ class Group:
 			new.group_abb.extents = self.group_abb.extents
 			new.group_abb.transform = self.group_abb.transform
 		
+		SelectionManager.entities_activate([new])
 		return new
 	
 	func debug_print():
@@ -92,7 +93,10 @@ const group_depth_colors : Array[Color] = [Color.BLACK, Color.DIM_GRAY, Color.WH
 static var group_depth_assigned_groups : Array = []
 static var is_depth_visualization_active : bool = false
 
+#child part keys pointing at root groups (for quickly finding the top most group on hovering over any part)
 static var root_group_child_parts_hashmap : Dictionary = {}
+#child entity keys pointing at parent groups (for quickly removing references from their parent group on deletion)
+static var parent_group_child_entity_hashmap : Dictionary = {}
 static var root_groups : Array[Group] = []
 static var existing_groups : Array[Group] = []
 
@@ -100,7 +104,7 @@ static var existing_groups : Array[Group] = []
 static var selected_entities : Array = []
 
 #selected_entities_internal and offset_abb_to_internal_entities are parallel arrays!!
-#flattened array of full hierarchy of selected_entities (all root and child parts and groups) for transformations
+#flattened array of full hierarchy of selected_entities (all root and child parts and child groups) for transformations
 static var selected_entities_internal : Array = []
 #local offsets from the internal selected parts and groups positions to the abb position: recalculate_abb_offsets()
 static var offset_abb_to_internal_entities : Array[Vector3] = []
@@ -213,7 +217,6 @@ static func handle_input(
 				if not Input.is_key_pressed(KEY_SHIFT):
 					if not Main.safety_check(hovered_handle):
 						SelectionManager.selection_clear_undoable()
-						#SelectionManager.post_selection_update()
 			
 			#if no parts, handles or ui detected, start selection rect
 			if not Main.safety_check(hovered_part) and not Main.safety_check(hovered_handle) and not is_ui_hovered:
@@ -226,7 +229,6 @@ static func handle_input(
 	#selection rect/marquee select handling
 	if event is InputEventMouseMotion:
 		selection_rect_handle(event, Main.panel_selection_rect, Main.cam)
-		#SelectionManager.post_selection_update()
 	
 #keyboard input-----------------------------------------------------------------
 	if event is InputEventKey and event.is_pressed() and not event.is_echo():
@@ -335,7 +337,10 @@ static func post_selection_update(is_manual_call : bool = false):
 		#TODO this only needs to be called when the selection changes from size > 0 to 0
 		ToolManager.handle_set_active(ToolManager.selected_tool_handle_array, false)
 	
-	print("post selection update called")
+	
+	group_display()
+	
+	print("post selection update called, manual call: ", is_manual_call)
 	if not is_manual_call:
 		selection_changed = false
 
@@ -368,23 +373,27 @@ static func post_movement_update():
 #static var root_groups : Array[Group] = []
 #post group update would then update these variables and also call group_display
 static func post_group_update():
-	#with in-group part selecting implemented, group bounding boxes must be refreshed
-	#whenever the user selects parts within groups and modifies them
-	var affected_groups : Array = group_get_groups_of_selected_entities()
-	
-	var i : int = 0
-	while i < affected_groups.size():
-		for group in group_get_full_hierarchy(affected_groups[i]):
-			group_recalculate_bounding_box(group)
-		i = i + 1
-	
-	
 	#update external state
 	#process information for hovering over parts and determining if theyre in a group
 	group_recalculate_hashmap_and_root()
 	
 	
-	if affected_groups.size() > 0 and is_depth_visualization_active:
+	#with in-group part selecting implemented, group bounding boxes must be refreshed
+	#whenever the user selects parts within groups and modifies them
+	#var affected_groups : Array = group_get_root_groups_of_selected_entities()
+	
+	#for the time being, update all existing groups instead of guessing through what is selected
+	#the delete tool doesnt select anything which causes this system to miss what groups are to be updated
+	#in the future i will build a reusable batch-update and pooling system instead
+	var i : int = 0
+	while i < existing_groups.size():
+		#for group in group_get_full_hierarchy(affected_groups[i]):
+		for group in existing_groups:
+			group_recalculate_bounding_box(group)
+		i = i + 1
+	
+	#affected_groups.size()
+	if existing_groups.size() > 0 and is_depth_visualization_active:
 		selection_box_redraw_all()
 	group_display()
 	groups_changed = false
@@ -513,8 +522,11 @@ static func get_hovered_entity(hovered_part : Part, exclude_group_key : Key):
 
 
 static func selection_add_entities(entities : Array):
-	_internal_entities_add_entities(entities)
+	if entities.is_empty():
+		return
 	
+	_internal_entities_add_entities(entities)
+	print(selected_entities_internal)
 	for entity in entities:
 		#theoretically this should never be called on already selected entities
 		if selected_entities.has(entity):
@@ -551,6 +563,9 @@ static func selection_add_entities_undoable(entities : Array):
 
 
 static func selection_remove_entities(entities : Array):
+	if entities.is_empty():
+		return
+	
 	_internal_entities_remove_entities(entities)
 	
 	for entity in entities:
@@ -639,7 +654,48 @@ static func selection_clear_undoable():
 
 #selected entities operations---------------------------------------------------
 static func selection_delete():
+	var previous_selected_parts : Array = selected_entities.filter(is_part)
+	var previous_selected_groups : Array = selected_entities.filter(is_group)
+	var affected_root_groups : Array = group_get_root_groups_of_selected_entities()
+	#parallel
+	var groups_of_previous_selected_parts : Array = []
+	var child_parts_of_group : Array = []
+	selection_clear()
+	
+	for i in affected_root_groups:
+		#search for groups containing the previous selected parts
+		var full_tree : Array = group_get_full_hierarchy(i)
+		for j in full_tree:
+			#go through each group to find the group that contains the part i
+			if j.child_entities.has(i):
+				groups_of_previous_selected_parts.append(j)
+				child_parts_of_group.append(i)
+	
+	#go through each parent group of the selected parts to remove the reference
+	var n : int = 0
+	while n < groups_of_previous_selected_parts.size():
+		group_remove_child_entities(groups_of_previous_selected_parts[n], [child_parts_of_group[n]])
+		n = n + 1
+	
+	
+	
+	for j in previous_selected_groups:
+		
+		
+		
+		
+		return
+	
+	for k in previous_selected_parts:
+		
+		
+		return
+	
+	
+	
+	"""
 	var previous_selected_entities : Array = selected_entities.duplicate()
+	var affected_root_groups : Array = group_get_root_groups_of_selected_entities()
 	selection_clear()
 	
 	for i in previous_selected_entities:
@@ -647,24 +703,37 @@ static func selection_delete():
 			var hierarchy : Array = group_get_full_hierarchy(i)
 			group_get_all_child_parts(hierarchy).map(func(input): input.queue_free())
 			group_clear_child_entities(i)
-			existing_groups.erase(i)
+			group_unregister(i)
 		else:
+			#first, check if this get_root_groups_of_selected_entities returned a non empty array
+			#if it returns a non empty array, it means some entities are contained in a group
+			#also find the group this entity is in
+			var root_group_of_entity : Group = root_group_child_parts_hashmap.get(i)
+			if not affected_root_groups.is_empty() and root_group_of_entity != null and not previous_selected_entities.has(root_group_of_entity):
+				var all_related_groups : Array = group_get_full_hierarchy(root_group_of_entity)
+				for related_group in all_related_groups:
+					if related_group.child_entities.has(i):
+						group_remove_child_entities(related_group, [i])
+						break
+			
 			i.queue_free()
+			
+			"""
 
 
 static func selection_delete_undoable():
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
 	var selection : Array = selected_entities.duplicate()
-	undo.append_undo_action_with_args(add_children, [WorkspaceManager.workspace, selection])
-	undo.append_redo_action_with_args(selection_clear, [])
+	undo.append_undo_action_with_args(entities_activate, [selection])
+	undo.append_undo_action_with_args(selection_clear, [])
 	undo.append_undo_action_with_args(selection_add_entities, [selection])
 	undo.explicit_object_references = selection
 	undo.append_redo_action_with_args(selection_clear, [])
-	undo.append_redo_action_with_args(remove_children, [WorkspaceManager.workspace, selection])
+	undo.append_redo_action_with_args(entities_deactivate, [selection])
 	UndoManager.register_undo_data(undo)
 	
 	selection_clear()
-	remove_children(WorkspaceManager.workspace, selection) 
+	entities_deactivate(selection) 
 
 
 static func selection_copy():
@@ -688,10 +757,10 @@ static func selection_paste():
 			duplicated_entities.append(copy)
 		else:
 			var copy : Group = i.copy()
-			root_groups.append(copy)
 			for part in group_get_all_child_parts(group_get_full_hierarchy(copy)):
 				root_group_child_parts_hashmap[part] = copy
 			duplicated_entities.append(copy)
+			groups_changed = true
 	
 	selection_add_entities(duplicated_entities)
 
@@ -707,10 +776,10 @@ static func selection_paste_undoable():
 	
 	undo.append_undo_action_with_args(selection_clear, [])
 	undo.append_undo_action_with_args(selection_add_entities, [selection_before])
-	undo.append_undo_action_with_args(remove_children, [WorkspaceManager.workspace, selection_after])
+	undo.append_undo_action_with_args(entities_deactivate, [selection_after])
 	undo.explicit_object_references.append_array(selection_before)
 	undo.explicit_object_references.append_array(selection_after)
-	undo.append_redo_action_with_args(add_children, [WorkspaceManager.workspace, selection_after])
+	undo.append_redo_action_with_args(entities_activate, [selection_after])
 	undo.append_redo_action_with_args(selection_add_entities, [selection_after])
 	undo.append_redo_action_with_args(selection_clear, [])
 	UndoManager.register_undo_data(undo)
@@ -737,6 +806,7 @@ static func selection_duplicate_undoable():
 	for i in selected_entities:
 		if i is Part:
 			var copy : Part = i.copy()
+			"TODO"#this should be abstracted somehow
 			WorkspaceManager.workspace.add_child(copy)
 			copy.initialize()
 			copied_entities.append(copy)
@@ -749,9 +819,9 @@ static func selection_duplicate_undoable():
 	
 	
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
-	undo.append_undo_action_with_args(remove_children, [WorkspaceManager.workspace, copied_entities])
+	undo.append_undo_action_with_args(entities_deactivate, [copied_entities])
 	undo.explicit_object_references = copied_entities
-	undo.append_redo_action_with_args(add_children, [WorkspaceManager.workspace, copied_entities])
+	undo.append_redo_action_with_args(entities_activate, [copied_entities])
 
 
 #position only
@@ -823,6 +893,9 @@ static func selection_rotate(rotated_basis : Basis, local_pivot_point : Vector3 
 		#copy transform
 		#selection_box_update_transforms()
 		i = i + 1
+	
+	#update group display
+	groups_changed = true
 	
 	#move transform handles with selection
 	selection_moved = true
@@ -983,7 +1056,7 @@ static func selection_set_exact_transforms(transform_array : Array, scale_array 
 static func _internal_entities_add_entities(entities : Array):
 	for entity in entities:
 		if selected_entities_internal.has(entity):
-			push_error("entities that are already selected are unable to be added")
+			push_warning("entities that are already selected are unable to be added")
 			continue
 		
 	#add all child entities of a group to internal array
@@ -992,6 +1065,8 @@ static func _internal_entities_add_entities(entities : Array):
 			assert(child_entities.size() >= 2, "a selected group should have at least 2 child entities")
 			
 			selected_entities_internal.append_array(child_entities)
+			
+			#TODO no longer necessary as post_selection_update refreshes abb offsets automatically
 			var calculate_offsets : Callable = func(input):
 				return selection_target_get_transform(input).origin - selected_parts_abb.transform.origin
 			offset_abb_to_internal_entities.append_array(child_entities.map(calculate_offsets))
@@ -1011,6 +1086,12 @@ static func _internal_entities_remove_entities(entities : Array):
 				offset_abb_to_internal_entities.remove_at(selected_entities_internal.find(child))
 				selected_entities_internal.erase(child)
 		else:
+			#make sure the internal entity being removed is not contained in a selected group
+			var group_containing_entity = root_group_child_parts_hashmap.get(entity)
+			if group_containing_entity != null:
+				if selected_entities.has(group_containing_entity) or selected_entities_internal.has(group_containing_entity):
+					continue
+			
 			#erase the same index as hovered_part
 			offset_abb_to_internal_entities.remove_at(selected_entities_internal.find(entity))
 			selected_entities_internal.erase(entity)
@@ -1021,7 +1102,7 @@ static var is_group : Callable = func(input_entity): return input_entity is Grou
 static var is_part : Callable = func(input_entity): return input_entity is Part
 
 
-static func selection_group(undo_group_reference : Group = null, refresh_abb_offsets = true):
+static func selection_group(undo_group_reference : Group = null):
 	var selected_parts : Array = selected_entities.filter(is_part)
 	var selected_groups : Array = selected_entities.filter(is_group)
 	
@@ -1054,7 +1135,7 @@ static func selection_group(undo_group_reference : Group = null, refresh_abb_off
 		group = Group.new()
 	
 	
-	existing_groups.append(group)
+	entities_activate([group])
 	group_add_child_entities(group, selected_entities)
 	
 	
@@ -1099,23 +1180,27 @@ static func selection_group_undoable():
 	
 	var selection : Array = selected_entities.duplicate()
 	var undo_group : Group = selection_group()
-	
+	#print("undo_group: ", undo_group)
+	#print("select: ", selection.size())
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
 	undo.append_undo_action_with_args(selection_clear, [])
-	undo.append_undo_action_with_args(selection_add_entities, [undo_group, undo_group])
-	undo.append_undo_action_with_args(selection_ungroup, [false])
+	undo.append_undo_action_with_args(selection_add_entities, [[undo_group]])
+	undo.append_undo_action_with_args(selection_ungroup, [])
 	undo.explicit_object_references.append_array(selection)
 	undo.explicit_object_references.append(undo_group)
 	undo.append_redo_action_with_args(selection_clear, [])
-	undo.append_redo_action_with_args(selection_add_entities, [selection, last_element(selection)])
-	undo.append_redo_action_with_args(selection_group, [undo_group, false])
+	undo.append_redo_action_with_args(selection_add_entities, [selection])
+	undo.append_redo_action_with_args(selection_group, [undo_group])
 	UndoManager.register_undo_data(undo)
 
 
 static func selection_ungroup():
+	print(selected_entities)
 	var selected_groups : Array = selected_entities.filter(is_group)
+	#var selected_parts : Array = 
+	selection_clear()
 	var to_remove : Array = []
-	var to_add : Array = []
+	var to_add : Array = selected_entities.filter(is_part)
 	
 	if selected_groups.size() < 1:
 		EditorUI.set_l_msg("ungrouping failed: at least one group must be selected.")
@@ -1123,19 +1208,19 @@ static func selection_ungroup():
 	
 	
 	for group in selected_groups:
-		existing_groups.erase(group)
-		for child_group in group.child_groups:
-			to_add.append(child_group)
-		
-		for child_part in group.child_entities.filter(is_part):
-			to_add.append(child_part)
+		for child_entity in group.child_entities:
+			to_add.append(child_entity)
 		
 		group_clear_child_entities(group)
-		to_remove.append(group)
+		#to_remove.append(group)
+	
+	#deactivate groups after clearing their children
+	entities_deactivate(selected_groups)
+	
+	
 	
 	#TODO figure out whether its better ux wise to clear the selection and only add what was grouped before
 	#or to leave all previously selected entities selected and add what was grouped before
-	selection_remove_entities(to_remove)
 	selection_add_entities(to_add)
 
 
@@ -1165,6 +1250,69 @@ static func selection_ungroup_undoable():
 	undo.append_redo_action_with_args(selection_clear, [])
 	undo.append_redo_action_with_args(selection_add_entities, [selection_after])
 	undo.append_redo_action_with_args(selection_ungroup, [])
+
+
+#handle "activating and deactivating" entities when for undoable deletion
+#this will automatically handle all child entities of provided groups
+static func entities_activate(entities : Array):
+	var groups_to_activate : Array = []
+	var parts_to_activate : Array = []
+	
+	#populate groups to activate
+	#provided group + all of its children are added
+	for entity in entities.filter(is_group):
+		var all_child_groups : Array = group_get_full_hierarchy(entity)
+		for child_group in all_child_groups:
+			if not groups_to_activate.has(entity):
+				groups_to_activate.append(entity)
+	
+	#populate parts to activate
+	for entity in entities.filter(is_part):
+		if not parts_to_activate.has(entity):
+			parts_to_activate.append(entity)
+	
+	for group in groups_to_activate:
+		for part in group.child_entities.filter(is_part):
+			if not parts_to_activate.has(part):
+				parts_to_activate.append(part)
+	
+	#activate entities
+	existing_groups.append_array(groups_to_activate)
+	groups_changed = not groups_to_activate.is_empty()
+	
+	for part in parts_to_activate:
+		WorkspaceManager.workspace.add_child(part)
+
+
+static func entities_deactivate(entities : Array):
+	var groups_to_deactivate : Array = []
+	var parts_to_deactivate : Array = []
+	
+	#populate groups to deactivate
+	for entity in entities.filter(is_group):
+		var all_child_groups : Array = group_get_full_hierarchy(entity)
+		for child_group in all_child_groups:
+			if not groups_to_deactivate.has(entity):
+				groups_to_deactivate.append(entity)
+	
+	#populate parts to deactivate
+	for entity in entities.filter(is_part):
+		if not parts_to_deactivate.has(entity):
+			parts_to_deactivate.append(entity)
+	
+	for group in groups_to_deactivate:
+		for part in group.child_entities.filter(is_part):
+			if not parts_to_deactivate.has(part):
+				parts_to_deactivate.append(part)
+	
+	#deactivate entities
+	for group in groups_to_deactivate:
+		existing_groups.erase(group)
+	
+	groups_changed = not groups_to_deactivate.is_empty()
+	
+	for part in parts_to_deactivate:
+		WorkspaceManager.workspace.remove_child(part)
 
 
 static func group_add_child_entities(group : Group, entities : Array):
@@ -1215,10 +1363,15 @@ static func group_recalculate_bounding_box(group : Group):
 static func group_recalculate_hashmap_and_root():
 	root_group_child_parts_hashmap.clear()
 	root_groups.clear()
+	parent_group_child_entity_hashmap.clear()
 	
 	for group in existing_groups:
 		if group.parent_group == null:
 			root_groups.append(group)
+		
+		for entity in group.child_entities:
+			parent_group_child_entity_hashmap[entity] = group
+	
 	
 	for r_group in root_groups:
 		for part in group_get_all_child_parts(group_get_full_hierarchy(r_group)):
@@ -1263,20 +1416,21 @@ static func group_get_all_child_entities(group : Group):
 
 
 static func group_get_hierarchy_depth(group : Group, depth : int = 0):
-	if group.child_groups.is_empty():
+	var child_groups : Array = group.child_entities.filter(is_group)
+	if child_groups.is_empty():
 		return depth
 	
 	var depth_return : int = 0
-	for child_group in group.child_groups: 
+	for child_group in child_groups: 
 		depth_return = max(depth_return, group_get_hierarchy_depth(child_group, depth + 1))
 	return depth_return
 
 
 #with in-group part selecting implemented, group bounding boxes must be refreshed
-#if there are parts in selected_entities which are in a root group
+#if there are parts in selected_entities which are in a group
 #it tells us the user used the in-group select because
+static func group_get_root_groups_of_selected_entities():
 #only root groups and ungrouped parts show up in that array
-static func group_get_groups_of_selected_entities():
 	var affected_groups : Array = []
 	var i : int = 0
 	while i < selected_entities.size():
@@ -1290,6 +1444,8 @@ static func group_get_groups_of_selected_entities():
 "TODO"#this could be better
 #i could assign selectionboxes *while* traversing the hierarchy instead of this
 #i could even do the functional approach like Array.map() but rather like group_full_hierarchy_map(function(input_group))
+#and i could add a selectionbox hierarchy system to automatically manage which system gets highest display priority
+#(selecting priority 10, group display priority 5,...)
 static func group_display():
 	if is_depth_visualization_active:
 		
@@ -1460,24 +1616,14 @@ static func last_element(input : Array):
 
 
 #convenience methods for undoing and redoing deletion
-"TODO"#could be optimized by caching each group hierarchy and the parts which it contains
-static func add_children(on_node : Node, input : Array):
+#they take flat part arrays as parameter
+static func add_child_parts(input : Array):
 	for i in input:
-		if i is Group:
-			add_children(on_node, group_get_all_child_parts(group_get_full_hierarchy(i)))
-			existing_groups.append(i)
-			groups_changed = true
-		else:
-			on_node.add_child(i)
-	
+		assert(i is Part)
+		WorkspaceManager.workspace.add_child(i)
 
 
-"TODO"#could be optimized by caching each group hierarchy and the parts which it contains
-static func remove_children(from_node : Node, input : Array):
+static func remove_child_parts(input : Array):
 	for i in input:
-		if i is Group:
-			remove_children(from_node, group_get_all_child_parts(group_get_full_hierarchy(i)))
-			existing_groups.erase(i)
-			groups_changed = true
-		else:
-			from_node.remove_child(i)
+		assert(i is Part)
+		WorkspaceManager.workspace.remove_child(i)

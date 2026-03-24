@@ -363,7 +363,7 @@ static func part_spawn(selected_part_type : Part):
 	var undo_data : UndoManager.UndoData = UndoManager.UndoData.new()
 	undo_data.append_undo_action_with_args(workspace.remove_child, [new_part])
 	undo_data.explicit_object_references = [new_part]
-	undo_data.append_redo_action_with_args(workspace.add_child, [new_part])
+	undo_data.append_redo_action_with_args(workspace.add_child, [new_part, false, 0])
 	UndoManager.register_undo_data(undo_data)
 	
 	#immediately update hovered_part in the cursor is over the spawned part
@@ -375,43 +375,80 @@ static func part_spawn(selected_part_type : Part):
 
 
 "TODO"#outdated cause unused
-static func part_delete(hovered_entity):
-	var entity_was_selected : bool = SelectionManager.selected_entities_internal.has(hovered_entity)
-	#if part was selected, add selecting to the undo actions
-	if entity_was_selected:
-		SelectionManager.selection_remove_entities([hovered_entity])
-	hovered_entity.queue_free()
+#i dont think this will ever be needed anyway
+#static func part_delete(hovered_entity):
+#	var entity_was_selected : bool = SelectionManager.selected_entities_internal.has(hovered_entity)
+#	#if part was selected, add selecting to the undo actions
+#	if entity_was_selected:
+#		SelectionManager.selection_remove_entities([hovered_entity])
+#	hovered_entity.queue_free()
 
 
 static func part_delete_undoable(hovered_entity):
 	var undo_data : UndoManager.UndoData = UndoManager.UndoData.new()
 	var entity_was_selected : bool = SelectionManager.selected_entities_internal.has(hovered_entity)
-	var entity_was_part_in_group : bool = SelectionManager.root_group_child_parts_hashmap[hovered_entity]
+	undo_data.explicit_object_references = [hovered_entity]
 	
-	#undo: first add the child node, then select it if needed
-	undo_data.append_undo_action_with_args(SelectionManager.add_children, [workspace, [hovered_entity]])
-	
+	#undo
+	undo_data.append_undo_action_with_args(SelectionManager.entities_activate, [[hovered_entity]])
 	#if part was selected, add selecting to the undo actions
 	if entity_was_selected:
 		undo_data.append_undo_action_with_args(SelectionManager.selection_add_entities, [hovered_entity])
+	
+	undo_data = _part_delete_undoable_empty_group(undo_data, hovered_entity)
+	
+	#redo
+	if entity_was_selected:
+		undo_data.append_redo_action_with_args(SelectionManager.selection_remove_entities, [hovered_entity])
+	undo_data.append_redo_action_with_args(SelectionManager.entities_deactivate, [[hovered_entity]])
+	
+	#commit
+	if entity_was_selected:
 		SelectionManager.selection_remove_entities([hovered_entity])
+	SelectionManager.entities_deactivate([hovered_entity])
 	
 	
-	SelectionManager.remove_children(workspace, [hovered_entity])
 	#"TODO"investigate why this is needed and why setting selection_changed is not cleaning up the group display selectionboxes
 	#only after a left mouse click does it clean up the remaining selectionboxes
 	#new comment: now that i have correctly implemented the abstractions im not sure if this is necessary
 	SelectionManager.group_display()
 	
-	undo_data.explicit_object_references = [hovered_entity]
-	
-	#if part was selected, remove from selection on redo first
-	if entity_was_selected:
-		undo_data.append_redo_action_with_args(SelectionManager.selection_remove_entities, [hovered_entity])
-	
-	#then remove from workspace
-	undo_data.append_redo_action_with_args(SelectionManager.remove_children, [workspace, [hovered_entity]])
 	UndoManager.register_undo_data(undo_data)
+
+
+static func _part_delete_undoable_empty_group(undo_data : UndoManager.UndoData, hovered_entity):
+	var parent = SelectionManager.parent_group_child_entity_hashmap.get(hovered_entity)
+	var grandparent
+	
+	
+	#make sure that if this entity has a parent group, that
+	#this group does not go below 2 child entities
+	if parent == null:
+		return undo_data
+	else:
+		grandparent = parent.parent_group
+		SelectionManager.groups_changed = true
+	
+	
+	
+	#remove the hovered entity from the parent
+	SelectionManager.group_remove_child_entities(parent, [hovered_entity])
+	
+	#if the parent has gone below 2 child entities, take the following steps:
+	if parent.child_entities.size() < 2:
+		#1. move the one child to the grandparent of the hovered_entity if there is one
+		if grandparent != null:
+			var remaining : Array = parent.child_entities.duplicate()
+			SelectionManager.group_add_child_entities(grandparent, remaining)
+			SelectionManager.group_remove_child_entities(grandparent, [parent])
+		
+	#2. deactivate the original parent
+		SelectionManager.group_clear_child_entities(parent)
+		SelectionManager.entities_deactivate([parent])
+	
+	
+	return undo_data
+
 
 
 #called when user clicks on a part and drags
@@ -528,7 +565,7 @@ static func transform_handle_handle(event : InputEvent):
 			Main.positional_snap_increment,
 			Main.snapping_active
 		))
-		EditorUI.set_l_msg("Translation: " + str(snapped(delta, Main.positional_snap_increment) * Main.dragged_handle.direction_vector))
+		EditorUI.set_l_msg("Translation: " + str(snapped(delta, Main.positional_snap_increment) * Main.dragged_handle.direction_vector), true)
 		
 		
 #rotation
@@ -543,7 +580,7 @@ static func transform_handle_handle(event : InputEvent):
 			deg_to_rad(Main.rotational_snap_increment),
 			Main.snapping_active
 		), WorkspaceManager.pivot_local_transform.origin)
-		EditorUI.set_l_msg("Angle: " + str(snapped(rad_to_deg(angle), Main.rotational_snap_increment) * Main.dragged_handle.direction_vector))
+		EditorUI.set_l_msg("Angle: " + str(snapped(rad_to_deg(angle), Main.rotational_snap_increment) * Main.dragged_handle.direction_vector), true)
 #scaling
 	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_scale:
 		var delta_scale : float = ToolManager.handle_input_linear_move(Main.cam, Main.dragged_handle, global_vector, cam_normal, cam_normal_initial, initial_handle_camera_position)
@@ -577,7 +614,7 @@ static func transform_handle_handle(event : InputEvent):
 		
 		SelectionManager.selection_move(result_move)
 		
-		EditorUI.set_l_msg("Scale: " + str(result))
+		EditorUI.set_l_msg("Scale: " + str(result), true)
 #pivot edit tool axis-move portion
 	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_move:
 		#process mouse drag on handle into a single value
@@ -603,7 +640,7 @@ static func transform_handle_handle(event : InputEvent):
 			WorkspaceManager.pivot_custom_mode_active,
 			Main.local_transform_active,
 			ToolManager.selected_tool_handle_array)
-		EditorUI.set_l_msg("Pivot offset: " + str(WorkspaceManager.pivot_local_transform.origin))
+		EditorUI.set_l_msg("Pivot offset: " + str(WorkspaceManager.pivot_local_transform.origin), true)
 #pivot edit tool axis-rotate portion
 	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_rotate:
 		#process mouse drag on handle into a single value
@@ -635,7 +672,7 @@ static func transform_handle_handle(event : InputEvent):
 		#angle_display.x = rad_to_deg(angle_display.x)
 		#angle_display.y = rad_to_deg(angle_display.y)
 		#angle_display.z = rad_to_deg(angle_display.z)
-		EditorUI.set_l_msg("Pivot angle: " + str(snapped(rad_to_deg(angle), Main.rotational_snap_increment) * Main.dragged_handle.direction_vector))
+		EditorUI.set_l_msg("Pivot angle: " + str(snapped(rad_to_deg(angle), Main.rotational_snap_increment) * Main.dragged_handle.direction_vector), true)
 
 
 static func transform_handle_terminate():
