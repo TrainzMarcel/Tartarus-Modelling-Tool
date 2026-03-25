@@ -1,7 +1,5 @@
 TOP PRIORITY
 
-add existing parts array at some point
-add underscore to existing groups and existing parts arrays
 add hashmap for pointing to parent groups from child entities
 
 implement subassemblies and/or grouping of parts, holding c (formerly alt) allows for single part selection
@@ -15,9 +13,10 @@ add cool sounds for saving and loading
 release v0.1-indev-3 with release notes
 
 
+add underscore to existing groups and existing parts arrays
+add existing parts array at some point
 
 
-(maybe not) add selectionbox around abb
 clean up TODOS
 fix messed up leaky abstractions everywhere: attempt to untangle main, attempt to untangle the managers and only have them communicate through main as well as possible
 add errorsubsystem with cool console that is like a dropdown which slides up from the middle message bar

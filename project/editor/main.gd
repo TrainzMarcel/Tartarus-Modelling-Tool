@@ -135,7 +135,7 @@ func _ready():
 	version_number
 	)
 	
-	SelectionManager.initialize(e_hover_selection_box)
+	SelectionManager.initialize(e_hover_selection_box, get_tree().process_frame)
 	
 	WorkspaceManager.initialize(
 		e_workspace,
@@ -305,7 +305,7 @@ func _input(event : InputEvent):
 						else:
 							var parts_of_hovered_group : Array = SelectionManager.group_get_all_child_parts(SelectionManager.group_get_full_hierarchy(hovered_entity))
 							for part in parts_of_hovered_group:
-								undo.append_undo_action_with_args(part.set, ["part_material", hovered_entity.part_material])
+								undo.append_undo_action_with_args(part.set, ["part_material", part.part_material])
 								part.part_material = WorkspaceManager.selected_material
 								undo.explicit_object_references.append(part)
 								undo.append_redo_action_with_args(part.set, ["part_material", WorkspaceManager.selected_material])

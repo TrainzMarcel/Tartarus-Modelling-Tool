@@ -33,7 +33,7 @@ class Group:
 		var child_parts : Array = self.child_entities.filter(SelectionManager.is_part)
 		if not child_groups.is_empty():
 			for child_group in child_groups:
-				new.child_entities.append(child_group.copy())
+				SelectionManager.group_add_child_entities(new, [child_group.copy()])
 		
 		#copy child parts
 		"TODO"#test
@@ -42,7 +42,8 @@ class Group:
 				var copy = child_part.copy()
 				WorkspaceManager.workspace.add_child(copy)
 				copy.initialize()
-				new.child_entities.append(copy)
+				SelectionManager.group_add_child_entities(new, [copy])
+			 
 		
 		#copy primary_entity
 		if not self.primary_entity == null:
@@ -163,6 +164,7 @@ static var is_rect_selecting_active : bool = false
 
 static func initialize(hover_selection_box : SelectionBox):
 	SelectionManager.hover_selection_box = hover_selection_box
+	
 
 
 #input handling functions-------------------------------------------------------
@@ -269,7 +271,7 @@ static func handle_input(
 		elif event.keycode == KEY_DELETE:
 			if is_selecting_allowed:
 				EditorUI.set_l_msg("deleted " + str(SelectionManager.selected_entities.filter(is_part).size()) + " parts")
-				SelectionManager.selection_delete_undoable()
+				SelectionManager.selection_delete()
 				#immediately update hovered_part in case theres another part behind the deleted one(s)
 				hovered_part = Main.part_hover_check()
 				SelectionManager.selection_box_hover_on_target(hovered_entity, is_hovering_allowed)
@@ -653,72 +655,115 @@ static func selection_clear_undoable():
 
 
 #selected entities operations---------------------------------------------------
-static func selection_delete():
+#for now, made delete key use this function instead of the undoable one
+static func selection_delete_2():
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	return
+
+
+#recursive, call on root
+static func _group_reparent_dissolve(group : Group):
+	for child_group in group.child_entities.filter(is_group):
+		_group_reparent_dissolve(child_group)
+	
+	if group == null:
+		return
+	
+	var grandparent = group.parent_group
+	
+	if group.child_entities.size() == 1:
+		existing_groups.erase(group)
+		var child : Array = group.child_entities.duplicate()
+		group_clear_child_entities(group)
+		if grandparent != null:
+			group_add_child_entities(grandparent, child)
+			group_remove_child_entities(grandparent, [group])
+		return
+	
+	if group.child_entities.is_empty():
+		existing_groups.erase(group)
+		if grandparent != null:
+			group_remove_child_entities(grandparent, [group])
+		return
+	
+	return
+
+
+#previous attempt
+static func selection_delete():#_deprecated():
 	var previous_selected_parts : Array = selected_entities.filter(is_part)
 	var previous_selected_groups : Array = selected_entities.filter(is_group)
+	#array of all root groups that have selected (direct and indirect) children
 	var affected_root_groups : Array = group_get_root_groups_of_selected_entities()
-	#parallel
-	var groups_of_previous_selected_parts : Array = []
-	var child_parts_of_group : Array = []
+	#serves as both a record for what has been handled and as a list of parts to delete at the end
+	var entities_handled : Array = []
+	var parts_to_delete : Array = []
+	
+	#i have not considered or thought through what will happen if non-root groups are selected
+	assert(previous_selected_groups.all(func(input): return input.parent_group == null), "all selected groups must be root groups. it shouldnt be possible to select any other group within a group tree.")
 	selection_clear()
 	
-	for i in affected_root_groups:
-		#search for groups containing the previous selected parts
-		var full_tree : Array = group_get_full_hierarchy(i)
-		for j in full_tree:
-			#go through each group to find the group that contains the part i
-			if j.child_entities.has(i):
-				groups_of_previous_selected_parts.append(j)
-				child_parts_of_group.append(i)
 	
-	#go through each parent group of the selected parts to remove the reference
-	var n : int = 0
-	while n < groups_of_previous_selected_parts.size():
-		group_remove_child_entities(groups_of_previous_selected_parts[n], [child_parts_of_group[n]])
-		n = n + 1
-	
-	
-	
-	for j in previous_selected_groups:
+#1. mark all child entities within selected (root) groups for deletion and erase all references
+#practically, first rough pass to take care of selected groups
+	for group in previous_selected_groups:
+		var full_tree : Array = group_get_full_hierarchy(group)
 		
-		
-		
-		
-		return
-	
-	for k in previous_selected_parts:
-		
-		
-		return
-	
-	
-	
-	"""
-	var previous_selected_entities : Array = selected_entities.duplicate()
-	var affected_root_groups : Array = group_get_root_groups_of_selected_entities()
-	selection_clear()
-	
-	for i in previous_selected_entities:
-		if i is Group:
-			var hierarchy : Array = group_get_full_hierarchy(i)
-			group_get_all_child_parts(hierarchy).map(func(input): input.queue_free())
+		for i in full_tree:
+			for part in i.child_entities.filter(is_part):
+				if not entities_handled.has(part):
+					entities_handled.append(part)
+					parts_to_delete.append(part)
+			
+			#clearing all references of the tree this way should suffice
+			i.parent_group = null
 			group_clear_child_entities(i)
-			group_unregister(i)
-		else:
-			#first, check if this get_root_groups_of_selected_entities returned a non empty array
-			#if it returns a non empty array, it means some entities are contained in a group
-			#also find the group this entity is in
-			var root_group_of_entity : Group = root_group_child_parts_hashmap.get(i)
-			if not affected_root_groups.is_empty() and root_group_of_entity != null and not previous_selected_entities.has(root_group_of_entity):
-				var all_related_groups : Array = group_get_full_hierarchy(root_group_of_entity)
-				for related_group in all_related_groups:
-					if related_group.child_entities.has(i):
-						group_remove_child_entities(related_group, [i])
-						break
-			
-			i.queue_free()
-			
-			"""
+			entities_handled.append(i)
+			existing_groups.erase(i)
+	
+	
+#2. mark all remaining selected parts for deletion
+#practically, dereference all selected parts from their parent groups and mark for deletion 
+	#go through and dereference all parts
+	for part in previous_selected_parts:
+		#only the parts not handled yet
+		if entities_handled.has(part):
+			continue
+		
+		#if any part is within a group, dereference it first
+		var parent_group : Group = parent_group_child_entity_hashmap.get(part)
+		if parent_group != null:
+			group_remove_child_entities(parent_group, [part])
+		
+		entities_handled.append(part)
+		parts_to_delete.append(part)
+	
+#3. recursively dissolve groups and reparent their entities, from the bottom up
+	for r_group in affected_root_groups:
+		#skip if this group was already handled
+		#if entities_handled.has(r_group):
+		#	continue
+		
+		_group_reparent_dissolve(r_group)
+	
+	
+	#DEBUG
+	var j : int = 0
+	for group in entities_handled.filter(is_group):
+		print("group ", j, "\nrefcount: ", group.get_reference_count())
+		j = j + 1
+	
+	for part in parts_to_delete:
+		part.queue_free()
+
 
 
 static func selection_delete_undoable():
@@ -1062,6 +1107,7 @@ static func _internal_entities_add_entities(entities : Array):
 	#add all child entities of a group to internal array
 		if entity is Group:
 			var child_entities : Array = group_get_all_child_entities(entity)
+			
 			assert(child_entities.size() >= 2, "a selected group should have at least 2 child entities")
 			
 			selected_entities_internal.append_array(child_entities)
@@ -1112,7 +1158,7 @@ static func selection_group(undo_group_reference : Group = null):
 	var depth : int = 0
 	#if depth limit is reached in any of these, cancel
 	for group in selected_groups:
-		depth = max(group_get_hierarchy_depth(group), depth)
+		depth = max(group_get_hierarchy_depth_from_root(group), depth)
 	assert(depth <= group_depth_max)
 	if depth == group_depth_max:
 		EditorUI.set_l_msg("grouping failed: group depth limit (" + str(group_depth_max + 1) + ") reached.")
@@ -1163,7 +1209,7 @@ static func selection_group_undoable():
 	var depth : int = 0
 	#if depth limit is reached in any of these, cancel
 	for group in selected_groups:
-		depth = max(group_get_hierarchy_depth(group), depth)
+		depth = max(group_get_hierarchy_depth_from_root(group), depth)
 	assert(depth <= group_depth_max)
 	if depth == group_depth_max:
 		EditorUI.set_l_msg("grouping failed: group depth limit (" + str(group_depth_max + 1) + ") reached.")
@@ -1340,7 +1386,9 @@ static func group_remove_child_entities(group : Group, entities : Array):
 	#if primary entity was removed, attempt to set new primary entity
 	if primary_entity_removed:
 		group.primary_entity = SelectionManager.last_element(group.child_entities)
-	group_recalculate_bounding_box(group)
+	
+	if group.child_entities.size() != 0:
+		group_recalculate_bounding_box(group)
 	
 	SelectionManager.groups_changed = true
 
@@ -1400,6 +1448,7 @@ static func group_get_full_hierarchy(group : Group):
 
 #feed result of function above as parameter
 #this saves on a little bit of processing
+"TODO"#DEPRECATED
 static func group_get_all_child_parts(groups : Array):
 	var child_parts : Array = []
 	for child_group in groups:
@@ -1408,6 +1457,7 @@ static func group_get_all_child_parts(groups : Array):
 
 
 #return flat array
+"TODO"#DEPRECATED
 static func group_get_all_child_entities(group : Group):
 	var all_groups : Array = group_get_full_hierarchy(group)
 	var entities : Array = group_get_all_child_parts(all_groups)
@@ -1415,22 +1465,48 @@ static func group_get_all_child_entities(group : Group):
 	return entities
 
 
-static func group_get_hierarchy_depth(group : Group, depth : int = 0):
+#this one is specifically for getting the tree depth from a root group
+static func group_get_hierarchy_depth_from_root(group : Group, depth : int = 0):
 	var child_groups : Array = group.child_entities.filter(is_group)
 	if child_groups.is_empty():
 		return depth
 	
 	var depth_return : int = 0
 	for child_group in child_groups: 
-		depth_return = max(depth_return, group_get_hierarchy_depth(child_group, depth + 1))
+		depth_return = max(depth_return, group_get_hierarchy_depth_from_root(child_group, depth + 1))
 	return depth_return
+
+
+#this is for querying any group within a hierarchy
+static func group_get_individual_depth(group : Group, depth : int = 0):
+	if group.parent_group != null:
+		return group_get_individual_depth(group.parent_group, depth + 1)
+	else:
+		return depth
+
+
+#returns a 2d array of group levels. index 0 will always contain root.
+static func group_organize_hierarchy_by_depth(group : Group):
+	var hierarchy_levels : Array[Array] = []
+	assert(group.parent_group == null, "group_organize_hierarchy_by_depth must be called on a root group (must not have a parent)")
+	
+	for child_group in group_get_full_hierarchy(group):
+		var depth : int = group_get_individual_depth(child_group)
+		
+		#add more space if the array is too small
+		while hierarchy_levels.size() < depth + 1:
+			hierarchy_levels.append([])
+		
+		hierarchy_levels[depth].append(child_group)
+	
+	return hierarchy_levels
 
 
 #with in-group part selecting implemented, group bounding boxes must be refreshed
 #if there are parts in selected_entities which are in a group
 #it tells us the user used the in-group select because
+#otherwise only root groups and ungrouped parts show up in selected_entities
 static func group_get_root_groups_of_selected_entities():
-#only root groups and ungrouped parts show up in that array
 	var affected_groups : Array = []
 	var i : int = 0
 	while i < selected_entities.size():
@@ -1460,7 +1536,7 @@ static func group_display():
 				if selection_box_targets.has(child_group):
 					continue
 				var new : SelectionBox = selection_box_instance_on_target(child_group)
-				var depth : int = group_get_hierarchy_depth(child_group)
+				var depth : int = group_get_individual_depth(child_group)
 				new.material_regular_color(group_depth_colors[depth])
 				new.box_thickness = 0.014 - depth * 0.001
 				group_depth_assigned_groups.append(child_group)

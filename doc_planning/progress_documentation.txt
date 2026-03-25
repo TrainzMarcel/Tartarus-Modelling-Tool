@@ -160,4 +160,6 @@
 18.3.	added assert checking for correct number of arguments supplied to undo system (it silently failed before)
 20.3.	worked on designing better abstractions for finding the parent groups of child entities as well as "registering" and "unregistering" entities from the system.
 21.3.	completely reworked the abstraction of "registering" (now activating and deactivating) entities from the system when undo-able versions of deletion are needed, discovered and fixed bug/edge case when selecting parts within a group and deselecting them while their group is selected, they are taken out of the internal selection array and cease to be transformed with the selected group. finished implementing functionality but not undo of single-part in-group deletion. new abstraction causes group copy function to attempt to add child parts to scene tree twice. parent group bounds dont quite seem to update correctly. post_group_update just "guesses" which group bounds to update based on what parts are selected. if parts within the group are selected, it updates correctly. need to implement a proper dirty-marking update system instead of this.
+24.3.	designed final necessary algorithm for in-group part deletion and working on implementing it
+25.3.	implemented in-group part deletion, partly loop based, partly recursive
 TODO:	TODO cleanup
