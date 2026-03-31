@@ -374,83 +374,6 @@ static func part_spawn(selected_part_type : Part):
 	SelectionManager.selection_box_hover_on_target(Main.hovered_entity, Main.is_hovering_allowed)
 
 
-"TODO"#outdated cause unused
-#i dont think this will ever be needed anyway
-#static func part_delete(hovered_entity):
-#	var entity_was_selected : bool = SelectionManager.selected_entities_internal.has(hovered_entity)
-#	#if part was selected, add selecting to the undo actions
-#	if entity_was_selected:
-#		SelectionManager.selection_remove_entities([hovered_entity])
-#	hovered_entity.queue_free()
-
-
-static func part_delete_undoable(hovered_entity):
-	var undo_data : UndoManager.UndoData = UndoManager.UndoData.new()
-	var entity_was_selected : bool = SelectionManager.selected_entities_internal.has(hovered_entity)
-	undo_data.explicit_object_references = [hovered_entity]
-	
-	#undo
-	undo_data.append_undo_action_with_args(SelectionManager.entities_activate, [[hovered_entity]])
-	#if part was selected, add selecting to the undo actions
-	if entity_was_selected:
-		undo_data.append_undo_action_with_args(SelectionManager.selection_add_entities, [hovered_entity])
-	
-	undo_data = _part_delete_undoable_empty_group(undo_data, hovered_entity)
-	
-	#redo
-	if entity_was_selected:
-		undo_data.append_redo_action_with_args(SelectionManager.selection_remove_entities, [hovered_entity])
-	undo_data.append_redo_action_with_args(SelectionManager.entities_deactivate, [[hovered_entity]])
-	
-	#commit
-	if entity_was_selected:
-		SelectionManager.selection_remove_entities([hovered_entity])
-	SelectionManager.entities_deactivate([hovered_entity])
-	
-	
-	#"TODO"investigate why this is needed and why setting selection_changed is not cleaning up the group display selectionboxes
-	#only after a left mouse click does it clean up the remaining selectionboxes
-	#new comment: now that i have correctly implemented the abstractions im not sure if this is necessary
-	SelectionManager.group_display()
-	
-	UndoManager.register_undo_data(undo_data)
-
-
-static func _part_delete_undoable_empty_group(undo_data : UndoManager.UndoData, hovered_entity):
-	var parent = SelectionManager.parent_group_child_entity_hashmap.get(hovered_entity)
-	var grandparent
-	
-	
-	#make sure that if this entity has a parent group, that
-	#this group does not go below 2 child entities
-	if parent == null:
-		return undo_data
-	else:
-		grandparent = parent.parent_group
-		SelectionManager.groups_changed = true
-	
-	
-	
-	#remove the hovered entity from the parent
-	SelectionManager.group_remove_child_entities(parent, [hovered_entity])
-	
-	#if the parent has gone below 2 child entities, take the following steps:
-	if parent.child_entities.size() < 2:
-		#1. move the one child to the grandparent of the hovered_entity if there is one
-		if grandparent != null:
-			var remaining : Array = parent.child_entities.duplicate()
-			SelectionManager.group_add_child_entities(grandparent, remaining)
-			SelectionManager.group_remove_child_entities(grandparent, [parent])
-		
-	#2. deactivate the original parent
-		SelectionManager.group_clear_child_entities(parent)
-		SelectionManager.entities_deactivate([parent])
-	
-	
-	return undo_data
-
-
-
 #called when user clicks on a part and drags
 #at this point ray_result shouldnt be empty
 static func drag_prepare(event : InputEvent):
@@ -465,7 +388,7 @@ static func drag_prepare(event : InputEvent):
 	
 	undo_data_drag = UndoManager.UndoData.new()
 	undo_data_drag.append_undo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
-	undo_data_drag.append_undo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis])
+	undo_data_drag.append_undo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis, Vector3()])
 
 
 static func drag_handle(event : InputEvent):
@@ -502,7 +425,7 @@ static func drag_terminate():
 	if drag_confirmed:
 			var selection : Array = SelectionManager.selected_entities_internal.duplicate()
 			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
-			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis])
+			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis, Vector3()])
 			UndoManager.register_undo_data(undo_data_drag)
 	undo_data_drag = null
 	Main.dragged_part = null
@@ -532,7 +455,7 @@ static func transform_handle_prepare(event : InputEvent):
 	if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_move:
 		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_rotate:
-		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis])
+		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis, Vector3()])
 		undo_data_transform.append_undo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale:
 		#get transforms with basis vectors scaled by part_scale
@@ -695,7 +618,7 @@ static func transform_handle_terminate():
 		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_rotate:
 		selection_transformed = undo_data_transform.undo_args.front().front() != SelectionManager.selected_parts_abb.transform.basis
-		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis])
+		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis, Vector3()])
 		undo_data_transform.append_redo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
 	elif ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_scale:
 		selection_transformed = undo_data_transform.undo_args.back().back() != SelectionManager.selected_parts_abb.extents

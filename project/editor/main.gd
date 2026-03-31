@@ -105,6 +105,7 @@ func _ready():
 	OS.low_processor_usage_mode = true
 	DisplayServer.set_icon(preload("res://editor/data_ui/assets/program_icon_v1E2_CHOSEN.png").get_image())
 	DisplayServer.window_set_title("Tartarus Modelling Tool " + version_number)
+	
 	#get exports from instance variables and assign to static variable
 	transform_handle_root = e_transform_handle_root
 	cam = e_cam
@@ -135,7 +136,7 @@ func _ready():
 	version_number
 	)
 	
-	SelectionManager.initialize(e_hover_selection_box, get_tree().process_frame)
+	SelectionManager.initialize(e_hover_selection_box)
 	
 	WorkspaceManager.initialize(
 		e_workspace,
@@ -330,7 +331,7 @@ func _input(event : InputEvent):
 					
 				#delete tool--------------------------------------------------
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_delete:
-						WorkspaceManager.part_delete_undoable(hovered_entity)
+						SelectionManager.entities_delete([hovered_entity])
 						#hide selection box
 						hover_selection_box.visible = false
 						
