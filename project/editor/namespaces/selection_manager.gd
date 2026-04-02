@@ -270,7 +270,7 @@ static func handle_input(
 		elif event.keycode == KEY_DELETE:
 			if is_selecting_allowed:
 				EditorUI.set_l_msg("deleted " + str(SelectionManager.selected_entities.filter(is_part).size()) + " parts")
-				SelectionManager.selection_delete()
+				SelectionManager.selection_delete_undoable()
 				#immediately update hovered_part in case theres another part behind the deleted one(s)
 				hovered_part = Main.part_hover_check()
 				SelectionManager.selection_box_hover_on_target(hovered_entity, is_hovering_allowed)
@@ -664,16 +664,17 @@ static func selection_delete():
 static func selection_delete_undoable():
 	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
 	var selection : Array = selected_entities.duplicate()
-	undo.append_undo_action_with_args(entities_activate, [selection])
-	undo.append_undo_action_with_args(selection_clear, [])
-	undo.append_undo_action_with_args(selection_add_entities, [selection])
-	undo.explicit_object_references = selection
-	undo.append_redo_action_with_args(selection_clear, [])
-	undo.append_redo_action_with_args(entities_deactivate, [selection])
-	UndoManager.register_undo_data(undo)
 	
 	selection_clear()
-	entities_deactivate(selection) 
+	
+	undo.append_redo_action_with_args(selection_clear, [])
+	undo.append_undo_action_with_args(selection_clear, [])
+	entities_delete_undoable(selection, undo)
+	
+	undo.append_undo_action_with_args(selection_add_entities, [selection])
+	undo.explicit_object_references.append_array(selection)
+	
+	UndoManager.register_undo_data(undo)
 
 
 static func selection_copy():
@@ -752,9 +753,7 @@ static func selection_duplicate_undoable():
 			copied_entities.append(copy)
 		else:
 			var copy : Group = i.copy()
-			root_groups.append(copy)
-			for part in group_get_all_child_parts(group_get_full_hierarchy(copy)):
-				root_group_child_parts_hashmap[part] = copy
+			groups_changed = true
 			copied_entities.append(copy)
 	
 	
@@ -762,6 +761,7 @@ static func selection_duplicate_undoable():
 	undo.append_undo_action_with_args(entities_deactivate, [copied_entities])
 	undo.explicit_object_references = copied_entities
 	undo.append_redo_action_with_args(entities_activate, [copied_entities])
+	assert(selected_entities_internal.size() == offset_abb_to_internal_entities.size())
 
 
 #position only
@@ -1257,66 +1257,44 @@ static func entities_deactivate(entities : Array):
 	
 	#deactivate entities
 	for group in groups_to_deactivate:
-		existing_groups.erase(group)
+		entities_deactivate_individual(group)
 	
 	groups_changed = not groups_to_deactivate.is_empty()
 	
 	for part in parts_to_deactivate:
-		WorkspaceManager.workspace.remove_child(part)
+		entities_deactivate_individual(part)
 
+#bare minimum, no entity hierarchy tree traversal
+static func entities_deactivate_individual(entity):
+	if entity is Part:
+		WorkspaceManager.workspace.remove_child(entity)
+	else:
+		existing_groups.erase(entity)
+		groups_changed = true
+
+
+"TODO"#somewhat outdated comment
 #1. capture and deduplicate every affected hierarchy (even counting entities with no parent or children)
 #2. convert them all into 2d array representations of their hierarchy structure
 #3. let the deletion (deactivation) operation happen
 #4. go through the same array that was created in step 1 and record their hierarchies in 2d arrays again
 #5. when undo and redo are pressed, a special function toggles the entities which were deactivated and
 #restructures the groups with the same objects as needed
-"TODO"#reimplement for undo
 static func entities_delete_undoable(entities : Array, undo_data : UndoManager.UndoData):
-	@warning_ignore("confusable_local_declaration")
-	var _entities_no_parent_deactivate : Callable = func (entities_no_parent : Array):
-		for entity in entities_no_parent:
-			if entity is Group:
-				var full_tree : Array = group_get_full_hierarchy(entity)
-				for i in full_tree:
-					#handle child parts
-					for child_part in i.child_entities.filter(is_part):
-						if Main.safety_check(child_part):
-							child_part.queue_free()
-					
-					#clearing all references of the tree this way should suffice
-					i.parent_group = null
-					group_clear_child_entities(i)
-					existing_groups.erase(i)
-			else:
-				if Main.safety_check(entity):
-					entity.queue_free()
-	
-	
-	@warning_ignore("confusable_local_declaration")
-	var _entities_with_parent_deactivate : Callable = func (entities_with_parent : Array):
-		#this will invalidate any group entities that have too many of their child entities deleted
-		var affected_parent_entities : Array = []
-		var i : int = 0
-		while i < entities_with_parent.size():
-			if entities_with_parent[i] is Part:
-				var parent = parent_group_child_entity_hashmap.get(entities_with_parent[i])
-				group_remove_child_entities(parent, [entities_with_parent[i]])
-				affected_parent_entities.append(parent)
-				entities_with_parent[i].queue_free()
-			i = i + 1
-	
-	#recursively dissolve groups and reparent their entities, from the bottom up
-		for group in affected_parent_entities:
-			_group_reparent_dissolve(group)
-	
-	
 	#simple case: delete entity along with any children
 	var entities_no_parent : Array = []
 	#complex case: delete entity with children and dissolve the parent if it is invalid.
 	#if the parent had one child left and it has a grandparent, reparent the child to its grandparent.
 	var entities_with_parent : Array = []
-	#direct reference for easy access
 	
+	#undo data
+	#combination of both above arrays with only the root entities deduplicated and stored
+	var entities_all_root : Array = group_get_root_groups_of_entities(entities)
+	#remember which entities to activate/deactivate
+	var entities_affected : Array = []
+	
+	assert(entities_all_root.filter(is_group).all(func(input): return input.parent_group == null))
+	assert(entities_all_root.filter(is_part).all(func(input): return root_group_child_parts_hashmap.get(input) == null))
 	
 #populate arrays
 	for entity in entities:
@@ -1329,28 +1307,83 @@ static func entities_delete_undoable(entities : Array, undo_data : UndoManager.U
 	#i have not considered or thought through what will happen if non-root groups are selected
 	assert(entities_with_parent.filter(is_group).size() == 0, "all provided groups must be root groups. it shouldnt be possible to select any other group within a group tree. undefined behavior.")
 	
+#setup is done, now comes the main part of this function
 #1 record the state of all entities with their complete hierarchies before
+	var affected_hierarchies_before : Array = []
+	for root in entities_all_root:
+		affected_hierarchies_before.append(group_convert_hierarchy_to_dictionary(root))
 	
-		
-	var entities_with_parent_before : Array = entities_with_parent.duplicate()
 	
 #2 delete every entity with no parent, along with any child entities
-	_entities_no_parent_deactivate.call(entities_no_parent)
+#all deactivated entities get added to entities_affected
+	_entities_no_parent_deactivate(entities_no_parent, entities_affected)
 	
-	#make sure none of the entities were deleted by being within a deleted root group
-	entities_with_parent = entities_with_parent.filter(func(input): return Main.safety_check(input))
+	#make sure none of the entities were deleted by being within the deactivated entities array
+	entities_with_parent = entities_with_parent.filter(func(input): 
+		return not entities_affected.has(input)
+	)
 	
 #3 mark remaining parts with parents and dereference them from their parents
-	_entities_with_parent_deactivate.call(entities_with_parent)
+#all deactivated entities get added to entities_affected
+	_entities_with_parent_deactivate(entities_with_parent, entities_affected)
 	
 #4 record the state after
-	var entities_no_parent_after : Array = entities_no_parent.duplicate()
-	var entities_with_parent_after : Array = entities_with_parent.duplicate()
-	
+	var affected_hierarchies_after : Array = []
+	for root in entities_all_root:
+		affected_hierarchies_after.append(group_convert_hierarchy_to_dictionary(root))
 #5 set undo
+	
+	for hierarchy in affected_hierarchies_before:
+		undo_data.explicit_object_references.append_array(hierarchy.keys())
+		var deduplicate : Array = []
+		for parent in hierarchy.values():
+			if not deduplicate.has(parent):
+				deduplicate.append(parent)
+		
+		undo_data.explicit_object_references.append_array(deduplicate)
+	
+	
+	for hierarchy in affected_hierarchies_after:
+		undo_data.append_redo_action_with_args(group_convert_dictionary_to_hierarchy, [hierarchy])
+	undo_data.append_redo_action_with_args(entities_deactivate, [entities_affected])
+	
+	for hierarchy in affected_hierarchies_before:
+		undo_data.append_undo_action_with_args(group_convert_dictionary_to_hierarchy, [hierarchy])
+	undo_data.append_undo_action_with_args(entities_activate, [entities_affected])
 	
 	
 	return undo_data
+
+
+static func _entities_no_parent_deactivate(entities_no_parent : Array, entities_affected : Array):
+		entities_deactivate(entities_no_parent)
+		
+		for entity in entities_no_parent:
+			if entity is Group:
+				for group in group_get_full_hierarchy(entity):
+					entities_affected.append(group)
+					entities_affected.append_array(group.child_entities.filter(is_part))
+			else:
+				entities_affected.append(entity)
+
+
+static func _entities_with_parent_deactivate(entities_with_parent : Array, entities_affected : Array):
+	#this will invalidate any group entities that have too many of their child entities deleted
+	var affected_parent_entities : Array = []
+	var i : int = 0
+	while i < entities_with_parent.size():
+		if entities_with_parent[i] is Part:
+			var parent = parent_group_child_entity_hashmap.get(entities_with_parent[i])
+			group_remove_child_entities(parent, [entities_with_parent[i]])
+			affected_parent_entities.append(parent)
+			entities_affected.append(parent)
+			entities_affected.append(entities_with_parent[i])
+			entities_deactivate_individual(entities_with_parent[i])
+		i = i + 1
+	
+#recursively dissolve groups and reparent their entities, from the bottom up
+	for group in affected_parent_entities:
+		entities_affected.append_array(_group_reparent_dissolve(group))
 
 
 static func entities_delete(entities : Array):
@@ -1423,8 +1456,9 @@ static func entities_delete(entities : Array):
 
 #recursive, call on root
 static func _group_reparent_dissolve(group : Group):
+	var entities_affected : Array = []
 	for child_group in group.child_entities.filter(is_group):
-		_group_reparent_dissolve(child_group)
+		entities_affected.append_array(_group_reparent_dissolve(child_group))
 	
 	if group == null:
 		return
@@ -1432,19 +1466,23 @@ static func _group_reparent_dissolve(group : Group):
 	var grandparent = group.parent_group
 	
 	if group.child_entities.size() == 1:
-		existing_groups.erase(group)
+		entities_deactivate_individual(group)
+		entities_affected.append(group)
 		var child : Array = group.child_entities.duplicate()
 		group_clear_child_entities(group)
 		if grandparent != null:
 			group_add_child_entities(grandparent, child)
 			group_remove_child_entities(grandparent, [group])
-		return
+		return entities_affected
 	
 	if group.child_entities.is_empty():
-		existing_groups.erase(group)
+		entities_deactivate_individual(group)
+		entities_affected.append(group)
 		if grandparent != null:
 			group_remove_child_entities(grandparent, [group])
-		return
+		return entities_affected
+	
+	return entities_affected
 
 
 static func group_add_child_entities(group : Group, entities : Array):
@@ -1567,6 +1605,7 @@ static func group_get_individual_depth(group : Group, depth : int = 0):
 		return depth
 
 
+#disused function
 #returns a 2d array of group levels. index 0 will always contain root.
 static func group_convert_hierarchy_to_array(group : Group):
 	var hierarchy_levels : Array[Array] = []
@@ -1584,16 +1623,39 @@ static func group_convert_hierarchy_to_array(group : Group):
 	return hierarchy_levels
 
 
-static func group_convert_array_to_hierarchy(hierarchy_levels : Array):
+static func group_convert_hierarchy_to_dictionary(group : Group):
+	var full_hierarchy : Array = group_get_full_hierarchy(group)
+	var result : Dictionary = {}
+	for child_group in full_hierarchy:
+		#assign child entities as keys to their parent group
+		for child_entity in child_group.child_entities:
+			result[child_entity] = child_group
+		
+		#if the groups child entities are empty, assign empty value
+		if child_group.child_entities.is_empty():
+			result[null] = child_group
 	
-	
-	
-	
-	
-	
-	return
+	return result
 
 
+static func group_convert_dictionary_to_hierarchy(dictionary : Dictionary):
+	#first clear remaining hierarchy
+	var cleared_groups : Array = []
+	for group in dictionary.values():
+		if not cleared_groups.has(group):
+			cleared_groups.append(group)
+			group_clear_child_entities(group)
+	
+	#secondly assign every child entity key to the value parent
+	for child_entity in dictionary.keys():
+		if child_entity == null:
+			continue
+		
+		var parent : Group = dictionary[child_entity]
+		group_add_child_entities(parent, [child_entity])
+
+
+#TODO probably outdated comment, need to refine the api anyway
 #with in-group part selecting implemented, group bounding boxes must be refreshed
 #if there are parts in selected_entities which are in a group
 #it tells us the user used the in-group select because
@@ -1603,11 +1665,20 @@ static func group_get_root_groups_of_entities(entities : Array):
 	var i : int = 0
 	#loop through all entities
 	while i < entities.size():
-		#attempt to get root group of entity
-		var group_of_selected_part = root_group_child_parts_hashmap.get(entities[i])
-		#only if its not null and the group hasnt been added yet, add it to the affected groups array
-		if group_of_selected_part != null and not affected_groups.has(group_of_selected_part):
-			affected_groups.append(group_of_selected_part)
+		if entities[i] is Group:
+			#climb to root
+			var i_group : Group = entities[i]
+			while i_group.parent_group != null:
+				i_group = i_group.parent_group
+			
+			if not affected_groups.has(i_group):
+				affected_groups.append(i_group)
+		else:
+			#attempt to get root group of entity
+			var group_of_selected_part = root_group_child_parts_hashmap.get(entities[i])
+			#only if its not null and the group hasnt been added yet, add it to the affected groups array
+			if group_of_selected_part != null and not affected_groups.has(group_of_selected_part):
+				affected_groups.append(group_of_selected_part)
 		i = i + 1
 	return affected_groups
 

@@ -331,7 +331,16 @@ func _input(event : InputEvent):
 					
 				#delete tool--------------------------------------------------
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_delete:
-						SelectionManager.entities_delete([hovered_entity])
+						var undo_data : UndoManager.UndoData = UndoManager.UndoData.new()
+						
+						#undo_data.append_undo_action_with_args()
+						#if SelectionManager.selected_entities.has(hovered_entity):
+							
+						
+						
+						SelectionManager.entities_delete_undoable([hovered_entity], undo_data)
+						
+						
 						#hide selection box
 						hover_selection_box.visible = false
 						

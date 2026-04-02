@@ -1,4 +1,4 @@
-11.7.	started work on 3d level editor software
+11.7. 2024	started work on 3d level editor software
 12.7.	started to implement spawning, dragging and visual selection of cuboids
 17.7.	finished implementing selection box
 24.7.	implementing dragging
@@ -17,7 +17,7 @@
 5.12.	updated readme
 20.12.	added shader to render handles on top, started work on transform_handle.gd, added collision layers to raycast functions
 27.12.	continued to roughly work out how to make transform handles work
-8.1.	figuring out projection of mouse movement onto transform handle axis
+8.1. 2025	figuring out projection of mouse movement onto transform handle axis
 20.1.	squashed bug when user tries to drag already selected part by holding shift, reorganized some code
 22.1.	replaced aabb with my own abb class to avoid having to rotate my data to fit the aabb and temporarily added a mesh representation
 23.1.	worked on studying better architecture for input() in the main class
@@ -129,7 +129,7 @@
 28.12.	starting to work on moving to sqlite3 saves instead of csv. this will help with recursive selection grouping.
 29.12.	planned out and defined database tables, initializes correctly. i was not able to find any references about the foreign key syntax for the godot sqlite plugin so im leaving that out, abstracted individual property serializing for material and shader into own functions.
 30.12.	implemented all sql serializing functions, added "save selected parts only" option to saving, finished sql save file functionality.
-4.1.	continue working on sql saving and loading
+4.1. 2026	continue working on sql saving and loading
 5.1.	figured out how to cleanly use correct loader for save version and so currently in the process of splitting up data_zip function into an open_zip with ziploader return, one or more functions which use the ziploader and a terminate function), fix clicking on scrollbar in dropdown closing dropdown, fix weird looking cursor in select tool icon in toolbar ui, made selecting a part type spawn it immediately afterward
 6.1.	finished all zip functions
 7.1.	finalized sql loading with versioning to allow legacy csv loading
@@ -164,4 +164,5 @@
 25.3.	finished implementing in-group part deletion without undo.
 30.3.	working on properly abstracting so that the delete tool shares code with selection_delete. added clause to _internal_entities_add_entities function to stop warning when adding part from already selected group. fixed small bug of selectionbox not showing up when grouping a selection. iterated on deletion algorithm for the 4th time, now broken down into 1. handling entities with no parents and 2. handling entities with a parent. undo still not implemented.
 31.3.	planned ahead for architecture rework in untangling the namespaces and more explicitly handling state after v0.1-indev-3 is released. started to work on undo version of the deletion function, still need a way to store the group hierarchy tree structure in the undo. planned to rework the group api as it has become convoluted and badly named.
+1.4.	rewrote deletion helpers to deactivate provided entities and to return all affected entities, including child entities. implemented 2 functions to translate between group hierarchies and dictionaries (providing a simple way to store hierarchies in undo frames. finished implementing in-group-deletion with undo. bugs to note: paste and duplicate have not been adjusted to work with the new code, deleting a root group on its own causes an assert to trigger and selection_delete sometimes deletes or deactivates the wrong entities (probably a mistake with the entities_affected array)
 TODO:	TODO cleanup
