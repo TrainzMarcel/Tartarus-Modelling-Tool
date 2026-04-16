@@ -12,15 +12,21 @@ class_name SelectionBox
 
 @export var box_scale : Vector3 = Vector3(0.4, 0.2, 0.8):
 	set(val):
+		if box_scale == val:
+			return
 		box_scale = val
 		box_update()
 
 
 @export var box_thickness : float = 0.015:
 	set(val):
+		if box_thickness == val:
+			return
 		box_thickness = val
 		box_update()
 
+func _ready():
+	box_update()
 
 func material_highlighter():
 	material_override = preload("res://editor/classes/selection_box/highlight_mat.res")

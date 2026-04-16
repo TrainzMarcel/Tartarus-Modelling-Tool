@@ -3,17 +3,17 @@ TOP PRIORITY
 implement subassemblies and/or grouping of parts, holding c (formerly alt) allows for single part selection
 													^ only deletion left to implement, which has some challenges
 
-automatic recalculation and pooling subsystem that uses wrapper objects and:
-	marks objects as dirty which it then automatically recalculates at the end of the frame
-	doesnt delete objects and doesnt create objects if it has some left in its pool.
 
 implement import/export (.obj, .gltf, .tres/.res)
 get release notes and use them to update the manual accordingly
-rename assetmanager, undomanager, selectionmanager, toolmanager to AssetSubsystem, UndoSubsystem, SelectionSubsystem, ToolSubsystem
 add cool sounds for saving and loading
 release v0.1-indev-3 with release notes
 
 
+automatic recalculation and pooling subsystem that uses wrapper objects and:
+	marks objects as dirty which it then automatically recalculates at the end of the frame
+	doesnt delete objects and doesnt create objects if it has some left in its pool.
+rename assetmanager, undomanager, selectionmanager, toolmanager to AssetSubsystem, UndoSubsystem, SelectionSubsystem, ToolSubsystem
 add underscore to existing groups and existing parts arrays
 add existing parts array at some point
 fix messed up leaky abstractions everywhere: attempt to untangle main, attempt to untangle the managers and only have them communicate through main as well as possible
@@ -70,6 +70,9 @@ export to godot project -> make sure all required materials are there -> find al
 
 
 v0.2
+debug dropdown (next to the file and edit ones) with toggleable 3d labels for all entities that exist in 3d space, extents/scale visualization
+toggleable grid shader for context-important surfaces
+
 implement csg (first with godot csg, then my own) https://www.youtube.com/watch?v=Iqmg4gblreo&pp=ygUlY29uc3RydWN0aXZlIHNvbGlkIGdlb21ldHJ5IGdhbWUgdGFsaw%3D%3D
 procedural shapes: cylinders and torus with tweakable numbers of vertices
 implement beveling edge tool which can add a bevel to an edge with a mouse click and remove it with a bevel remove tool. bevel options will be in a dropdown or ui panel. probably becoming visible on top of the snapping options panel.

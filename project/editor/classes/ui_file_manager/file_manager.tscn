@@ -272,7 +272,6 @@ size_flags_vertical = 3
 
 [node name="PanelContainerModeData" type="PanelContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection"]
 unique_name_in_owner = true
-visible = false
 custom_minimum_size = Vector2(248, 0)
 layout_mode = 2
 size_flags_horizontal = 8
@@ -343,6 +342,29 @@ theme_override_styles/focus = ExtResource("6_itj42")
 toggle_mode = true
 text = "Save selected
 parts only"
+autowrap_mode = 2
+script = ExtResource("17_jw4td")
+
+[node name="VBoxContainerExportModel" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData"]
+visible = false
+layout_mode = 2
+script = ExtResource("16_xki3j")
+mode_name = &"export_model"
+mode_title = "Export a Model"
+
+[node name="ButtonDoXYZ" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/VBoxContainerExportModel"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+tooltip_text = "should used assets be embedded in the save file?
+this is not necessary if you are not using any custom assets."
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+text = "TODO think of export options"
 autowrap_mode = 2
 script = ExtResource("17_jw4td")
 

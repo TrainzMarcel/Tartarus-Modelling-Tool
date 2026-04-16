@@ -387,8 +387,13 @@ static func drag_prepare(event : InputEvent):
 	initial_drag_event = event
 	
 	undo_data_drag = UndoManager.UndoData.new()
-	undo_data_drag.append_undo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
-	undo_data_drag.append_undo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis, Vector3()])
+	undo_data_drag.append_undo_action_with_args(SelectionManager.selection_clear, [])
+	#get current selection
+	var current_selection : Array = SelectionManager.selected_entities.duplicate()
+	undo_data_drag.append_undo_action_with_args(SelectionManager.selection_add_entities, [SelectionManager.selected_entities.duplicate()])
+	undo_data_drag.append_undo_action_with_args(SelectionManager.post_selection_update, [true])
+	undo_data_drag.append_undo_action_with_args(SelectionManager.selection_move, [Vector3(SelectionManager.selected_parts_abb.transform.origin)])
+	undo_data_drag.append_undo_action_with_args(SelectionManager.selection_rotate, [Basis(SelectionManager.selected_parts_abb.transform.basis), Vector3()])
 
 
 static func drag_handle(event : InputEvent):
@@ -423,9 +428,12 @@ static func drag_handle(event : InputEvent):
 
 static func drag_terminate():
 	if drag_confirmed:
-			var selection : Array = SelectionManager.selected_entities_internal.duplicate()
-			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_move, [SelectionManager.selected_parts_abb.transform.origin])
-			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_rotate, [SelectionManager.selected_parts_abb.transform.basis, Vector3()])
+			assert(SelectionManager.selected_entities.size() == 1)
+			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_clear, [])
+			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_add_entities, [SelectionManager.selected_entities.duplicate()])
+			undo_data_drag.append_redo_action_with_args(SelectionManager.post_selection_update, [true])
+			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_move, [Vector3(SelectionManager.selected_parts_abb.transform.origin)])
+			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_rotate, [Basis(SelectionManager.selected_parts_abb.transform.basis), Vector3()])
 			UndoManager.register_undo_data(undo_data_drag)
 	undo_data_drag = null
 	Main.dragged_part = null

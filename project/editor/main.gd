@@ -373,22 +373,34 @@ func _input(event : InputEvent):
 	
 	#camera controls
 	cam.cam_input(event, second_cam, SelectionManager.selected_entities, SelectionManager.selected_parts_abb, EditorUI.l_camera_speed)
+	
+	#end of frame updates
+	#input frame comes before process frame which meant
+	#the transform handles were not being updated exactly correctly without this line
+	SelectionManager.post_group_update()
+	SelectionManager.post_selection_update()
+	SelectionManager.post_movement_update()
 
 
 func _process(delta : float):
 	if ui_menu_block_check(EditorUI.ui_menu) or not is_input_active:
 		return
 	cam.cam_process(delta, second_cam, transform_handle_root, transform_handle_scale, ToolManager.selected_tool_handle_array, SelectionManager.selected_parts_abb, last_mouse_event)
+	
+	#end of frame updates
+	SelectionManager.post_group_update()
+	SelectionManager.post_selection_update()
+	SelectionManager.post_movement_update()
 
 
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_APPLICATION_FOCUS_IN:
+func _notification(notification_type: int) -> void:
+	if notification_type == NOTIFICATION_APPLICATION_FOCUS_IN:
 		Engine.max_fps = 0 #Zero means uncapped
 		get_tree().paused = false
-	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+	if notification_type == NOTIFICATION_APPLICATION_FOCUS_OUT:
 		Engine.max_fps = 15
 		get_tree().paused = true
-	if what == NOTIFICATION_CRASH:
+	if notification_type == NOTIFICATION_CRASH:
 		#need to disable asset file embedding for saving.
 		WorkspaceManager.save_model(FilePathRegistry.data_folder_autosaves, FilePathRegistry.data_crash_save, false, false)
 

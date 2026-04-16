@@ -159,6 +159,12 @@ func initialize():
 	part_mesh_node.owner = get_tree().edited_scene_root
 
 
+#simple check for lazy initialization
+#this will be reworked after indev-3 is released
+func is_initialized():
+	return part_mesh_node.get_parent() != null
+
+
 #"TODO"
 #var wedge_collider_points : PackedVector3Array = [
 #	Vector3(-0.5, -0.5, -0.5),

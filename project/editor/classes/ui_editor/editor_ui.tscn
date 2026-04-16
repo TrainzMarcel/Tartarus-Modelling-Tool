@@ -238,7 +238,6 @@ item_3/id = 3
 item_3/disabled = true
 item_4/text = "Export Model"
 item_4/id = 4
-item_4/disabled = true
 item_5/text = "Open Autosave Folder"
 item_5/id = 5
 
