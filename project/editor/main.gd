@@ -132,7 +132,6 @@ func _ready():
 	MainUIEvents.on_local_transform_active_set,
 	MainUIEvents.on_snapping_active_set,
 	MainUIEvents.on_top_bar_id_pressed,
-	MainUIEvents.on_file_manager_accept_pressed,
 	version_number
 	)
 	
@@ -256,7 +255,7 @@ func _input(event : InputEvent):
 		)
 	
 #prepare and terminate drag and transform operations----------------------------
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and is_hovering_allowed:
 	#lmb down
 		if event.pressed:
 			#part detected

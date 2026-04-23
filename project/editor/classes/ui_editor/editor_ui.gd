@@ -104,7 +104,6 @@ func initialize(
 	on_local_transform_active_set : Callable,
 	on_snapping_active_set : Callable,
 	on_top_bar_id_pressed : Callable,
-	on_file_manager_accept_pressed : Callable,
 	version_number : String
 	):
 	
@@ -243,8 +242,6 @@ func initialize(
 	pm_edit.id_pressed.connect(on_top_bar_id_pressed.bind(pm_edit))
 	pm_assets.id_pressed.connect(on_top_bar_id_pressed.bind(pm_assets))
 	pm_help.id_pressed.connect(on_top_bar_id_pressed.bind(pm_help))
-	
-	fm_file.accept_button_pressed.connect(on_file_manager_accept_pressed)
 	
 	#set version number bottom right
 	%LabelVersion.text = "      " + version_number + "      "

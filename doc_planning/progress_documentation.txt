@@ -169,5 +169,6 @@
 9.4.	fixed bug with activate and deactivate functions (used outer loop variable where inner loop variable was supposed to be), duplicate and paste functions also fixed
 10.4.	fixed bug where undo was not capturing newly created root groups
 14.4.	fixed bug with undoing in-group dragging not working correctly: selected entities abb was not being recalculated in time for the selection_move() call
-16.4.	changed group.copy() to not initialize or activate any copied entities, stopped group_display from freeing and recalculating all selectionboxes showing the existing groups, stopped updating all group bounds when entities without parents are moved or rotated, started work on mesh exporting
+16.4.	changed group.copy() to not initialize or activate any copied entities, stopped group_display from freeing and recalculating all selectionboxes showing the existing groups, stopped updating all group bounds when entities without parents are moved or rotated, started work on mesh exporting, fixed assert triggering when a drag is started over ui and ended over the workspace
+23.4.	created ui for export options in filemanager, untangled mess of signals and function calls when saving a model, made file modes able to have multiple identifiers and window titles, changed and unified references to file manager mode to be called operation instead
 TODO:	TODO cleanup

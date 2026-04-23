@@ -99,6 +99,8 @@ static func initialize(
 		on_part_type_selected : Callable
 	):
 	
+	EditorUI.fm_file.accept_button_pressed.connect(dispatch_filemanager_operation)
+	
 	WorkspaceManager.workspace = workspace
 	
 	#set paths
@@ -427,7 +429,7 @@ static func drag_handle(event : InputEvent):
 
 
 static func drag_terminate():
-	if drag_confirmed:
+	if drag_confirmed and Main.safety_check(undo_data_drag):
 			assert(SelectionManager.selected_entities.size() == 1)
 			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_clear, [])
 			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_add_entities, [SelectionManager.selected_entities.duplicate()])
@@ -665,29 +667,46 @@ static func validate_filename(filename : String):
 
 
 static func request_save():
-	file_operation = FileOperation.save_model
 	if validate_filepath(last_save_location) and validate_filename(last_save_name):
-		confirm_save_load(last_save_location, last_save_name)
+		confirm_save_load(last_save_location, last_save_name, EditorUI.fm_file.get_current_operation_name())
 	else:
 		EditorUI.fm_file.popup("save_model")
 
-
+#wrappers to reduce the danger of magic strings when this is being called from outside
 static func request_save_as():
-	file_operation = FileOperation.save_model_as
-	EditorUI.fm_file.popup("save_model")
-
+	EditorUI.fm_file.popup("save_as")
 
 static func request_load():
-	file_operation = FileOperation.load_model
 	EditorUI.fm_file.popup("load_model")
 
+static func request_export():
+	EditorUI.fm_file.popup("export_model")
 
-static func confirm_save_load(filepath : String, name : String):
+static func request_import():
+	EditorUI.fm_file.popup("import_model")
+
+
+#called when b_accept_pressed is emitted by the filemanager
+static func dispatch_filemanager_operation(current_dir : String, file_name : String, operation_name : String):
+	if operation_name == "save_model" or operation_name == "save_as" or operation_name == "load_model":
+		confirm_save_load(current_dir, file_name, operation_name)
+	elif operation_name == "import_model":
+		pass
+		#import_model()
+	elif operation_name == "export_model":
+		export_model()
+	
+	#refresh to show the new file
+	EditorUI.fm_file.refresh_file_manager()
+
+
+"TODO"#refactor
+static func confirm_save_load(filepath : String, name : String, operation : String):
 	EditorUI.c_loading_message.visible = true
 	#one await wasnt enough for the loading message to show up
 	await EditorUI.c_loading_message.get_tree().process_frame
 	await EditorUI.c_loading_message.get_tree().process_frame
-	if file_operation == FileOperation.save_model or file_operation == FileOperation.save_model_as:
+	if operation == "save_model" or operation == "save_as":
 		EditorUI.set_l_msg("saving...")
 		var options : Control = EditorUI.fm_file.get_options_ui("save_model")
 		var embed_assets : bool = false
@@ -702,7 +721,7 @@ static func confirm_save_load(filepath : String, name : String):
 		save_model(filepath + "/", name, embed_assets, selected_only)
 		last_save_location = filepath
 		last_save_name = name
-	elif file_operation == FileOperation.load_model:
+	elif operation == "load_model":
 		EditorUI.set_l_msg("successfully loaded " + name + " at " + filepath + "!")
 		if not FileAccess.file_exists(filepath + "/" + name + ".tmv"):
 			EditorUI.set_l_msg("loading failed: " + name + ".tmv could not be found")
@@ -718,6 +737,14 @@ static func confirm_save_load(filepath : String, name : String):
 		load_model(filepath + "/", name)
 	EditorUI.c_loading_message.visible = false
 
+
+"TODO"
+static func export_model():
+	#var groups : Array[Array] = MeshUtils.group_parts_by_material_and_color(WorkspaceManager.workspace.get_children().filter(func(input): return input is Part))
+	#var mesh = MeshUtils.create_mesh_from_part_groupings(groups)
+	#MeshUtils.add_metadata_to_mesh(groups, mesh)
+	#ResourceSaver.save(mesh, "/home/marci/Desktop/save testing/MAOW.res", ResourceSaver.FLAG_BUNDLE_RESOURCES)
+	return
 
 #actual save and load functions
 #dont add file ending to filename parameter
@@ -1012,12 +1039,6 @@ static func load_model_from_csv_data(input : PackedByteArray):
 			new.initialize()
 		
 		i = i + 1
-
-
-"TODO"
-static func export_model():
-	
-	return
 
 
 #did not know where to put this function

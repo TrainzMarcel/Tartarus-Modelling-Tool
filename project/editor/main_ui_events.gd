@@ -110,33 +110,28 @@ static func on_snapping_active_set(active):
 	Main.snapping_active = active
 
 
-static func on_file_manager_accept_pressed(filepath : String, name : String):
-	WorkspaceManager.confirm_save_load(filepath, name)
-
 #i already tried doing a dynamic dispatch with function arrays, it sucked
 #if else is much more readable in this case
 static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 	#file dropdown----------------------
 	if pm == EditorUI.pm_file:
 		if id == 0:
-			#save (model) as
+			#save model as
 			WorkspaceManager.request_save_as()
 		elif id == 1:
-			#save (model)
+			#save model
 			WorkspaceManager.request_save()
 		elif id == 2:
 			#load model
 			WorkspaceManager.request_load()
 		elif id == 3:
 			#import model (planned: .res/tres, .gltf, .obj)
-			pass
+			WorkspaceManager.request_import()
 		elif id == 4:
 			#export model
-			pass
-			#var groups : Array[Array] = MeshUtils.group_parts_by_material_and_color(WorkspaceManager.workspace.get_children().filter(func(input): return input is Part))
-			#var mesh = MeshUtils.create_mesh_from_part_groupings(groups)
-			#MeshUtils.add_metadata_to_mesh(groups, mesh)
-			#ResourceSaver.save(mesh, "/home/marci/Desktop/save testing/MAOW.res", ResourceSaver.FLAG_BUNDLE_RESOURCES)
+			WorkspaceManager.request_export()
+		elif id == 5:
+			OS.shell_show_in_file_manager(ProjectSettings.globalize_path(FilePathRegistry.data_folder_autosaves))
 		
 	#edit dropdown----------------------
 	elif pm == EditorUI.pm_edit:
@@ -156,24 +151,20 @@ static func on_top_bar_id_pressed(id : int, pm : PopupMenu):
 		elif id == 5:
 			#ctrl v paste selection
 			SelectionManager.selection_paste_undoable()
-			#SelectionManager.post_selection_update()
 			EditorUI.set_l_msg("pasted " + str(SelectionManager.entities_clipboard.size()) + " parts")
 		elif id == 6:
 			#ctrl x cut selection
 			SelectionManager.selection_copy()
 			SelectionManager.selection_delete_undoable()
-			#SelectionManager.post_selection_update()
 			EditorUI.set_l_msg("cut " + str(SelectionManager.entities_clipboard.size()) + " parts")
 		elif id == 7:
 			#ctrl d duplicate selection
 			SelectionManager.selection_duplicate_undoable()
-			#SelectionManager.post_selection_update()
 			EditorUI.set_l_msg("duplicated " + str(SelectionManager.selected_entities_internal.filter(SelectionManager.is_part).size()) + " parts")
 		elif id == 8:
 			#delete clear selection
 			EditorUI.set_l_msg("deleted " + str(SelectionManager.selected_entities_internal.filter(SelectionManager.is_part)) + " parts")
 			SelectionManager.selection_delete()
-			#SelectionManager.post_selection_update()
 		elif id == 8:
 			#settings window
 			pass

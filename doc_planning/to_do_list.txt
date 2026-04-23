@@ -1,20 +1,17 @@
 TOP PRIORITY
 
-implement subassemblies and/or grouping of parts, holding c (formerly alt) allows for single part selection
-													^ only deletion left to implement, which has some challenges
-
-
-implement import/export (.obj, .gltf, .tres/.res)
+implement import/export (.obj, .gltf, .tres/.res, import
 get release notes and use them to update the manual accordingly
 add cool sounds for saving and loading
 release v0.1-indev-3 with release notes
 
+implement import of reference images .png, .jpg in 3d space)
 
 automatic recalculation and pooling subsystem that uses wrapper objects and:
 	marks objects as dirty which it then automatically recalculates at the end of the frame
 	doesnt delete objects and doesnt create objects if it has some left in its pool.
 rename assetmanager, undomanager, selectionmanager, toolmanager to AssetSubsystem, UndoSubsystem, SelectionSubsystem, ToolSubsystem
-add underscore to existing groups and existing parts arrays
+rename and add underscore so existing_groups becomes _active_entities
 add existing parts array at some point
 fix messed up leaky abstractions everywhere: attempt to untangle main, attempt to untangle the managers and only have them communicate through main as well as possible
 

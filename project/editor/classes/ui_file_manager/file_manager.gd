@@ -44,9 +44,9 @@ var t_main_file_display : Tree
 var hbc_list_file_display : HBoxContainer
 var t_list_file_display : Array[Tree]
 var t_list_file_display_extra : Array[Tree]
-var pc_mode_data_holder : PanelContainer
-var mode_name_to_data_map : Dictionary
-var current_mode : StringName
+var mc_operation_data_holder : MarginContainer
+var operation_name_to_data_map : Dictionary
+var current_operation_name : StringName
 
 
 #bottom controls
@@ -85,7 +85,7 @@ func _ready():
 	t_main_file_display.create_item()
 	
 #options/mode data container
-	pc_mode_data_holder = %PanelContainerModeData
+	mc_operation_data_holder = %MarginContainerModeData
 	
 	
 #bottom controls
@@ -109,16 +109,19 @@ func _ready():
 		ob_drives.add_item(drive_name)
 	
 #get configs from pc_configuration_data
-	for mode_data in pc_mode_data_holder.get_children():
-		mode_data = mode_data as FileManagerModeData
-		mode_name_to_data_map[mode_data.mode_name] = mode_data
+	for operation_data in mc_operation_data_holder.get_children():
+		operation_data = operation_data as FileManagerOperationData
+		
+		#assign all the names of this operation to the hashmap of this operation
+		for operation_name in operation_data.operation_name:
+			operation_name_to_data_map[operation_name] = operation_data
 		
 		#create 2d array
-		for filter in mode_data.filters:
+		for filter in operation_data.filters:
 			filter = filter as String
-			mode_data.filters_internal.append(filter.split(","))
+			operation_data.filters_internal.append(filter.split(","))
 	
-	pc_mode_data_holder.visible = false
+	operation_name_to_data_map.visible = false
 	update_file_display(dir_start)
 	
 	
@@ -146,36 +149,41 @@ func _ready():
 
 
 #helper functions
-func popup(mode_name : StringName):
+func popup(operation_name : StringName):
 	#i dont actually think users want to re-navigate back each time this opens
 	#change_dir(dir_start, true)
-	var mode_data : FileManagerModeData = mode_name_to_data_map.get(mode_name)
-	if mode_data == null:
-		push_error("file manager mode not found: ", mode_name)
+	var operation_data : FileManagerOperationData = operation_name_to_data_map.get(operation_name)
+	if operation_data == null:
+		push_error("file manager operation not found: ", operation_name)
 		return
 	
 	#keep track of current mode
-	current_mode = mode_name
+	current_operation_name = operation_name
 	
 	#set filemanager title
-	l_title.text = mode_data.mode_title
+	#the smaller of the two values is picked
+	#this means many titles or many names can be defined, or both
+	#and it will always choose 
+	var operation_title_index : int = min(operation_data.operation_title.size(), operation_data.operation_name.size(), operation_data.operation_name.find(operation_name))
+	assert(operation_title_index != -1, "given operation name was not found")
+	l_title.text = operation_data.operation_title[operation_title_index]
 	
 	#if there is no settings ui, hide that panel
-	if mode_data.settings_ui_array.is_empty():
-		pc_mode_data_holder.visible = false
+	if mc_operation_data_holder.get_children().is_empty():
+		mc_operation_data_holder.visible = false
 	#else, hide all except the current modes options
 	else:
-		pc_mode_data_holder.visible = true
-		for settings in pc_mode_data_holder.get_children():
+		mc_operation_data_holder.visible = true
+		for settings in mc_operation_data_holder.get_children():
 			settings.visible = false
-		mode_data.visible = true
+		operation_data.visible = true
 	
 	#initialize filters ui
 	ob_filters.clear()
-	if not mode_data.filters.is_empty():
-		for filters in mode_data.filters:
+	if not operation_data.filters.is_empty():
+		for filters in operation_data.filters:
 			ob_filters.add_item(filters)
-			selected_filters = mode_data.filters_internal[0]
+			selected_filters = operation_data.filters_internal[0]
 	else:
 		ob_filters.add_item("*")
 		selected_filters = ["*"]
@@ -184,16 +192,19 @@ func popup(mode_name : StringName):
 	visible = true
 
 
+func get_current_operation_name():
+	return current_operation_name
+
 func close():
 	visible = false
 
 
 #for easily reading ui state from outside
-func get_options_ui(mode_name : StringName):
-	var mode_data = mode_name_to_data_map.get(mode_name)
-	if mode_data == null:
-		push_error("file manager mode data not found: ", mode_name)
-	return mode_data
+func get_options_ui(operation_name : StringName):
+	var operation_data = operation_name_to_data_map.get(operation_name)
+	if operation_data == null:
+		push_error("file manager operation not found: ", operation_name)
+	return operation_data
 
 
 #for easily refreshing from outside after a file operation
@@ -407,7 +418,7 @@ func on_ob_drives_item_selected(index : int):
 
 
 func on_ob_filters_item_selected(index : int):
-	selected_filters = mode_name_to_data_map.get(current_mode).filters_internal[index]
+	selected_filters = operation_name_to_data_map.get(current_operation_name).filters_internal[index]
 	update_file_display(dir_access.get_current_dir())
 
 

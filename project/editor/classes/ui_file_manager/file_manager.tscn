@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://bjtrfenn2qo0u"]
+[gd_scene load_steps=24 format=3 uid="uid://bjtrfenn2qo0u"]
 
 [ext_resource type="Script" uid="uid://rd10txw1b76c" path="res://editor/classes/ui_file_manager/file_manager.gd" id="1_omhfy"]
 [ext_resource type="Texture2D" uid="uid://bul8005ajw68t" path="res://editor/data_ui/assets/File.svg" id="2_1m6pn"]
@@ -23,6 +23,10 @@
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_6oyx8"]
 content_margin_bottom = 6.0
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_jw4td"]
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_wpiqv"]
 
 [node name="FileManager" type="Control"]
 layout_mode = 3
@@ -271,22 +275,28 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="PanelContainerModeData" type="PanelContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection"]
-unique_name_in_owner = true
 custom_minimum_size = Vector2(248, 0)
 layout_mode = 2
 size_flags_horizontal = 8
 theme_override_styles/panel = ExtResource("15_3kflr")
 
-[node name="VBoxContainerLoadModel" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData" node_paths=PackedStringArray("settings_ui_array")]
+[node name="MarginContainerModeData" type="MarginContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/margin_left = 3
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 3
+theme_override_constants/margin_bottom = 3
+
+[node name="VBoxContainerLoadModel" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData"]
 visible = false
 layout_mode = 2
 script = ExtResource("16_xki3j")
-mode_name = &"load_model"
-mode_title = "Load a Model"
+operation_name = Array[StringName]([&"load_model"])
+operation_title = Array[String](["Load a model"])
 filters = Array[String](["*.tmv", "*"])
-settings_ui_array = [NodePath("ButtonClearWorkspace")]
 
-[node name="ButtonClearWorkspace" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/VBoxContainerLoadModel"]
+[node name="ButtonClearWorkspace" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerLoadModel"]
 custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
 tooltip_text = "should the workspace be cleared when load is pressed?"
@@ -303,16 +313,15 @@ on load"
 autowrap_mode = 2
 script = ExtResource("17_jw4td")
 
-[node name="VBoxContainerSaveModel" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData" node_paths=PackedStringArray("settings_ui_array")]
+[node name="VBoxContainerSaveModel" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData"]
 visible = false
 layout_mode = 2
 script = ExtResource("16_xki3j")
-mode_name = &"save_model"
-mode_title = "Save a Model"
+operation_name = Array[StringName]([&"save_model", &"save_as"])
+operation_title = Array[String](["Save a model", "Save model as"])
 filters = Array[String](["*.tmv"])
-settings_ui_array = [NodePath("ButtonEmbedAssets")]
 
-[node name="ButtonEmbedAssets" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/VBoxContainerSaveModel"]
+[node name="ButtonEmbedAssets" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerSaveModel"]
 custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
 tooltip_text = "should used assets be embedded in the save file?
@@ -328,7 +337,7 @@ text = "Embed assets"
 autowrap_mode = 2
 script = ExtResource("17_jw4td")
 
-[node name="ButtonSaveSelectedOnly" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/VBoxContainerSaveModel"]
+[node name="ButtonSaveSelectedOnly" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerSaveModel"]
 custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
 tooltip_text = "should used assets be embedded in the save file?
@@ -345,18 +354,36 @@ parts only"
 autowrap_mode = 2
 script = ExtResource("17_jw4td")
 
-[node name="VBoxContainerExportModel" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData"]
-visible = false
+[node name="VBoxContainerExportModel" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData"]
 layout_mode = 2
 script = ExtResource("16_xki3j")
-mode_name = &"export_model"
-mode_title = "Export a Model"
+operation_name = Array[StringName]([&"export_model"])
+operation_title = Array[String](["Export a model"])
 
-[node name="ButtonDoXYZ" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/VBoxContainerExportModel"]
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="LabelTitle" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
+text = "Export as"
+horizontal_alignment = 1
+
+[node name="GridContainer" type="GridContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+columns = 2
+
+[node name="ButtonTRES" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel/ScrollContainer/VBoxContainer/GridContainer"]
 custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
-tooltip_text = "should used assets be embedded in the save file?
-this is not necessary if you are not using any custom assets."
+size_flags_horizontal = 3
 theme = ExtResource("3_y5lmk")
 theme_override_font_sizes/font_size = 0
 theme_override_styles/normal = ExtResource("4_v8wiq")
@@ -364,9 +391,162 @@ theme_override_styles/pressed = ExtResource("5_cel0h")
 theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/focus = ExtResource("6_itj42")
 toggle_mode = true
-text = "TODO think of export options"
+button_group = SubResource("ButtonGroup_jw4td")
+text = ".tres"
 autowrap_mode = 2
-script = ExtResource("17_jw4td")
+
+[node name="ButtonRES" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel/ScrollContainer/VBoxContainer/GridContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+button_pressed = true
+button_group = SubResource("ButtonGroup_jw4td")
+text = ".res"
+autowrap_mode = 2
+
+[node name="ButtonOBJ" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel/ScrollContainer/VBoxContainer/GridContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+button_group = SubResource("ButtonGroup_jw4td")
+text = ".obj"
+autowrap_mode = 2
+
+[node name="ButtonGLTF" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel/ScrollContainer/VBoxContainer/GridContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+button_group = SubResource("ButtonGroup_jw4td")
+text = ".gltf"
+autowrap_mode = 2
+
+[node name="LabelTitle2" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
+text = "UV Mapping"
+horizontal_alignment = 1
+
+[node name="ButtonUVDefault" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+button_pressed = true
+button_group = SubResource("ButtonGroup_wpiqv")
+text = "Unchanged"
+autowrap_mode = 2
+
+[node name="ButtonUVBox" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+button_group = SubResource("ButtonGroup_wpiqv")
+text = "Box Projection"
+autowrap_mode = 2
+
+[node name="LabelTitle3" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
+text = "Mesh"
+horizontal_alignment = 1
+
+[node name="ButtonTriangulate" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+text = "Triangulate"
+autowrap_mode = 2
+
+[node name="ButtonCenterMesh" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+button_pressed = true
+text = "Center Mesh Position"
+autowrap_mode = 2
+
+[node name="ButtonEmbedTextures" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+text = "Embed textures"
+autowrap_mode = 2
+
+[node name="GradientPanel" type="Panel" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("11_7dsi7")
+
+[node name="ButtonExportSelectedOnly" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/VBoxContainerExportModel/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+text = "Export selected parts only"
+autowrap_mode = 2
 
 [node name="GradientPanel2" type="Panel" parent="Panel/MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 2)
