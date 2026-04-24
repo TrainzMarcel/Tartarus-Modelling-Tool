@@ -239,6 +239,8 @@ static func initialize(
 	#this line is only required for the manually placed parts in the main scene
 	baseplate.initialize()
 	#workspace.get_children().map(func(input): if input is Part: input.initialize())
+	
+	initialize_file_manager_export_ui()
 
 
 static func initialize_user_folder():
@@ -687,14 +689,15 @@ static func request_import():
 
 
 #called when b_accept_pressed is emitted by the filemanager
-static func dispatch_filemanager_operation(current_dir : String, file_name : String, operation_name : String):
+static func dispatch_filemanager_operation(current_dir : String, file_name : String):
+	var operation_name : String = EditorUI.fm_file.get_current_operation_name()
 	if operation_name == "save_model" or operation_name == "save_as" or operation_name == "load_model":
 		confirm_save_load(current_dir, file_name, operation_name)
 	elif operation_name == "import_model":
 		pass
 		#import_model()
 	elif operation_name == "export_model":
-		export_model()
+		export_model(current_dir, file_name)
 	
 	#refresh to show the new file
 	EditorUI.fm_file.refresh_file_manager()
@@ -738,13 +741,63 @@ static func confirm_save_load(filepath : String, name : String, operation : Stri
 	EditorUI.c_loading_message.visible = false
 
 
-"TODO"
-static func export_model():
-	#var groups : Array[Array] = MeshUtils.group_parts_by_material_and_color(WorkspaceManager.workspace.get_children().filter(func(input): return input is Part))
-	#var mesh = MeshUtils.create_mesh_from_part_groupings(groups)
-	#MeshUtils.add_metadata_to_mesh(groups, mesh)
-	#ResourceSaver.save(mesh, "/home/marci/Desktop/save testing/MAOW.res", ResourceSaver.FLAG_BUNDLE_RESOURCES)
-	return
+static func initialize_file_manager_export_ui():
+	var options : ScrollContainer = EditorUI.fm_file.get_options_ui("export_model")
+	#get file type buttons
+	var main_container : VBoxContainer = options.get_node("VBoxContainer")
+	var btns : Array = main_container.get_node("GridContainer").get_children()
+	
+	#TODO tooltip add the name and color of the previously assigned material
+	var metadata : Control = main_container.get_node("ButtonIncludeMetadata")
+	var embed_materials : Control = main_container.get_node("ButtonEmbedTextures")
+	
+	var disable_button : Callable = func(buttons_array : Array, toggle_array : Array):
+		var i : int = 0
+		while i < buttons_array.size():
+			buttons_array[i].disabled = toggle_array[i]
+			i = i + 1
+	
+	#.tres
+	btns[0].pressed.connect(disable_button.bind([metadata, embed_materials], [false, true]))
+	#.res
+	btns[1].pressed.connect(disable_button.bind([metadata, embed_materials], [false, false]))
+	#.obj
+	btns[2].pressed.connect(disable_button.bind([metadata, embed_materials], [true, false]))
+	#.gltf
+	btns[3].pressed.connect(disable_button.bind([metadata, embed_materials], [true, false]))
+	#configure which options are allowed
+	
+	#var tres_options : Array = []
+	#var res_options : Array = []
+	#var obj_options : Array = []
+	#var gltf_options : Array = []
+
+
+static func export_model(current_dir : String, file_name : String):
+	var options : ScrollContainer = EditorUI.fm_file.get_options_ui("export_model")
+	var main_container : Node = options.get_node("VBoxContainer")
+	var embed_material : bool = main_container.get_node("ButtonEmbedTextures").button_pressed
+	var add_metadata : bool = main_container.get_node("ButtonIncludeMetadata").button_pressed
+	
+	var combinations : Array[Array] = MeshUtils.classify_parts_by_material_and_color_combination(WorkspaceManager.workspace.get_children().filter(func(input): return input is Part))
+	var mesh : ArrayMesh = MeshUtils.create_mesh_from_part_combinations(combinations)
+	if add_metadata:
+		MeshUtils.add_metadata_to_mesh(combinations, mesh)
+	
+	var file_type : String
+	var btns : Array = main_container.get_node("GridContainer").get_children()
+	if btns[0].button_pressed:
+		file_type = ".tres"
+	elif btns[1].button_pressed:
+		file_type = ".res"
+	
+	var flag
+	if embed_material:
+		flag = ResourceSaver.FLAG_BUNDLE_RESOURCES
+	else:
+		flag = ResourceSaver.FLAG_NONE
+	
+	ResourceSaver.save(mesh, current_dir.path_join(file_name) + file_type, flag)
 
 #actual save and load functions
 #dont add file ending to filename parameter

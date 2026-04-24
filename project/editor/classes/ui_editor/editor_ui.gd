@@ -349,8 +349,10 @@ static var tooltip_font : Theme = preload(FilePathRegistry.style_font_tooltip)
 static func custom_tooltip(for_text : String):
 	var tooltip : Label = Label.new()
 	for_text = for_text
-	tooltip.text = for_text.replace("(", "[ ").replace(")", " ]").replace("\n", " ")
+	tooltip.text = for_text.replace("(", "[ ").replace(")", " ]").replace("\\n", " ")
 	tooltip.theme = EditorUI.tooltip_font
 	tooltip.add_theme_stylebox_override("normal", tooltip_panel)
 	tooltip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	#tooltip.autowrap_mode = TextServer.AUTOWRAP_WORD
+	tooltip.custom_minimum_size.y = 25
 	return tooltip

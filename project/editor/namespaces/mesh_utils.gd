@@ -14,7 +14,7 @@ class_name MeshUtils
 #https://docs.godotengine.org/en/stable/classes/class_gltfstate.html#class-gltfstate
 
 
-static func group_parts_by_material_and_color(part_array : Array):
+static func classify_parts_by_material_and_color_combination(part_array : Array):
 	#parallel arrays
 	#the same material will occupy one item for every color used with it
 	var material_combination_array : Array[Material] = []
@@ -78,7 +78,7 @@ static func group_parts_by_material_and_color(part_array : Array):
 	return result_part_groupings
 
 
-static func create_mesh_from_part_groupings(part_array : Array[Array]):
+static func create_mesh_from_part_combinations(part_array : Array[Array]):
 	var st : SurfaceTool = SurfaceTool.new()
 	var resulting_mesh : ArrayMesh = ArrayMesh.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -104,7 +104,7 @@ static func create_mesh_from_part_groupings(part_array : Array[Array]):
 	return resulting_mesh
 
 
-static func get_color_array_from_part_groupings(part_array : Array[Array]):
+static func get_color_array_from_part_combinations(part_array : Array[Array]):
 	var color_array : Array[Color] = []
 	for i in part_array:
 		#part array is guaranteed to have at least 1 item
@@ -113,7 +113,7 @@ static func get_color_array_from_part_groupings(part_array : Array[Array]):
 	return color_array
 
 
-static func get_material_name_array_from_part_groupings(part_array : Array[Array]):
+static func get_material_name_array_from_part_combinations(part_array : Array[Array]):
 	var material_name_array : Array[String] = []
 	for i in part_array:
 		#part array is guaranteed to have at least 1 item
@@ -124,14 +124,13 @@ static func get_material_name_array_from_part_groupings(part_array : Array[Array
 
 
 static func add_metadata_to_mesh(part_array : Array[Array], mesh : Resource):
-	mesh.set_meta("material_names", get_material_name_array_from_part_groupings(part_array))
-	mesh.set_meta("colors", get_color_array_from_part_groupings(part_array))
+	mesh.set_meta("material_names", get_material_name_array_from_part_combinations(part_array))
+	mesh.set_meta("colors", get_color_array_from_part_combinations(part_array))
 
 
-static func export_as_obj(mesh, filepath, filename):
+static func export_obj(mesh, filepath, filename):
 	OBJExporter.save_mesh_to_files(mesh, filepath, filename)
-	
-	return
+
 
 static func import_obj():
 	return

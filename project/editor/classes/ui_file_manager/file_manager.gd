@@ -120,6 +120,12 @@ func _ready():
 		for filter in operation_data.filters:
 			filter = filter as String
 			operation_data.filters_internal.append(filter.split(","))
+		
+		#connect and bind filter select signals
+		for button in operation_data.buttons_set_filter_index.keys():
+			assert(button is BaseButton)
+			button.pressed.connect(operation_data.button_set_filter_on_button_pressed.bind(self, operation_data.buttons_set_filter_index[button]))
+	
 	
 	operation_name_to_data_map.visible = false
 	update_file_display(dir_start)
