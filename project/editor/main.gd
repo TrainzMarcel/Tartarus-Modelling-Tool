@@ -149,6 +149,23 @@ func _ready():
 	
 	"TODO"#fix this class because its broken again
 	HyperDebug.initialize(false, get_tree().root)
+	WorkspaceManager.load_model("/home/marci/Desktop/save testing/", "lab_1_SQL")
+	var m_options : MeshUtils.EntityToMeshOptions = MeshUtils.EntityToMeshOptions.new()
+	m_options.include_metadata = true
+	m_options.split_mesh_by_combinations = true
+	await get_tree().create_timer(1).timeout
+	WorkspaceManager.export_model("/media/marci/1.0 TB Hard Disk/Godot 4.5 Projects/Tartarus Modelling Tool/project/addons", "test", "res", SelectionManager.get_workspace_entities(), m_options, false)
+	$EditorUI/Button.pressed.connect(func(): 
+		var meshes : Array = WorkspaceManager.workspace.get_children().map(func(input):
+			if input is Part: return input.part_mesh_node.mesh
+		)
+		
+		var faces : Array
+		for mesh in meshes:
+			if mesh:
+				faces.append_array(mesh.get_faces())
+		$EditorUI/Button.text = "Update Vertex Count" + "\n" + "Vertex Count = " + str(faces.size())
+	)
 	
 	#for convenience so my console isnt covered up every time i start the software
 	get_window().position = Vector2(1920*0.5 - 1152 * 0.3, 40)

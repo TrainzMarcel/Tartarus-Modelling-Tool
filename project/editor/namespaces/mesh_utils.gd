@@ -3,7 +3,6 @@ class_name MeshUtils
 
 
 "TODO"#add resource name to these meshes
-"TODO"#integrate file manager
 "TODO"#clean up this code
 "TODO"#add obj export
 "TODO"#add gltf export
@@ -13,8 +12,89 @@ class_name MeshUtils
 #https://docs.godotengine.org/en/stable/classes/class_gltfdocument.html
 #https://docs.godotengine.org/en/stable/classes/class_gltfstate.html#class-gltfstate
 
+class EntityToMeshOptions:
+	enum UVOption
+	{
+		Unchanged,
+		BoxProjectMesh,
+		BoxProjectVariable
+	}
+	var box_project_scale : float
+	
+	var include_metadata : bool
+	var triangulate : bool
+	var center_mesh : bool
+	var split_mesh_by_combinations : bool
 
-static func classify_parts_by_material_and_color_combination(part_array : Array):
+
+static func convert_entities_to_mesh(options : EntityToMeshOptions, entities : Array, filename : String):
+	var mesh_result : Mesh = null
+	var combinations : Array[Array]
+	
+	if options.include_metadata or options.split_mesh_by_combinations:
+		combinations = _classify_parts_by_material_and_color_combination(WorkspaceManager.workspace.get_children().filter(func(input): return input is Part))
+	
+	
+	if options.split_mesh_by_combinations:
+		mesh_result = _append_surface_to_mesh_from_parts_2(combinations)
+	else:
+		mesh_result = _create_mesh_from_parts(entities)
+	
+	
+	if options.include_metadata:
+		MeshUtils._add_metadata_to_mesh(combinations, mesh_result)
+	
+	"TODO"#abstract this into a debug print function
+	var i : int = 0
+	var sum : int = 0
+	while i < combinations.size():
+		var count : int = 0
+		for part in combinations[i]:
+			var mesh = part.part_mesh_node.mesh
+			count = count + mesh.get_faces().size()
+		sum = sum + count
+		print("surface " + str(i) + " vert count: ", count, "   mats: ", mesh_result.get_meta("material_names")[i], " color: ", mesh_result.get_meta("colors")[i])
+		i = i + 1
+	print("total: ", str(sum))
+
+	mesh_result.resource_name = filename
+	return mesh_result
+
+
+static func import_obj():
+	return
+
+
+static func export_obj(mesh : Mesh, filepath : String, filename : String):
+	OBJExporter.save_mesh_to_files(mesh, filepath, filename)
+
+
+static func import_resource():
+	return# ResourceLoader.load()
+
+
+static func export_resource(mesh : Mesh, binary_encoding : bool, bundle_resources : bool, filepath : String, filename : String):
+	var file_type : String
+	if binary_encoding:
+		file_type = ".res"
+	else:
+		file_type = ".tres"
+	
+	var flags : int = 0
+	if bundle_resources:
+		flags = flags | ResourceSaver.FLAG_BUNDLE_RESOURCES
+	
+	return ResourceSaver.save(mesh, filepath.path_join(filename) + file_type, flags)
+
+
+static func import_gltf():
+	return
+
+static func export_gltf(mesh : Mesh, filepath : String, filename : String):
+	return
+
+
+static func _classify_parts_by_material_and_color_combination(part_array : Array):
 	#parallel arrays
 	#the same material will occupy one item for every color used with it
 	var material_combination_array : Array[Material] = []
@@ -69,6 +149,8 @@ static func classify_parts_by_material_and_color_combination(part_array : Array)
 		while j < part_array.size():
 			var part : Part = part_array[j]
 			"TODO"#use mappings and abstract the grouping code out for metadata purposes
+			if part.name == "@StaticBody3D@427":
+				pass
 			if part.part_color == sort_color and part.part_material == sort_material:
 				result_part_groupings[i].append(part)
 			j = j + 1
@@ -78,7 +160,26 @@ static func classify_parts_by_material_and_color_combination(part_array : Array)
 	return result_part_groupings
 
 
-static func create_mesh_from_part_combinations(part_array : Array[Array]):
+static func _create_mesh_from_part_combinations(part_array : Array[Array]):
+	var st : SurfaceTool = SurfaceTool.new()
+	var resulting_mesh : ArrayMesh = ArrayMesh.new()
+	
+	#every surface
+	var i : int = 0
+	while i < part_array.size():
+		resulting_mesh = _append_surface_to_mesh_from_parts(part_array[i], resulting_mesh)
+		i = i + 1
+	
+	return resulting_mesh
+
+
+"TODO"
+static func _create_mesh_from_parts(part_array : Array):
+	return
+
+
+
+static func _append_surface_to_mesh_from_parts_2(part_array : Array[Array]):
 	var st : SurfaceTool = SurfaceTool.new()
 	var resulting_mesh : ArrayMesh = ArrayMesh.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -104,8 +205,70 @@ static func create_mesh_from_part_combinations(part_array : Array[Array]):
 	return resulting_mesh
 
 
-static func get_color_array_from_part_combinations(part_array : Array[Array]):
+
+"TODO"
+static func _append_surface_to_mesh_from_parts(part_array : Array, resulting_mesh : ArrayMesh):
+	var surface_result : Array
+	surface_result.resize(Mesh.ARRAY_MAX)
+	
+	
+	@warning_ignore("confusable_local_declaration")
+	var _append_to_data_array : Callable = func(surface_result : Array, surface_addition : Array, mesh_transform : Transform3D):
+		var k : int = 0
+		var transform_rotation : Basis = mesh_transform.basis.orthonormalized().inverse()
+		while k < surface_addition.size():
+			if surface_result[k] == null and surface_addition[k] != null:
+				if surface_addition[k] is PackedVector3Array:
+					surface_result[k] = PackedVector3Array()
+				elif surface_addition[k] is PackedVector2Array:
+					surface_result[k] = PackedVector2Array()
+				elif surface_addition[k] is PackedInt32Array:
+					surface_result[k] = PackedInt32Array()
+				elif surface_addition[k] is PackedFloat32Array:
+					surface_result[k] = PackedFloat32Array()
+				elif surface_addition[k] is PackedColorArray:
+					surface_result[k] = PackedColorArray()
+				elif surface_addition[k] is PackedByteArray:
+					surface_result[k] = PackedByteArray()
+			
+			if k == Mesh.ARRAY_VERTEX:
+				var l : int = 0
+				while l < surface_addition[k].size():
+					surface_addition[k][l] = mesh_transform * surface_addition[k][l]
+					l = l + 1
+			elif k == Mesh.ARRAY_NORMAL:
+				var l : int = 0
+				while l < surface_addition[k].size():
+					surface_addition[k][l] = surface_addition[k][l] * transform_rotation
+					l = l + 1
+			
+			
+			if surface_addition[k] != null:
+				surface_result[k].append_array(surface_addition[k])
+			
+			k = k + 1
+	
+	
+	#add all parts into one mesh
+	#for every part:
+	var i : int = 0
+	while i < part_array.size():
+		var mesh_node : MeshInstance3D = part_array[i].part_mesh_node
+		#TODO var surface_count : int = mesh_node.mesh.get_surface_count()
+		
+		#for every data array of that surface:
+		var surface_addition : Array = mesh_node.mesh.surface_get_arrays(0)
+		_append_to_data_array.call(surface_result, surface_addition, mesh_node.global_transform)
+		i = i + 1
+	
+	#finish surface
+	resulting_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_result)
+	return resulting_mesh
+
+
+static func _get_color_array_from_part_combinations(part_array : Array[Array]):
 	var color_array : Array[Color] = []
+	#loop through every first item in inner array
 	for i in part_array:
 		#part array is guaranteed to have at least 1 item
 		color_array.append(i[0].part_color)
@@ -113,27 +276,21 @@ static func get_color_array_from_part_combinations(part_array : Array[Array]):
 	return color_array
 
 
-static func get_material_name_array_from_part_combinations(part_array : Array[Array]):
+static func _get_material_name_array_from_part_combinations(part_array : Array[Array]):
 	var material_name_array : Array[String] = []
 	for i in part_array:
 		#part array is guaranteed to have at least 1 item
 		var material : Material = i[0].part_material
-		material_name_array.append(AssetManager.get_name_of_asset(material))
+		#get_name_of
+		material_name_array.append(AssetManager.get_name_of_asset(material, false) + "," + i[0].part_color.to_html(false))
 	
 	return material_name_array
 
 
-static func add_metadata_to_mesh(part_array : Array[Array], mesh : Resource):
-	mesh.set_meta("material_names", get_material_name_array_from_part_combinations(part_array))
-	mesh.set_meta("colors", get_color_array_from_part_combinations(part_array))
+static func _add_metadata_to_mesh(part_array : Array[Array], mesh : Resource):
+	mesh.set_meta("material_names", _get_material_name_array_from_part_combinations(part_array))
+	mesh.set_meta("colors", _get_color_array_from_part_combinations(part_array))
 
-
-static func export_obj(mesh, filepath, filename):
-	OBJExporter.save_mesh_to_files(mesh, filepath, filename)
-
-
-static func import_obj():
-	return
 
 "TODO"#possibly figure out a class name for a class which takes care of file operations like saving loading importing and exporting
 #or simply throw the export function into workspace manager again x3
@@ -143,11 +300,11 @@ static func import_obj():
 
 
 #for obj and gltf export and also for anyone who doesnt wanna use triplanar materials
-static func uv_box_projection():
+static func _uv_box_projection():
 	return
 
 
-static func get_meshes_from_parts(part_array : Array):
+static func _get_meshes_from_parts(part_array : Array):
 	return part_array.map(func(input : Part):
 		return input.part_mesh_node.mesh
 		)

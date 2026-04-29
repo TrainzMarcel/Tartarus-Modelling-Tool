@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://bjtrfenn2qo0u"]
+[gd_scene load_steps=25 format=3 uid="uid://bjtrfenn2qo0u"]
 
 [ext_resource type="Script" uid="uid://rd10txw1b76c" path="res://editor/classes/ui_file_manager/file_manager.gd" id="1_omhfy"]
 [ext_resource type="Texture2D" uid="uid://bul8005ajw68t" path="res://editor/data_ui/assets/File.svg" id="2_1m6pn"]
@@ -20,6 +20,7 @@
 [ext_resource type="Script" uid="uid://b0qnitcp3u5s6" path="res://editor/classes/ui_editor/label_numeric.gd" id="15_56d13"]
 [ext_resource type="Script" uid="uid://j6sbjyr0ukj2" path="res://editor/classes/ui_file_manager/file_manager_mode.gd" id="16_xki3j"]
 [ext_resource type="Script" uid="uid://bta5w6pjs8xnc" path="res://editor/classes/ui_editor/tooltip_assign.gd" id="17_jw4td"]
+[ext_resource type="Script" uid="uid://daccittnn72bi" path="res://editor/classes/ui_editor/line_edit_numeric.gd" id="20_wpiqv"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_6oyx8"]
 content_margin_bottom = 6.0
@@ -356,7 +357,6 @@ script = ExtResource("17_jw4td")
 
 [node name="ScrollContainerExportModel" type="ScrollContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData" node_paths=PackedStringArray("buttons_set_filter_index")]
 layout_mode = 2
-scroll_vertical = 284
 script = ExtResource("16_xki3j")
 operation_name = Array[StringName]([&"export_model"])
 operation_title = Array[String](["Export a model"])
@@ -473,7 +473,41 @@ button_group = SubResource("ButtonGroup_wpiqv")
 text = "Unchanged"
 autowrap_mode = 2
 
-[node name="ButtonUVBox" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer"]
+[node name="HBoxUVBox" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+
+[node name="ButtonUVBoxCustomSize" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer/HBoxUVBox"]
+custom_minimum_size = Vector2(140, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+button_group = SubResource("ButtonGroup_wpiqv")
+text = "Box Projection (Input Size)"
+autowrap_mode = 2
+
+[node name="LineEditUVBoxCustomSize" type="LineEdit" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer/HBoxUVBox"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("7_flhe7")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("8_irtvw")
+theme_override_styles/focus = ExtResource("6_itj42")
+text = "1.0"
+editable = false
+script = ExtResource("20_wpiqv")
+metadata/_custom_type_script = "uid://daccittnn72bi"
+
+[node name="ButtonUVBoxMeshSize" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer"]
 custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -483,10 +517,9 @@ theme_override_styles/normal = ExtResource("4_v8wiq")
 theme_override_styles/pressed = ExtResource("5_cel0h")
 theme_override_styles/hover = ExtResource("4_v8wiq")
 theme_override_styles/focus = ExtResource("6_itj42")
-disabled = true
 toggle_mode = true
 button_group = SubResource("ButtonGroup_wpiqv")
-text = "Box Projection"
+text = "Box Projection (Model Size)"
 autowrap_mode = 2
 
 [node name="ControlSpacer2" type="Control" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer"]
@@ -502,6 +535,7 @@ text = "Mesh"
 horizontal_alignment = 1
 
 [node name="ButtonTriangulate" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer"]
+visible = false
 custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -556,7 +590,7 @@ combination"
 autowrap_mode = 2
 script = ExtResource("17_jw4td")
 
-[node name="ButtonEmbedTextures" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer"]
+[node name="ButtonEmbedMaterials" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer"]
 custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -602,6 +636,11 @@ theme_override_styles/focus = ExtResource("6_itj42")
 toggle_mode = true
 text = "Export selected parts only"
 autowrap_mode = 2
+
+[node name="ControlSpacer3" type="Control" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
 
 [node name="GradientPanel2" type="Panel" parent="Panel/MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 2)

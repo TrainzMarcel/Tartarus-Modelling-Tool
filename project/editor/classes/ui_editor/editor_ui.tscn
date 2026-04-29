@@ -1274,7 +1274,7 @@ text = "➖"
 
 [node name="LineEditUnitStepIncrementStep" type="LineEdit" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerPositionUnits"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 40)
+custom_minimum_size = Vector2(78, 40)
 layout_mode = 2
 size_flags_vertical = 0
 theme = ExtResource("13_v6fq4")
@@ -1372,7 +1372,7 @@ text = "➖"
 
 [node name="LineEditRotationStepIncrementStep" type="LineEdit" parent="PanelContainerBottomLeftBlock/MarginContainer/VBoxContainer/HBoxContainerSnapIncrements/HBoxContainerRotationDegrees"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 40)
+custom_minimum_size = Vector2(78, 40)
 layout_mode = 2
 size_flags_vertical = 0
 theme = ExtResource("13_v6fq4")

@@ -171,4 +171,7 @@
 14.4.	fixed bug with undoing in-group dragging not working correctly: selected entities abb was not being recalculated in time for the selection_move() call
 16.4.	changed group.copy() to not initialize or activate any copied entities, stopped group_display from freeing and recalculating all selectionboxes showing the existing groups, stopped updating all group bounds when entities without parents are moved or rotated, started work on mesh exporting, fixed assert triggering when a drag is started over ui and ended over the workspace
 23.4.	created ui for export options in filemanager, untangled mess of signals and function calls when saving a model, made file modes able to have multiple identifiers and window titles, changed and unified references to file manager mode to be called operation instead
-TODO:	TODO cleanup
+24.4.	added way to automatically set file type filter on options ui button press in filemanager, added first draft of code for .tres and .res export as well as disabling invalid options buttons when a different file type is selected
+27.4.	added proper abstraction to meshutils, clean up export_model, added ui for more uv unwrap options
+29.4.	improved numeric line edit with red border when invalid value is entered, increased width of right display in each pair in the snapping options panel, continued debugging failing entity to mesh conversion but have not yet found an answer as to why its failing. 
+TODO:	TODO cleanup, TODO filemanager file type filter resets after exporting

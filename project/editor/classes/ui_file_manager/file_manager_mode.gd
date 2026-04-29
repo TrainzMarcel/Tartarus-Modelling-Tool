@@ -19,4 +19,5 @@ var filters_internal : Array
 
 
 func button_set_filter_on_button_pressed(fm_file_manager : FileManager, filter_index : int):
+	fm_file_manager.ob_filters.select(filter_index)
 	fm_file_manager.on_ob_filters_item_selected(filter_index)

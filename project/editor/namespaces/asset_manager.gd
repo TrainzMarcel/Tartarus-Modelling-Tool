@@ -19,12 +19,13 @@ static func get_name_of_asset(asset : Resource, include_color : bool = true, add
 	else:
 		base_name = normalize_asset_name(asset.resource_path, add_file_ending)
 	
+	if base_name == "":
+		push_error("asset " + str(asset) + " has no resource_name and no resource_path set")
+	assert(base_name != "")
+	
 	#add hex color to key to differentiate by color and to easily fetch a colored material if it exists already
 	#i think i will not add the color to resource_name, only the key
 	#so i can more easily find all instances of a material by looping through all asset dict values
-	if base_name == "":
-		push_error("asset " + str(asset) + " has no resource_name and no resource_path set")
-	
 	if (asset is BaseMaterial3D or asset is ShaderMaterial) and include_color:
 		base_name = base_name + "," + str(get_material_color(asset).to_html(false))
 	elif not include_color:
