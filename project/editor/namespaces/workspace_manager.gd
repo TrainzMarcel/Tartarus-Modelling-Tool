@@ -821,8 +821,13 @@ static func confirm_export(current_dir, filename, operation_name):
 
 
 static func export_model(filepath : String, filename : String, filetype : String, entities : Array, mesh_options : MeshUtils.EntityToMeshOptions, embed_materials : bool):
-	var mesh : Mesh = MeshUtils.convert_entities_to_mesh(mesh_options, entities, filename)
+	var valid_file_types = ["res", "tres", "obj", "gltf"]
 	assert(not filetype.begins_with("."))
+	if not valid_file_types.has(filetype):
+		push_error("filetype invalid, aborting mesh export")
+		return
+	
+	var mesh : Mesh = MeshUtils.convert_entities_to_mesh(mesh_options, entities, filename)
 	
 	if filetype == "res":
 		MeshUtils.export_resource(mesh, true, embed_materials, filepath, filename)
@@ -832,8 +837,6 @@ static func export_model(filepath : String, filename : String, filetype : String
 		MeshUtils.export_obj(mesh, filepath, filename)
 	elif filetype == "gltf":
 		MeshUtils.export_gltf(mesh, filepath, filename)
-	else:
-		push_error("filetype invalid")
 
 
 #actual save and load functions

@@ -36,7 +36,7 @@ static func convert_entities_to_mesh(options : EntityToMeshOptions, entities : A
 	
 	
 	if options.split_mesh_by_combinations:
-		mesh_result = _append_surface_to_mesh_from_parts_2(combinations)
+		mesh_result = _create_mesh_from_part_combinations(combinations)
 	else:
 		mesh_result = _create_mesh_from_parts(entities)
 	
@@ -44,21 +44,46 @@ static func convert_entities_to_mesh(options : EntityToMeshOptions, entities : A
 	if options.include_metadata:
 		MeshUtils._add_metadata_to_mesh(combinations, mesh_result)
 	
-	"TODO"#abstract this into a debug print function
+	debug_print_part_combinations(combinations)
+	debug_print_mesh_surfaces(mesh_result)
+	mesh_result.resource_name = filename
+	return mesh_result
+
+
+static func debug_print_part_combinations(combinations : Array[Array]):
 	var i : int = 0
 	var sum : int = 0
 	while i < combinations.size():
 		var count : int = 0
+		var color : Color
+		var material : Material
+		var material_name : String
+		if combinations[i].size() != 0:
+			color = combinations[i][0].part_color
+			material = combinations[i][0].part_material
+		
+		
 		for part in combinations[i]:
-			var mesh = part.part_mesh_node.mesh
-			count = count + mesh.get_faces().size()
+			var mesh : Mesh = part.part_mesh_node.mesh
+			count = count + mesh.surface_get_arrays(0)[0].size()
 		sum = sum + count
-		print("surface " + str(i) + " vert count: ", count, "   mats: ", mesh_result.get_meta("material_names")[i], " color: ", mesh_result.get_meta("colors")[i])
+		
+		print("surface " + str(i) + " vert count: ", count, "   mats: ", AssetManager.get_name_of_asset(combinations[i][0].part_material, false), " color: ", combinations[i][0].part_color)
 		i = i + 1
 	print("total: ", str(sum))
 
-	mesh_result.resource_name = filename
-	return mesh_result
+
+static func debug_print_mesh_surfaces(mesh : Mesh):
+	var surfaces : int = mesh.get_surface_count()
+	var sum : int = 0
+	for surface in surfaces:
+		var count = mesh.surface_get_arrays(surface)[0].size()
+		print("surface " + str(surface) + " vert count: ", count, "   mats: ", mesh.get_meta("material_names")[surface], " color: ", mesh.get_meta("colors")[surface])
+		sum = sum + count
+	
+	print("total: ", str(sum))
+
+
 
 
 static func import_obj():
@@ -149,8 +174,6 @@ static func _classify_parts_by_material_and_color_combination(part_array : Array
 		while j < part_array.size():
 			var part : Part = part_array[j]
 			"TODO"#use mappings and abstract the grouping code out for metadata purposes
-			if part.name == "@StaticBody3D@427":
-				pass
 			if part.part_color == sort_color and part.part_material == sort_material:
 				result_part_groupings[i].append(part)
 			j = j + 1
@@ -161,7 +184,6 @@ static func _classify_parts_by_material_and_color_combination(part_array : Array
 
 
 static func _create_mesh_from_part_combinations(part_array : Array[Array]):
-	var st : SurfaceTool = SurfaceTool.new()
 	var resulting_mesh : ArrayMesh = ArrayMesh.new()
 	
 	#every surface
@@ -169,6 +191,10 @@ static func _create_mesh_from_part_combinations(part_array : Array[Array]):
 	while i < part_array.size():
 		resulting_mesh = _append_surface_to_mesh_from_parts(part_array[i], resulting_mesh)
 		i = i + 1
+	
+	#resulting_mesh = _append_surface_to_mesh_from_parts_2(part_array, resulting_mesh)
+	
+	
 	
 	return resulting_mesh
 
@@ -179,10 +205,7 @@ static func _create_mesh_from_parts(part_array : Array):
 
 
 
-static func _append_surface_to_mesh_from_parts_2(part_array : Array[Array]):
-	var st : SurfaceTool = SurfaceTool.new()
-	var resulting_mesh : ArrayMesh = ArrayMesh.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+static func _append_surface_to_mesh_from_parts_2(part_array : Array[Array], resulting_mesh : ArrayMesh):
 	
 	
 	#every surface
@@ -191,6 +214,8 @@ static func _append_surface_to_mesh_from_parts_2(part_array : Array[Array]):
 	while i < part_array.size():
 		j = 0
 		#add all parts of group to mesh
+		var st : SurfaceTool = SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
 		while j < part_array[i].size():
 			st.append_from(part_array[i][j].part_mesh_node.mesh, 0, part_array[i][j].part_mesh_node.global_transform)
 			j = j + 1
@@ -236,11 +261,28 @@ static func _append_surface_to_mesh_from_parts(part_array : Array, resulting_mes
 				while l < surface_addition[k].size():
 					surface_addition[k][l] = mesh_transform * surface_addition[k][l]
 					l = l + 1
+			
 			elif k == Mesh.ARRAY_NORMAL:
 				var l : int = 0
 				while l < surface_addition[k].size():
 					surface_addition[k][l] = surface_addition[k][l] * transform_rotation
 					l = l + 1
+			
+			elif k == Mesh.ARRAY_INDEX:
+				pass
+				#if not surface_addition[k] is PackedInt32Array:
+				#	surface_addition[k] = PackedInt32Array()
+				#	surface_addition[k].resize(surface_addition[Mesh.ARRAY_VERTEX].size())
+				#	for index in surface_addition[Mesh.ARRAY_INDEX].size():
+				#		surface_addition[Mesh.ARRAY_INDEX][index] = index
+				#if not surface_result[k] is PackedInt32Array:
+				#	surface_result[k] = PackedInt32Array()
+				
+				#var l : int = 0
+				#while l < surface_addition[Mesh.ARRAY_VERTEX].size():
+				#	surface_addition[k][l] = surface_addition[k][l] + surface_result[Mesh.ARRAY_INDEX].size()
+				#	l = l + 1
+				
 			
 			
 			if surface_addition[k] != null:
@@ -253,11 +295,15 @@ static func _append_surface_to_mesh_from_parts(part_array : Array, resulting_mes
 	#for every part:
 	var i : int = 0
 	while i < part_array.size():
+		var st : SurfaceTool = SurfaceTool.new()
 		var mesh_node : MeshInstance3D = part_array[i].part_mesh_node
 		#TODO var surface_count : int = mesh_node.mesh.get_surface_count()
-		
+		st.create_from(mesh_node.mesh, 0)
+		st.deindex()
+		var indexed_mesh : Mesh = st.commit()
 		#for every data array of that surface:
-		var surface_addition : Array = mesh_node.mesh.surface_get_arrays(0)
+		var surface_addition : Array = indexed_mesh.surface_get_arrays(0)
+		#the mesh array appending function!!!
 		_append_to_data_array.call(surface_result, surface_addition, mesh_node.global_transform)
 		i = i + 1
 	

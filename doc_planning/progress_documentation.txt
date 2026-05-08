@@ -173,5 +173,7 @@
 23.4.	created ui for export options in filemanager, untangled mess of signals and function calls when saving a model, made file modes able to have multiple identifiers and window titles, changed and unified references to file manager mode to be called operation instead
 24.4.	added way to automatically set file type filter on options ui button press in filemanager, added first draft of code for .tres and .res export as well as disabling invalid options buttons when a different file type is selected
 27.4.	added proper abstraction to meshutils, clean up export_model, added ui for more uv unwrap options
-29.4.	improved numeric line edit with red border when invalid value is entered, increased width of right display in each pair in the snapping options panel, continued debugging failing entity to mesh conversion but have not yet found an answer as to why its failing. 
+29.4.	improved numeric line edit with red border when invalid value is entered, increased width of right display in each pair in the snapping options panel, continued debugging failing entity to mesh conversion but have not yet found an answer as to why its failing.
+4.5.	slightly improved validation in export_model() and worked on debug print functions in meshutils
+8.5.	fixed mesh combining algorithm by deindexing every mesh before appending it. optimizations can be made by caching deindexed meshes for reuse.
 TODO:	TODO cleanup, TODO filemanager file type filter resets after exporting
