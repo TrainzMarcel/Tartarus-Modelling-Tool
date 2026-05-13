@@ -1,10 +1,12 @@
 TOP PRIORITY
-
-implement import/export (.obj, .gltf, .tres/.res, import
+implement import/export (.obj, .gltf, .tres/.res)
+fix display groups bug when delete tool is used on a group
 get release notes and use them to update the manual accordingly
 add cool sounds for saving and loading
 release v0.1-indev-3 with release notes
 
+
+implement import/export (.obj, .gltf, .tres/.res)
 implement import of reference images .png, .jpg in 3d space)
 
 automatic recalculation and pooling subsystem that uses wrapper objects and:

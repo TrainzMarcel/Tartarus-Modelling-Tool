@@ -175,5 +175,7 @@
 27.4.	added proper abstraction to meshutils, clean up export_model, added ui for more uv unwrap options
 29.4.	improved numeric line edit with red border when invalid value is entered, increased width of right display in each pair in the snapping options panel, continued debugging failing entity to mesh conversion but have not yet found an answer as to why its failing.
 4.5.	slightly improved validation in export_model() and worked on debug print functions in meshutils
-8.5.	fixed mesh combining algorithm by deindexing every mesh before appending it. optimizations can be made by caching deindexed meshes for reuse.
-TODO:	TODO cleanup, TODO filemanager file type filter resets after exporting
+8.5.	fixed mesh combining algorithm by deindexing every mesh before appending it. optimizations can be made by caching deindexed meshes for reuse
+12.5.	fixed destination directory not being added to undo in file manager
+13.5.	fixed undoing of ungroup operation not working, fixed selection_add_undoable not undoing correctly, fixed group_display selectionbox being left behind after using delete tool on group and also when undoing and redoing this action
+TODO:	TODO cleanup

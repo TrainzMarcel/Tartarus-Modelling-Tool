@@ -130,7 +130,6 @@ func _ready():
 	operation_name_to_data_map.visible = false
 	update_file_display(dir_start)
 	
-	
 	#signals
 	b_close_page.pressed.connect(on_b_close_page_pressed)
 	
@@ -215,17 +214,23 @@ func get_options_ui(operation_name : StringName):
 
 #for easily refreshing from outside after a file operation
 func refresh_file_manager():
+	
 	update_file_display(dir_access.get_current_dir())
 
 
 func change_dir(input : String):
-	dir_access.change_dir(input)
-	var current_dir : String = dir_access.get_current_dir()
+	var error : int = dir_access.change_dir(input)
+	if error != OK:
+		print("directory ", input, " not found")
+		return
 	
+	var current_dir : String = dir_access.get_current_dir()
 	update_file_display(current_dir)
 
 
 func change_dir_undoable(input : String):
+	change_dir(input)
+	
 	if dir_history_index != dir_history.size() - 1:
 		#pop everything past the index off
 		var i : int = 0
@@ -237,7 +242,13 @@ func change_dir_undoable(input : String):
 	dir_history.append(dir_access.get_current_dir())
 	dir_history_index = dir_history.size() - 1
 	
-	change_dir(input)
+	#debug
+	print("dir_history:")
+	for dir in dir_history:
+		if dir == dir_history[dir_history_index]:
+			print("x " + dir)
+			continue
+		print("  " + dir)
 
 
 func update_file_display(current_dir : String):
@@ -379,7 +390,10 @@ func on_b_next_folder_pressed():
 
 
 func on_b_parent_folder_pressed():
-	change_dir_undoable("..")
+	if dir_access.get_current_dir() != "/":
+		change_dir_undoable("..")
+	else:
+		print("parent folder does not exist")
 
 
 func on_b_root_folder_pressed():

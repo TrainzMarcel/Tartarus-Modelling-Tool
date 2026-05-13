@@ -541,7 +541,7 @@ static func selection_add_entities_undoable(entities : Array):
 		push_error("entities that are already selected are unable to be added")
 		return
 	
-	var selection_before : Array = entities.duplicate()
+	var selection_before : Array = selected_entities.duplicate()
 	selection_add_entities(entities)
 	var selection_after : Array = selected_entities.duplicate()
 	
@@ -623,6 +623,12 @@ static func get_workspace_entities():
 			all_entities.append(entity)
 	
 	return all_entities
+
+#returns flat array of all parts in workspace
+static func get_workspace_parts():
+	return WorkspaceManager.workspace.get_children().filter(func(part):
+		return part is Part
+		)
 
 
 static func selection_clear():
@@ -1056,9 +1062,15 @@ static var is_group : Callable = func(input_entity): return input_entity is Grou
 static var is_part : Callable = func(input_entity): return input_entity is Part
 
 
-static func selection_group(undo_group_reference : Group = null):
-	var selected_parts : Array = selected_entities.filter(is_part)
-	var selected_groups : Array = selected_entities.filter(is_group)
+static func selection_group(undo_group_reference : Group = null, entities : Array = []):
+	var selected_parts : Array
+	var selected_groups : Array
+	if entities.is_empty():
+		selected_parts = selected_entities.filter(is_part)
+		selected_groups = selected_entities.filter(is_group)
+	else:
+		selected_parts = entities.filter(is_part)
+		selected_groups = entities.filter(is_group)
 	
 	assert(not selected_groups.has(undo_group_reference))
 	
@@ -1072,7 +1084,7 @@ static func selection_group(undo_group_reference : Group = null):
 		EditorUI.set_l_msg("grouping failed: group depth limit (" + str(group_depth_max + 1) + ") reached.")
 		return
 	
-	if selected_entities.size() < 2:
+	if selected_entities.size() < 2 and entities.size() < 2:
 		EditorUI.set_l_msg("grouping failed: selection must contain at least 2 entities.")
 		return
 	
@@ -1090,8 +1102,10 @@ static func selection_group(undo_group_reference : Group = null):
 	
 	
 	entities_activate([group])
-	group_add_child_entities(group, selected_entities)
-	
+	if entities.is_empty():
+		group_add_child_entities(group, selected_entities)
+	else:
+		group_add_child_entities(group, entities)
 	
 	#this shouldnt be possible but i will keep it just in case of some catastrophic failure
 	if not Main.safety_check(group.primary_entity):
@@ -1147,7 +1161,7 @@ static func selection_group_undoable():
 	undo.explicit_object_references.append(undo_group)
 	undo.append_redo_action_with_args(selection_clear, [])
 	undo.append_redo_action_with_args(selection_add_entities, [selection])
-	undo.append_redo_action_with_args(selection_group, [undo_group])
+	undo.append_redo_action_with_args(selection_group, [undo_group, []])
 	UndoManager.register_undo_data(undo)
 
 
@@ -1175,9 +1189,6 @@ static func selection_ungroup():
 	entities_deactivate(selected_groups)
 	
 	
-	
-	#TODO figure out whether its better ux wise to clear the selection and only add what was grouped before
-	#or to leave all previously selected entities selected and add what was grouped before
 	selection_add_entities(to_add)
 
 
@@ -1185,28 +1196,29 @@ static func selection_ungroup_undoable():
 #preliminary checks
 	var selection : Array = selected_entities.duplicate()
 	var selected_groups : Array = selected_entities.filter(is_group)
+	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
 	
 	if selected_groups.size() < 1:
 		EditorUI.set_l_msg("ungrouping failed: at least one group must be selected.")
 		return
 	
-	
-	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
 	undo.append_undo_action_with_args(selection_clear, [])
-	undo.append_undo_action_with_args(selection_add_entities, [selection])
 	for undo_group in selected_groups:
 		undo.explicit_object_references.append(undo_group)
-		undo.append_undo_action_with_args(selection_group, [undo_group])
-	
-	undo.append_undo_action_with_args(post_selection_update, [])
+		undo.append_undo_action_with_args(selection_group, [undo_group, undo_group.child_entities.duplicate()])
 	
 	selection_ungroup()
 	var selection_after : Array = selected_entities.duplicate()
 	
+	
+	undo.append_undo_action_with_args(post_selection_update, [true])
+	
+	
 	undo.explicit_object_references.append_array(selection_after)
 	undo.append_redo_action_with_args(selection_clear, [])
-	undo.append_redo_action_with_args(selection_add_entities, [selection_after])
+	undo.append_redo_action_with_args(selection_add_entities, [selection])
 	undo.append_redo_action_with_args(selection_ungroup, [])
+	UndoManager.register_undo_data(undo)
 
 
 #handle "activating and deactivating" entities when needed for undoable deletion
@@ -1739,10 +1751,16 @@ static func group_get_root_groups_of_entities(entities : Array):
 static func group_display():
 	if is_depth_visualization_active:
 		#delete any invalid selectionboxes
+		var invalid_selectionboxes : Array = []
 		for group in group_depth_assigned_groups:
-			if selected_entities.has(group):
+			if selected_entities.has(group) or not existing_groups.has(group):
 				selection_box_delete_on_part(group)
-				group_depth_assigned_groups.erase(group)
+				invalid_selectionboxes.append(group)
+		
+		#dont erase from the array that was being iterated over
+		for group in invalid_selectionboxes:
+			group_depth_assigned_groups.erase(group)
+		
 		
 		#update all selectionboxes and add new ones where necessary
 		for group in existing_groups:

@@ -177,7 +177,7 @@ static func initialize(
 				parts_list.append(new)
 				
 				#set default scale (this must be refactored and not hardcoded!!)
-				if file_name == "cuboid.tres":
+				if file_name == "cuboid.tres" or file_name == "wedge.tres":
 					new.part_scale = Vector3(0.4, 0.2, 0.8)
 				#cylinder
 				elif file_name == "cylinder.tres":
@@ -803,7 +803,7 @@ static func confirm_export(current_dir, filename, operation_name):
 	if options.get_node("ButtonExportSelectedOnly").button_pressed:
 		entities = SelectionManager.selected_entities_internal
 	else:
-		entities = SelectionManager.get_workspace_entities()
+		entities = SelectionManager.get_workspace_parts()
 	assert(entities.all(SelectionManager.is_part))
 	
 	var filetype : String = ""
@@ -818,6 +818,7 @@ static func confirm_export(current_dir, filename, operation_name):
 	assert(filetype != "")
 	
 	export_model(current_dir, filename, filetype, entities, mesh_options, embed_materials)
+	EditorUI.fm_file.refresh_file_manager()
 
 
 static func export_model(filepath : String, filename : String, filetype : String, entities : Array, mesh_options : MeshUtils.EntityToMeshOptions, embed_materials : bool):
@@ -872,7 +873,7 @@ static func save_model(filepath : String, filename : String, embed_assets : bool
 			push_error("save selected only is enabled but nothing is selected! aborting.")
 			return
 	else:
-		save_parts = SelectionManager.get_workspace_entities()
+		save_parts = SelectionManager.get_workspace_parts()
 	
 	
 	var sql : SQLite = DataUtils.initialize_sql_db(filepath, filename)

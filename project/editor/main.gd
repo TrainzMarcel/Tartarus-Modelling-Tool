@@ -156,7 +156,7 @@ func _ready():
 	#m_options.include_metadata = true
 	#m_options.split_mesh_by_combinations = true
 	#await get_tree().create_timer(1).timeout
-	#WorkspaceManager.export_model("/media/marci/1.0 TB Hard Disk/Godot 4.5 Projects/Tartarus Modelling Tool/project/addons", "test", "res", SelectionManager.get_workspace_entities(), m_options, false)
+	#WorkspaceManager.export_model("/media/marci/1.0 TB Hard Disk/Godot 4.5 Projects/Tartarus Modelling Tool/project/addons", "test", "res", SelectionManager.get_workspace_parts(), m_options, false)
 	#$EditorUI/Button.pressed.connect(func(): 
 	#	var meshes : Array = WorkspaceManager.workspace.get_children().map(func(input):
 	#		if input is Part: return input.part_mesh_node.mesh
@@ -351,22 +351,21 @@ func _input(event : InputEvent):
 					if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_delete:
 						var undo_data : UndoManager.UndoData = UndoManager.UndoData.new()
 						
-						#undo_data.append_undo_action_with_args()
-						#if SelectionManager.selected_entities.has(hovered_entity):
-							
+						if SelectionManager.selected_entities.has(hovered_entity):
+							SelectionManager.selection_remove_entities([hovered_entity])
 						
-						
-						SelectionManager.entities_delete_undoable([hovered_entity], undo_data)
-						
+						undo_data = SelectionManager.entities_delete_undoable([hovered_entity], undo_data)
 						
 						#hide selection box
 						hover_selection_box.visible = false
+						#update selectionboxes after 1 deletion
+						SelectionManager.group_display()
 						
 						#immediately update hovered_part in case theres another part behind the deleted one
 						hovered_part = Main.part_hover_check()
 						hovered_entity = SelectionManager.get_hovered_entity(hovered_part, group_exclude_key)
 						SelectionManager.selection_box_hover_on_target(hovered_entity, true)
-						
+						UndoManager.register_undo_data(undo_data)
 	#lmb up
 			#else:
 			#	pass

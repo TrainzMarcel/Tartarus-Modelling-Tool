@@ -56,11 +56,17 @@ static func debug_print_part_combinations(combinations : Array[Array]):
 	while i < combinations.size():
 		var count : int = 0
 		var color : Color
+		var color_name : String
 		var material : Material
 		var material_name : String
 		if combinations[i].size() != 0:
 			color = combinations[i][0].part_color
+			color_name = str(color)
 			material = combinations[i][0].part_material
+			material_name = AssetManager.get_name_of_asset(material, false)
+		else:
+			material_name = "no metadata available"
+			color_name = "no metadata available"
 		
 		
 		for part in combinations[i]:
@@ -68,7 +74,7 @@ static func debug_print_part_combinations(combinations : Array[Array]):
 			count = count + mesh.surface_get_arrays(0)[0].size()
 		sum = sum + count
 		
-		print("surface " + str(i) + " vert count: ", count, "   mats: ", AssetManager.get_name_of_asset(combinations[i][0].part_material, false), " color: ", combinations[i][0].part_color)
+		print("surface " + str(i) + " vert count: ", count, "   mats: ", material_name, " color: ", color_name)
 		i = i + 1
 	print("total: ", str(sum))
 
@@ -76,14 +82,27 @@ static func debug_print_part_combinations(combinations : Array[Array]):
 static func debug_print_mesh_surfaces(mesh : Mesh):
 	var surfaces : int = mesh.get_surface_count()
 	var sum : int = 0
+	var metadata_material_names = mesh.get_meta("material_names")
+	var metadata_colors = mesh.get_meta("colors")
 	for surface in surfaces:
 		var count = mesh.surface_get_arrays(surface)[0].size()
-		print("surface " + str(surface) + " vert count: ", count, "   mats: ", mesh.get_meta("material_names")[surface], " color: ", mesh.get_meta("colors")[surface])
+		var material_name : String
+		var color_name : String
+		
+		if metadata_material_names != null and metadata_material_names.size() - 1 > surface:
+			material_name = metadata_material_names[surface]
+		else:
+			material_name = "no metadata available"
+		
+		if metadata_colors != null and metadata_colors.size() - 1 > surface:
+			color_name = metadata_colors[surface]
+		else:
+			color_name = "no metadata available"
+		
+		print("surface " + str(surface) + " vert count: ", count, "   mats: ", material_name, " color: ", color_name)
 		sum = sum + count
 	
 	print("total: ", str(sum))
-
-
 
 
 static func import_obj():
@@ -303,7 +322,7 @@ static func _append_surface_to_mesh_from_parts(part_array : Array, resulting_mes
 		var indexed_mesh : Mesh = st.commit()
 		#for every data array of that surface:
 		var surface_addition : Array = indexed_mesh.surface_get_arrays(0)
-		#the mesh array appending function!!!
+		#add surface_addition to surface_result
 		_append_to_data_array.call(surface_result, surface_addition, mesh_node.global_transform)
 		i = i + 1
 	
