@@ -741,37 +741,40 @@ static func confirm_save_load(filepath : String, name : String, operation : Stri
 	EditorUI.c_loading_message.visible = false
 
 
+static func is_button_pressed(button : BaseButton):
+	return button.button_pressed and not button.disabled
+
+
 static func initialize_file_manager_export_ui():
 	var options : ScrollContainer = EditorUI.fm_file.get_options_ui("export_model")
 	#get file type buttons
 	var main_container : VBoxContainer = options.get_node("VBoxContainer")
-	var btns : Array = main_container.get_node("GridContainer").get_children()
-	
+	var filetype_buttons : Array = main_container.get_node("GridContainer").get_children()
+	var b_tres : Button = filetype_buttons[0]
+	var b_res : Button = filetype_buttons[1]
+	var b_obj : Button = filetype_buttons[2]
+	var b_gltf : Button = filetype_buttons[3]
 	
 	#TODO tooltip add the name and color of the previously assigned material
 	var b_metadata : Button = main_container.get_node("ButtonIncludeMetadata")
 	var b_embed_materials : Button = main_container.get_node("ButtonEmbedMaterials")
 	var le_uv_box_custom_size : LineEditNumeric = main_container.get_node("HBoxUVBox/LineEditUVBoxCustomSize")
 	var b_uv_box_custom_size : Button = main_container.get_node("HBoxUVBox/ButtonUVBoxCustomSize")
+	var b_split_mesh_by_combinations : Button = main_container.get_node("ButtonSplitByCombination")
 	
-	b_uv_box_custom_size.toggled.connect(func(button_toggled : bool): le_uv_box_custom_size.editable = button_toggled)
-	
-	var disable_button : Callable = func(buttons_array : Array, toggle_array : Array):
+	var allow_button : Callable = func(buttons_array : Array, toggle_array : Array):
 		var i : int = 0
 		while i < buttons_array.size():
-			buttons_array[i].disabled = toggle_array[i]
+			buttons_array[i].disabled = not toggle_array[i]
 			i = i + 1
 	
-	
-	#.tres
-	btns[0].pressed.connect(disable_button.bind([b_metadata, b_embed_materials], [false, true]))
-	#.res
-	btns[1].pressed.connect(disable_button.bind([b_metadata, b_embed_materials], [false, false]))
-	#.obj
-	btns[2].pressed.connect(disable_button.bind([b_metadata, b_embed_materials], [true, false]))
-	#.gltf
-	btns[3].pressed.connect(disable_button.bind([b_metadata, b_embed_materials], [true, false]))
 	#configure which options are allowed
+	b_uv_box_custom_size.toggled.connect(func(button_toggled : bool): le_uv_box_custom_size.editable = button_toggled)
+	b_split_mesh_by_combinations.toggled.connect(func(button_toggled : bool): b_metadata.disabled = not button_toggled; b_embed_materials.disabled = not (button_toggled and not b_tres.button_pressed and not b_obj.button_pressed and not b_gltf.button_pressed))
+	b_tres.pressed.connect(allow_button.bind([b_metadata, b_embed_materials], [true, false]))
+	b_res.pressed.connect(allow_button.bind([b_metadata, b_embed_materials], [true, true and b_split_mesh_by_combinations.button_pressed]))
+	b_obj.pressed.connect(allow_button.bind([b_metadata, b_embed_materials], [true, false]))
+	b_gltf.pressed.connect(allow_button.bind([b_metadata, b_embed_materials], [true, false]))
 	
 	
 	#var all_options : Array = []
@@ -784,44 +787,54 @@ static func initialize_file_manager_export_ui():
 static func confirm_export(current_dir, filename, operation_name):
 	var options : Control = EditorUI.fm_file.get_options_ui("export_model")
 	var mesh_options : MeshUtils.EntityToMeshOptions = MeshUtils.EntityToMeshOptions.new()
-	var export_buttons : Array = options.get_node("VBoxContainer").get_node("GridContainer").get_children()
+	var filetype_buttons : Array = options.get_node("VBoxContainer").get_node("GridContainer").get_children()
 	options = options.get_node("VBoxContainer")
 	var entities : Array
 	#export file type buttons 
-	var b_tres : Button = export_buttons[0]
-	var b_res : Button = export_buttons[1]
-	var b_obj : Button = export_buttons[2]
-	var b_gltf : Button = export_buttons[3]
+	var b_tres : Button = filetype_buttons[0]
+	var b_res : Button = filetype_buttons[1]
+	var b_obj : Button = filetype_buttons[2]
+	var b_gltf : Button = filetype_buttons[3]
 	
 	#export option buttons
-	mesh_options.center_mesh = options.get_node("ButtonCenterMesh").button_pressed
-	mesh_options.split_mesh_by_combinations = options.get_node("ButtonSplitByCombination").button_pressed
-	mesh_options.triangulate = options.get_node("ButtonTriangulate").button_pressed
-	mesh_options.include_metadata = options.get_node("ButtonIncludeMetadata").button_pressed
-	var embed_materials : bool = options.get_node("ButtonEmbedMaterials").button_pressed
+	mesh_options.center_mesh = is_button_pressed(options.get_node("ButtonCenterMesh"))
+	mesh_options.split_mesh_by_combinations = is_button_pressed(options.get_node("ButtonSplitByCombination"))
+	mesh_options.index_mesh = is_button_pressed(options.get_node("ButtonIndexMesh"))
+	mesh_options.include_metadata = is_button_pressed(options.get_node("ButtonIncludeMetadata"))
+	mesh_options.embed_assets = is_button_pressed(options.get_node("ButtonEmbedMaterials"))
 	
-	if options.get_node("ButtonExportSelectedOnly").button_pressed:
+	#set uv options
+	if is_button_pressed(options.get_node("ButtonUVDefault")):
+		mesh_options.uv_option = MeshUtils.EntityToMeshOptions.UVOptionEnum.Unchanged
+	elif is_button_pressed(options.get_node("HBoxUVBox").get_node("ButtonUVBoxCustomSize")):
+		mesh_options.uv_option = MeshUtils.EntityToMeshOptions.UVOptionEnum.BoxProjectVariable
+		mesh_options.uv_box_project_scale = options.get_node("HBoxUVBox").get_node("LineEditUVBoxCustomSize").true_value
+	elif is_button_pressed(options.get_node("ButtonUVBoxMeshSize")):
+		mesh_options.uv_option = MeshUtils.EntityToMeshOptions.UVOptionEnum.BoxProjectMesh
+	
+	
+	if is_button_pressed(options.get_node("ButtonExportSelectedOnly")):
 		entities = SelectionManager.selected_entities_internal
 	else:
 		entities = SelectionManager.get_workspace_parts()
 	assert(entities.all(SelectionManager.is_part))
 	
 	var filetype : String = ""
-	if b_tres.button_pressed:
+	if is_button_pressed(b_tres):
 		filetype = "tres"
-	elif b_res.button_pressed:
+	elif is_button_pressed(b_res):
 		filetype = "res"
-	elif b_obj.button_pressed:
+	elif is_button_pressed(b_obj):
 		filetype = "obj"
-	elif b_gltf.button_pressed:
+	elif is_button_pressed(b_gltf):
 		filetype = "gltf"
 	assert(filetype != "")
 	
-	export_model(current_dir, filename, filetype, entities, mesh_options, embed_materials)
+	export_model(current_dir, filename, filetype, entities, mesh_options)
 	EditorUI.fm_file.refresh_file_manager()
 
 
-static func export_model(filepath : String, filename : String, filetype : String, entities : Array, mesh_options : MeshUtils.EntityToMeshOptions, embed_materials : bool):
+static func export_model(filepath : String, filename : String, filetype : String, entities : Array, mesh_options : MeshUtils.EntityToMeshOptions):
 	var valid_file_types = ["res", "tres", "obj", "gltf"]
 	assert(not filetype.begins_with("."))
 	if not valid_file_types.has(filetype):
@@ -831,13 +844,17 @@ static func export_model(filepath : String, filename : String, filetype : String
 	var mesh : Mesh = MeshUtils.convert_entities_to_mesh(mesh_options, entities, filename)
 	
 	if filetype == "res":
-		MeshUtils.export_resource(mesh, true, embed_materials, filepath, filename)
+		MeshUtils.export_resource(mesh, true, mesh_options.embed_assets, filepath, filename)
 	elif filetype == "tres":
-		MeshUtils.export_resource(mesh, false, embed_materials, filepath, filename)
+		MeshUtils.export_resource(mesh, false, mesh_options.embed_assets, filepath, filename)
 	elif filetype == "obj":
 		MeshUtils.export_obj(mesh, filepath, filename)
 	elif filetype == "gltf":
 		MeshUtils.export_gltf(mesh, filepath, filename)
+
+
+static func import_model():
+	return
 
 
 #actual save and load functions

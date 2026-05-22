@@ -4,27 +4,39 @@ class_name MeshUtils
 
 "TODO"#add resource name to these meshes
 "TODO"#clean up this code
-"TODO"#add obj export
-"TODO"#add gltf export
+"TODO"#add obj export (mesh only)
+"TODO"#add gltf export (mesh only)
 "TODO"#add obj import
 "TODO"#add gltf import
+"TODO"#add tres import
+"TODO"#add res import
+
+#i really want to add metadata for the previous color and material name of each surface for .res/.tres exports
+#then when i pull the resources into godot, i can have a plugin automatically assign the intended colors and materials
+
+#mini task list
+#mesh uv box projection
+#mesh indexing by matching vertex pos vector, normal vector, uv "vector" for each mesh surface (either color-mat combination or whole mesh)
+#mesh centering
 
 #https://docs.godotengine.org/en/stable/classes/class_gltfdocument.html
 #https://docs.godotengine.org/en/stable/classes/class_gltfstate.html#class-gltfstate
 
 class EntityToMeshOptions:
-	enum UVOption
+	enum UVOptionEnum
 	{
 		Unchanged,
 		BoxProjectMesh,
 		BoxProjectVariable
 	}
-	var box_project_scale : float
-	
-	var include_metadata : bool
-	var triangulate : bool
-	var center_mesh : bool
-	var split_mesh_by_combinations : bool
+	var uv_option : UVOptionEnum = UVOptionEnum.Unchanged
+	var uv_box_project_scale : float = 0.0
+	var index_mesh : bool = false
+	var center_mesh : bool = false
+	#mesh metadata (of combinations) can only be added if split into combinations first
+	var include_metadata : bool = false
+	var split_mesh_by_combinations : bool = false
+	var embed_assets : bool = false
 
 
 static func convert_entities_to_mesh(options : EntityToMeshOptions, entities : Array, filename : String):
@@ -117,7 +129,7 @@ static func import_resource():
 	return# ResourceLoader.load()
 
 
-static func export_resource(mesh : Mesh, binary_encoding : bool, bundle_resources : bool, filepath : String, filename : String):
+static func export_resource(mesh : Mesh, binary_encoding : bool, embed_assets : bool, filepath : String, filename : String):
 	var file_type : String
 	if binary_encoding:
 		file_type = ".res"
@@ -125,7 +137,7 @@ static func export_resource(mesh : Mesh, binary_encoding : bool, bundle_resource
 		file_type = ".tres"
 	
 	var flags : int = 0
-	if bundle_resources:
+	if embed_assets:
 		flags = flags | ResourceSaver.FLAG_BUNDLE_RESOURCES
 	
 	return ResourceSaver.save(mesh, filepath.path_join(filename) + file_type, flags)
@@ -137,7 +149,7 @@ static func import_gltf():
 static func export_gltf(mesh : Mesh, filepath : String, filename : String):
 	return
 
-
+"TODO"#replace complex logic with calls to assetmanager
 static func _classify_parts_by_material_and_color_combination(part_array : Array):
 	#parallel arrays
 	#the same material will occupy one item for every color used with it
@@ -211,43 +223,11 @@ static func _create_mesh_from_part_combinations(part_array : Array[Array]):
 		resulting_mesh = _append_surface_to_mesh_from_parts(part_array[i], resulting_mesh)
 		i = i + 1
 	
-	#resulting_mesh = _append_surface_to_mesh_from_parts_2(part_array, resulting_mesh)
-	
-	
-	
 	return resulting_mesh
 
 
-"TODO"
 static func _create_mesh_from_parts(part_array : Array):
-	return
-
-
-
-static func _append_surface_to_mesh_from_parts_2(part_array : Array[Array], resulting_mesh : ArrayMesh):
-	
-	
-	#every surface
-	var i : int = 0
-	var j : int = 0
-	while i < part_array.size():
-		j = 0
-		#add all parts of group to mesh
-		var st : SurfaceTool = SurfaceTool.new()
-		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-		while j < part_array[i].size():
-			st.append_from(part_array[i][j].part_mesh_node.mesh, 0, part_array[i][j].part_mesh_node.global_transform)
-			j = j + 1
-		
-		#finish surface
-		#too bad the materials dont work correctly when indices are added
-		#(at least automatically, maybe theres a way to add them manually without breaking the mesh surfaces)
-		st.deindex()
-		st.commit(resulting_mesh)
-		i = i + 1
-	
-	return resulting_mesh
-
+	return _append_surface_to_mesh_from_parts(part_array, ArrayMesh.new())
 
 
 "TODO"
@@ -352,21 +332,52 @@ static func _get_material_name_array_from_part_combinations(part_array : Array[A
 	return material_name_array
 
 
-static func _add_metadata_to_mesh(part_array : Array[Array], mesh : Resource):
-	mesh.set_meta("material_names", _get_material_name_array_from_part_combinations(part_array))
+static func _add_metadata_to_mesh(part_array : Array[Array], mesh : ArrayMesh):
+	var material_names : Array[String] = _get_material_name_array_from_part_combinations(part_array)
+	mesh.set_meta("material_names", material_names)
 	mesh.set_meta("colors", _get_color_array_from_part_combinations(part_array))
-
-
-"TODO"#possibly figure out a class name for a class which takes care of file operations like saving loading importing and exporting
-#or simply throw the export function into workspace manager again x3
-
-#i really want to add metadata for the previous color and material name of each surface for .res/.tres exports
-#then when i pull the resources into godot, i can have a plugin automatically assign the intended colors and materials
+	for i in mesh.get_surface_count():
+		#material names and hex colors are included
+		mesh.surface_set_name(i, str(i) + "_" + material_names[i])
 
 
 #for obj and gltf export and also for anyone who doesnt wanna use triplanar materials
-static func _uv_box_projection():
+static func _uv_box_projection(surface_array : Array, scale : float):
+	var sides : PackedVector3Array = [
+		Vector3.RIGHT,
+		Vector3.LEFT,
+		Vector3.UP,
+		Vector3.DOWN,
+		Vector3.BACK,
+		Vector3.FORWARD
+		]
+	
+	#45 degrees tolerance from normal vector for every side
+	var dot_tolerance : float = cos(deg_to_rad(45))
+	for side in sides:
+		_uv_plane_projection(surface_array, scale, side, dot_tolerance)
+
+
+static func _uv_plane_projection(surface_array : Array, scale : float, normal_vector : Vector3, dot_tolerance : float):
+	var matching_surface_indices : PackedInt32Array = _classify_surface_array_indices_by_normal(surface_array, normal_vector, dot_tolerance)
+	var i : int = 0
+	while i < matching_surface_indices.size():
+		#var vertex_position
+		#var uv_coordinate
+		
+		
+		i = i + 1
+	
 	return
+
+
+static func _classify_surface_array_indices_by_normal(surface_array : Array, normal_vector : Vector3, dot_tolerance : float):
+	
+	return #PackedInt32Array of array indices
+
+
+static func _get_mesh_aabb(mesh : ArrayMesh):
+	mesh.get_aabb()
 
 
 static func _get_meshes_from_parts(part_array : Array):

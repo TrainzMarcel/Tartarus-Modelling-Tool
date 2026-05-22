@@ -347,9 +347,41 @@ static var tooltip_panel : StyleBox = preload(FilePathRegistry.style_tooltip_pan
 static var tooltip_font : Theme = preload(FilePathRegistry.style_font_tooltip)
 
 static func custom_tooltip(for_text : String):
+	for_text = for_text.replace("(", "[ ").replace(")", " ]").replace("\\n", " ").replace("\n", " ")
 	var tooltip : Label = Label.new()
-	for_text = for_text
-	tooltip.text = for_text.replace("(", "[ ").replace(")", " ]").replace("\\n", " ")
+	var lines : PackedStringArray = [""]
+	var words : PackedStringArray = for_text.split(" ", false)
+	var max_characters_per_line : int = 44
+	
+	
+	#split by space
+	var i : int = 0
+	while i < words.size():
+		var last_line : String = lines[lines.size() - 1]
+		var last_line_addition : String
+		var is_first_word : bool = last_line.is_empty()
+		
+		if is_first_word:
+			last_line_addition = words[i]
+		else:
+			last_line_addition = last_line + " " + words[i]
+		
+		#if the line doesnt exceed max characters with and without the next word, add it
+		if last_line.length() < max_characters_per_line and last_line_addition.length() < max_characters_per_line:
+			lines[lines.size() - 1] = last_line_addition
+		#edge case, the next word exceeds max characters so add it and start the next line 
+		elif words[i].length() > max_characters_per_line:
+			lines.append(words[i])
+			lines.append("")
+		#if both conditions fail, start the next line without going to the next word
+		else:
+			lines.append("")
+			continue
+		
+		i = i + 1
+	
+	tooltip.text = "\n".join(lines)
+	
 	tooltip.theme = EditorUI.tooltip_font
 	tooltip.add_theme_stylebox_override("normal", tooltip_panel)
 	tooltip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
