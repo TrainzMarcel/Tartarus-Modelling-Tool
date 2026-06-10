@@ -107,7 +107,7 @@ static func debug_print_mesh_surfaces(mesh : Mesh):
 			material_name = "no metadata available"
 		
 		if metadata_colors != null and metadata_colors.size() - 1 > surface:
-			color_name = metadata_colors[surface]
+			color_name = str(metadata_colors[surface])
 		else:
 			color_name = "no metadata available"
 		
@@ -267,27 +267,71 @@ static func _append_surface_to_mesh_from_parts(part_array : Array, resulting_mes
 					surface_addition[k][l] = surface_addition[k][l] * transform_rotation
 					l = l + 1
 			
-			elif k == Mesh.ARRAY_INDEX:
-				pass
-				#if not surface_addition[k] is PackedInt32Array:
-				#	surface_addition[k] = PackedInt32Array()
-				#	surface_addition[k].resize(surface_addition[Mesh.ARRAY_VERTEX].size())
-				#	for index in surface_addition[Mesh.ARRAY_INDEX].size():
-				#		surface_addition[Mesh.ARRAY_INDEX][index] = index
-				#if not surface_result[k] is PackedInt32Array:
-				#	surface_result[k] = PackedInt32Array()
-				
-				#var l : int = 0
-				#while l < surface_addition[Mesh.ARRAY_VERTEX].size():
-				#	surface_addition[k][l] = surface_addition[k][l] + surface_result[Mesh.ARRAY_INDEX].size()
-				#	l = l + 1
-				
-			
 			
 			if surface_addition[k] != null:
 				surface_result[k].append_array(surface_addition[k])
 			
 			k = k + 1
+	
+	
+	var _add_indexing_to_data_array : Callable = func(surface_input : Array):
+		var surface_result_indexed : Array = _initialize_mesh_array_from_mesh_array(surface_input)
+		
+		#hold the index of every first index that is being mapped to
+		#if there is no match, then just append the original vertex's index (j)
+		var index_mapping : PackedInt32Array = []
+		#indices of vertices that will be added to the new data array
+		var index_unique : PackedInt32Array = []
+		
+		var j : int = 0
+		assert(surface_input[Mesh.ARRAY_TEX_UV] != null and surface_input[Mesh.ARRAY_TEX_UV].size() != 0)
+		assert(surface_input[Mesh.ARRAY_NORMAL] != null and surface_input[Mesh.ARRAY_NORMAL].size() != 0)
+		while j < surface_input[Mesh.ARRAY_VERTEX].size():
+			var k : int = 0
+			while k <= j:
+				if k == j:
+					index_mapping.append(index_unique.size())
+					index_unique.append(j)
+					break
+				
+				var vertex_match : bool = surface_input[Mesh.ARRAY_VERTEX][k] == surface_input[Mesh.ARRAY_VERTEX][j]
+				var normal_match : bool = surface_input[Mesh.ARRAY_NORMAL][k] == surface_input[Mesh.ARRAY_NORMAL][j]
+				var uv_match : bool = surface_input[Mesh.ARRAY_TEX_UV][k] == surface_input[Mesh.ARRAY_TEX_UV][j]
+				if vertex_match and normal_match and uv_match:
+					#append the first matching index
+					index_mapping.append(index_unique.find(k))
+					break
+				k = k + 1
+			j = j + 1
+		
+		
+		#reduce the array to the unique indices
+		j = 0
+		while j < index_unique.size():
+			var copy_index : int = index_unique[j]
+			var array : int = 0
+			while array < Mesh.ARRAY_MAX:
+				
+				if surface_input[array] != null:
+					if array != Mesh.ARRAY_TANGENT:
+						surface_result_indexed[array].append(surface_input[array][copy_index])
+					else:
+						var quadruple : int = copy_index * 4
+						surface_result_indexed[array].append(surface_input[array][quadruple])
+						surface_result_indexed[array].append(surface_input[array][quadruple + 1])
+						surface_result_indexed[array].append(surface_input[array][quadruple + 2])
+						surface_result_indexed[array].append(surface_input[array][quadruple + 3])
+				
+				
+				array = array + 1
+			j = j + 1
+		
+		#finally, set the mesh to index mode
+		surface_result_indexed[Mesh.ARRAY_INDEX] = index_mapping
+		
+		var arrays_debug = BoxMesh.new().get_mesh_arrays()
+		
+		return surface_result_indexed
 	
 	
 	#add all parts into one mesh
@@ -298,6 +342,8 @@ static func _append_surface_to_mesh_from_parts(part_array : Array, resulting_mes
 		var mesh_node : MeshInstance3D = part_array[i].part_mesh_node
 		#TODO var surface_count : int = mesh_node.mesh.get_surface_count()
 		st.create_from(mesh_node.mesh, 0)
+		#deindex the part first because combining indexed meshes does not bring enough benefit vs the complexity
+		#combining indexed meshes would mean vertices are only shared within the same parts and not between separate parts
 		st.deindex()
 		var indexed_mesh : Mesh = st.commit()
 		#for every data array of that surface:
@@ -306,8 +352,12 @@ static func _append_surface_to_mesh_from_parts(part_array : Array, resulting_mes
 		_append_to_data_array.call(surface_result, surface_addition, mesh_node.global_transform)
 		i = i + 1
 	
+	#add indexing
+	surface_result = _add_indexing_to_data_array.call(surface_result)
+	
+	
 	#finish surface
-	resulting_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_result)
+	resulting_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_result, [], {}, Mesh.ARRAY_FORMAT_INDEX)
 	return resulting_mesh
 
 
@@ -394,11 +444,12 @@ static func _uv_plane_projection(surface_array : Array, scale : float, normal_ve
 	return
 
 
+"TODO TEST"
 static func _classify_surface_array_indices_by_normal(surface_array : Array, normal_vector : Vector3, dot_tolerance : float):
 	var result : PackedInt32Array = []
 	for i in surface_array[Mesh.ARRAY_NORMAL].size():
-		if surface_array[Mesh.ARRAY_NORMAL][i]:
-			return
+		if surface_array[Mesh.ARRAY_NORMAL][i].dot(normal_vector) <= dot_tolerance:
+			result.append(i)
 	
 	return result
 
@@ -411,3 +462,27 @@ static func _get_meshes_from_parts(part_array : Array):
 	return part_array.map(func(input : Part):
 		return input.part_mesh_node.mesh
 		)
+
+
+static func _initialize_mesh_array_from_mesh_array(mesh_array : Array):
+	var result : Array = []
+	result.resize(Mesh.ARRAY_MAX)
+	
+	var i : int = 0
+	while i < Mesh.ARRAY_MAX:
+		if result[i] == null and mesh_array[i] != null:
+			if mesh_array[i] is PackedVector3Array:
+				result[i] = PackedVector3Array()
+			elif mesh_array[i] is PackedVector2Array:
+				result[i] = PackedVector2Array()
+			elif mesh_array[i] is PackedInt32Array:
+				result[i] = PackedInt32Array()
+			elif mesh_array[i] is PackedFloat32Array:
+				result[i] = PackedFloat32Array()
+			elif mesh_array[i] is PackedColorArray:
+				result[i] = PackedColorArray()
+			elif mesh_array[i] is PackedByteArray:
+				result[i] = PackedByteArray()
+		i = i + 1
+	
+	return result
