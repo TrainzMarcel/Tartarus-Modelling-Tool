@@ -180,4 +180,5 @@
 13.5.	fixed undoing of ungroup operation not working, fixed selection_add_undoable not undoing correctly, fixed group_display selectionbox being left behind after using delete tool on group and also when undoing and redoing this action
 21.5.	made _add_metadata_to_mesh() add material name and color to each surface, implemented _create_mesh_from_parts() (which creates a mesh with a single material instead of many)
 22.5.	implemented automated tooltip text splitting, started working on uv box projection
+10.6.	continue working on uv projection
 TODO:	TODO cleanup

@@ -343,6 +343,7 @@ static func _add_metadata_to_mesh(part_array : Array[Array], mesh : ArrayMesh):
 
 #for obj and gltf export and also for anyone who doesnt wanna use triplanar materials
 static func _uv_box_projection(surface_array : Array, scale : float):
+	assert(scale > 0.0)
 	var sides : PackedVector3Array = [
 		Vector3.RIGHT,
 		Vector3.LEFT,
@@ -359,12 +360,34 @@ static func _uv_box_projection(surface_array : Array, scale : float):
 
 
 static func _uv_plane_projection(surface_array : Array, scale : float, normal_vector : Vector3, dot_tolerance : float):
+	assert(scale > 0.0)
+	assert(dot_tolerance != 0.0)
+	assert(normal_vector.length() == 1.0)
+	
+	#getting the planar vectors from normal vector
+	#1. find the vector closest to UP from normal vector
+	#create the cross product between normal vector and an up vector with defaults for up and down
+	var cross_product : Vector3 = Vector3()
+	if normal_vector == Vector3.UP:
+		cross_product = Vector3.RIGHT
+	elif normal_vector == Vector3.DOWN:
+		cross_product = Vector3.LEFT
+	else:
+		cross_product = normal_vector.cross(Vector3.UP)
+	
+	#create the planar up vector by rotating 90 degrees
+	var normal_vector_up : Vector3 = cross_product.normalized().rotated(normal_vector, -deg_to_rad(90))
+	#sanity check by creating the planar right vector using a second cross product
+	var normal_vector_right : Vector3 = normal_vector.cross(normal_vector_up)
+	assert(normal_vector_right.is_normalized())
+	
 	var matching_surface_indices : PackedInt32Array = _classify_surface_array_indices_by_normal(surface_array, normal_vector, dot_tolerance)
 	var i : int = 0
 	while i < matching_surface_indices.size():
-		#var vertex_position
-		#var uv_coordinate
-		
+		var vertex_position : Vector3 = surface_array[Mesh.ARRAY_VERTEX][i]
+		var uv_coordinate_u : float = vertex_position.dot(normal_vector_right)
+		var uv_coordinate_v : float = vertex_position.dot(normal_vector_up)
+		surface_array[Mesh.ARRAY_TEX_UV][i] = Vector2(uv_coordinate_u, uv_coordinate_v)
 		
 		i = i + 1
 	
@@ -372,8 +395,12 @@ static func _uv_plane_projection(surface_array : Array, scale : float, normal_ve
 
 
 static func _classify_surface_array_indices_by_normal(surface_array : Array, normal_vector : Vector3, dot_tolerance : float):
+	var result : PackedInt32Array = []
+	for i in surface_array[Mesh.ARRAY_NORMAL].size():
+		if surface_array[Mesh.ARRAY_NORMAL][i]:
+			return
 	
-	return #PackedInt32Array of array indices
+	return result
 
 
 static func _get_mesh_aabb(mesh : ArrayMesh):
