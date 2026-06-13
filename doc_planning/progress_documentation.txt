@@ -181,4 +181,6 @@
 21.5.	made _add_metadata_to_mesh() add material name and color to each surface, implemented _create_mesh_from_parts() (which creates a mesh with a single material instead of many)
 22.5.	implemented automated tooltip text splitting, started working on uv box projection
 10.6.	continue working on uv box projection + implemented mesh indexing
+11.6.	fix minor problem with meshutils debug print, added automatic mesh array initializing function
+13.6.	add support to _append_surface_to_mesh_from_parts for multi-surface meshes to be appended to the final mesh, working on cleaning up and optimizing mesh indexing
 TODO:	TODO cleanup

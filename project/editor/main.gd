@@ -160,6 +160,8 @@ func _ready():
 	var m_options : MeshUtils.EntityToMeshOptions = MeshUtils.EntityToMeshOptions.new()
 	m_options.include_metadata = true
 	m_options.split_mesh_by_combinations = true
+	m_options.index_mesh = false
+	
 	await get_tree().create_timer(1).timeout
 	WorkspaceManager.export_model("/media/marci/1.0 TB Hard Disk/Godot 4.5 Projects/Tartarus Modelling Tool/project/addons", "test", "res", SelectionManager.get_workspace_parts(), m_options)
 	$EditorUI/Button.pressed.connect(func(): 

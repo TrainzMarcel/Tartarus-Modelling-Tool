@@ -31,7 +31,8 @@ class EntityToMeshOptions:
 	}
 	var uv_option : UVOptionEnum = UVOptionEnum.Unchanged
 	var uv_box_project_scale : float = 0.0
-	var index_mesh : bool = false
+	#add indexing enabled by default
+	var index_mesh : bool = true
 	var center_mesh : bool = false
 	#mesh metadata (of combinations) can only be added if split into combinations first
 	var include_metadata : bool = false
@@ -54,10 +55,16 @@ static func convert_entities_to_mesh(options : EntityToMeshOptions, entities : A
 	
 	
 	if options.include_metadata:
-		MeshUtils._add_metadata_to_mesh(combinations, mesh_result)
+		_add_metadata_to_mesh(combinations, mesh_result)
+	
+	#last step
+	if not options.index_mesh:
+		mesh_result = _deindex_mesh(mesh_result)
 	
 	debug_print_part_combinations(combinations)
 	debug_print_mesh_surfaces(mesh_result)
+	
+	
 	mesh_result.resource_name = filename
 	return mesh_result
 
@@ -71,7 +78,7 @@ static func debug_print_part_combinations(combinations : Array[Array]):
 		var color_name : String
 		var material : Material
 		var material_name : String
-		if combinations[i].size() != 0:
+		if combinations[i].size() > 0 and combinations[i][0].part_material != null and combinations[i][0].part_color != null:
 			color = combinations[i][0].part_color
 			color_name = str(color)
 			material = combinations[i][0].part_material
@@ -94,8 +101,11 @@ static func debug_print_part_combinations(combinations : Array[Array]):
 static func debug_print_mesh_surfaces(mesh : Mesh):
 	var surfaces : int = mesh.get_surface_count()
 	var sum : int = 0
-	var metadata_material_names = mesh.get_meta("material_names")
-	var metadata_colors = mesh.get_meta("colors")
+	var metadata_material_names = null
+	var metadata_colors = null
+	if mesh.has_meta("material_names"): metadata_material_names = mesh.get_meta("material_names")
+	if mesh.has_meta("colors"): metadata_colors = mesh.get_meta("colors")
+	
 	for surface in surfaces:
 		var count = mesh.surface_get_arrays(surface)[0].size()
 		var material_name : String
@@ -233,27 +243,14 @@ static func _create_mesh_from_parts(part_array : Array):
 "TODO"
 static func _append_surface_to_mesh_from_parts(part_array : Array, resulting_mesh : ArrayMesh):
 	var surface_result : Array
-	surface_result.resize(Mesh.ARRAY_MAX)
-	
-	
 	@warning_ignore("confusable_local_declaration")
 	var _append_to_data_array : Callable = func(surface_result : Array, surface_addition : Array, mesh_transform : Transform3D):
+		surface_result = _initialize_mesh_array_from_mesh_array(surface_addition, surface_result)
+		
+		#iterate over all data
 		var k : int = 0
 		var transform_rotation : Basis = mesh_transform.basis.orthonormalized().inverse()
 		while k < surface_addition.size():
-			if surface_result[k] == null and surface_addition[k] != null:
-				if surface_addition[k] is PackedVector3Array:
-					surface_result[k] = PackedVector3Array()
-				elif surface_addition[k] is PackedVector2Array:
-					surface_result[k] = PackedVector2Array()
-				elif surface_addition[k] is PackedInt32Array:
-					surface_result[k] = PackedInt32Array()
-				elif surface_addition[k] is PackedFloat32Array:
-					surface_result[k] = PackedFloat32Array()
-				elif surface_addition[k] is PackedColorArray:
-					surface_result[k] = PackedColorArray()
-				elif surface_addition[k] is PackedByteArray:
-					surface_result[k] = PackedByteArray()
 			
 			if k == Mesh.ARRAY_VERTEX:
 				var l : int = 0
@@ -267,48 +264,55 @@ static func _append_surface_to_mesh_from_parts(part_array : Array, resulting_mes
 					surface_addition[k][l] = surface_addition[k][l] * transform_rotation
 					l = l + 1
 			
-			
 			if surface_addition[k] != null:
 				surface_result[k].append_array(surface_addition[k])
 			
 			k = k + 1
 	
 	
-	var _add_indexing_to_data_array : Callable = func(surface_input : Array):
+	#to recap: shared vertices are connected into tris by sets of three vertex indices in the index array
+	var _add_indexing_to_mesh_array : Callable = func(surface_input : Array):
 		var surface_result_indexed : Array = _initialize_mesh_array_from_mesh_array(surface_input)
 		
 		#hold the index of every first index that is being mapped to
 		#if there is no match, then just append the original vertex's index (j)
-		var index_mapping : PackedInt32Array = []
+		var indices_mapping : PackedInt32Array = []
 		#indices of vertices that will be added to the new data array
-		var index_unique : PackedInt32Array = []
+		var indices_unique : PackedInt32Array = []
 		
-		var j : int = 0
+		#sanity check
 		assert(surface_input[Mesh.ARRAY_TEX_UV] != null and surface_input[Mesh.ARRAY_TEX_UV].size() != 0)
 		assert(surface_input[Mesh.ARRAY_NORMAL] != null and surface_input[Mesh.ARRAY_NORMAL].size() != 0)
-		while j < surface_input[Mesh.ARRAY_VERTEX].size():
-			var k : int = 0
-			while k <= j:
-				if k == j:
-					index_mapping.append(index_unique.size())
-					index_unique.append(j)
-					break
-				
-				var vertex_match : bool = surface_input[Mesh.ARRAY_VERTEX][k] == surface_input[Mesh.ARRAY_VERTEX][j]
-				var normal_match : bool = surface_input[Mesh.ARRAY_NORMAL][k] == surface_input[Mesh.ARRAY_NORMAL][j]
-				var uv_match : bool = surface_input[Mesh.ARRAY_TEX_UV][k] == surface_input[Mesh.ARRAY_TEX_UV][j]
+		
+		"TODO"#use a dictionary to speed up the process
+		#"target" vertex: original vertex for which a matching vertex is being searched for
+		var index_target : int = 0
+		while index_target < surface_input[Mesh.ARRAY_VERTEX].size():
+			#"query" vertex: vertex which is being compared to the target vertex to see if its a match
+			var index_query : int = 0
+			while index_query < index_target:
+				var vertex_match : bool = surface_input[Mesh.ARRAY_VERTEX][index_query] == surface_input[Mesh.ARRAY_VERTEX][index_target]
+				var normal_match : bool = surface_input[Mesh.ARRAY_NORMAL][index_query] == surface_input[Mesh.ARRAY_NORMAL][index_target]
+				var uv_match : bool = surface_input[Mesh.ARRAY_TEX_UV][index_query] == surface_input[Mesh.ARRAY_TEX_UV][index_target]
 				if vertex_match and normal_match and uv_match:
 					#append the first matching index
-					index_mapping.append(index_unique.find(k))
+					indices_mapping.append(indices_unique.find(index_query))
 					break
-				k = k + 1
-			j = j + 1
+				index_query = index_query + 1
+			
+			#if all vertices before the target vertex have been searched through and no match
+			#has been found for the target, then add it as a new unique vertex
+			if index_query == index_target:
+				indices_mapping.append(indices_unique.size())
+				indices_unique.append(index_target)
+			
+			index_target = index_target + 1
 		
 		
 		#reduce the array to the unique indices
-		j = 0
-		while j < index_unique.size():
-			var copy_index : int = index_unique[j]
+		var j : int = 0
+		while j < indices_unique.size():
+			var copy_index : int = indices_unique[j]
 			var array : int = 0
 			while array < Mesh.ARRAY_MAX:
 				
@@ -327,12 +331,12 @@ static func _append_surface_to_mesh_from_parts(part_array : Array, resulting_mes
 			j = j + 1
 		
 		#finally, set the mesh to index mode
-		surface_result_indexed[Mesh.ARRAY_INDEX] = index_mapping
-		
-		var arrays_debug = BoxMesh.new().get_mesh_arrays()
-		
+		surface_result_indexed[Mesh.ARRAY_INDEX] = indices_mapping
 		return surface_result_indexed
 	
+	
+	#cache deindexed meshes such as cuboids
+	var deindexed_meshes : Dictionary = {}
 	
 	#add all parts into one mesh
 	#for every part:
@@ -340,25 +344,47 @@ static func _append_surface_to_mesh_from_parts(part_array : Array, resulting_mes
 	while i < part_array.size():
 		var st : SurfaceTool = SurfaceTool.new()
 		var mesh_node : MeshInstance3D = part_array[i].part_mesh_node
-		#TODO var surface_count : int = mesh_node.mesh.get_surface_count()
-		st.create_from(mesh_node.mesh, 0)
+		var deindexed_mesh : Mesh = deindexed_meshes.get(AssetManager.get_name_of_asset(mesh_node.mesh, false, true))
 		#deindex the part first because combining indexed meshes does not bring enough benefit vs the complexity
 		#combining indexed meshes would mean vertices are only shared within the same parts and not between separate parts
-		st.deindex()
-		var indexed_mesh : Mesh = st.commit()
-		#for every data array of that surface:
-		var surface_addition : Array = indexed_mesh.surface_get_arrays(0)
-		#add surface_addition to surface_result
-		_append_to_data_array.call(surface_result, surface_addition, mesh_node.global_transform)
+		if deindexed_mesh == null:
+			deindexed_mesh = _deindex_mesh(mesh_node.mesh)
+			#cache deindexed meshes
+			deindexed_meshes[AssetManager.get_name_of_asset(mesh_node.mesh, false, true)] = deindexed_mesh
+		
+		assert(deindexed_mesh != null)
+		var surface_count : int = deindexed_mesh.get_surface_count()
+		var l : int = 0
+		while l < surface_count:
+			var surface_addition : Array = deindexed_mesh.surface_get_arrays(l)
+			#add surface_addition to surface_result
+			#for every data array of that surface, append it to the surface_result
+			_append_to_data_array.call(surface_result, surface_addition, mesh_node.global_transform)
+			l = l + 1
+		
 		i = i + 1
 	
 	#add indexing
-	surface_result = _add_indexing_to_data_array.call(surface_result)
+	surface_result = _add_indexing_to_mesh_array.call(surface_result)
 	
 	
 	#finish surface
 	resulting_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_result, [], {}, Mesh.ARRAY_FORMAT_INDEX)
 	return resulting_mesh
+
+
+static func _deindex_mesh(mesh_input : Mesh):
+	var st : SurfaceTool = SurfaceTool.new()
+	var mesh_result : ArrayMesh = ArrayMesh.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var i : int = 0
+	while i < mesh_input.get_surface_count():
+		st.append_from(mesh_input, i, Transform3D.IDENTITY)
+		st.deindex()
+		mesh_result = st.commit(mesh_result)
+		i = i + 1
+	
+	return mesh_result
 
 
 static func _get_color_array_from_part_combinations(part_array : Array[Array]):
@@ -377,7 +403,10 @@ static func _get_material_name_array_from_part_combinations(part_array : Array[A
 		#part array is guaranteed to have at least 1 item
 		var material : Material = i[0].part_material
 		#get_name_of
-		material_name_array.append(AssetManager.get_name_of_asset(material, false) + "," + i[0].part_color.to_html(false))
+		if material != null:
+			material_name_array.append(AssetManager.get_name_of_asset(material, false) + "," + i[0].part_color.to_html(false))
+		else:
+			material_name_array.append("NULL")
 	
 	return material_name_array
 
@@ -391,6 +420,7 @@ static func _add_metadata_to_mesh(part_array : Array[Array], mesh : ArrayMesh):
 		mesh.surface_set_name(i, str(i) + "_" + material_names[i])
 
 
+"TODO TEST"
 #for obj and gltf export and also for anyone who doesnt wanna use triplanar materials
 static func _uv_box_projection(surface_array : Array, scale : float):
 	assert(scale > 0.0)
@@ -409,6 +439,7 @@ static func _uv_box_projection(surface_array : Array, scale : float):
 		_uv_plane_projection(surface_array, scale, side, dot_tolerance)
 
 
+"TODO TEST"
 static func _uv_plane_projection(surface_array : Array, scale : float, normal_vector : Vector3, dot_tolerance : float):
 	assert(scale > 0.0)
 	assert(dot_tolerance != 0.0)
@@ -464,8 +495,9 @@ static func _get_meshes_from_parts(part_array : Array):
 		)
 
 
-static func _initialize_mesh_array_from_mesh_array(mesh_array : Array):
-	var result : Array = []
+#ensure a new or existing_array has all the data arrays that the given mesh_array has
+static func _initialize_mesh_array_from_mesh_array(mesh_array : Array, existing_array : Array = []):
+	var result : Array = existing_array
 	result.resize(Mesh.ARRAY_MAX)
 	
 	var i : int = 0
@@ -483,6 +515,18 @@ static func _initialize_mesh_array_from_mesh_array(mesh_array : Array):
 				result[i] = PackedColorArray()
 			elif mesh_array[i] is PackedByteArray:
 				result[i] = PackedByteArray()
+			
+			#make sure the array got initialized correctly if mesh_array 
+			assert(result[i] != null or mesh_array[i] == null)
+			if result[i] != null and mesh_array[i] == null:
+				push_error("the given mesh array is missing a data array")
+			
 		i = i + 1
 	
 	return result
+
+
+#
+static func _copy_mesh_array_data(mesh_array : Array, ):
+	
+	return
