@@ -1006,6 +1006,7 @@ static func load_model(filepath : String, filename : String):
 	
 	var zip_reader : ZIPReader = DataUtils.unzip_start(filepath, filename)
 	if zip_reader == null:
+		push_error("failed to open model file.")
 		return
 	DataUtils.unzip_assets(zip_reader, filepath, filename)
 	var save_version : int = DataUtils.zip_check_save_version(zip_reader)
@@ -1023,7 +1024,7 @@ static func load_model(filepath : String, filename : String):
 	elif save_version == 1:
 		data_filename = DataUtils.zip_copy_to_filesystem(zip_reader, "", data_filename, filepath)
 		if data_filename == "" or data_filename == null:
-			push_error("aborting loading.")
+			push_error("empty filename, aborting loading.")
 			DataUtils.unzip_end(zip_reader, filepath, files_to_clean_up)
 			return
 		var sql : SQLite = SQLite.new()

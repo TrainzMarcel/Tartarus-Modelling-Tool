@@ -457,10 +457,11 @@ theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
 text = "UV Mapping"
 horizontal_alignment = 1
 
-[node name="ButtonUVDefault" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer"]
+[node name="ButtonUVUnchanged" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer"]
 custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
 size_flags_horizontal = 3
+tooltip_text = "Leave UVs unchanged. This will cause textures to stretch to the size of each individual part."
 theme = ExtResource("3_y5lmk")
 theme_override_font_sizes/font_size = 0
 theme_override_styles/normal = ExtResource("4_v8wiq")
@@ -472,6 +473,7 @@ button_pressed = true
 button_group = SubResource("ButtonGroup_wpiqv")
 text = "Unchanged"
 autowrap_mode = 2
+script = ExtResource("17_jw4td")
 
 [node name="HBoxUVBox" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer"]
 custom_minimum_size = Vector2(43, 43)
@@ -483,6 +485,7 @@ theme = ExtResource("3_y5lmk")
 custom_minimum_size = Vector2(140, 43)
 layout_mode = 2
 size_flags_horizontal = 3
+tooltip_text = "Input a custom size for box projection. 1.0 = Texture will align with a 1x1x1 Cube. 2.0 = Texture will tile twice on a 1x1x1 Cube."
 theme = ExtResource("3_y5lmk")
 theme_override_font_sizes/font_size = 0
 theme_override_styles/normal = ExtResource("4_v8wiq")
@@ -493,6 +496,7 @@ toggle_mode = true
 button_group = SubResource("ButtonGroup_wpiqv")
 text = "Box Projection (Input Size)"
 autowrap_mode = 2
+script = ExtResource("17_jw4td")
 
 [node name="LineEditUVBoxCustomSize" type="LineEdit" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer/HBoxUVBox"]
 custom_minimum_size = Vector2(43, 43)
@@ -511,6 +515,7 @@ metadata/_custom_type_script = "uid://daccittnn72bi"
 custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
 size_flags_horizontal = 3
+tooltip_text = "Take the length on the X, Y and Z dimensions of the whole model and average them for the box projection scale. It will try to make the texture matcn up to the size of the model."
 theme = ExtResource("3_y5lmk")
 theme_override_font_sizes/font_size = 0
 theme_override_styles/normal = ExtResource("4_v8wiq")
@@ -521,6 +526,7 @@ toggle_mode = true
 button_group = SubResource("ButtonGroup_wpiqv")
 text = "Box Projection (Model Size)"
 autowrap_mode = 2
+script = ExtResource("17_jw4td")
 
 [node name="ControlSpacer2" type="Control" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer"]
 custom_minimum_size = Vector2(0, 10)

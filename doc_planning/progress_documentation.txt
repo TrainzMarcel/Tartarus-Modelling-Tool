@@ -183,4 +183,6 @@
 10.6.	continue working on uv box projection + implemented mesh indexing
 11.6.	fix minor problem with meshutils debug print, added automatic mesh array initializing function
 13.6.	add support to _append_surface_to_mesh_from_parts for multi-surface meshes to be appended to the final mesh, working on cleaning up and optimizing mesh indexing
+18.6.	added standard prefixes in meshutils (_mesh for functions operating on an entire mesh, _surface for functions operating on individual mesh surfaces). added uv operation logic to convert_entities_to_mesh()
+28.6.	finished uv box projection, split indexing into its own function to be called after uv projection. this creates cleaner seams between the edges of the box projection. added mesh centering.
 TODO:	TODO cleanup

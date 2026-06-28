@@ -1,5 +1,6 @@
 TOP PRIORITY
 implement import/export (.obj, .gltf, .tres/.res)
+fix the filemanagers export ui by creating an exclusion/incompatibility system for options that disables buttons for conflicting options
 get release notes and use them to update the manual accordingly
 add cool sounds for saving and loading
 release v0.1-indev-3 with release notes

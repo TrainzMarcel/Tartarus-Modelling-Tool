@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://hul5x10ptumj"]
+[gd_scene load_steps=21 format=3 uid="uid://hul5x10ptumj"]
 
 [ext_resource type="Script" uid="uid://c4oqa8akwhger" path="res://editor/main.gd" id="1_4xdr8"]
 [ext_resource type="PackedScene" uid="uid://c01nu37bjhxsi" path="res://editor/classes/camera/free_look_camera.tscn" id="2_n3tr4"]
@@ -8,8 +8,8 @@
 [ext_resource type="Material" uid="uid://dg0pq3t4uvees" path="res://editor/classes/selection_box/highlight_mat.res" id="8_4p0vi"]
 [ext_resource type="Material" uid="uid://b0neg6iikmfuo" path="res://editor/classes/selection_box/selection_box_mat.res" id="8_jrpsl"]
 [ext_resource type="Script" uid="uid://hsyj255fcxqh" path="res://editor/classes/selection_box/selection_box.gd" id="9_n7hy1"]
-[ext_resource type="ArrayMesh" uid="uid://bas57f1fxfty3" path="res://addons/test.res" id="9_xw27u"]
-[ext_resource type="Script" uid="uid://cup1y6wlnah7y" path="res://editor/test.gd" id="10_jq74w"]
+[ext_resource type="ArrayMesh" path="res://debug/test.res" id="9_xw27u"]
+[ext_resource type="Texture2D" uid="uid://bt33cbwvyfasm" path="res://debug/cat.webp" id="10_xw27u"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_jgeb0"]
 sky_top_color = Color(0.168627, 0.470588, 0.690196, 1)
@@ -56,6 +56,9 @@ corner_radius_bottom_left = 5
 [sub_resource type="ImmediateMesh" id="ImmediateMesh_xw27u"]
 
 [sub_resource type="ImmediateMesh" id="ImmediateMesh_jq74w"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_66aea"]
+albedo_texture = ExtResource("10_xw27u")
 
 [node name="Main" type="Node3D" node_paths=PackedStringArray("e_cam", "e_second_cam", "e_workspace", "e_transform_handle_root", "e_hover_selection_box", "e_abb_selection_box", "ui_node", "e_panel_selection_rect")]
 script = ExtResource("1_4xdr8")
@@ -153,6 +156,7 @@ script = ExtResource("9_n7hy1")
 box_scale = Vector3(1, 1, 1)
 
 [node name="Test" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58.826622, 0, 31.434116)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3651633, 0, 0.07649368)
 mesh = ExtResource("9_xw27u")
-script = ExtResource("10_jq74w")
+surface_material_override/0 = SubResource("StandardMaterial3D_66aea")
+surface_material_override/1 = SubResource("StandardMaterial3D_66aea")
