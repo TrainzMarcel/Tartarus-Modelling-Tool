@@ -150,29 +150,10 @@ func _ready():
 	
 	"TODO"#fix this class because its broken again
 	HyperDebug.initialize(false, get_tree().root)
+	
 	"DEBUG"
-	#WorkspaceManager.load_model("/home/marci/Desktop/save testing/", "test_5b_sql")#"lab_1_SQL")#
+	WorkspaceManager.debug_mesh_export()
 	
-	#"TODO"#add explicit default values to options
-	var new_part : Part = WorkspaceManager.available_part_types[0].copy()#cuboid
-	#var new_part : Part = WorkspaceManager.available_part_types[4].copy()#sphere
-	#var new_part : Part = WorkspaceManager.available_part_types[1].copy()#cylinder
-	WorkspaceManager.workspace.add_child(new_part)
-	#new_part.part_scale = Vector3.ONE
-	new_part.initialize()
-	new_part.position = Vector3(0, 10, 0)
-	
-	SelectionManager.entities_delete([WorkspaceManager.workspace.get_node("Part")])
-	
-	var m_options : MeshUtils.EntityToMeshOptions = MeshUtils.EntityToMeshOptions.new()
-	m_options.center_mesh = true
-	m_options.include_metadata = true
-	m_options.split_mesh_by_combinations = true
-	m_options.uv_option = MeshUtils.EntityToMeshOptions.UVOptionEnum.BoxProjectVariable
-	m_options.uv_box_project_scale = 2.0
-	
-	await get_tree().create_timer(1).timeout
-	WorkspaceManager.export_model("/media/marci/1.0 TB Hard Disk/Godot 4.5 Projects/Tartarus Modelling Tool/project/debug", "test", "res", SelectionManager.get_workspace_parts(), m_options)
 	$EditorUI/Button.pressed.connect(func(): 
 		var meshes : Array = WorkspaceManager.workspace.get_children().map(func(input):
 			if input is Part: return input.part_mesh_node.mesh

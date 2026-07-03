@@ -11,30 +11,39 @@ class_name OBJExporter
 #signal export_completed(object_file, material_file)
 
 # Dump given mesh to obj file
-static func save_mesh_to_files(mesh: Mesh, file_path: String, object_name: String):
+static func save_mesh_to_files(mesh: ArrayMesh, file_path: String, object_name: String):
 	# Based on:
 	# https://github.com/fractilegames/godot-obj-export/blob/main/objexport.gd
 	# https://github.com/mohammedzero43/CSGExport-Godot/blob/master/addons/CSGExport/csgexport.gd
-	
-	#emit_signal("export_started")
-	
 	# Blank material, used when no material is assigned to mesh
 	var blank_material = StandardMaterial3D.new()
 	blank_material.resource_name = "BlankMaterial"
+	#obj file content
+	var output : String = "mtllib "+object_name+".mtl\no " + object_name + "\n"
+	#mtl file content
+	var mat_output : String = ""
 	
-	var output = "mtllib "+object_name+".mtl\no " + object_name + "\n"
-	var mat_output := ""
+	
+	#emit_signal("export_started")
 	
 	# Write all surfaces in mesh (obj file indices start from 1)
 	var index_base = 1
 	for s in range(mesh.get_surface_count()):
+		var mat_check = mesh.surface_get_material(s)
+		var mat : StandardMaterial3D = mesh.surface_get_material(s)
+		if mat_check != null and mat_check is StandardMaterial3D:
+			mat = mesh.surface_get_material(s)
+		else:
+			mat = blank_material
 		
+		var has_uv = false
+		var has_n = false
 		var surface = mesh.surface_get_arrays(s)
-		if surface[ArrayMesh.ARRAY_INDEX] == null:
-			push_warning("Saving only supports indexed meshes for now, skipping non-indexed surface " + str(s))
-			continue
 		
-		var mat: StandardMaterial3D = mesh.surface_get_material(s)
+		
+		if surface[ArrayMesh.ARRAY_INDEX] == null:
+			push_error("Saving only supports indexed meshes for now, skipping non-indexed surface " + str(s))
+			continue
 		
 		
 		output += "g surface" + str(s) + "\n"
@@ -42,13 +51,11 @@ static func save_mesh_to_files(mesh: Mesh, file_path: String, object_name: Strin
 		for v in surface[ArrayMesh.ARRAY_VERTEX]:
 			output += "v " + str(v.x) + " " + str(v.y) + " " + str(v.z) + "\n"
 		
-		var has_uv = false
 		if surface[ArrayMesh.ARRAY_TEX_UV] != null:
+			has_uv = true
 			for uv in surface[ArrayMesh.ARRAY_TEX_UV]:
 				output += "vt " + str(uv.x) + " " + str(1.0 - uv.y) + "\n"
-			has_uv = true
 		
-		var has_n = false
 		if surface[ArrayMesh.ARRAY_NORMAL] != null:
 			for n in surface[ArrayMesh.ARRAY_NORMAL]:
 				output += "vn " + str(n.x) + " " + str(n.y) + " " + str(n.z) + "\n"
@@ -58,7 +65,7 @@ static func save_mesh_to_files(mesh: Mesh, file_path: String, object_name: Strin
 		if mat == null:
 			mat = blank_material
 		
-		output += "usemtl "+str(mat)+"\n"
+		output += "usemtl "+ mesh.surface_get_name(s) +"\n"
 		
 		# Write triangle faces
 		# Note: Godot's front face winding order is different from obj file format
@@ -103,7 +110,7 @@ static func save_mesh_to_files(mesh: Mesh, file_path: String, object_name: Strin
 		index_base += surface[ArrayMesh.ARRAY_VERTEX].size()
 		
 		# Create Materials for current surface
-		mat_output += str("newmtl "+str(mat))+'\n'
+		mat_output += str("newmtl "+ mesh.surface_get_name(s))+'\n'
 		mat_output += str("Kd ",mat.albedo_color.r," ",mat.albedo_color.g," ",mat.albedo_color.b)+'\n'
 		mat_output += str("Ke ",mat.emission.r," ",mat.emission.g," ",mat.emission.b)+'\n'
 		mat_output += str("d ",mat.albedo_color.a)+"\n"

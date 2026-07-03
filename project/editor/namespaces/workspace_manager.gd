@@ -760,28 +760,38 @@ static func initialize_file_manager_export_ui():
 	var b_embed_materials : Button = main_container.get_node("ButtonEmbedMaterials")
 	var le_uv_box_custom_size : LineEditNumeric = main_container.get_node("HBoxUVBox/LineEditUVBoxCustomSize")
 	var b_uv_box_custom_size : Button = main_container.get_node("HBoxUVBox/ButtonUVBoxCustomSize")
+	var b_uv_unchanged : Button = main_container.get_node("ButtonUVUnchanged")
+	var b_uv_box_mesh_size : Button = main_container.get_node("ButtonUVBoxMeshSize")
 	var b_split_mesh_by_combinations : Button = main_container.get_node("ButtonSplitByCombination")
-	
-	var allow_button : Callable = func(buttons_array : Array, toggle_array : Array):
-		var i : int = 0
-		while i < buttons_array.size():
-			buttons_array[i].disabled = not toggle_array[i]
-			i = i + 1
-	
-	#configure which options are allowed
-	b_uv_box_custom_size.toggled.connect(func(button_toggled : bool): le_uv_box_custom_size.editable = button_toggled)
-	b_split_mesh_by_combinations.toggled.connect(func(button_toggled : bool): b_metadata.disabled = not button_toggled; b_embed_materials.disabled = not (button_toggled and not b_tres.button_pressed and not b_obj.button_pressed and not b_gltf.button_pressed))
-	b_tres.pressed.connect(allow_button.bind([b_metadata, b_embed_materials], [true, false]))
-	b_res.pressed.connect(allow_button.bind([b_metadata, b_embed_materials], [true, true and b_split_mesh_by_combinations.button_pressed]))
-	b_obj.pressed.connect(allow_button.bind([b_metadata, b_embed_materials], [true, false]))
-	b_gltf.pressed.connect(allow_button.bind([b_metadata, b_embed_materials], [true, false]))
+	var b_index : Button = main_container.get_node("ButtonIndexMesh")
 	
 	
-	#var all_options : Array = []
-	#var valid_tres_options : Array = []
-	#var valid_res_options : Array = []
-	#var valid_obj_options : Array = []
-	#var valid_gltf_options : Array = []
+	var on_relevant_buttons_pressed : Callable = func():
+		b_embed_materials.disabled = true
+		b_metadata.disabled = true
+		le_uv_box_custom_size.editable = false
+		b_index.disabled = true
+		
+		#input field		requires box projection (input size)
+		#embed materials	requires .res and split mesh by combinations
+		#append metadata	requires (.tres or .res) and split mesh by combinations
+		#index mesh			requires (.tres or .res or .gltf) (non-indexed not supported by .obj exporter for whatever reason)
+		#all other buttons are free of any requirements
+		if is_button_pressed(b_uv_box_custom_size):
+			le_uv_box_custom_size.editable = true
+		
+		if is_button_pressed(b_res) and is_button_pressed(b_split_mesh_by_combinations):
+			b_embed_materials.disabled = false
+		
+		if (is_button_pressed(b_tres) or is_button_pressed(b_res)) and is_button_pressed(b_split_mesh_by_combinations):
+			b_metadata.disabled = false
+		
+		if is_button_pressed(b_tres) or is_button_pressed(b_res) or is_button_pressed(b_gltf):
+			b_index.disabled = false
+	
+	for button in [b_tres, b_res, b_gltf, b_obj, b_split_mesh_by_combinations, b_uv_box_custom_size, b_uv_unchanged, b_uv_box_mesh_size]:
+		button.pressed.connect(on_relevant_buttons_pressed)
+
 
 #collect export options and feed them to the export_model function
 static func confirm_export(current_dir, filename, operation_name):
@@ -799,7 +809,9 @@ static func confirm_export(current_dir, filename, operation_name):
 	#export option buttons
 	mesh_options.center_mesh = is_button_pressed(options.get_node("ButtonCenterMesh"))
 	mesh_options.split_mesh_by_combinations = is_button_pressed(options.get_node("ButtonSplitByCombination"))
+	#obj exporter requires mesh indexing
 	mesh_options.index_mesh = is_button_pressed(options.get_node("ButtonIndexMesh"))
+	mesh_options.index_mesh = mesh_options.index_mesh or is_button_pressed(b_obj)
 	mesh_options.include_metadata = is_button_pressed(options.get_node("ButtonIncludeMetadata"))
 	mesh_options.embed_assets = is_button_pressed(options.get_node("ButtonEmbedMaterials"))
 	
@@ -848,9 +860,35 @@ static func export_model(filepath : String, filename : String, filetype : String
 	elif filetype == "tres":
 		MeshUtils.export_resource(mesh, false, mesh_options.embed_assets, filepath, filename)
 	elif filetype == "obj":
-		MeshUtils.export_obj(mesh, filepath, filename)
+		MeshUtils.export_obj(mesh, filepath, filename, mesh_options.include_metadata)
 	elif filetype == "gltf":
 		MeshUtils.export_gltf(mesh, filepath, filename)
+
+
+static func debug_mesh_export():
+	SelectionManager.entities_delete([WorkspaceManager.workspace.get_node("Part")])
+	
+	WorkspaceManager.load_model("/home/marci/Desktop/save testing/", "test_5b_sql")
+	#WorkspaceManager.load_model("/home/marci/Desktop/save testing/", "lab_1_SQL")
+	
+	#var new_part : Part = WorkspaceManager.available_part_types[0].copy()#cuboid
+	#var new_part : Part = WorkspaceManager.available_part_types[4].copy()#sphere
+	#var new_part : Part = WorkspaceManager.available_part_types[1].copy()#cylinder
+	#WorkspaceManager.workspace.add_child(new_part)
+	#new_part.part_scale = Vector3.ONE
+	#new_part.initialize()
+	#new_part.position = Vector3(0, 10, 0)
+	
+	
+	var m_options : MeshUtils.EntityToMeshOptions = MeshUtils.EntityToMeshOptions.new()
+	#m_options.center_mesh = true
+	m_options.include_metadata = true
+	m_options.split_mesh_by_combinations = true
+	#m_options.uv_option = MeshUtils.EntityToMeshOptions.UVOptionEnum.BoxProjectVariable
+	#m_options.uv_box_project_scale = 2.0
+	
+	await workspace.get_tree().create_timer(1).timeout
+	WorkspaceManager.export_model("/media/marci/1.0 TB Hard Disk/Godot 4.5 Projects/Tartarus Modelling Tool/project/debug", "test", "obj", SelectionManager.get_workspace_parts(), m_options)
 
 
 static func import_model():

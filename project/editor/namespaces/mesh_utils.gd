@@ -135,11 +135,27 @@ static func debug_print_mesh_surfaces(input_mesh : Mesh):
 
 
 static func import_obj():
-	return
+	return#OBJExporter.load_mesh_from_file()
 
 
-static func export_obj(mesh : Mesh, filepath : String, filename : String):
-	OBJExporter.save_mesh_to_files(mesh, filepath, filename)
+static func export_obj(mesh : ArrayMesh, filepath : String, filename : String, include_metadata : bool):
+	var surfaces : int = mesh.get_surface_count()
+	var i : int = 0
+	
+	"TODO"#in data_utils.zip_copy_to_filesystem() theres good code for checking if no existing files are being overwritten
+	#this should be used in all writing processes
+	
+	while i < surfaces:
+		var st : SurfaceTool = SurfaceTool.new()
+		st.create_from(mesh, i)
+		var mesh_surface : ArrayMesh = st.commit()
+		if include_metadata:
+			var surface_name : String = mesh.surface_get_name(i)
+			surface_name = surface_name.split("_", false, 1)[1]
+			mesh_surface.surface_set_name(0, surface_name)
+		
+		OBJExporter.save_mesh_to_files(mesh_surface, filepath, filename + "_" + str(i))
+		i = i + 1
 
 
 static func import_resource():
@@ -165,6 +181,7 @@ static func import_gltf():
 
 static func export_gltf(mesh : Mesh, filepath : String, filename : String):
 	return
+
 
 "TODO"#replace complex logic with calls to assetmanager
 static func _classify_parts_by_material_and_color_combination(part_array : Array):
@@ -494,7 +511,6 @@ static func _surface_append_surface_to_mesh_from_parts(part_array : Array, resul
 	return resulting_mesh
 
 
-"TODO TEST"
 #for obj and gltf export and also for anyone who doesnt wanna use triplanar materials
 static func _surface_uv_box_projection(surface_array : Array, scale : float):
 	assert(scale > 0.0)
@@ -516,7 +532,6 @@ static func _surface_uv_box_projection(surface_array : Array, scale : float):
 	return surface_array
 
 
-"TODO TEST"
 static func _surface_uv_plane_projection(surface_array : Array, scale : float, uv_projection_vector : Vector3, dot_tolerance : float):
 	assert(scale > 0.0)
 	assert(dot_tolerance != 0.0)
