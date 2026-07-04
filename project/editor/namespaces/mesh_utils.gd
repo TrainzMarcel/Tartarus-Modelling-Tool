@@ -145,6 +145,7 @@ static func export_obj(mesh : ArrayMesh, filepath : String, filename : String, i
 	"TODO"#in data_utils.zip_copy_to_filesystem() theres good code for checking if no existing files are being overwritten
 	#this should be used in all writing processes
 	
+	#there should be a separate option to split the obj into separate groupings if obj supports that (g grouping?)
 	while i < surfaces:
 		var st : SurfaceTool = SurfaceTool.new()
 		st.create_from(mesh, i)
@@ -179,7 +180,14 @@ static func export_resource(mesh : Mesh, binary_encoding : bool, embed_assets : 
 static func import_gltf():
 	return
 
+
 static func export_gltf(mesh : Mesh, filepath : String, filename : String):
+	
+	
+	
+	
+	
+	
 	return
 
 

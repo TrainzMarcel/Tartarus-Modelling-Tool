@@ -868,8 +868,8 @@ static func export_model(filepath : String, filename : String, filetype : String
 static func debug_mesh_export():
 	SelectionManager.entities_delete([WorkspaceManager.workspace.get_node("Part")])
 	
-	WorkspaceManager.load_model("/home/marci/Desktop/save testing/", "test_5b_sql")
-	#WorkspaceManager.load_model("/home/marci/Desktop/save testing/", "lab_1_SQL")
+	#WorkspaceManager.load_model("/home/marci/Desktop/save testing/", "test_5b_sql")
+	WorkspaceManager.load_model("/home/marci/Desktop/save testing/", "lab_1_SQL")
 	
 	#var new_part : Part = WorkspaceManager.available_part_types[0].copy()#cuboid
 	#var new_part : Part = WorkspaceManager.available_part_types[4].copy()#sphere
@@ -884,11 +884,14 @@ static func debug_mesh_export():
 	#m_options.center_mesh = true
 	m_options.include_metadata = true
 	m_options.split_mesh_by_combinations = true
-	#m_options.uv_option = MeshUtils.EntityToMeshOptions.UVOptionEnum.BoxProjectVariable
-	#m_options.uv_box_project_scale = 2.0
+	m_options.uv_option = MeshUtils.EntityToMeshOptions.UVOptionEnum.BoxProjectVariable
+	m_options.uv_box_project_scale = 1.0
 	
 	await workspace.get_tree().create_timer(1).timeout
+	var timer : float = Time.get_unix_time_from_system()
 	WorkspaceManager.export_model("/media/marci/1.0 TB Hard Disk/Godot 4.5 Projects/Tartarus Modelling Tool/project/debug", "test", "obj", SelectionManager.get_workspace_parts(), m_options)
+	print("export time elapsed: ", Time.get_unix_time_from_system() - timer)
+	
 
 
 static func import_model():
