@@ -442,6 +442,7 @@ static func zip_start(filepath : String, filename : String):
 
 static func zip_end(zip_packer : ZIPPacker, filepath : String, files_to_clean_up : PackedStringArray):
 	var error : int
+	"TODO"#make this into a reusable function
 	for file in files_to_clean_up:
 		error = DirAccess.remove_absolute(filepath.path_join(file))
 		if error != OK:

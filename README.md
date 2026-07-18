@@ -56,16 +56,16 @@ v0.1
 
 
 	MODEL EXPORT (everything related to model exporting)
-	  ME1 possibility to export as .obj with materials and colors
+	x ME1 possibility to export as .obj (cut: with materials and colors)
 	  ME2 possibility to automatically set up materials in an input godot project, on models the material slots will be named after the material they use, with a number after to distinguish between any different colors (since u need a new material for every extra color on a model) and this way whenever a model is imported it will utilize the shared material
 	  ME3 every model with said specifically named material slots that is imported in a project with these shared materials, has the materials assigned automatically
-	  ME4 if an existing model is reimported/overwritten, update all the nodes with this model to the newest version, keeping the assigned materials as well as possible (i think i can only do this using a plugin)
+	x ME4 if an existing model is reimported/overwritten, update all the nodes with this model to the newest version, keeping the assigned materials as well as possible (i think i can only do this using a plugin) (note: godot already does this)
 	  ME5 possibility to save filepaths for fast and easy reimporting
 
 
 	MISC
 	x MI1 saving and loading of models using csv files
-	  MI2 loading of obj or gltf models
+	x MI2 loading of obj or gltf models
 	  MI3 automated build/export chain
 
 	EXTRAS (requirements added later on)

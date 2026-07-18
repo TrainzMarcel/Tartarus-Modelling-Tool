@@ -152,7 +152,7 @@ func _ready():
 	HyperDebug.initialize(false, get_tree().root)
 	
 	"DEBUG"
-	WorkspaceManager.debug_mesh_export()
+	#WorkspaceManager.debug_mesh_export()
 	
 	$EditorUI/Button.pressed.connect(func(): 
 		var meshes : Array = WorkspaceManager.workspace.get_children().map(func(input):

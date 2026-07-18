@@ -754,6 +754,7 @@ static func initialize_file_manager_export_ui():
 	var b_res : Button = filetype_buttons[1]
 	var b_obj : Button = filetype_buttons[2]
 	var b_gltf : Button = filetype_buttons[3]
+	var b_glb : Button = filetype_buttons[4]
 	
 	#TODO tooltip add the name and color of the previously assigned material
 	var b_metadata : Button = main_container.get_node("ButtonIncludeMetadata")
@@ -775,7 +776,7 @@ static func initialize_file_manager_export_ui():
 		#input field		requires box projection (input size)
 		#embed materials	requires .res and split mesh by combinations
 		#append metadata	requires (.tres or .res) and split mesh by combinations
-		#index mesh			requires (.tres or .res or .gltf) (non-indexed not supported by .obj exporter for whatever reason)
+		#index mesh			requires (.tres or .res or .gltf or .glb) (non-indexed not supported by .obj exporter for whatever reason)
 		#all other buttons are free of any requirements
 		if is_button_pressed(b_uv_box_custom_size):
 			le_uv_box_custom_size.editable = true
@@ -786,7 +787,7 @@ static func initialize_file_manager_export_ui():
 		if (is_button_pressed(b_tres) or is_button_pressed(b_res)) and is_button_pressed(b_split_mesh_by_combinations):
 			b_metadata.disabled = false
 		
-		if is_button_pressed(b_tres) or is_button_pressed(b_res) or is_button_pressed(b_gltf):
+		if is_button_pressed(b_tres) or is_button_pressed(b_res) or is_button_pressed(b_gltf) or is_button_pressed(b_glb):
 			b_index.disabled = false
 	
 	for button in [b_tres, b_res, b_gltf, b_obj, b_split_mesh_by_combinations, b_uv_box_custom_size, b_uv_unchanged, b_uv_box_mesh_size]:
@@ -805,6 +806,7 @@ static func confirm_export(current_dir, filename, operation_name):
 	var b_res : Button = filetype_buttons[1]
 	var b_obj : Button = filetype_buttons[2]
 	var b_gltf : Button = filetype_buttons[3]
+	var b_glb : Button = filetype_buttons[4]
 	
 	#export option buttons
 	mesh_options.center_mesh = is_button_pressed(options.get_node("ButtonCenterMesh"))
@@ -840,6 +842,8 @@ static func confirm_export(current_dir, filename, operation_name):
 		filetype = "obj"
 	elif is_button_pressed(b_gltf):
 		filetype = "gltf"
+	elif is_button_pressed(b_glb):
+		filetype = "glb"
 	assert(filetype != "")
 	
 	export_model(current_dir, filename, filetype, entities, mesh_options)
@@ -847,7 +851,7 @@ static func confirm_export(current_dir, filename, operation_name):
 
 
 static func export_model(filepath : String, filename : String, filetype : String, entities : Array, mesh_options : MeshUtils.EntityToMeshOptions):
-	var valid_file_types = ["res", "tres", "obj", "gltf"]
+	var valid_file_types = ["res", "tres", "obj", "gltf", "glb"]
 	assert(not filetype.begins_with("."))
 	if not valid_file_types.has(filetype):
 		push_error("filetype invalid, aborting mesh export")
@@ -862,14 +866,16 @@ static func export_model(filepath : String, filename : String, filetype : String
 	elif filetype == "obj":
 		MeshUtils.export_obj(mesh, filepath, filename, mesh_options.include_metadata)
 	elif filetype == "gltf":
-		MeshUtils.export_gltf(mesh, filepath, filename)
+		MeshUtils.export_gltf(mesh, false, filepath, filename)
+	elif filetype == "glb":
+		MeshUtils.export_gltf(mesh, true, filepath, filename)
 
 
 static func debug_mesh_export():
 	SelectionManager.entities_delete([WorkspaceManager.workspace.get_node("Part")])
 	
-	#WorkspaceManager.load_model("/home/marci/Desktop/save testing/", "test_5b_sql")
-	WorkspaceManager.load_model("/home/marci/Desktop/save testing/", "lab_1_SQL")
+	WorkspaceManager.load_model("/home/marci/Desktop/save testing/", "test_5b_sql")
+	#WorkspaceManager.load_model("/home/marci/Desktop/save testing/", "lab_1_SQL")
 	
 	#var new_part : Part = WorkspaceManager.available_part_types[0].copy()#cuboid
 	#var new_part : Part = WorkspaceManager.available_part_types[4].copy()#sphere
@@ -889,8 +895,10 @@ static func debug_mesh_export():
 	
 	await workspace.get_tree().create_timer(1).timeout
 	var timer : float = Time.get_unix_time_from_system()
-	WorkspaceManager.export_model("/media/marci/1.0 TB Hard Disk/Godot 4.5 Projects/Tartarus Modelling Tool/project/debug", "test", "obj", SelectionManager.get_workspace_parts(), m_options)
+	WorkspaceManager.export_model("/media/marci/1.0 TB Hard Disk/Godot 4.5 Projects/Tartarus Modelling Tool/project/debug", "test", "glb", SelectionManager.get_workspace_parts(), m_options)
+	#WorkspaceManager.import_model("/media/marci/1.0 TB Hard Disk/Godot 4.5 Projects/Tartarus Modelling Tool/project/debug", "test", "glb", SelectionManager.get_workspace_parts(), m_options)
 	print("export time elapsed: ", Time.get_unix_time_from_system() - timer)
+	
 	
 
 

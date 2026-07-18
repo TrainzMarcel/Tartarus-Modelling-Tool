@@ -13,7 +13,7 @@ class_name MeshUtils
 #for refactor
 "TODO"#in convert_entities_to_mesh() under options.index_mesh, the indexing changes the format of the array
 #which also changes the required flags in ArrayMesh.add_surface_from_arrays()
-#i will need an object with these parameters which i can plug into that function directly
+#i will need a flags object with these parameters which i can plug into that function directly
 #it would save confusion if any flags need to change throughout the convert entities function
 
 #_surface prefix means the function operates on the mesh array of individual surfaces
@@ -36,6 +36,13 @@ class EntityToMeshOptions:
 	var include_metadata : bool = false
 	var split_mesh_by_combinations : bool = false
 	var embed_assets : bool = false
+
+
+class MeshToEntityOptions:
+	var center_mesh : bool = true
+	var split_mesh_by_material_slots : bool = false
+	var remove_materials : bool = false
+	var add_mesh_to_spawn_list : bool = false
 
 
 static func convert_entities_to_mesh(options : EntityToMeshOptions, entities : Array, filename : String):
@@ -74,6 +81,23 @@ static func convert_entities_to_mesh(options : EntityToMeshOptions, entities : A
 	
 	mesh_result.resource_name = filename
 	return mesh_result
+
+
+static func convert_mesh_to_entity(options : MeshToEntityOptions, mesh : Mesh):
+	if options.center_mesh:
+		mesh = _mesh_center_based_on_aabb(mesh)
+	
+	if options.split_mesh_by_material_slots:
+		return
+	
+	if options.remove_materials:
+		return
+	
+	if options.add_mesh_to_spawn_list:
+		return
+	
+	
+	
 
 
 static func debug_print_part_combinations(combinations : Array[Array]):
@@ -159,8 +183,16 @@ static func export_obj(mesh : ArrayMesh, filepath : String, filename : String, i
 		i = i + 1
 
 
-static func import_resource():
-	return# ResourceLoader.load()
+static func import_resource(filepath : String, filename : String):
+	var result : Resource = AssetManager.get_asset_by_name(filename)
+	if result != null:
+		return result
+	
+	result = ResourceLoader.load(filepath.path_join(filename))
+	if not result is Mesh:
+		return null
+	
+	return result
 
 
 static func export_resource(mesh : Mesh, binary_encoding : bool, embed_assets : bool, filepath : String, filename : String):
@@ -181,14 +213,30 @@ static func import_gltf():
 	return
 
 
-static func export_gltf(mesh : Mesh, filepath : String, filename : String):
+#gltfstate and gltfdocument for some reason require access to the node tree
+static func export_gltf(mesh : Mesh, binary_encoding : bool, filepath : String, filename : String):#, workspace : Node, filepath : String, filename : String):
+	var gltf_document_save : GLTFDocument = GLTFDocument.new()
+	var gltf_state_save : GLTFState = GLTFState.new()
+	var mesh_instance : MeshInstance3D = MeshInstance3D.new()
+	mesh_instance.mesh = mesh
 	
+	#insert gltf data into gltf_state_save
+	var error : int = gltf_document_save.append_from_scene(mesh_instance, gltf_state_save)
+	if error != OK:
+		push_error("converting mesh into gltf data failed. aborting export process.")
+	assert(error == OK)
+	# The file extension in the output `path` (`.gltf` or `.glb`) determines
+	# whether the output uses text or binary format.
+	# `GLTFDocument.generate_buffer()` is also available for saving to memory.
+	if binary_encoding:
+		error = gltf_document_save.write_to_filesystem(gltf_state_save, filepath.path_join(filename) + ".glb")
+	else:
+		error = gltf_document_save.write_to_filesystem(gltf_state_save, filepath.path_join(filename) + ".gltf")
 	
-	
-	
-	
-	
-	return
+	if error != OK:
+		push_error("writing gltf file to filesystem failed. aborting export process.")
+	assert(error == OK)
+	mesh_instance.queue_free()
 
 
 "TODO"#replace complex logic with calls to assetmanager

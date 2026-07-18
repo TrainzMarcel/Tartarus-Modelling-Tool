@@ -1601,6 +1601,7 @@ static func group_recalculate_hashmap_and_root():
 			root_group_child_parts_hashmap[part] = r_group
 
 
+#DISUSED
 #same function but without affecting the existing references and only adding specific groups
 static func group_append_to_hashmap(groups_to_append : Array):
 	for group in groups_to_append:

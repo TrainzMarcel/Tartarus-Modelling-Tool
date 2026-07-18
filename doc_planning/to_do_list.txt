@@ -1,9 +1,17 @@
 TOP PRIORITY
-implement import/export (.obj, .gltf, .tres/.res)
+implement import (.obj, .gltf, .tres/.res)
 get release notes and use them to update the manual accordingly
 add cool sounds for saving and loading
 release v0.1-indev-3 with release notes
 
+	  MI3 automated build/export chain
+	  IC3 tool 2	there will also be a small square for each axis, which allows users to move parts planarly
+	  ME2 possibility to automatically set up materials in an input godot project, on models the material slots will be named after the material they use, with a number after to distinguish between any different colors (since u need a new material for every extra color on a model) and this way whenever a model is imported it will utilize the shared material
+	  ME3 every model with said specifically named material slots that is imported in a project with these shared materials, has the materials assigned automatically
+	  ME5 possibility to save filepaths for fast and easy reimporting
+	  E1	possibility to group selections using ctrl + g and to ungroup ctrl + shift + g. groupings should be able to contain other groupings.
+update manual with above features
+release v0.1
 
 implement import of reference images .png, .jpg in 3d space)
 
@@ -15,6 +23,7 @@ automatic recalculation and pooling subsystem that uses wrapper objects and:
 	marks objects as dirty which it then automatically recalculates at the end of the frame
 	doesnt delete objects and doesnt create objects if it has some left in its pool.
 
+loading processes should be handled on at least one separate thread as to not stall the program. this will require another generic system for starting jobs and loading screens.
 
 clean up TODOS
 add errorsubsystem with cool console that is like a dropdown which slides up from the middle message bar
@@ -23,11 +32,15 @@ https://docs.godotengine.org/en/stable/tutorials/scripting/logging.html
 https://docs.godotengine.org/en/stable/classes/class_logger.html#class-logger
 
 settings menu? centralized settings loader? csv? autosave repeat duration? automated property setting ui? hint system disable? default file manager directory?
+assetsubsystem additional required features:
+source tracking: enum{from_asset_folder, from_save_file, from_import} this will add a more intelligent layer for embedding assets in save files, making it possible to only embed assets that were not on the users system
+error handling: when assets fail to import, store the original asset name in the error replacements, so that no data loss occurs during saving of assets that failed to load
+
 
 
 automated build system: https://www.youtube.com/watch?v=wZsAY_SdEb8
-implement snapping for wedge face 
 implement asset import export (reference images)
+implement snapping for wedge face 
 
 clear annoying unpreventable warnings from loading: https://forum.godotengine.org/t/any-way-to-clear-the-output-panel-from-a-tool-script/75135/3
 when hovering over color or material, preview the hovered property on selected part (also refine the ux in this todo)
@@ -69,8 +82,9 @@ v0.2
 debug dropdown (next to the file and edit ones) with toggleable 3d labels for all entities that exist in 3d space, extents/scale visualization
 toggleable grid shader for context-important surfaces
 
-implement csg (first with godot csg, then my own) https://www.youtube.com/watch?v=Iqmg4gblreo&pp=ygUlY29uc3RydWN0aXZlIHNvbGlkIGdlb21ldHJ5IGdhbWUgdGFsaw%3D%3D
+implement csg (using godot csg) https://www.youtube.com/watch?v=Iqmg4gblreo&pp=ygUlY29uc3RydWN0aXZlIHNvbGlkIGdlb21ldHJ5IGdhbWUgdGFsaw%3D%3D
 procedural shapes: cylinders and torus with tweakable numbers of vertices
+implement bezier curvable meshes
 implement beveling edge tool which can add a bevel to an edge with a mouse click and remove it with a bevel remove tool. bevel options will be in a dropdown or ui panel. probably becoming visible on top of the snapping options panel.
 implement part properties inspector
 implement part locking
@@ -78,5 +92,5 @@ recolor selection box to red if 2 selected parts are overlapping perfectly
 implement multi part coloring and material application
 implement automatic hidden face reduction algorithm
 skybox picker
-implement uv mapping
+x implement uv mapping
 (maybe?) refine selection system to work with normal godot assets because it would be fun to use this as a level editor

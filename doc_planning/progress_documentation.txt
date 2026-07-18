@@ -185,6 +185,8 @@
 13.6.	add support to _append_surface_to_mesh_from_parts for multi-surface meshes to be appended to the final mesh, working on cleaning up and optimizing mesh indexing
 18.6.	added standard prefixes in meshutils (_mesh for functions operating on an entire mesh, _surface for functions operating on individual mesh surfaces). added uv operation logic to convert_entities_to_mesh()
 28.6.	finished uv box projection, split indexing into its own function to be called after uv projection. this creates cleaner seams between the edges of the box projection. added mesh centering.
-2.7.	export ui button exclusion now works, obj export now works but very slowly. will optimize the obj export function for larger meshes.
+3.7.	export ui button exclusion now works, obj export now works but very slowly. will optimize the obj export function for larger meshes.
 4.7.	obj export code optimized to be very fast now, 3 seconds for exporting a 200k vertex scene on my 10 year old cpu.
+10.7.	implemented .gltf and .glb export. it was far simpler than expected. created export mode for file manager
+13.7.	wrote some tooltips for new export mode ui in filemanager.
 TODO:	TODO cleanup

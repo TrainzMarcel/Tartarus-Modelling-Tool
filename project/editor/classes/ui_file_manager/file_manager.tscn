@@ -356,16 +356,18 @@ autowrap_mode = 2
 script = ExtResource("17_jw4td")
 
 [node name="ScrollContainerExportModel" type="ScrollContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData" node_paths=PackedStringArray("buttons_set_filter_index")]
+visible = false
 layout_mode = 2
 script = ExtResource("16_xki3j")
 operation_name = Array[StringName]([&"export_model"])
 operation_title = Array[String](["Export a model"])
-filters = Array[String](["*.tres", "*.res", "*.obj", "*.gltf", "*"])
+filters = Array[String](["*.tres", "*.res", "*.obj", "*.gltf", "*.glb", "*"])
 buttons_set_filter_index = {
 NodePath("VBoxContainer/GridContainer/ButtonTRES"): 0,
 NodePath("VBoxContainer/GridContainer/ButtonRES"): 1,
 NodePath("VBoxContainer/GridContainer/ButtonOBJ"): 2,
-NodePath("VBoxContainer/GridContainer/ButtonGLTF"): 3
+NodePath("VBoxContainer/GridContainer/ButtonGLTF"): 3,
+NodePath("VBoxContainer/GridContainer/ButtonGLB"): 4
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel"]
@@ -445,6 +447,21 @@ theme_override_styles/focus = ExtResource("6_itj42")
 toggle_mode = true
 button_group = SubResource("ButtonGroup_jw4td")
 text = ".gltf"
+autowrap_mode = 2
+
+[node name="ButtonGLB" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer/GridContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+button_group = SubResource("ButtonGroup_jw4td")
+text = ".glb"
 autowrap_mode = 2
 
 [node name="ControlSpacer" type="Control" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer"]
@@ -646,6 +663,169 @@ text = "Export selected parts only"
 autowrap_mode = 2
 
 [node name="ControlSpacer3" type="Control" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerExportModel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+
+[node name="ScrollContainerImportModel" type="ScrollContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData" node_paths=PackedStringArray("buttons_set_filter_index")]
+layout_mode = 2
+script = ExtResource("16_xki3j")
+operation_name = Array[StringName]([&"import_model"])
+operation_title = Array[String](["Import a model"])
+filters = Array[String](["*.tres", "*.res", "*.obj", "*.gltf", "*.glb", "*"])
+buttons_set_filter_index = {
+NodePath("../ScrollContainerExportModel/VBoxContainer/GridContainer/ButtonTRES"): 0,
+NodePath("../ScrollContainerExportModel/VBoxContainer/GridContainer/ButtonRES"): 1,
+NodePath("../ScrollContainerExportModel/VBoxContainer/GridContainer/ButtonOBJ"): 2,
+NodePath("../ScrollContainerExportModel/VBoxContainer/GridContainer/ButtonGLTF"): 3,
+NodePath("../ScrollContainerExportModel/VBoxContainer/GridContainer/ButtonGLB"): 4
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="LabelTitle2" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
+text = "Valid Import Formats:"
+horizontal_alignment = 1
+
+[node name="GridContainer" type="GridContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel/VBoxContainer"]
+layout_mode = 2
+columns = 2
+
+[node name="LabelTitle5" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel/VBoxContainer/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
+text = ".tres"
+horizontal_alignment = 1
+
+[node name="LabelTitle4" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel/VBoxContainer/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
+text = ".res"
+horizontal_alignment = 1
+
+[node name="LabelTitle6" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel/VBoxContainer/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
+text = ".obj"
+horizontal_alignment = 1
+
+[node name="LabelTitle7" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel/VBoxContainer/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
+text = ".gltf"
+horizontal_alignment = 1
+
+[node name="LabelTitle8" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel/VBoxContainer/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
+text = ".glb"
+horizontal_alignment = 1
+
+[node name="ControlSpacer" type="Control" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+
+[node name="LabelTitle3" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
+text = "Mesh"
+horizontal_alignment = 1
+
+[node name="ButtonCenterMesh" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel/VBoxContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Center the mesh based on the vertices that are furthest out"
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+button_pressed = true
+text = "Center Mesh Position"
+autowrap_mode = 2
+script = ExtResource("17_jw4td")
+
+[node name="ButtonSplitByMaterialSlot" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel/VBoxContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Split the mesh into separate parts for every material slot it has. This means each material slot of the imported mesh can have an individual color and material assigned."
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+button_pressed = true
+text = "Split mesh by material slots"
+autowrap_mode = 2
+script = ExtResource("17_jw4td")
+
+[node name="ButtonEmbedMaterials" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel/VBoxContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+text = "Remove materials"
+autowrap_mode = 2
+
+[node name="ControlSpacer3" type="Control" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+
+[node name="LabelTitle4" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("3_y5lmk")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_6oyx8")
+text = "eDITOR"
+horizontal_alignment = 1
+
+[node name="ButtonAddMeshToSpawnList" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel/VBoxContainer"]
+custom_minimum_size = Vector2(43, 43)
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Add the mesh to the parts spawn list. When the editor is closed, the mesh will disappear from the spawn list."
+theme = ExtResource("3_y5lmk")
+theme_override_font_sizes/font_size = 0
+theme_override_styles/normal = ExtResource("4_v8wiq")
+theme_override_styles/pressed = ExtResource("5_cel0h")
+theme_override_styles/hover = ExtResource("4_v8wiq")
+theme_override_styles/focus = ExtResource("6_itj42")
+toggle_mode = true
+text = "Add Mesh to     Spawn list"
+autowrap_mode = 2
+script = ExtResource("17_jw4td")
+
+[node name="ControlSpacer4" type="Control" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData/ScrollContainerImportModel/VBoxContainer"]
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 theme = ExtResource("3_y5lmk")
