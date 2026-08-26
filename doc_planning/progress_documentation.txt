@@ -187,6 +187,16 @@
 28.6.	finished uv box projection, split indexing into its own function to be called after uv projection. this creates cleaner seams between the edges of the box projection. added mesh centering.
 3.7.	export ui button exclusion now works, obj export now works but very slowly. will optimize the obj export function for larger meshes.
 4.7.	obj export code optimized to be very fast now, 3 seconds for exporting a 200k vertex scene on my 10 year old cpu.
-10.7.	implemented .gltf and .glb export. it was far simpler than expected. created export mode for file manager
-13.7.	wrote some tooltips for new export mode ui in filemanager.
+10.7.	implemented .gltf and .glb export. it was far simpler than expected. created import mode for file manager
+13.7.	wrote some tooltips for new import mode ui in filemanager.
+18.7.	started work on import mesh functions, wanted to allow import to add to spawn menu but realized it would be too much to change before planned refactor.
+21.7.	working on custom mesh scaling (meshes whos AABB is offcenter and a size different than (1,1,1)
+22.7.	finished custom mesh scaling, adjusted filemanager to return not just the filename but the file ending, implemented import pipeline, resource import works, obj is implemented but untested and gltf is in progress. forgot that gltf could contain multiple meshes with transforms and forgot to factor that into the plan.
+23.7.	implemented gltf import with transforms. TODO: implement material import by adding names to all assets somehow. currently materials from gltf cause errors while saving.
+24.7.	implemented gltf material import, adding surface or mesh name to any unnamed subresources.
+30.7.	fixed assert failure in drag_terminate()/before drag_handle() call when dragging a part with the paint tool, fixed bug with part.part_material setter
+10.8.	made Assetmanager.name_unnamed_subresources() so all imported assets get named before trying to register them
+18.8.	worked on _mesh_concatenate_multi_material_meshes for taking meshes with no part_material and splitting their surfaces and combining them by shared materials
+25.8.	made _mesh_concatenate_multi_material_meshes clearer by encapsulating the sorting loops into a sub function
+26.8.	export of meshes with part_materials and custom materials now works correctly, file manager mode change now refreshes file display if file ending filter is different (preventing wrong files being set to inactive), fixed glb button press not updating export options ui
 TODO:	TODO cleanup

@@ -1,5 +1,8 @@
 TOP PRIORITY
 implement import (.obj, .gltf, .tres/.res)
+fix load -> undo bug
+filemanager mode change needs to refresh if the filter changes
+filemanager settings still dont work correctly
 get release notes and use them to update the manual accordingly
 add cool sounds for saving and loading
 release v0.1-indev-3 with release notes
@@ -35,7 +38,7 @@ settings menu? centralized settings loader? csv? autosave repeat duration? autom
 assetsubsystem additional required features:
 source tracking: enum{from_asset_folder, from_save_file, from_import} this will add a more intelligent layer for embedding assets in save files, making it possible to only embed assets that were not on the users system
 error handling: when assets fail to import, store the original asset name in the error replacements, so that no data loss occurs during saving of assets that failed to load
-
+make it possible to add imported meshes to the spawn list
 
 
 automated build system: https://www.youtube.com/watch?v=wZsAY_SdEb8

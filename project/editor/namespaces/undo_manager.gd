@@ -1,7 +1,7 @@
 extends RefCounted
 class_name UndoManager
 
-const logging : bool = true
+const logging : bool = false
 #limit of undodata objects in undo stack
 static var undo_limit : int = 255
 #how much to subtract from the array size if the limit is exceeded

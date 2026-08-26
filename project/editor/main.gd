@@ -271,7 +271,7 @@ func _input(event : InputEvent):
 		)
 	
 #prepare and terminate drag and transform operations----------------------------
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and is_hovering_allowed:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and (is_selecting_allowed or ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_pivot):
 	#lmb down
 		if event.pressed:
 			#part detected
@@ -293,7 +293,7 @@ func _input(event : InputEvent):
 #dragging parts + transform handle calculations---------------------------------
 	if event is InputEventMouseMotion:
 		#parts dragging
-		if is_mouse_button_held:
+		if is_mouse_button_held and is_selecting_allowed:
 			WorkspaceManager.drag_handle(event)
 		
 		#transform handle dragging
@@ -487,6 +487,7 @@ static func raycast_mouse_pos(
 
 #having 2 indents was ugly so i also put this in a function
 #also checks for nulls
+#WARNING do not use for VARIANT data such as vectors
 static func safety_check(instance):
 	if is_instance_valid(instance):
 		if not instance.is_queued_for_deletion():

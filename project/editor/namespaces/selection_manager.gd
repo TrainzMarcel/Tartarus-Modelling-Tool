@@ -1265,7 +1265,7 @@ static func entities_activate_individual(entity):
 		else:
 			push_warning("attempted to add ", entity, " to existing groups")
 
-#activation without deactivating child entities
+#activation meant only for flat arrays, no activating child entities
 static func entities_activate_individual_array(entities : Array):
 	for entity in entities:
 		entities_activate_individual(entity)

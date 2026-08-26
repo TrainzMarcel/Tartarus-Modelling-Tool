@@ -56,10 +56,10 @@ var b_accept : Button
 var le_file_name : LineEdit
 var ob_filters : OptionButton
 
-signal accept_button_pressed(path : String, filename : String)
+#filepath: self explanatory, filename_line_edit_entry: what is currently entered in the filemanagers filename bar
+#filename: file or folder last clicked/double clicked on
+signal accept_button_pressed(filepath : String, filename_line_edit_entry : String, filename : String)
 
-#var i : int = 0
-#enum Icon
 # Called when the node enters the scene tree for the first time.
 func _ready():
 #initialize ui variables
@@ -184,6 +184,7 @@ func popup(operation_name : StringName):
 		operation_data.visible = true
 	
 	#initialize filters ui
+	var original_filter : String = ob_filters.get_item_text(ob_filters.get_selected_id())
 	ob_filters.clear()
 	if not operation_data.filters.is_empty():
 		for filters in operation_data.filters:
@@ -194,6 +195,12 @@ func popup(operation_name : StringName):
 		selected_filters = ["*"]
 	
 	ob_filters.selected = 0
+	
+	#if the filter is different, refresh the file display
+	#to make sure the correct items are selectable
+	if ob_filters.get_item_text(ob_filters.get_selected_id()) != original_filter:
+		refresh_file_manager()
+	
 	visible = true
 
 
@@ -243,12 +250,12 @@ func change_dir_undoable(input : String):
 	dir_history_index = dir_history.size() - 1
 	
 	#debug
-	print("dir_history:")
-	for dir in dir_history:
-		if dir == dir_history[dir_history_index]:
-			print("x " + dir)
-			continue
-		print("  " + dir)
+	#print("dir_history:")
+	#for dir in dir_history:
+	#	if dir == dir_history[dir_history_index]:
+	#		print("x " + dir)
+	#		continue
+	#	print("  " + dir)
 
 
 func update_file_display(current_dir : String):
@@ -446,11 +453,12 @@ func on_ob_filters_item_selected(index : int):
 func on_b_accept_pressed():
 	if not le_file_name.text.is_valid_filename():
 		return
-	accept_button_pressed.emit(dir_access.get_current_dir(), le_file_name.text)
+	accept_button_pressed.emit(dir_access.get_current_dir(), le_file_name.text, selected_file_or_folder)
 	update_file_display(dir_access.get_current_dir())
 
 
 #tree signals
+#triggered on double click on an item
 func on_t_file_display_item_activated(tree : Tree):
 	var selected : TreeItem = tree.get_selected()
 	if selected == null:
@@ -460,9 +468,15 @@ func on_t_file_display_item_activated(tree : Tree):
 	if dir_access.dir_exists(dir_access.get_current_dir() + "/" + selected_text):
 		change_dir_undoable(selected_text)
 	elif dir_access.file_exists(dir_access.get_current_dir() + "/" + selected_text):
-		le_file_name.text = selected_text.rsplit(".", true, 1)[0]
+		selected_file_or_folder = selected_text
+		var filetype_split_tokens : PackedStringArray = selected_text.rsplit(".", false, 1)
+		if filetype_split_tokens.size() > 0:
+			le_file_name.text = filetype_split_tokens[0]
+		else:
+			le_file_name.text = selected_file_or_folder
 
 #for deleting (moving to trash) and renaming
+#triggered on single click on an item
 func on_t_file_display_item_selected(tree : Tree):
 	var selected : TreeItem = tree.get_selected()
 	if selected == null:

@@ -9,6 +9,7 @@ class_name AssetManager
 static var name_to_asset_map : Dictionary = {}
 
 #utility function: ensures keys stay consistent
+#WARNING: will return an empty string if the asset has no resource_name or resource_path assigned
 static func get_name_of_asset(asset : Resource, include_color : bool = true, add_file_ending : bool = false):
 	if asset == null:
 		return
@@ -20,8 +21,8 @@ static func get_name_of_asset(asset : Resource, include_color : bool = true, add
 		base_name = normalize_asset_name(asset.resource_path, add_file_ending)
 	
 	if base_name == "":
-		push_error("asset " + str(asset) + " has no resource_name and no resource_path set")
-	assert(base_name != "")
+		push_warning("asset " + str(asset) + " has no resource_name and no resource_path set")
+	#assert(base_name != "")
 	
 	#add hex color to key to differentiate by color and to easily fetch a colored material if it exists already
 	#i think i will not add the color to resource_name, only the key
@@ -89,6 +90,7 @@ static func get_material_by_name_any_color(asset_name : String):
 
 
 #required by DataUtils to save all the imagetextures used by materials among other subresources
+#used by name_unnamed_subresources()
 static func get_subresources(asset : Resource, subresources : Array = []):
 	#loop through all properties
 	for property in asset.get_property_list():
@@ -106,8 +108,21 @@ static func get_subresources(asset : Resource, subresources : Array = []):
 			subresources.append(parameter)
 			#get subresources for the parameter and add them back
 			subresources.append_array(get_subresources(parameter, subresources))
+	
+	
+	#special case: mesh surfaces are not simple exposed properties
+	if asset is Mesh:
+		_get_mesh_materials(asset)
+	
+	
+	#loop through and deduplicate all subresources
+	var subresources_deduplicated : Array = []
+	for resource in subresources_deduplicated:
+		if not subresources_deduplicated.has(resource):
+			subresources_deduplicated.append(resource)
+	
 	#finally return after the loop
-	return subresources
+	return subresources_deduplicated
 
 
 #management methods
@@ -115,7 +130,7 @@ static func register_asset(asset : Resource):
 	#add if asset exists, otherwise do nothing
 	var base_name : StringName = get_name_of_asset(asset)
 	
-	#only register if asset already exists
+	#dont register if asset already exists
 	if name_to_asset_map.get(base_name) != null:
 		#debug
 		#debug_pretty_print()
@@ -138,19 +153,112 @@ static func register_asset(asset : Resource):
 #guards against cyclic dependencies
 static func register_asset_with_subresources(asset : Resource, asset_history : Array = []):
 	register_asset(asset)
-	asset_history.append(asset)
-	for property in asset.get_property_list():
-		#skip non-persistent/internal properties
-		if property.usage & PROPERTY_USAGE_STORAGE == 0:
+	for subresource in get_subresources(asset):
+		register_asset(subresource)
+
+
+static func name_unnamed_subresources(asset : Resource, fallback_name : String):
+	#first get all subresources
+	var resource_array : Array = get_subresources(asset)
+	resource_array.append(asset)
+	
+	
+	#if there are any meshes within the array, go through their materials first
+	var i : int = 0
+	while i < resource_array.size():
+		if not resource_array[i] is Mesh:
+			i = i + 1
 			continue
 		
-		var parameter = asset.get(property.name)
-		if parameter is Resource:
-			if asset_history.has(parameter):
-				push_error("cyclic resource dependency!")
-				return
-			register_asset_with_subresources(parameter, asset_history)
-	return
+		
+		var mesh_input : Mesh = resource_array[i]
+		var mesh_name : String = AssetManager.get_name_of_asset(mesh_input, false)
+		
+		#if the mesh is unnamed or its name is taken, try our fallback name
+		if mesh_name == "" or AssetManager.is_asset_key_taken(mesh_name):
+			mesh_name = fallback_name
+		
+		#if our fallback name is not empty but taken, add a number
+		if fallback_name != "" and AssetManager.is_asset_key_taken(fallback_name):
+			var k : int = 0
+			while AssetManager.is_asset_key_taken(fallback_name + "_" + str(k)):
+				k = k + 1
+				if k == 1000:
+					break
+			
+			mesh_name = fallback_name + "_" + str(k)
+		
+		#if the fallback name is empty or taken, make our own
+		if mesh_name == "" or AssetManager.is_asset_key_taken(mesh_name):
+			var k : int = 0
+			while AssetManager.is_asset_key_taken("imported_mesh_" + str(k)):
+				k = k + 1
+			mesh_name = "imported_mesh_" + str(k)
+		
+		
+		mesh_input.resource_name = mesh_name
+		var mesh_materials : Array = _get_mesh_materials(mesh_input)
+		var mesh_material_names : Array = _get_mesh_material_slot_names(mesh_input)
+		
+		#for each surface, get the subresources of the assigned material, name them and register them
+		var l : int = 0
+		while l < mesh_input.get_surface_count():
+			var surface_material : Material = mesh_input.surface_get_material(l)
+			
+			if surface_material != null:
+				#fetch nested materials
+				var surface_material_resource_array : Array = get_subresources(surface_material)
+				surface_material_resource_array.append(surface_material)
+				
+				#first, try to use the surface materials name as a base to name its subresources
+				var surface_name : String = AssetManager.get_name_of_asset(surface_material, false)
+				#if the surface_material is unnamed, try the mesh surface name
+				if surface_name == "" or AssetManager.is_asset_key_taken(surface_name):
+					surface_name = (mesh_input as ArrayMesh).surface_get_name(l)
+				#if the mesh surface is unnamed, create our own
+				if surface_name == "" or AssetManager.is_asset_key_taken(surface_name):
+					surface_name = mesh_name + "_surface_" + str(l)
+				
+				#using the surface_name, name all of the materials unnamed subresources
+				var m : int = 0
+				while m < surface_material_resource_array.size():
+					var resource : Resource = surface_material_resource_array[m]
+					var resource_name : String = get_name_of_asset(resource, false)
+					#if the materials subresource is unnamed or its name is taken, make our own
+					if resource_name == "" or AssetManager.is_asset_key_taken(surface_name):
+						resource_name = surface_name + "_" + resource.get_class() + "_" + str(m)
+						#if this variation is still taken
+						if AssetManager.is_asset_key_taken(resource_name):
+							var n : int = 0
+							while AssetManager.is_asset_key_taken(resource_name + "_" + str(n)):
+								n = n + 1
+							resource_name = resource_name + str(n)
+						resource.resource_name = resource_name
+						
+					m = m + 1
+			l = l + 1
+		i = i + 1
+	
+	i = 0
+	while i < resource_array.size():
+		if resource_array[i] is Mesh:
+			i = i + 1
+			continue
+		
+		#give names to all unnamed resources in the array
+		if AssetManager.get_name_of_asset(resource_array[i], false) == "" or AssetManager.is_asset_key_taken(resource_array[i]):
+			#giving subresources our own name + their class name should ensure unique names
+			var final_resource_name : String = fallback_name + "_" + resource_array[i].get_class()
+			if AssetManager.is_asset_key_taken(final_resource_name):
+				var k : int = 0
+				while AssetManager.is_asset_key_taken(final_resource_name + str(k)):
+					k = k + 1
+				final_resource_name = final_resource_name + str(k)
+			
+			assert(not AssetManager.is_asset_key_taken(final_resource_name))
+			resource_array[i].resource_name = final_resource_name
+			
+		i = i + 1
 
 
 #probably will not be used
@@ -201,6 +309,7 @@ static func recolor_material(mat : Material, color : Color, automatic_register :
 	return separate
 
 
+#utils
 static func get_material_color(mat : Material):
 	if mat is ShaderMaterial:
 		var attempt = mat.get_shader_parameter("color")
@@ -209,6 +318,22 @@ static func get_material_color(mat : Material):
 		return attempt
 	elif mat is BaseMaterial3D:
 		return mat.albedo_color
+
+
+static func _get_mesh_materials(asset : Mesh):
+	var material_array : Array = []
+	for i in asset.get_surface_count():
+		material_array.append(asset.surface_get_material(i))
+	
+	return material_array
+
+static func _get_mesh_material_slot_names(asset : Mesh):
+	var array_mesh : ArrayMesh = asset as ArrayMesh
+	var name_array : Array = []
+	for i in array_mesh.get_surface_count():
+		name_array.append(array_mesh.surface_get_name(i))
+	
+	return name_array
 
 
 static func debug_pretty_print():

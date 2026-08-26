@@ -7,6 +7,9 @@ class_name WorkspaceManager
 
 #dependencies
 static var workspace : Node
+#f8f8f8 is (248,248,248) like institutional white
+#plastic_01,f8f8f8
+static var default_material : String = "plastic_01,f8f8f8"
 
 #initial state of bounding box of selected parts for transform purposes
 static var initial_abb_state : ABB = ABB.new()
@@ -69,8 +72,6 @@ enum FileOperation {
 	save_model_as,
 	load_model
 }
-static var file_operation_save : StringName = "SaveModelCsv"
-static var file_operation_load : StringName = "LoadModelCsv"
 static var file_operation : FileOperation
 static var last_save_location : String = ""
 static var last_save_name : String = ""
@@ -224,8 +225,10 @@ static func initialize(
 	if available_part_types.size() > 0:
 		selected_part_type = available_part_types[0]
 	
-	selected_color = Color.WHITE
-	selected_material = AssetManager.get_asset_by_name("plastic_01,ffffff")
+	#institutional white default colors
+	selected_color = Color8(248, 248, 248)
+	selected_material = AssetManager.get_asset_by_name(default_material)
+	selected_material = AssetManager.recolor_material(selected_material, selected_color, true)
 	
 	EditorUI.create_material_buttons(on_material_selected, materials_list)
 	EditorUI.create_part_type_buttons(on_part_type_selected, parts_list)
@@ -233,6 +236,7 @@ static func initialize(
 	
 	#set singular part to grass texture after loading
 	var baseplate : Part = workspace.get_node("Part")
+	#DEBUG
 	baseplate.part_mesh = AssetManager.get_asset_by_name("cuboid")
 	baseplate.part_material = AssetManager.get_asset_by_name("grass_01")
 	#_ready was getting called in the parts before main and before textures loaded so this is done manually now
@@ -432,13 +436,14 @@ static func drag_handle(event : InputEvent):
 
 static func drag_terminate():
 	if drag_confirmed and Main.safety_check(undo_data_drag):
-			assert(SelectionManager.selected_entities.size() == 1)
-			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_clear, [])
-			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_add_entities, [SelectionManager.selected_entities.duplicate()])
-			undo_data_drag.append_redo_action_with_args(SelectionManager.post_selection_update, [true])
-			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_move, [Vector3(SelectionManager.selected_parts_abb.transform.origin)])
-			undo_data_drag.append_redo_action_with_args(SelectionManager.selection_rotate, [Basis(SelectionManager.selected_parts_abb.transform.basis), Vector3()])
-			UndoManager.register_undo_data(undo_data_drag)
+		#why did i possibly write this assert
+		#assert(SelectionManager.selected_entities.size() == 1)
+		undo_data_drag.append_redo_action_with_args(SelectionManager.selection_clear, [])
+		undo_data_drag.append_redo_action_with_args(SelectionManager.selection_add_entities, [SelectionManager.selected_entities.duplicate()])
+		undo_data_drag.append_redo_action_with_args(SelectionManager.post_selection_update, [true])
+		undo_data_drag.append_redo_action_with_args(SelectionManager.selection_move, [Vector3(SelectionManager.selected_parts_abb.transform.origin)])
+		undo_data_drag.append_redo_action_with_args(SelectionManager.selection_rotate, [Basis(SelectionManager.selected_parts_abb.transform.basis), Vector3()])
+		UndoManager.register_undo_data(undo_data_drag)
 	undo_data_drag = null
 	Main.dragged_part = null
 	drag_confirmed = false
@@ -486,6 +491,11 @@ static func transform_handle_handle(event : InputEvent):
 	var global_vector_initial : Vector3 = (WorkspaceManager.initial_transform_handle_root_transform.basis * Main.dragged_handle.direction_vector).normalized()
 	var cam_normal : Vector3 = Main.cam.project_ray_normal(event.position)
 	var cam_normal_initial : Vector3 = Main.cam.project_ray_normal(WorkspaceManager.initial_handle_event.position)
+	
+	#do not continue with invalid state
+	if cam_normal == null or cam_normal_initial == null:
+		return
+	
 	
 #movement single axis
 	if ToolManager.selected_tool == ToolManager.SelectedToolEnum.t_move and Main.dragged_handle.direction_type == TransformHandle.DirectionTypeEnum.axis_move:
@@ -688,22 +698,22 @@ static func request_import():
 	EditorUI.fm_file.popup("import_model")
 
 
-#called when b_accept_pressed is emitted by the filemanager
-static func dispatch_filemanager_operation(current_dir : String, file_name : String):
+#called when accept_button_pressed is emitted by the filemanager
+#connected in WorkspaceManager.initialize()
+static func dispatch_filemanager_operation(current_dir : String, filename_line_edit_entry : String, filename : String):
 	var operation_name : String = EditorUI.fm_file.get_current_operation_name()
 	if operation_name == "save_model" or operation_name == "save_as" or operation_name == "load_model":
-		confirm_save_load(current_dir, file_name, operation_name)
+		confirm_save_load(current_dir, filename_line_edit_entry, operation_name)
 	elif operation_name == "import_model":
-		pass
-		#import_model()
+		confirm_import(current_dir, filename)
 	elif operation_name == "export_model":
-		confirm_export(current_dir, file_name, operation_name)
+		confirm_export(current_dir, filename_line_edit_entry)
 	
 	#refresh to show the new file
 	EditorUI.fm_file.refresh_file_manager()
 
 
-"TODO"#refactor
+"TODO"#refactor (make it work on a separate thread)
 static func confirm_save_load(filepath : String, name : String, operation : String):
 	EditorUI.c_loading_message.visible = true
 	#one await wasnt enough for the loading message to show up
@@ -781,7 +791,7 @@ static func initialize_file_manager_export_ui():
 		if is_button_pressed(b_uv_box_custom_size):
 			le_uv_box_custom_size.editable = true
 		
-		if is_button_pressed(b_res) and is_button_pressed(b_split_mesh_by_combinations):
+		if is_button_pressed(b_glb) or is_button_pressed(b_res) and is_button_pressed(b_split_mesh_by_combinations):
 			b_embed_materials.disabled = false
 		
 		if (is_button_pressed(b_tres) or is_button_pressed(b_res)) and is_button_pressed(b_split_mesh_by_combinations):
@@ -790,12 +800,12 @@ static func initialize_file_manager_export_ui():
 		if is_button_pressed(b_tres) or is_button_pressed(b_res) or is_button_pressed(b_gltf) or is_button_pressed(b_glb):
 			b_index.disabled = false
 	
-	for button in [b_tres, b_res, b_gltf, b_obj, b_split_mesh_by_combinations, b_uv_box_custom_size, b_uv_unchanged, b_uv_box_mesh_size]:
+	for button in [b_tres, b_res, b_gltf, b_glb, b_obj, b_split_mesh_by_combinations, b_uv_box_custom_size, b_uv_unchanged, b_uv_box_mesh_size]:
 		button.pressed.connect(on_relevant_buttons_pressed)
 
 
 #collect export options and feed them to the export_model function
-static func confirm_export(current_dir, filename, operation_name):
+static func confirm_export(current_dir : String, filename : String):
 	var options : Control = EditorUI.fm_file.get_options_ui("export_model")
 	var mesh_options : MeshUtils.EntityToMeshOptions = MeshUtils.EntityToMeshOptions.new()
 	var filetype_buttons : Array = options.get_node("VBoxContainer").get_node("GridContainer").get_children()
@@ -818,7 +828,7 @@ static func confirm_export(current_dir, filename, operation_name):
 	mesh_options.embed_assets = is_button_pressed(options.get_node("ButtonEmbedMaterials"))
 	
 	#set uv options
-	if is_button_pressed(options.get_node("ButtonUVDefault")):
+	if is_button_pressed(options.get_node("ButtonUVUnchanged")):
 		mesh_options.uv_option = MeshUtils.EntityToMeshOptions.UVOptionEnum.Unchanged
 	elif is_button_pressed(options.get_node("HBoxUVBox").get_node("ButtonUVBoxCustomSize")):
 		mesh_options.uv_option = MeshUtils.EntityToMeshOptions.UVOptionEnum.BoxProjectVariable
@@ -898,12 +908,138 @@ static func debug_mesh_export():
 	WorkspaceManager.export_model("/media/marci/1.0 TB Hard Disk/Godot 4.5 Projects/Tartarus Modelling Tool/project/debug", "test", "glb", SelectionManager.get_workspace_parts(), m_options)
 	#WorkspaceManager.import_model("/media/marci/1.0 TB Hard Disk/Godot 4.5 Projects/Tartarus Modelling Tool/project/debug", "test", "glb", SelectionManager.get_workspace_parts(), m_options)
 	print("export time elapsed: ", Time.get_unix_time_from_system() - timer)
-	
-	
 
 
-static func import_model():
-	return
+static func confirm_import(filepath : String, filename : String):
+	var options : Control = EditorUI.fm_file.get_options_ui("import_model").get_node("VBoxContainer")
+	var entity_options : MeshUtils.MeshImportOptions = MeshUtils.MeshImportOptions.new()
+	
+	if not FileAccess.file_exists(filepath + "/" + filename):
+		EditorUI.set_l_msg("import failed: " + filename + " could not be found")
+		EditorUI.c_loading_message.visible = false
+		return
+	
+	var b_clear_workspace : Button = options.get_node("ButtonClearWorkspace")
+	if b_clear_workspace.button_pressed:
+		SelectionManager.selection_add_entities(SelectionManager.get_workspace_entities())
+		SelectionManager.selection_delete()
+	
+	#export option buttons
+	entity_options.center_mesh = is_button_pressed(options.get_node("ButtonCenterMesh"))
+	entity_options.split_mesh_by_material_slots = is_button_pressed(options.get_node("ButtonSplitByMaterialSlot"))
+	entity_options.remove_materials = is_button_pressed(options.get_node("ButtonRemoveMaterials"))
+	
+	var filename_tokens : PackedStringArray = filename.split(".", false)
+	if filename_tokens.size() < 2:
+		push_error("file ending validation failed")
+		EditorUI.set_l_msg("file ending validation failed")
+		return
+	
+	var filetype : String = filename_tokens[filename_tokens.size() - 1].to_lower()
+	assert(filetype != "")
+	var valid_filetypes : Array[String] = ["tres", "res", "obj", "gltf", "glb"]
+	
+	if not valid_filetypes.has(filetype):
+		push_error("loading " + filetype + " has not been implemented")
+		EditorUI.set_l_msg("loading " + filetype + " has not been implemented")
+		return
+	
+	import_model(filepath, filename, filetype, entity_options)
+	EditorUI.fm_file.refresh_file_manager()
+
+
+static func import_model(filepath : String, filename : String, filetype : String, entity_options : MeshUtils.MeshImportOptions):
+	var mesh : Mesh
+	var part_array : Array = []
+	var mesh_array : Array
+	
+	if filetype == "tres" or filetype == "res":
+		mesh = MeshUtils.import_resource(filepath, filename)
+	elif filetype == "obj":
+		mesh = MeshUtils.import_obj(filepath, filename)
+	#special case: gltf can contain multiple meshes with individual transforms
+	elif filetype == "gltf" or filetype == "glb":
+		var gltf_scene_root : Node = MeshUtils.import_gltf(filepath, filename)
+		var mesh_instance_array : Array = MeshUtils.process_imported_gltf_scene(gltf_scene_root)
+		
+		for mesh_instance in mesh_instance_array:
+			
+			mesh_array = MeshUtils.convert_mesh_for_import(entity_options, mesh_instance.mesh)
+			
+			var i : int = 0
+			while i < mesh_array.size():
+				var mesh_input : Mesh = mesh_array[i]
+				var instance_transform : Transform3D = mesh_instance.transform
+				var new_part : Part = Part.new()
+				
+				#part needs to be scaled according to the aabb scale
+				new_part.part_mesh = mesh_input
+				new_part.set_part_to_original_mesh_scale()
+				new_part.transform = instance_transform
+				new_part.translate_object_local(mesh_input.get_aabb().get_center())
+				
+				
+				part_array.append(new_part)
+				
+				
+				
+				AssetManager.name_unnamed_subresources(mesh_input, filename)
+				AssetManager.register_asset_with_subresources(mesh_input)
+				i = i + 1
+			
+			"TODO this needs to be a part of AssetManager.register() a sub function called "
+			#register meshes and possibly materials with assetmanager
+			#give names to meshes and materials before registering them
+			
+			
+			#print()
+			#print("----------------resources of " + input_name)
+			#for resource in resource_array:
+			#	AssetManager.register_asset(resource)
+			#	print("--------")
+			#	if resource is Mesh:
+			#		for k in input.get_surface_count():
+			#			print("surface " + str(k) + ": " + str((input as ArrayMesh).surface_get_name(k)))
+			#	
+			#	print("\t" + str(resource.get_class()))
+			#	print("\t" + str(resource))
+			#	print("\t" + AssetManager.get_name_of_asset(resource, false, true))
+			#	if AssetManager.get_name_of_asset(resource, false, true) == "":
+			#		print(AssetManager.get_name_of_asset(resource, false, true))
+			#		print("resource_array: ")
+			#		print(resource_array)
+			#		pass
+			#	
+		
+		AssetManager.debug_pretty_print()
+		gltf_scene_root.queue_free()
+		
+		SelectionManager.entities_activate_individual_array(part_array)
+		return
+	else:
+		return
+	
+	
+	mesh_array = MeshUtils.convert_mesh_for_import(entity_options, mesh)
+	
+	#convert meshes to parts
+	part_array = mesh_array.map(func(input : Mesh):
+		var new_part : Part = Part.new()
+		#part needs to be scaled according to the aabb scale
+		new_part.part_mesh = input
+		new_part.set_part_to_original_mesh_scale()
+		new_part.position = input.get_aabb().get_center()
+		return new_part
+		)
+	
+	#register meshes and possibly materials with assetmanager
+	mesh_array.map(func(input : Mesh):
+		AssetManager.name_unnamed_subresources(input, filename)
+		AssetManager.register_asset_with_subresources(input)
+		)
+	AssetManager.debug_pretty_print()
+	
+	SelectionManager.entities_activate_individual_array(part_array)
 
 
 #actual save and load functions

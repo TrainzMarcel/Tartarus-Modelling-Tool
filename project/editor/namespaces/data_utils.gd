@@ -73,7 +73,7 @@ static var sql_def : SQLDefinitions = SQLDefinitions.new()
 
 static func initialize_sql_db(filepath : String, filename : String, verbosity : SQLite.VerbosityLevel = SQLite.VerbosityLevel.NORMAL):
 	if not filename.is_valid_filename():
-		push_error("invalid filename!!")
+		push_error("invalid filename!")
 		return
 	
 	var sql : SQLite = SQLite.new()
@@ -364,7 +364,7 @@ static func sql_material_deserialize(row : Dictionary):
 
 
 static func sql_mesh_serialize(input : Mesh, sql : SQLite):
-	return sql.insert_row(sql_def.mesh_table_name, {"mesh_filename": AssetManager.normalize_asset_name(input.resource_path, true)})
+	return sql.insert_row(sql_def.mesh_table_name, {"mesh_filename": (AssetManager.get_name_of_asset(input, false, false) as String)})
 
 
 static func sql_mesh_deserialize(row : Dictionary):
@@ -397,7 +397,7 @@ static func sql_part_deserialize(row : Dictionary, used_colors : Array[Color], u
 	#material
 	new.part_material = used_materials[row["material_id"]]
 	
-	if new.part_material == null:
+	if new.part_material == null and new.part_mesh_node.mesh != null and not new.has_material():
 		EditorUI.set_l_msg("Save loaded with materials missing")
 	
 	#color
@@ -599,6 +599,9 @@ static func zip_assets(input_assets : Array[Resource], filepath : String, zip_pa
 		#	debug_asset_saved = true
 		elif asset is Mesh:
 			"TODO"#implement obj loading
+			if not asset_name.ends_with(".res") and not asset_name.ends_with(".tres"):
+				asset_name = asset_name + ".res"
+			
 			error = ResourceSaver.save(asset, filepath + asset_name)
 			error = zip_packer.start_file(asset_name)
 			error = zip_packer.write_file(FileAccess.get_file_as_bytes(filepath + asset_name))

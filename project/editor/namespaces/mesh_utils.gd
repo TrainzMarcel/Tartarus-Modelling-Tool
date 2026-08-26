@@ -38,16 +38,19 @@ class EntityToMeshOptions:
 	var embed_assets : bool = false
 
 
-class MeshToEntityOptions:
+class MeshImportOptions:
 	var center_mesh : bool = true
 	var split_mesh_by_material_slots : bool = false
 	var remove_materials : bool = false
+	#cut from v0.1, will be added in v0.2
 	var add_mesh_to_spawn_list : bool = false
 
 
 static func convert_entities_to_mesh(options : EntityToMeshOptions, entities : Array, filename : String):
 	var mesh_result : Mesh = null
 	var combinations : Array[Array]
+	var surface_materials : Array
+	var surface_names : Array
 	
 	if options.include_metadata or options.split_mesh_by_combinations:
 		combinations = _classify_parts_by_material_and_color_combination(WorkspaceManager.workspace.get_children().filter(func(input): return input is Part))
@@ -57,6 +60,11 @@ static func convert_entities_to_mesh(options : EntityToMeshOptions, entities : A
 		mesh_result = _create_mesh_from_part_combinations(combinations)
 	else:
 		mesh_result = _create_mesh_from_parts(entities)
+	
+	
+	for surface in mesh_result.get_surface_count():
+		surface_materials.append(mesh_result.surface_get_material(surface))
+		surface_names.append((mesh_result as ArrayMesh).surface_get_name(surface))
 	
 	
 	if options.center_mesh:
@@ -71,6 +79,10 @@ static func convert_entities_to_mesh(options : EntityToMeshOptions, entities : A
 		mesh_result = _mesh_index(mesh_result)
 	
 	
+	if options.embed_assets and options.split_mesh_by_combinations:
+		mesh_result = _assign_materials_to_mesh_slots(mesh_result, surface_materials, surface_names)
+	
+	
 	#last step
 	if options.include_metadata:
 		_mesh_add_metadata(combinations, mesh_result)
@@ -83,21 +95,23 @@ static func convert_entities_to_mesh(options : EntityToMeshOptions, entities : A
 	return mesh_result
 
 
-static func convert_mesh_to_entity(options : MeshToEntityOptions, mesh : Mesh):
+static func convert_mesh_for_import(options : MeshImportOptions, mesh : Mesh):
+	var part_array : Array[Part] = []
+	var mesh_array : Array = []
 	if options.center_mesh:
 		mesh = _mesh_center_based_on_aabb(mesh)
 	
-	if options.split_mesh_by_material_slots:
-		return
 	
 	if options.remove_materials:
-		return
-	
-	if options.add_mesh_to_spawn_list:
-		return
+		mesh = _mesh_strip_materials(mesh)
 	
 	
+	if options.split_mesh_by_material_slots:
+		mesh_array = _mesh_split_by_material_slots(mesh)
+	else:
+		mesh_array.append(mesh)
 	
+	return mesh_array
 
 
 static func debug_print_part_combinations(combinations : Array[Array]):
@@ -130,6 +144,7 @@ static func debug_print_part_combinations(combinations : Array[Array]):
 
 
 static func debug_print_mesh_surfaces(input_mesh : Mesh):
+	print_stack()
 	var surfaces : int = input_mesh.get_surface_count()
 	var sum : int = 0
 	var metadata_material_names = null
@@ -153,13 +168,18 @@ static func debug_print_mesh_surfaces(input_mesh : Mesh):
 			color_name = "no metadata available"
 		
 		print("surface " + str(surface) + " vert count: ", count, "   mats: ", material_name, " color: ", color_name)
+		print("surface_name: " + str((input_mesh as ArrayMesh).surface_get_name(surface)) + "   material name: " + str(input_mesh.surface_get_material(surface)))
 		sum = sum + count
 	
 	print("total: ", str(sum))
 
 
-static func import_obj():
-	return#OBJExporter.load_mesh_from_file()
+static func import_obj(filepath : String, filename : String):
+	var mtl_filename : String = filename.trim_suffix(".obj") + ".mtl"
+	if FileAccess.file_exists(filepath.path_join(mtl_filename)):
+		return OBJExporter.load_mesh_from_file(filepath.path_join(filename), filepath.path_join(mtl_filename))
+	else:
+		return OBJExporter.load_mesh_from_file(filepath.path_join(filename))
 
 
 static func export_obj(mesh : ArrayMesh, filepath : String, filename : String, include_metadata : bool):
@@ -205,13 +225,39 @@ static func export_resource(mesh : Mesh, binary_encoding : bool, embed_assets : 
 	var flags : int = 0
 	if embed_assets:
 		flags = flags | ResourceSaver.FLAG_BUNDLE_RESOURCES
+		flags = flags | ResourceSaver.FLAG_REPLACE_SUBRESOURCE_PATHS
 	
 	return ResourceSaver.save(mesh, filepath.path_join(filename) + file_type, flags)
 
 
-static func import_gltf():
-	return
+static func import_gltf(filepath : String, filename : String):
+	var gltf_document_load = GLTFDocument.new()
+	var gltf_state_load = GLTFState.new()
+	var error = gltf_document_load.append_from_file(filepath.path_join(filename), gltf_state_load)
+	
+	if error == OK:
+		return gltf_document_load.generate_scene(gltf_state_load)
+	else:
+		push_error("Couldn't load glTF scene (error code: %s)." % error_string(error))
 
+
+#filter all meshinstance nodes out of an imported gltf scene
+static func process_imported_gltf_scene(gltf_scene_root : Node):
+	var flatten_node_tree : Callable = func(input : Node, f : Callable):
+		var child_node_array : Array = input.get_children()
+		for child_node in child_node_array:
+			child_node_array.append_array(f.call(child_node, f))
+		
+		return child_node_array
+	
+	#recursive lambda didnt work without giving it a self-referencing parameter
+	var gltf_scene_node_array : Array = flatten_node_tree.call(gltf_scene_root, flatten_node_tree)
+	#DEBUGPRINT
+	print("nodes found: ", gltf_scene_node_array)
+	
+	return gltf_scene_node_array.filter(func(input : Node):
+		return input is MeshInstance3D
+		)
 
 #gltfstate and gltfdocument for some reason require access to the node tree
 static func export_gltf(mesh : Mesh, binary_encoding : bool, filepath : String, filename : String):#, workspace : Node, filepath : String, filename : String):
@@ -223,7 +269,7 @@ static func export_gltf(mesh : Mesh, binary_encoding : bool, filepath : String, 
 	#insert gltf data into gltf_state_save
 	var error : int = gltf_document_save.append_from_scene(mesh_instance, gltf_state_save)
 	if error != OK:
-		push_error("converting mesh into gltf data failed. aborting export process.")
+		push_error("converting gltf data into mesh failed. aborting export process.")
 	assert(error == OK)
 	# The file extension in the output `path` (`.gltf` or `.glb`) determines
 	# whether the output uses text or binary format.
@@ -240,6 +286,8 @@ static func export_gltf(mesh : Mesh, binary_encoding : bool, filepath : String, 
 
 
 "TODO"#replace complex logic with calls to assetmanager
+#WARNING all parts with part_material of null get put together
+#WARNING this function uses part_material only and ignores any materials assigned to the mesh resource's surfaces
 static func _classify_parts_by_material_and_color_combination(part_array : Array):
 	#parallel arrays
 	#the same material will occupy one item for every color used with it
@@ -268,6 +316,7 @@ static func _classify_parts_by_material_and_color_combination(part_array : Array
 			#but keep on a lookout in case it does count the same material and color as different combinations
 			#just because the resource instance counts as a different object
 			var check_2 : bool = part.part_material == material_combination_array[j]
+			
 			
 			#break out if matching combination already exists
 			if check_1 and check_2:
@@ -304,20 +353,68 @@ static func _classify_parts_by_material_and_color_combination(part_array : Array
 	return result_part_groupings
 
 
-static func _create_mesh_from_part_combinations(part_array : Array[Array]):
-	var resulting_mesh : ArrayMesh = ArrayMesh.new()
-	
-	#every surface
+static func _assign_materials_to_mesh_slots(resulting_mesh : Mesh, surface_materials : Array, surface_names : Array):
 	var i : int = 0
-	while i < part_array.size():
-		resulting_mesh = _surface_append_surface_to_mesh_from_parts(part_array[i], resulting_mesh)
+	
+	while i < resulting_mesh.get_surface_count():
+		resulting_mesh.surface_set_material(i, surface_materials[i])
+		(resulting_mesh as ArrayMesh).surface_set_name(i, surface_names[i])
 		i = i + 1
 	
 	return resulting_mesh
 
 
+static func _create_mesh_from_part_combinations(part_array : Array[Array]):
+	var resulting_mesh : ArrayMesh = ArrayMesh.new()
+	var custom_material_parts : Array = []
+	var mesh_array : Array = []
+	var transform_array : Array = []
+	
+	#to be collected during the process
+	#then applied once the mesh is finished
+	var surface_names : Array = []
+	var surface_materials : Array = []
+	 
+	
+	#every surface
+	var i : int = 0
+	while i < part_array.size():
+		if part_array[i].size() > 0 and part_array[i][0].part_material == null:
+			custom_material_parts = part_array[i]
+			i = i + 1
+			continue
+		
+		surface_names.append(_get_material_name_for_surface(part_array[i][0].part_material, part_array[i][0].part_color))
+		surface_materials.append(part_array[i][0].part_mesh_node.material_override)
+		
+		mesh_array = _get_meshes_from_parts(part_array[i])
+		transform_array = _get_transforms_from_parts(part_array[i])
+		resulting_mesh = _surface_append_surface_to_mesh_from_meshes(mesh_array, transform_array, resulting_mesh)
+		i = i + 1
+	
+	i = 0
+	while i < surface_materials.size():
+		resulting_mesh.surface_set_material(i, surface_materials[i])
+		(resulting_mesh as ArrayMesh).surface_set_name(i, surface_names[i])
+		i = i + 1
+	
+	if custom_material_parts.size() == 0:
+		return resulting_mesh
+	
+	mesh_array = _get_meshes_from_parts(custom_material_parts)
+	transform_array = _get_transforms_from_parts(custom_material_parts)
+	#preserves materials
+	resulting_mesh = _mesh_concatenate_multi_material_meshes(mesh_array, transform_array, resulting_mesh)
+	return resulting_mesh
+
+
+#create simple single material mesh
 static func _create_mesh_from_parts(part_array : Array):
-	return _surface_append_surface_to_mesh_from_parts(part_array, ArrayMesh.new())
+	return _surface_append_surface_to_mesh_from_meshes(
+		_get_meshes_from_parts(part_array),
+		_get_transforms_from_parts(part_array),
+		ArrayMesh.new()
+	)
 
 
 static func _get_color_array_from_part_combinations(part_array : Array[Array]):
@@ -335,13 +432,19 @@ static func _get_material_name_array_from_part_combinations(part_array : Array[A
 	for i in part_array:
 		#part array is guaranteed to have at least 1 item
 		var material : Material = i[0].part_material
+		var color = i[0].part_color
 		#get_name_of
-		if material != null:
-			material_name_array.append(AssetManager.get_name_of_asset(material, false) + "," + i[0].part_color.to_html(false))
-		else:
-			material_name_array.append("NULL")
+		material_name_array.append(_get_material_name_for_surface(material, color))
 	
 	return material_name_array
+
+
+static func _get_material_name_for_surface(material : Material, color : Color):
+	if material != null:
+		return AssetManager.get_name_of_asset(material, false) + "," + color.to_html(false)
+	else:
+		return "NULL"
+	
 
 
 #iterate through every vertex in every surface and apply an offset
@@ -362,6 +465,17 @@ static func _mesh_center_based_on_aabb(mesh_input : Mesh):
 	return _mesh_apply_function_to_surfaces(_surface_add_offset_to_vertices, mesh_input, [offset], Mesh.PRIMITIVE_TRIANGLES, [], {}, 0)
 
 
+static func _mesh_strip_materials(mesh_input : Mesh):
+	var surfaces : int = mesh_input.get_surface_count()
+	var i : int = 0
+	
+	while i < surfaces:
+		mesh_input.surface_set_material(i, null)
+		i = i + 1
+	
+	return mesh_input
+
+
 static func _mesh_index(mesh_input : Mesh):
 	return _mesh_apply_function_to_surfaces(_surface_add_indexing, mesh_input, [], Mesh.PRIMITIVE_TRIANGLES, [], {}, Mesh.ARRAY_FORMAT_INDEX)
 
@@ -380,13 +494,152 @@ static func _mesh_deindex(mesh_input : Mesh):
 	return mesh_result
 
 
+#return the individual surfaces of a mesh
+static func _mesh_split_by_material_slots(mesh_input : Mesh):
+	var st : SurfaceTool = SurfaceTool.new()
+	var mesh_result_array : Array[ArrayMesh] = []
+	var mesh_material_array : Array = []
+	
+	
+	var i : int = 0
+	while i < mesh_input.get_surface_count():
+		
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		st.create_from(mesh_input, i)
+		var mesh_slice : Mesh = st.commit()
+		mesh_slice.resource_name = mesh_slice.resource_name + "_slice_" + str(i)
+		mesh_result_array.append(mesh_slice)
+		
+		#copy material and surface name to slices
+		mesh_slice.surface_set_name(0, (mesh_input as ArrayMesh).surface_get_name(i))
+		mesh_slice.surface_set_material(0, mesh_input.surface_get_material(i))
+		st.clear()
+		i = i + 1
+	
+	
+	return mesh_result_array
+
+
 static func _mesh_add_metadata(part_array : Array[Array], mesh_input : ArrayMesh):
 	var material_names : Array[String] = _get_material_name_array_from_part_combinations(part_array)
 	mesh_input.set_meta("material_names", material_names)
 	mesh_input.set_meta("colors", _get_color_array_from_part_combinations(part_array))
-	for i in mesh_input.get_surface_count():
-		#material names and hex colors are included
-		mesh_input.surface_set_name(i, str(i) + "_" + material_names[i])
+
+
+#this function takes mesh_array and preserves surfaces that share the same material
+#it combines surfaces with shared materials and then appends them to mesh_input
+#preserves materials
+static func _mesh_concatenate_multi_material_meshes(mesh_array : Array, transform_array : Array, mesh_input : Mesh):
+	#transform corresponds to each outer array above
+	var split_surfaces : Array[Array] = []
+	var split_transforms : Array = []
+	
+	#each inner array corresponds to one surface meant to share its materials
+	var split_surfaces_sorted : Array[Array]
+	var split_transforms_sorted : Array[Array]
+	
+	#keep track of which surfaces have been handled
+	var materials_handled : Array = []
+	
+	@warning_ignore("confusable_local_declaration")
+	var _sort_split_surfaces : Callable = func(
+			materials_handled : Array,
+			split_surfaces : Array[Array],
+			split_transforms : Array,
+			split_surfaces_sorted : Array[Array],
+			split_transforms_sorted : Array[Array]
+		):
+		var is_sorting_finished = true
+		#first material that gets found and which isnt in materials_handled
+		var current_material : Material = null
+		
+		
+		var current_surfaces : Array = []
+		var current_transforms : Array = []
+		
+		var i : int = 0
+		#iterate through all split surfaces, handling one material for each function call
+		#this function then returns true if all materials have been handled (keeping track in materials_handled array)
+		while i < split_surfaces.size():
+			var ii : int = 0
+			while ii < split_surfaces[i].size():
+				#if this material hasnt been handled yet and this is the first time encountering it, start handling all surfaces containing it
+				#only start handling a new material if a material isnt being handled already
+				if is_sorting_finished and not materials_handled.has(split_surfaces[i][ii].surface_get_material(0)):
+					current_material = split_surfaces[i][ii].surface_get_material(0)
+					materials_handled.append(current_material)
+					is_sorting_finished = false
+				
+				#if the material being handled for this iteration is the same as the one of this mesh
+				#add the surface to the sorted array
+				#also add the transform of the original mesh alongside to the split_transforms array
+				if current_material == split_surfaces[i][ii].surface_get_material(0):
+					current_surfaces.append(split_surfaces[i][ii])
+					current_transforms.append(split_transforms[i])
+				
+				ii = ii + 1
+			i = i + 1
+		
+		
+		if not current_surfaces.is_empty():
+			split_surfaces_sorted.append(current_surfaces)
+			split_transforms_sorted.append(current_transforms)
+		
+		return is_sorting_finished
+	
+	
+	
+	#split meshes by material slots
+	var i : int = 0
+	while i < mesh_array.size():
+		split_transforms.append(transform_array[i])
+		split_surfaces.append(_mesh_split_by_material_slots(mesh_array[i]))
+		i = i + 1
+	
+	#combine the split surfaces by material
+	var all_materials_handled : bool = false
+	while not all_materials_handled:
+		#assume all materials were handled until proven wrong
+		all_materials_handled = true
+		
+		all_materials_handled = _sort_split_surfaces.call(
+			materials_handled,
+			split_surfaces,
+			split_transforms,
+			split_surfaces_sorted,
+			split_transforms_sorted
+		)
+	
+	#after the loop, simply concatenate the sorted surfaces
+	#first, collect original surface data
+	var original_surface_materials : Array = []
+	var original_surface_names : Array = []
+	i = 0
+	while i < mesh_input.get_surface_count():
+		original_surface_materials.append(mesh_input.surface_get_material(i))
+		original_surface_names.append((mesh_input as ArrayMesh).surface_get_name(i))
+		i = i + 1
+	
+	#second, concatenate
+	i = 0
+	while i < split_surfaces_sorted.size():
+		#get name and material as the surface append function does not preserve material
+		var set_material : Material = split_surfaces_sorted[i][0].surface_get_material(0)
+		var set_name : String = (split_surfaces_sorted[i][0] as ArrayMesh).surface_get_name(0)
+		mesh_input = _surface_append_surface_to_mesh_from_meshes(split_surfaces_sorted[i], split_transforms_sorted[i], mesh_input)
+		var surface_count : int = mesh_input.get_surface_count()
+		mesh_input.surface_set_material(surface_count - 1, set_material)
+		(mesh_input as ArrayMesh).surface_set_name(surface_count - 1, set_name)
+		i = i + 1
+	
+	#third, reassign original surface data
+	i = 0
+	while i < original_surface_materials.size():
+		mesh_input.surface_set_material(i, original_surface_materials[i])
+		(mesh_input as ArrayMesh).surface_set_name(i, original_surface_names[i])
+		i = i + 1
+	
+	return mesh_input
 
 
 static func _mesh_apply_uv_projection(mesh_input : ArrayMesh, options : EntityToMeshOptions):
@@ -406,7 +659,10 @@ static func _mesh_apply_uv_projection(mesh_input : ArrayMesh, options : EntityTo
 	
 	return mesh_output
 
-
+"TODO"#create a data class (struct) to use as a parameter for this function
+#struct: has flags, mesh input and function args array
+#and functions which this function calls
+#then the parameter order wont be a problem anymore
 static func _mesh_apply_function_to_surfaces(surface_modify_function : Callable, mesh_input : ArrayMesh, function_arguments : Array, mesh_type : Mesh.PrimitiveType, blend_shapes: Array[Array] = [], lods: Dictionary = {}, flags = 0):
 	var mesh_output : ArrayMesh = ArrayMesh.new()
 	var i : int = 0
@@ -503,7 +759,9 @@ static func _surface_add_indexing(surface_array : Array):
 	return surface_result_indexed
 
 
-static func _surface_append_surface_to_mesh_from_parts(part_array : Array, resulting_mesh : ArrayMesh):
+#adds one surface to the resulting_mesh
+#this function does not preserve materials
+static func _surface_append_surface_to_mesh_from_meshes(mesh_array : Array, transform_array : Array, resulting_mesh : ArrayMesh):
 	var surface_result : Array
 	@warning_ignore("confusable_local_declaration")
 	var _append_to_data_array : Callable = func(surface_result : Array, surface_addition : Array, mesh_transform : Transform3D):
@@ -538,16 +796,17 @@ static func _surface_append_surface_to_mesh_from_parts(part_array : Array, resul
 	#add all parts into one mesh
 	#for every part:
 	var i : int = 0
-	while i < part_array.size():
+	while i < mesh_array.size():
+		var current_mesh : Mesh = mesh_array[i]
+		var current_transform : Transform3D = transform_array[i]
 		var st : SurfaceTool = SurfaceTool.new()
-		var mesh_node : MeshInstance3D = part_array[i].part_mesh_node
-		var deindexed_mesh : Mesh = deindexed_meshes.get(AssetManager.get_name_of_asset(mesh_node.mesh, false, true))
+		var deindexed_mesh : Mesh = deindexed_meshes.get(AssetManager.get_name_of_asset(current_mesh, false, true))
 		#deindex the part first because combining indexed meshes does not bring enough benefit vs the complexity
 		#combining indexed meshes would mean vertices are only shared within the same parts and not between separate parts
 		if deindexed_mesh == null:
-			deindexed_mesh = _mesh_deindex(mesh_node.mesh)
+			deindexed_mesh = _mesh_deindex(current_mesh)
 			#cache deindexed meshes
-			deindexed_meshes[AssetManager.get_name_of_asset(mesh_node.mesh, false, true)] = deindexed_mesh
+			deindexed_meshes[AssetManager.get_name_of_asset(current_mesh, false, true)] = deindexed_mesh
 		
 		assert(deindexed_mesh != null)
 		var surface_count : int = deindexed_mesh.get_surface_count()
@@ -556,13 +815,14 @@ static func _surface_append_surface_to_mesh_from_parts(part_array : Array, resul
 			var surface_addition : Array = deindexed_mesh.surface_get_arrays(l)
 			#add surface_addition to surface_result
 			#for every data array of that surface, append it to the surface_result
-			_append_to_data_array.call(surface_result, surface_addition, mesh_node.global_transform)
+			_append_to_data_array.call(surface_result, surface_addition, current_transform)
 			l = l + 1
 		
 		i = i + 1
 	
 	
 	#finish surface
+	assert(surface_result.size() == Mesh.ARRAY_MAX)
 	resulting_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_result)
 	return resulting_mesh
 
@@ -666,7 +926,13 @@ static func _surface_classify_surface_array_indices_by_normal(surface_array : Ar
 static func _get_meshes_from_parts(part_array : Array):
 	return part_array.map(func(input : Part):
 		return input.part_mesh_node.mesh
-		)
+	)
+
+
+static func _get_transforms_from_parts(part_array : Array):
+	return part_array.map(func(input : Part):
+		return input.part_mesh_node.global_transform
+	)
 
 
 #ensure a new or existing_array has all the data arrays that the given mesh_array has

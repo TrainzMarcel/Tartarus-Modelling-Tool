@@ -12,6 +12,7 @@ class_name Part
 #@export var exclude : bool = false
 
 #make unselectable
+#(unfinished)
 @export var locked : bool = false
 
 #material setter
@@ -20,11 +21,11 @@ class_name Part
 		if not mesh_node_safety_check("part material"):
 			return
 		
-		#if material is invalid, set part_material to null and display error material
 		if not Main.safety_check(value):
 			part_material = null
-			push_warning("attempted to set part_material to invalid value: ", value, ", setting material to fallback ", FilePathRegistry.data_fallback_material.get_file())
-			part_mesh_node.material_override = preload(FilePathRegistry.data_fallback_material)
+			if not Main.safety_check(part_mesh_node.mesh) or not has_material():
+				push_warning("attempted to set part_material to invalid value: ", value, ", setting material to fallback ", FilePathRegistry.data_fallback_material.get_file())
+				part_mesh_node.material_override = preload(FilePathRegistry.data_fallback_material)
 			return
 		
 		#otherwise, proceed as normal
@@ -42,11 +43,13 @@ class_name Part
 		if not mesh_node_safety_check("part color"):
 			return
 		
-		if part_mesh_node.material_override == null:
-			part_mesh_node.material_override = StandardMaterial3D.new()#AssetManager.recolor_material(load(FilePathRegistry.data_default_material), part_color, true)
-		else:
+		if part_mesh_node.material_override != null:
 			part_mesh_node.material_override = AssetManager.recolor_material(part_mesh_node.material_override, part_color, true)
 
+#custom meshes will inevitably be a different size than (1, 1, 1)
+#so save the original size of the aabb, to keep the mesh within original bounds
+#this value gets updated when setting part_mesh
+var mesh_original_aabb : AABB = AABB()
 
 #size with setter
 #@export var part_scale : Vector3 = Vector3(0.4, 0.2, 0.8):
@@ -82,7 +85,9 @@ class_name Part
 		#		var shape : ConvexPolygonShape3D = ConvexPolygonShape3D.new()
 		#		shape.points = scale_wedge_collider(p_scale, wedge_collider_points)
 		
-		part_mesh_node.scale = part_scale
+		_set_mesh_node_transform()
+
+
 
 
 @export var part_mesh : Mesh:
@@ -90,13 +95,20 @@ class_name Part
 		if value == part_mesh:
 			return
 		
+		#checks
 		if not mesh_node_safety_check("part type"):
 			return
 		
 		if not Main.safety_check(value):
 			part_mesh_node.mesh = preload(FilePathRegistry.data_fallback_part)
 			part_mesh = null
+			mesh_original_aabb = AABB()
 			return
+		
+		#if this is a custom sized mesh, set the new aabb
+		mesh_original_aabb = value.get_aabb()
+		_set_mesh_node_transform()
+		
 		
 		part_mesh_node.mesh = value
 		part_mesh = value
@@ -152,6 +164,7 @@ func initialize():
 	part_color = part_color
 	
 	
+	
 	add_child(part_collider_node)
 	part_collider_node.owner = get_tree().edited_scene_root
 	
@@ -163,6 +176,38 @@ func initialize():
 #this will be reworked after indev-3 is released
 func is_initialized():
 	return part_mesh_node.get_parent() != null
+
+
+#simple check whether a mesh has any inherent materials
+func has_material():
+	#if material is invalid and mesh has no surface materials, set part_material to null and display error material
+	for i in part_mesh_node.mesh.get_surface_count():
+		if Main.safety_check(part_mesh_node.mesh.surface_get_material(i)):
+			return true
+	
+	return false
+
+
+func set_part_to_original_mesh_scale():
+	if mesh_original_aabb.size.is_zero_approx():
+		push_error("scaling mesh to aabb size failed: aabb.size is (0, 0, 0)")
+		return
+	part_scale = mesh_original_aabb.size
+
+
+#set the part_mesh_node scale and position
+func _set_mesh_node_transform():
+	if mesh_original_aabb.size == Vector3.ONE:
+		part_mesh_node.scale = part_scale
+	else:
+		part_mesh_node.scale = part_scale / mesh_original_aabb.size
+	
+	if mesh_original_aabb.position != Vector3.ZERO:
+		#position + (size / 2.0)
+		var position_sub : Vector3 = mesh_original_aabb.position * 0.5
+		var result_position : Vector3 = -mesh_original_aabb.get_center() * part_mesh_node.scale
+		part_mesh_node.position = result_position
+
 
 
 #"TODO"
