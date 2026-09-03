@@ -522,8 +522,10 @@ static func _mesh_split_by_material_slots(mesh_input : Mesh):
 
 static func _mesh_add_metadata(part_array : Array[Array], mesh_input : ArrayMesh):
 	var material_names : Array[String] = _get_material_name_array_from_part_combinations(part_array)
+	var colors : Array[Color] = []
 	mesh_input.set_meta("material_names", material_names)
 	mesh_input.set_meta("colors", _get_color_array_from_part_combinations(part_array))
+	
 
 
 #this function takes mesh_array and preserves surfaces that share the same material

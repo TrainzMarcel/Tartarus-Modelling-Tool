@@ -199,4 +199,6 @@
 18.8.	worked on _mesh_concatenate_multi_material_meshes for taking meshes with no part_material and splitting their surfaces and combining them by shared materials
 25.8.	made _mesh_concatenate_multi_material_meshes clearer by encapsulating the sorting loops into a sub function
 26.8.	export of meshes with part_materials and custom materials now works correctly, file manager mode change now refreshes file display if file ending filter is different (preventing wrong files being set to inactive), fixed glb button press not updating export options ui
+2.9.	working on making loading and importing undoable: initialization is now handled by confirm_save_load while load model returns an array of entities
+3.9.	importing and loading are now undoable
 TODO:	TODO cleanup

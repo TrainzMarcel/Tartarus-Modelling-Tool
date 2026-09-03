@@ -421,7 +421,7 @@ autowrap_mode = 2
 custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "Warning: non-indexed meshes unsupported and multi-material meshes will be split into multiple files"
+tooltip_text = "Warning: non-indexed meshes unsupported and multi-material meshes will be split into individual files"
 theme = ExtResource("3_y5lmk")
 theme_override_font_sizes/font_size = 0
 theme_override_styles/normal = ExtResource("4_v8wiq")
@@ -504,7 +504,7 @@ theme = ExtResource("3_y5lmk")
 custom_minimum_size = Vector2(140, 43)
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "Input a custom size for box projection. 1.0 = Texture will align with a 1x1x1 Cube. 2.0 = Texture will tile twice on a 1x1x1 Cube."
+tooltip_text = "Input a custom size for box projection. 1.0 = Texture will tile once with a 1x1x1 Cube. 2.0 = Texture will tile twice on a 1x1x1 Cube."
 theme = ExtResource("3_y5lmk")
 theme_override_font_sizes/font_size = 0
 theme_override_styles/normal = ExtResource("4_v8wiq")
@@ -631,7 +631,7 @@ autowrap_mode = 2
 custom_minimum_size = Vector2(43, 43)
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "For all formats, this names the surfaces with the material and color that was assigned. For .tres/.res, this also adds metadata describing what material and color were assigned before export."
+tooltip_text = "For .tres/.res, this adds metadata describing what material and color were assigned before export."
 theme = ExtResource("3_y5lmk")
 theme_override_font_sizes/font_size = 0
 theme_override_styles/normal = ExtResource("4_v8wiq")
@@ -668,6 +668,7 @@ layout_mode = 2
 theme = ExtResource("3_y5lmk")
 
 [node name="ScrollContainerImportModel" type="ScrollContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainerMainSection/PanelContainerModeData/MarginContainerModeData"]
+visible = false
 layout_mode = 2
 scroll_vertical = 79
 script = ExtResource("16_xki3j")

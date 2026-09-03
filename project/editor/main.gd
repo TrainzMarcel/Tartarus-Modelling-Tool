@@ -51,7 +51,7 @@ static var initial_rotation : Basis
 
 
 #@export_category("Tweakables")
-#drag tolerance
+#drag tolerance (in pixels)
 #this makes sure when the user is selecting with shift
 #that parts dont get moved when the user accidentally moves their mouse a tiny bit
 static var drag_tolerance : float = 10

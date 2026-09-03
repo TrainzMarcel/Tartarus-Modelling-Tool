@@ -184,7 +184,13 @@ func popup(operation_name : StringName):
 		operation_data.visible = true
 	
 	#initialize filters ui
-	var original_filter : String = ob_filters.get_item_text(ob_filters.get_selected_id())
+	var ob_id : int = ob_filters.get_selected_id()
+	var original_filter : String
+	if ob_id == -1:
+		original_filter = "*"
+	else:
+		original_filter = ob_filters.get_item_text(ob_id)
+		
 	ob_filters.clear()
 	if not operation_data.filters.is_empty():
 		for filters in operation_data.filters:

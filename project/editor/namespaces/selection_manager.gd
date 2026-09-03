@@ -661,19 +661,20 @@ static func selection_delete():
 	entities_delete(selection)
 
 
-static func selection_delete_undoable():
-	var undo : UndoManager.UndoData = UndoManager.UndoData.new()
+static func selection_delete_undoable(undo : UndoManager.UndoData = null):
+	if undo == null:
+		undo = UndoManager.UndoData.new()
 	var selection : Array = selected_entities.duplicate()
 	
 	selection_clear()
 	
-	undo.append_redo_action_with_args(selection_clear, [])
 	undo.append_undo_action_with_args(selection_clear, [])
+	undo.append_redo_action_with_args(selection_clear, [])
 	entities_delete_undoable(selection, undo)
 	
 	undo.append_undo_action_with_args(selection_add_entities, [selection])
-	undo.explicit_object_references.append_array(selection)
 	
+	undo.explicit_object_references.append_array(selection)
 	UndoManager.register_undo_data(undo)
 
 

@@ -1,8 +1,5 @@
 TOP PRIORITY
-implement import (.obj, .gltf, .tres/.res)
-fix load -> undo bug
-filemanager mode change needs to refresh if the filter changes
-filemanager settings still dont work correctly
+implement import (.obj, .gltf, .tres/.res) (code is there but needs testing)
 get release notes and use them to update the manual accordingly
 add cool sounds for saving and loading
 release v0.1-indev-3 with release notes

@@ -715,6 +715,7 @@ static func dispatch_filemanager_operation(current_dir : String, filename_line_e
 
 "TODO"#refactor (make it work on a separate thread)
 static func confirm_save_load(filepath : String, name : String, operation : String):
+	var undo_data : UndoManager.UndoData = UndoManager.UndoData.new()
 	EditorUI.c_loading_message.visible = true
 	#one await wasnt enough for the loading message to show up
 	await EditorUI.c_loading_message.get_tree().process_frame
@@ -743,12 +744,13 @@ static func confirm_save_load(filepath : String, name : String, operation : Stri
 		var options : Control = EditorUI.fm_file.get_options_ui("load_model")
 		var b_clear_workspace : Button = options.get_node("ButtonClearWorkspace")
 		if b_clear_workspace.button_pressed:
+			
 			SelectionManager.selection_add_entities(SelectionManager.get_workspace_entities())
-			SelectionManager.selection_delete()
+			SelectionManager.selection_delete_undoable(undo_data)
 		"TODO ERROR"#add error return or log error inside
-		#set this first so load_model can show errors
-		load_model(filepath + "/", name)
+		load_model(filepath + "/", name, undo_data)
 	EditorUI.c_loading_message.visible = false
+	UndoManager.register_undo_data(undo_data)
 
 
 static func is_button_pressed(button : BaseButton):
@@ -784,14 +786,14 @@ static func initialize_file_manager_export_ui():
 		b_index.disabled = true
 		
 		#input field		requires box projection (input size)
-		#embed materials	requires .res and split mesh by combinations
+		#embed materials	requires (.res or .glb or .gltf) and split mesh by combinations
 		#append metadata	requires (.tres or .res) and split mesh by combinations
 		#index mesh			requires (.tres or .res or .gltf or .glb) (non-indexed not supported by .obj exporter for whatever reason)
 		#all other buttons are free of any requirements
 		if is_button_pressed(b_uv_box_custom_size):
 			le_uv_box_custom_size.editable = true
 		
-		if is_button_pressed(b_glb) or is_button_pressed(b_res) and is_button_pressed(b_split_mesh_by_combinations):
+		if is_button_pressed(b_gltf) or is_button_pressed(b_glb) or is_button_pressed(b_res) and is_button_pressed(b_split_mesh_by_combinations):
 			b_embed_materials.disabled = false
 		
 		if (is_button_pressed(b_tres) or is_button_pressed(b_res)) and is_button_pressed(b_split_mesh_by_combinations):
@@ -883,8 +885,8 @@ static func export_model(filepath : String, filename : String, filetype : String
 
 static func debug_mesh_export():
 	SelectionManager.entities_delete([WorkspaceManager.workspace.get_node("Part")])
-	
-	WorkspaceManager.load_model("/home/marci/Desktop/save testing/", "test_5b_sql")
+	var undo_data : UndoManager.UndoData = UndoManager.UndoData.new()
+	WorkspaceManager.load_model("/home/marci/Desktop/save testing/", "test_5b_sql", undo_data)
 	#WorkspaceManager.load_model("/home/marci/Desktop/save testing/", "lab_1_SQL")
 	
 	#var new_part : Part = WorkspaceManager.available_part_types[0].copy()#cuboid
@@ -913,6 +915,7 @@ static func debug_mesh_export():
 static func confirm_import(filepath : String, filename : String):
 	var options : Control = EditorUI.fm_file.get_options_ui("import_model").get_node("VBoxContainer")
 	var entity_options : MeshUtils.MeshImportOptions = MeshUtils.MeshImportOptions.new()
+	var undo_data : UndoManager.UndoData = UndoManager.UndoData.new()
 	
 	if not FileAccess.file_exists(filepath + "/" + filename):
 		EditorUI.set_l_msg("import failed: " + filename + " could not be found")
@@ -922,7 +925,7 @@ static func confirm_import(filepath : String, filename : String):
 	var b_clear_workspace : Button = options.get_node("ButtonClearWorkspace")
 	if b_clear_workspace.button_pressed:
 		SelectionManager.selection_add_entities(SelectionManager.get_workspace_entities())
-		SelectionManager.selection_delete()
+		SelectionManager.selection_delete_undoable(undo_data)
 	
 	#export option buttons
 	entity_options.center_mesh = is_button_pressed(options.get_node("ButtonCenterMesh"))
@@ -944,11 +947,12 @@ static func confirm_import(filepath : String, filename : String):
 		EditorUI.set_l_msg("loading " + filetype + " has not been implemented")
 		return
 	
-	import_model(filepath, filename, filetype, entity_options)
+	import_model(filepath, filename, filetype, entity_options, undo_data)
+	UndoManager.register_undo_data(undo_data)
 	EditorUI.fm_file.refresh_file_manager()
 
 
-static func import_model(filepath : String, filename : String, filetype : String, entity_options : MeshUtils.MeshImportOptions):
+static func import_model(filepath : String, filename : String, filetype : String, entity_options : MeshUtils.MeshImportOptions, undo_data : UndoManager.UndoData):
 	var mesh : Mesh
 	var part_array : Array = []
 	var mesh_array : Array
@@ -987,10 +991,6 @@ static func import_model(filepath : String, filename : String, filetype : String
 				AssetManager.register_asset_with_subresources(mesh_input)
 				i = i + 1
 			
-			"TODO this needs to be a part of AssetManager.register() a sub function called "
-			#register meshes and possibly materials with assetmanager
-			#give names to meshes and materials before registering them
-			
 			
 			#print()
 			#print("----------------resources of " + input_name)
@@ -1014,7 +1014,11 @@ static func import_model(filepath : String, filename : String, filetype : String
 		AssetManager.debug_pretty_print()
 		gltf_scene_root.queue_free()
 		
+		
 		SelectionManager.entities_activate_individual_array(part_array)
+		undo_data.append_undo_action_with_args(SelectionManager.entities_deactivate_individual_array, [part_array])
+		undo_data.explicit_object_references = part_array
+		undo_data.append_redo_action_with_args(SelectionManager.entities_activate_individual_array, [part_array])
 		return
 	else:
 		return
@@ -1040,6 +1044,9 @@ static func import_model(filepath : String, filename : String, filetype : String
 	AssetManager.debug_pretty_print()
 	
 	SelectionManager.entities_activate_individual_array(part_array)
+	undo_data.append_undo_action_with_args(SelectionManager.entities_deactivate_individual_array, [part_array])
+	undo_data.explicit_object_references = part_array
+	undo_data.append_redo_action_with_args(SelectionManager.entities_activate_individual_array, [part_array])
 
 
 #actual save and load functions
@@ -1184,8 +1191,7 @@ static func save_model(filepath : String, filename : String, embed_assets : bool
 	DataUtils.zip_end(zip_packer, filepath, [])
 
 
-static func load_model(filepath : String, filename : String):
-	#no mappings required as the indices are already stored
+static func load_model(filepath : String, filename : String, undo_data : UndoManager.UndoData):
 	var file : PackedByteArray = []
 	var files_to_clean_up : PackedStringArray = []
 	
@@ -1203,9 +1209,9 @@ static func load_model(filepath : String, filename : String):
 		data_filename = filename + "_data.db"
 		
 	file = DataUtils.unzip_data_file(zip_reader, data_filename)
-	
+	var entities : Array = []
 	if save_version == 0:
-		load_model_from_csv_data(file)
+		entities = load_model_from_csv_data(file)
 	elif save_version == 1:
 		data_filename = DataUtils.zip_copy_to_filesystem(zip_reader, "", data_filename, filepath)
 		if data_filename == "" or data_filename == null:
@@ -1215,11 +1221,16 @@ static func load_model(filepath : String, filename : String):
 		var sql : SQLite = SQLite.new()
 		sql.path = filepath.path_join(data_filename)
 		sql.open_db()
-		load_model_from_sql_data(sql)
+		entities = load_model_from_sql_data(sql)
 		sql.close_db()
 		files_to_clean_up.append(data_filename)
 	
 	DataUtils.unzip_end(zip_reader, filepath, files_to_clean_up)
+	SelectionManager.entities_activate(entities)
+	SelectionManager.post_group_update()
+	undo_data.append_undo_action_with_args(SelectionManager.entities_deactivate, [entities])
+	undo_data.explicit_object_references = entities
+	undo_data.append_redo_action_with_args(SelectionManager.entities_activate, [entities])
 
 
 static func load_model_from_sql_data(sql : SQLite):
@@ -1244,6 +1255,7 @@ static func load_model_from_sql_data(sql : SQLite):
 	var used_parts : Array[Part] = []
 	var used_groups : Array[SelectionManager.Group] = []
 	var root_groups : Array[SelectionManager.Group] = []
+	var entities : Array = []
 	
 	#load color
 	for row in rows_color_table:
@@ -1258,14 +1270,13 @@ static func load_model_from_sql_data(sql : SQLite):
 	#load parts
 	for row in rows_part_table:
 		var new : Part = DataUtils.sql_part_deserialize(row, used_colors, used_materials, used_meshes)
-		workspace.add_child(new)
-		new.initialize()
+		entities.append(new)
 		used_parts.append(new)
 	
 	#first load all groups
 	for row in rows_group_table:
 		var new : SelectionManager.Group = SelectionManager.Group.new()
-		SelectionManager.existing_groups.append(new)
+		entities.append(new)
 		used_groups.append(new)
 	
 	
@@ -1280,27 +1291,22 @@ static func load_model_from_sql_data(sql : SQLite):
 	
 	
 	#recalculate abb and primary_part
-	for group in used_groups:
-		group.primary_entity = SelectionManager.last_element(group.child_entities)
-		print("group_abb: ", group.group_abb)
-		
-		SelectionManager.group_recalculate_bounding_box(group)
+	#for group in used_groups:
+	#	group.primary_entity = SelectionManager.last_element(group.child_entities)
+	#	print("group_abb: ", group.group_abb)
+	#	
+	#	SelectionManager.group_recalculate_bounding_box(group)
 	
-	
-	#update selectionmanager state
-	"TODO"#this should be part of the api of selectionmanager
-	SelectionManager.root_groups.append_array(root_groups)
-	SelectionManager.root_group_child_parts_hashmap.clear()
-	for r_group in SelectionManager.root_groups:
-		for part in SelectionManager.group_get_all_child_parts(SelectionManager.group_get_full_hierarchy(r_group)):
-			SelectionManager.root_group_child_parts_hashmap[part] = r_group
-	
+	#handle entity initialization and registration outside
+	return entities
 
 
 static func load_model_from_csv_data(input : PackedByteArray):
 	var used_colors : Array[Color] = []
 	var used_materials : Array[Material] = []
 	var used_meshes : Array[Mesh] = []
+	#entities loaded
+	var entities : Array = []
 	var file : PackedStringArray = input.get_string_from_utf8().split("\n")
 	var i : int = 0
 	#mode from headers
@@ -1334,10 +1340,10 @@ static func load_model_from_csv_data(input : PackedByteArray):
 		elif mode == data_headers[3]:
 			var new : Part = DataUtilsLegacy.csv_part_deserialize(line, used_colors, used_materials, used_meshes)
 			
-			workspace.add_child(new)
-			new.initialize()
+			entities.append(new)
 		
 		i = i + 1
+	return entities
 
 
 #did not know where to put this function
