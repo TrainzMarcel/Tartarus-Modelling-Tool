@@ -201,4 +201,8 @@
 26.8.	export of meshes with part_materials and custom materials now works correctly, file manager mode change now refreshes file display if file ending filter is different (preventing wrong files being set to inactive), fixed glb button press not updating export options ui
 2.9.	working on making loading and importing undoable: initialization is now handled by confirm_save_load while load model returns an array of entities
 3.9.	importing and loading are now undoable
+4.9.	created "golden file" in .blend format and exported into glb, gltf, obj for testing, added debug shortcuts f3+d (asset database dump) and f3+i (scene info query button)
+19.9.	figured out that meshutils.center_mesh() does not preserve materials, which causes problems with concatenating mesh surfaces that share materials. also, i need to be able to detect mesh array flags and pass them through the entire pipeline, changing them if necessary (like when adding or removing indexing from a mesh)
+24.9.	made helper functions for getting mesh flags from its arrays and for preserving materials
+27.9.	correctly implemented and used flags helper for _mesh_apply_function_to_surfaces(), made import process correctly preserve materials, fixed bug when non-uniform transform meshes are imported (part_scale is set instead), made import process strip bones and bone weights which are unsupported
 TODO:	TODO cleanup

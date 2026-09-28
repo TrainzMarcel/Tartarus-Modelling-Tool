@@ -96,20 +96,31 @@ static func convert_entities_to_mesh(options : EntityToMeshOptions, entities : A
 
 
 static func convert_mesh_for_import(options : MeshImportOptions, mesh : Mesh):
-	var part_array : Array[Part] = []
 	var mesh_array : Array = []
+	var surface_data : Dictionary = _mesh_get_materials_surfaces(mesh)
+	#remove bones and bone weights if there are any
+	#blend shapes are also unsupported, but are just ignored and stripped automatically
+	#as i supply an empty array for add_surface_from_arrays() blend_shapes argument in all cases
+	mesh = _mesh_strip_unsupported_data(mesh)
+	
+	
 	if options.center_mesh:
 		mesh = _mesh_center_based_on_aabb(mesh)
 	
 	
-	if options.remove_materials:
-		mesh = _mesh_strip_materials(mesh)
+	_mesh_set_materials_surfaces(mesh, surface_data)
 	
 	
 	if options.split_mesh_by_material_slots:
 		mesh_array = _mesh_split_by_material_slots(mesh)
 	else:
 		mesh_array.append(mesh)
+	
+	
+	if options.remove_materials:
+		for i_mesh in mesh_array:
+			_mesh_strip_materials(i_mesh)
+	
 	
 	return mesh_array
 
@@ -243,6 +254,9 @@ static func import_gltf(filepath : String, filename : String):
 
 #filter all meshinstance nodes out of an imported gltf scene
 static func process_imported_gltf_scene(gltf_scene_root : Node):
+	if gltf_scene_root == null:
+		return
+	
 	var flatten_node_tree : Callable = func(input : Node, f : Callable):
 		var child_node_array : Array = input.get_children()
 		for child_node in child_node_array:
@@ -259,8 +273,8 @@ static func process_imported_gltf_scene(gltf_scene_root : Node):
 		return input is MeshInstance3D
 		)
 
-#gltfstate and gltfdocument for some reason require access to the node tree
-static func export_gltf(mesh : Mesh, binary_encoding : bool, filepath : String, filename : String):#, workspace : Node, filepath : String, filename : String):
+
+static func export_gltf(mesh : Mesh, binary_encoding : bool, filepath : String, filename : String):
 	var gltf_document_save : GLTFDocument = GLTFDocument.new()
 	var gltf_state_save : GLTFState = GLTFState.new()
 	var mesh_instance : MeshInstance3D = MeshInstance3D.new()
@@ -280,7 +294,7 @@ static func export_gltf(mesh : Mesh, binary_encoding : bool, filepath : String, 
 		error = gltf_document_save.write_to_filesystem(gltf_state_save, filepath.path_join(filename) + ".gltf")
 	
 	if error != OK:
-		push_error("writing gltf file to filesystem failed. aborting export process.")
+		push_error("writing gltf file to filesystem failed. aborting export process. error code: ", error_string(error))
 	assert(error == OK)
 	mesh_instance.queue_free()
 
@@ -462,7 +476,7 @@ static func _mesh_center_based_on_aabb(mesh_input : Mesh):
 		return surface_array
 	
 	
-	return _mesh_apply_function_to_surfaces(_surface_add_offset_to_vertices, mesh_input, [offset], Mesh.PRIMITIVE_TRIANGLES, [], {}, 0)
+	return _mesh_apply_function_to_surfaces(_surface_add_offset_to_vertices, mesh_input, [offset], Mesh.PRIMITIVE_TRIANGLES, [], {})
 
 
 static func _mesh_strip_materials(mesh_input : Mesh):
@@ -477,7 +491,7 @@ static func _mesh_strip_materials(mesh_input : Mesh):
 
 
 static func _mesh_index(mesh_input : Mesh):
-	return _mesh_apply_function_to_surfaces(_surface_add_indexing, mesh_input, [], Mesh.PRIMITIVE_TRIANGLES, [], {}, Mesh.ARRAY_FORMAT_INDEX)
+	return _mesh_apply_function_to_surfaces(_surface_add_indexing, mesh_input, [], Mesh.PRIMITIVE_TRIANGLES, [], {})
 
 
 static func _mesh_deindex(mesh_input : Mesh):
@@ -612,17 +626,7 @@ static func _mesh_concatenate_multi_material_meshes(mesh_array : Array, transfor
 			split_transforms_sorted
 		)
 	
-	#after the loop, simply concatenate the sorted surfaces
-	#first, collect original surface data
-	var original_surface_materials : Array = []
-	var original_surface_names : Array = []
-	i = 0
-	while i < mesh_input.get_surface_count():
-		original_surface_materials.append(mesh_input.surface_get_material(i))
-		original_surface_names.append((mesh_input as ArrayMesh).surface_get_name(i))
-		i = i + 1
-	
-	#second, concatenate
+	#after the loop, simply concatenate the sorted surfaces and preserve their surface data
 	i = 0
 	while i < split_surfaces_sorted.size():
 		#get name and material as the surface append function does not preserve material
@@ -634,12 +638,6 @@ static func _mesh_concatenate_multi_material_meshes(mesh_array : Array, transfor
 		(mesh_input as ArrayMesh).surface_set_name(surface_count - 1, set_name)
 		i = i + 1
 	
-	#third, reassign original surface data
-	i = 0
-	while i < original_surface_materials.size():
-		mesh_input.surface_set_material(i, original_surface_materials[i])
-		(mesh_input as ArrayMesh).surface_set_name(i, original_surface_names[i])
-		i = i + 1
 	
 	return mesh_input
 
@@ -654,18 +652,42 @@ static func _mesh_apply_uv_projection(mesh_input : ArrayMesh, options : EntityTo
 		var scale : Vector3 = mesh_input.get_aabb().size
 		var average_scale : float = (scale.x + scale.y + scale.z) / 3.0
 		
-		mesh_output = _mesh_apply_function_to_surfaces(_surface_uv_box_projection, mesh_input,[average_scale], Mesh.PRIMITIVE_TRIANGLES, [], {}, 0)
+		mesh_output = _mesh_apply_function_to_surfaces(_surface_uv_box_projection, mesh_input,[average_scale], Mesh.PRIMITIVE_TRIANGLES, [], {})
 		
 	elif options.uv_option == EntityToMeshOptions.UVOptionEnum.BoxProjectVariable:
-		mesh_output = _mesh_apply_function_to_surfaces(_surface_uv_box_projection, mesh_input, [options.uv_box_project_scale], Mesh.PRIMITIVE_TRIANGLES, [], {}, 0)
+		mesh_output = _mesh_apply_function_to_surfaces(_surface_uv_box_projection, mesh_input, [options.uv_box_project_scale], Mesh.PRIMITIVE_TRIANGLES, [], {})
 	
 	return mesh_output
+
+
+#strip unsupported bones and bone weights for import
+static func _mesh_strip_unsupported_data(mesh_input : Mesh):
+	var i : int = 0
+	var unsupported_data_found : bool = false
+	while i < mesh_input.get_surface_count():
+		var flags : int = _array_get_flags(mesh_input.surface_get_arrays(i))
+		if flags & Mesh.ARRAY_FORMAT_BONES or flags & Mesh.ARRAY_FORMAT_WEIGHTS:
+			unsupported_data_found = true
+			break
+		i = i + 1
+	
+	
+	if not unsupported_data_found:
+		return mesh_input
+	
+	var _strip_data : Callable = func(surface_array : Array):
+		surface_array[Mesh.ARRAY_BONES] = null
+		surface_array[Mesh.ARRAY_WEIGHTS] = null
+		return surface_array
+	
+	return _mesh_apply_function_to_surfaces(_strip_data, mesh_input, [], Mesh.PRIMITIVE_TRIANGLES, [], {})
+
 
 "TODO"#create a data class (struct) to use as a parameter for this function
 #struct: has flags, mesh input and function args array
 #and functions which this function calls
 #then the parameter order wont be a problem anymore
-static func _mesh_apply_function_to_surfaces(surface_modify_function : Callable, mesh_input : ArrayMesh, function_arguments : Array, mesh_type : Mesh.PrimitiveType, blend_shapes: Array[Array] = [], lods: Dictionary = {}, flags = 0):
+static func _mesh_apply_function_to_surfaces(surface_modify_function : Callable, mesh_input : ArrayMesh, function_arguments : Array, mesh_type : Mesh.PrimitiveType, blend_shapes: Array[Array] = [], lods: Dictionary = {}):
 	var mesh_output : ArrayMesh = ArrayMesh.new()
 	var i : int = 0
 	var surfaces : int = mesh_input.get_surface_count()
@@ -676,10 +698,11 @@ static func _mesh_apply_function_to_surfaces(surface_modify_function : Callable,
 	
 	while i < surfaces:
 			function_arguments_surface[0] = mesh_input.surface_get_arrays(i)
+			assert(function_arguments != null)
 			assert(function_arguments_surface[0] != null and function_arguments_surface[0].size() > 0)
 			var modified_surface : Array = surface_modify_function.callv(function_arguments_surface)
 			assert(modified_surface != null and modified_surface.size() > 0)
-			mesh_output.add_surface_from_arrays(mesh_type, modified_surface, blend_shapes, lods, flags)
+			mesh_output.add_surface_from_arrays(mesh_type, modified_surface, blend_shapes, lods, _array_get_flags(modified_surface))
 			i = i + 1
 	return mesh_output
 
@@ -697,19 +720,27 @@ static func _surface_add_indexing(surface_array : Array):
 	var indices_unique_lookup : Dictionary = {}
 	
 	#sanity check
-	assert(surface_array[Mesh.ARRAY_TEX_UV] != null and surface_array[Mesh.ARRAY_TEX_UV].size() != 0)
-	assert(surface_array[Mesh.ARRAY_NORMAL] != null and surface_array[Mesh.ARRAY_NORMAL].size() != 0)
+	if surface_array == null:
+		return
 	
 	#"target" vertex: original vertex for which a matching vertex is being searched for
 	var index_target : int = 0
 	while index_target < surface_array[Mesh.ARRAY_VERTEX].size():
+		var normal_key : Vector3 = Vector3()
+		var uv_key : Vector2 = Vector2()
+		
+		if surface_array[Mesh.ARRAY_NORMAL] != null:
+			normal_key = (surface_array[Mesh.ARRAY_NORMAL][index_target] * 10000).round()
+		if surface_array[Mesh.ARRAY_TEX_UV] != null:
+			uv_key = (surface_array[Mesh.ARRAY_TEX_UV][index_target] * 10000).round()
+		
 		var vertex_key : StringName = StringName(
 			",".join(
 				PackedStringArray(
 					[
 						str((surface_array[Mesh.ARRAY_VERTEX][index_target] * 10000).round()),
-						str((surface_array[Mesh.ARRAY_NORMAL][index_target] * 10000).round()),
-						str((surface_array[Mesh.ARRAY_TEX_UV][index_target] * 10000).round())
+						str(normal_key),
+						str(uv_key)
 					]
 				)
 			)
@@ -762,7 +793,7 @@ static func _surface_add_indexing(surface_array : Array):
 
 
 #adds one surface to the resulting_mesh
-#this function does not preserve materials
+#this function does not preserve materials or surface names
 static func _surface_append_surface_to_mesh_from_meshes(mesh_array : Array, transform_array : Array, resulting_mesh : ArrayMesh):
 	var surface_result : Array
 	@warning_ignore("confusable_local_declaration")
@@ -925,6 +956,31 @@ static func _surface_classify_surface_array_indices_by_normal(surface_array : Ar
 	return result
 
 
+
+
+#helpers to preserve materials and surface names
+#assuming number of surfaces does not change
+static func _mesh_get_materials_surfaces(mesh : Mesh):
+	var i : int = 0
+	var output : Dictionary = {}
+	output.materials = []
+	output.surface_names = []
+	
+	while i < mesh.get_surface_count():
+		output.materials.append(mesh.surface_get_material(i))
+		output.surface_names.append((mesh as ArrayMesh).surface_get_name(i))
+		i = i + 1
+	return output
+
+
+static func _mesh_set_materials_surfaces(mesh : Mesh, input : Dictionary):
+	var i : int = 0
+	while i < mesh.get_surface_count():
+		mesh.surface_set_material(i, input.materials[i])
+		(mesh as ArrayMesh).surface_set_name(i, input.surface_names[i])
+		i = i + 1
+
+
 static func _get_meshes_from_parts(part_array : Array):
 	return part_array.map(func(input : Part):
 		return input.part_mesh_node.mesh
@@ -972,3 +1028,45 @@ static func _initialize_mesh_array_from_mesh_array(mesh_array : Array, existing_
 static func _copy_mesh_array_data(mesh_array : Array, ):
 	
 	return
+
+
+#get flags integer from mesh arrays
+static func _array_get_flags(mesh_array : Array):
+	var flags : int = 0
+	var is_array_valid : Callable = func(array_type : Mesh.ArrayType, array : Array):
+		return array[array_type] != null and array[array_type].size() > 0
+	
+	assert(mesh_array.size() == Mesh.ARRAY_MAX)
+	if mesh_array.size() != Mesh.ARRAY_MAX:
+		push_error("given mesh array is not standard size. data likely invalid. attempting to resize to standard")
+		mesh_array.resize(Mesh.ARRAY_MAX)
+	
+	#there should at least be a vertex array
+	if is_array_valid.call(Mesh.ARRAY_VERTEX, mesh_array):
+		flags = flags | Mesh.ARRAY_FORMAT_VERTEX
+	else:
+		push_error("given mesh array has no vertex array. returning empty flags value")
+		return 0
+	
+	if is_array_valid.call(Mesh.ARRAY_NORMAL, mesh_array):
+		flags = flags | Mesh.ARRAY_FORMAT_NORMAL
+	if is_array_valid.call(Mesh.ARRAY_TANGENT, mesh_array):
+		flags = flags | Mesh.ARRAY_FORMAT_TANGENT
+	if is_array_valid.call(Mesh.ARRAY_COLOR, mesh_array):
+		flags = flags | Mesh.ARRAY_FORMAT_COLOR
+	
+	if is_array_valid.call(Mesh.ARRAY_TEX_UV, mesh_array):
+		flags = flags | Mesh.ARRAY_FORMAT_TEX_UV
+	if is_array_valid.call(Mesh.ARRAY_TEX_UV2, mesh_array):
+		flags = flags | Mesh.ARRAY_FORMAT_TEX_UV2
+	
+	
+	if is_array_valid.call(Mesh.ARRAY_INDEX, mesh_array):
+		flags = flags | Mesh.ARRAY_FORMAT_INDEX
+	if is_array_valid.call(Mesh.ARRAY_BONES, mesh_array):
+		flags = flags | Mesh.ARRAY_FORMAT_BONES
+	if is_array_valid.call(Mesh.ARRAY_WEIGHTS, mesh_array):
+		flags = flags | Mesh.ARRAY_FORMAT_WEIGHTS
+		
+	
+	return flags

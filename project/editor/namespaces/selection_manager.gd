@@ -1341,6 +1341,7 @@ static func entities_delete_undoable(entities : Array, undo_data : UndoManager.U
 	#remember which entities to activate/deactivate
 	var entities_affected : Array = []
 	
+	"TODO"#does this even work?
 	assert(entities_all_root.filter(is_group).all(func(input): return input.parent_group == null))
 	assert(entities_all_root.filter(is_part).all(func(input): return root_group_child_parts_hashmap.get(input) == null))
 	

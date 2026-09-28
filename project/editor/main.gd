@@ -5,6 +5,10 @@ class_name Main
 "TODO"#find a good way to group variables
 "TODO"#put all the things one has to edit to add a new tool to transformhandleroot into one file (if possible)
 
+#DEBUG
+static var debug_button : Button
+
+
 #dependencies
 @export_category("Dependencies")
 @export var e_cam : FreeLookCamera
@@ -153,18 +157,23 @@ func _ready():
 	
 	"DEBUG"
 	#WorkspaceManager.debug_mesh_export()
+	#WorkspaceManager.debug_mesh_import()
 	
-	$EditorUI/Button.pressed.connect(func(): 
+	#debug
+	debug_button = $EditorUI/Button
+	var debug_f : Callable = func():
 		var meshes : Array = WorkspaceManager.workspace.get_children().map(func(input):
 			if input is Part: return input.part_mesh_node.mesh
 		)
-		
+				
+				
 		var verts : int = 0
 		for mesh in meshes:
 			if mesh:
 				verts = verts + mesh.surface_get_arrays(0)[0].size()
-		$EditorUI/Button.text = "Update Vertex Count" + "\n" + "Vertex Count = " + str(verts)
-	)
+			debug_button.text = "Update Vertex Count" + "\n" + "Vertex Count = " + str(verts)
+	
+	debug_button.pressed.connect(debug_f)
 	
 	#for convenience so my console isnt covered up every time i start the software
 	get_window().position = Vector2(1920*0.5 - 1152 * 0.3, 40)
@@ -384,6 +393,18 @@ func _input(event : InputEvent):
 			UndoManager.redo()
 		elif event.keycode == KEY_F1:
 			EditorUI.dd_manual.popup()
+		
+		#DEBUG
+		#TODO show labels on every 3d object
+		#elif event.keycode == KEY_L and Input.is_key_pressed(KEY_F3):
+		#	pass
+		#print dump of assetmanager database
+		elif event.keycode == KEY_D and Input.is_key_pressed(KEY_F3):
+			AssetManager.debug_pretty_print()
+		#display scene info
+		elif event.keycode == KEY_I and Input.is_key_pressed(KEY_F3):
+			debug_button.visible = not debug_button.visible
+		
 	
 	#camera controls
 	cam.cam_input(event, second_cam, SelectionManager.selected_entities, SelectionManager.selected_parts_abb, EditorUI.l_camera_speed)
@@ -415,7 +436,6 @@ func _notification(notification_type: int) -> void:
 		Engine.max_fps = 15
 		get_tree().paused = true
 	if notification_type == NOTIFICATION_CRASH:
-		#need to disable asset file embedding for saving.
 		WorkspaceManager.save_model(FilePathRegistry.data_folder_autosaves, FilePathRegistry.data_crash_save, false, false)
 
 

@@ -912,6 +912,31 @@ static func debug_mesh_export():
 	print("export time elapsed: ", Time.get_unix_time_from_system() - timer)
 
 
+static func debug_mesh_import():
+	var import_options : MeshUtils.MeshImportOptions = MeshUtils.MeshImportOptions.new()
+	import_options.split_mesh_by_material_slots = false
+	import_options.center_mesh = false
+	
+	
+	var export_options : MeshUtils.EntityToMeshOptions = MeshUtils.EntityToMeshOptions.new()
+	export_options.embed_assets = true
+	export_options.index_mesh = true
+	export_options.include_metadata = true
+	export_options.split_mesh_by_combinations = true
+	
+	
+	
+	var path : String = "/media/marci/1.0 TB Hard Disk/Godot 4.5 Projects/Tartarus Modelling Tool/project/debug/test folder"
+	WorkspaceManager.import_model(path + "/glb", "/golden_source.glb", "glb", import_options, UndoManager.UndoData.new())
+	await WorkspaceManager.workspace.get_tree().create_timer(5.0).timeout
+	
+	WorkspaceManager.export_model(path + "/output", "/golden_source_EXPORT_GLB.glb", "glb", SelectionManager.get_workspace_entities(), export_options)
+	#SelectionManager.entities_delete(SelectionManager.get_workspace_entities())
+	
+	
+	
+
+
 static func confirm_import(filepath : String, filename : String):
 	var options : Control = EditorUI.fm_file.get_options_ui("import_model").get_node("VBoxContainer")
 	var entity_options : MeshUtils.MeshImportOptions = MeshUtils.MeshImportOptions.new()
@@ -964,6 +989,8 @@ static func import_model(filepath : String, filename : String, filetype : String
 	#special case: gltf can contain multiple meshes with individual transforms
 	elif filetype == "gltf" or filetype == "glb":
 		var gltf_scene_root : Node = MeshUtils.import_gltf(filepath, filename)
+		if gltf_scene_root == null:
+			return
 		var mesh_instance_array : Array = MeshUtils.process_imported_gltf_scene(gltf_scene_root)
 		
 		for mesh_instance in mesh_instance_array:
@@ -982,6 +1009,11 @@ static func import_model(filepath : String, filename : String, filetype : String
 				new_part.transform = instance_transform
 				new_part.translate_object_local(mesh_input.get_aabb().get_center())
 				
+				#if the instance transforms have non-uniform scale:
+				#set the part scale and the transform scale correctly
+				if new_part.scale != Vector3.ONE:
+					new_part.part_scale = new_part.scale
+					new_part.scale = Vector3.ONE
 				
 				part_array.append(new_part)
 				

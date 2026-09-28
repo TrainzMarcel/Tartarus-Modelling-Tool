@@ -1,6 +1,7 @@
 TOP PRIORITY
 implement import (.obj, .gltf, .tres/.res) (code is there but needs testing)
-get release notes and use them to update the manual accordingly
+thoroughly test undo and fix problems
+write release notes and use them to update the manual accordingly
 add cool sounds for saving and loading
 release v0.1-indev-3 with release notes
 
@@ -11,7 +12,7 @@ release v0.1-indev-3 with release notes
 	  ME5 possibility to save filepaths for fast and easy reimporting
 	  E1	possibility to group selections using ctrl + g and to ungroup ctrl + shift + g. groupings should be able to contain other groupings.
 update manual with above features
-release v0.1
+release v0.1	
 
 implement import of reference images .png, .jpg in 3d space)
 
@@ -92,5 +93,5 @@ recolor selection box to red if 2 selected parts are overlapping perfectly
 implement multi part coloring and material application
 implement automatic hidden face reduction algorithm
 skybox picker
-x implement uv mapping
+implement uv mapping
 (maybe?) refine selection system to work with normal godot assets because it would be fun to use this as a level editor

@@ -106,6 +106,7 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_3ofqj")
 [node name="EditorUI" parent="." instance=ExtResource("6_whu6r")]
 
 [node name="Button" type="Button" parent="EditorUI"]
+visible = false
 layout_mode = 0
 offset_left = 26.0
 offset_top = 217.0

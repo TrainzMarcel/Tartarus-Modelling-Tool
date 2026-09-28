@@ -120,6 +120,8 @@ static func get_subresources(asset : Resource, subresources : Array = []):
 	for resource in subresources_deduplicated:
 		if not subresources_deduplicated.has(resource):
 			subresources_deduplicated.append(resource)
+			if not resource is Mesh:
+				print("get_subresources found: ", str(resource))
 	
 	#finally return after the loop
 	return subresources_deduplicated
@@ -147,6 +149,7 @@ static func register_asset(asset : Resource):
 	
 	#register the asset
 	name_to_asset_map[base_name] = asset
+	print("ASSETMANAGER registered: ", base_name, " object: ", str(asset))
 
 
 #recursive wrapper for register_asset()
