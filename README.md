@@ -5,9 +5,9 @@ nearly useable currently
 
 each building block is treated like it has its own coordinate system
 
-<img width="1920" height="1030" alt="Image" src="https://github.com/user-attachments/assets/cfb069de-0f84-47e6-bb72-90f00a019f99" />
+<img width="1920" alt="Image" src="https://github.com/user-attachments/assets/cfb069de-0f84-47e6-bb72-90f00a019f99" />
 
-<img width="1920" height="1030" alt="Image" src="https://github.com/user-attachments/assets/8fa6e214-7adb-46f7-9387-eb0b2f4f0714" />
+<img width="1920" alt="Image" src="https://github.com/user-attachments/assets/8fa6e214-7adb-46f7-9387-eb0b2f4f0714" />
 
 ```
 REQUIREMENTS
